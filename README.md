@@ -26,6 +26,10 @@ In the Solution Explorer open the file `App.xaml.cs`. Add the `using` statement 
 
 ![][launch]
 
+If you are building a Windows Phone app you need to add the `ID_CAP_IDENTITY_DEVICE` capability. In the Solution Explorer open the WMAppManifest.xml file, switch to the Capabilities tab and check the appropriate checkbox.
+
+![][capabilities]
+
 ### 3. Build your app
 From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
 
@@ -83,6 +87,7 @@ In any case, don't forget to import AdjustIo. Again, there is no point in sendin
 [install]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/install.png
 [launch]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/launch.png
 [output]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/output.png
+[capabilities]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/capabilities.png
 
 
 ## License
