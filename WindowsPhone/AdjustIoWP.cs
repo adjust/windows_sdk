@@ -19,7 +19,7 @@ namespace adeven.AdjustIo
             trackSessionStart();
         }
 
-        public static void TrackEvent(string eventId,
+        public static void TrackEvent(string eventToken,
                   Dictionary<string, string> callbackParameters = null)
         {
             string paramString = Util.GetBase64EncodedParameters(callbackParameters);
@@ -27,19 +27,19 @@ namespace adeven.AdjustIo
             var parameters = new Dictionary<string, string> {
                 { "app_id", appId },
                 { "mac", deviceId },
-                { "id", eventId },
+                { "id", eventToken },
                 { "params", paramString}
             };
 
             PostRequest request = new PostRequest("/event");
-            request.SuccessMessage = "Tracked event " + eventId + ".";
-            request.FailureMessage = "Failed to track event " + eventId + ".";
+            request.SuccessMessage = "Tracked event " + eventToken + ".";
+            request.FailureMessage = "Failed to track event " + eventToken + ".";
             request.UserAgent = userAgent;
             request.Start(parameters);
         }
 
         public static void TrackRevenue(float amountInCents,
-                                       string eventId = null,
+                                       string eventToken = null,
                    Dictionary<string, string> callbackParameters = null)
         {
             int amountInMillis = (int)Math.Round(10 * amountInCents);
@@ -50,7 +50,7 @@ namespace adeven.AdjustIo
                 { "app_id", appId },
                 { "mac", deviceId },
                 { "amount", amount },
-                { "event_id", eventId },
+                { "event_id", eventToken },
                 { "params", paramString }
             };
 
