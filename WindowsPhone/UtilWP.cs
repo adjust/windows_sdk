@@ -18,12 +18,6 @@ namespace adeven.AdjustIo
         public const string ClientSdk = "winphone1.0";
         public const string LogTag = "AdjustIo";
 
-        public static string GetAppId()
-        {
-            string appId = getAppId();
-            return appId;
-        }
-
         public static string GetDeviceId()
         {
             object id;

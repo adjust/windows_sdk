@@ -16,12 +16,6 @@ namespace adeven.AdjustIo
         public const string ClientSdk = "winstore1.0";
         public const string LogTag = "AdjustIo";
 
-        public static string GetAppId()
-        {
-            string appId = getAppFamilyName();
-            return appId;
-        }
-
         public static string GetDeviceId()
         {
             var profiles = Windows.Networking.Connectivity.NetworkInformation.GetConnectionProfiles();

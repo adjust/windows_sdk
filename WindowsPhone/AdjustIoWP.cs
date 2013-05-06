@@ -5,9 +5,9 @@ namespace adeven.AdjustIo
 {
     public static class AdjustIo
     {
-        public static void AppDidLaunch()
+        public static void AppDidLaunch(string appToken)
         {
-            AdjustIo.appId = Util.GetAppId();
+            AdjustIo.appToken = appToken;
             AdjustIo.deviceId = Util.GetDeviceId();
             AdjustIo.userAgent = Util.GetUserAgent();
 
@@ -25,7 +25,7 @@ namespace adeven.AdjustIo
             string paramString = Util.GetBase64EncodedParameters(callbackParameters);
 
             var parameters = new Dictionary<string, string> {
-                { "app_id", appId },
+                { "app_token", appToken },
                 { "mac", deviceId },
                 { "id", eventToken },
                 { "params", paramString}
@@ -47,7 +47,7 @@ namespace adeven.AdjustIo
             string paramString = Util.GetBase64EncodedParameters(callbackParameters);
 
             var parameters = new Dictionary<string, string> {
-                { "app_id", appId },
+                { "app_token", appToken },
                 { "mac", deviceId },
                 { "amount", amount },
                 { "event_id", eventToken },
@@ -63,14 +63,14 @@ namespace adeven.AdjustIo
 
         // This line marks the end of the public interface
 
-        private static string appId;
+        private static string appToken;
         private static string deviceId;
         private static string userAgent;
 
         private static void trackSessionStart()
         {
             var parameters = new Dictionary<string, string> {
-                { "app_id", appId },
+                { "app_token", appToken },
                 { "mac", deviceId }
             };
 

@@ -18,11 +18,11 @@ After the `PM>` prompt, enter the following line and press `<Enter>` to install 
 ![][install]
 
 ### 2. Integrate AdjustIo into your app
-In the Solution Explorer open the file `App.xaml.cs`. Add the `using` statement at the top of the file. In the `OnLaunched` method (`Application_Launching` for Windows Phone apps) of your app call the method `AppDidLaunch`. This tells AdjustIo about the launch of your Application.
+In the Solution Explorer open the file `App.xaml.cs`. Add the `using` statement at the top of the file. In the `OnLaunched` method (`Application_Launching` for Windows Phone apps) of your app call the method `AppDidLaunch`. This tells AdjustIo about the launch of your Application. Replace `<YourAppToken>` with the App Token that you can find in your dashboard at [adjust.io][].
 
     using adeven.AdjustIo;
     // ...
-    AdjustIo.AppDidLaunch();
+    AdjustIo.AppDidLaunch("<YourAppToken>");
 
 ![][launch]
 
