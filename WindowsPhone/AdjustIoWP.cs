@@ -6,6 +6,9 @@ namespace adeven.AdjustIo
 {
     public static class AdjustIo
     {
+        public const string AIEnvironmentSandbox = "sandbox";
+        public const string AIEnvironmentProduction = "production";
+        
         static AIActivityHandler activityHandler;
 
         public static void AppDidLaunch(string appToken)
@@ -93,6 +96,32 @@ namespace adeven.AdjustIo
         public static void SetLogLevel(AILogLevel logLevel)
         {
             AILogger.LogLevel = logLevel;
+        }
+
+        public static void SetEnvironment(string environment)
+        {
+            if (activityHandler == null) 
+            {
+                AILogger.Error("Please call 'SetEnvironment' after 'AppDidLaunch'!");
+            } 
+            else if (environment == AdjustIo.AIEnvironmentSandbox) 
+            {
+                activityHandler.SetEnvironment(environment);
+                AILogger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
+                + " Don't forget to set the environment to AIEnvironmentProduction before publishing!");
+            }
+            else if (environment == AdjustIo.AIEnvironmentProduction)
+            {
+                activityHandler.SetEnvironment(environment);
+                AILogger.Assert("PRODUCTION: AdjustIo is running in Production mode."
+                + " Use this setting only for the build that you want to publish."
+                + " Set the environment to AIEnvironmentSandbox if you want to test your app!");
+            }
+            else
+            {
+                activityHandler.SetEnvironment("malformed");
+                AILogger.Error("Malformerd environment: '{0}'", environment);
+            }
         }
 
         //public static void TrackEventAsync(string eventToken,
