@@ -14,7 +14,8 @@ namespace adeven.AdjustIo
 {
     public static class Util
     {
-        public const string BaseUrl = "http://app.adjust.io";
+        //public const string BaseUrl = "https://app.adjust.io";
+        public const string BaseUrl = "https://stage.adjust.io";
         public const string ClientSdk = "winphone1.0";
         public const string LogTag = "AdjustIo";
 

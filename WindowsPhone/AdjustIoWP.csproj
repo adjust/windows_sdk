@@ -84,6 +84,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AdjustIoWP.cs" />
+    <Compile Include="AIActivityHandler.cs" />
+    <Compile Include="AIActivityPackage.cs" />
+    <Compile Include="AIPackageBuilder.cs" />
+    <Compile Include="AIPackageHandler.cs" />
+    <Compile Include="AIRequestHandler.cs" />
+    <Compile Include="AsyncProducerConsumerCollection.cs" />
     <Compile Include="Base32Encoding.cs" />
     <Compile Include="PostRequestWP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
