@@ -79,7 +79,7 @@ namespace adeven.AdjustIo
         {
             activityPackage.Parameters.Add("event_count", EventCount.ToString());
             activityPackage.Parameters.Add("event_token", EventToken);
-            activityPackage.Parameters.Add("params", CallBackParameters.ToString());
+            activityPackage.Parameters.Add("params", Util.GetBase64EncodedParameters(CallBackParameters));
 
             activityPackage.Path = @"/event";
             activityPackage.Kind = "event";

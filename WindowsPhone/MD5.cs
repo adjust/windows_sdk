@@ -1,11 +1,8 @@
 using System;
 
-
+//http://farazmahmood.wordpress.com/projects/md5-implementation-in-c/
 namespace MD5
 {
-
-
-
 	/*******************************************************
 	 * Programmed by
 	 *			 syed Faraz mahmood 

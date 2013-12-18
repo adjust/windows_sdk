@@ -85,6 +85,12 @@ namespace adeven.AdjustIo
         //}
         #endregion
 
+        public static void TrackEvent(string eventToken,
+            Dictionary<string, string> callbackParameters = null)
+        {
+            activityHandler.TrackEvent(eventToken, callbackParameters);
+        }
+
         //public static void TrackEventAsync(string eventToken,
         //          Dictionary<string, string> callbackParameters = null)
         //{

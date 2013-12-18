@@ -39,9 +39,10 @@ namespace adeven.AdjustIo
             AIActivityHandler.Environment = enviornment;
         }
 
-        //public void TrackEvent()
-        //{
-        //    string paramString = Util.GetBase64EncodedParameters(CallbackParameters);
+        public void TrackEvent(string eventToken,
+            Dictionary<string, string> callbackParameters)
+        {
+        //    string paramString = Util.GetBase64EncodedParameters(callbackParameters);
 
         //    var parameters = new Dictionary<string, string> {
         //        { "app_id", AdjustIo.appId },
@@ -51,20 +52,20 @@ namespace adeven.AdjustIo
         //        { "params", paramString}
         //    };
 
-        //    var packageBuilder = GetDefaultPackageBuilder();
+            var packageBuilder = GetDefaultPackageBuilder();
 
-        //    packageBuilder.EventToken = this.EventToken;
-        //    packageBuilder.CallBackParameters = this.CallbackParameters;
+            packageBuilder.EventToken = eventToken;
+            packageBuilder.CallBackParameters = callbackParameters;
 
         //    //event specific attributes
         //    packageBuilder.EventCount = 0;
 
-        //    //TODO use PackageHandler in the future
-        //    requestHandler.SendPackage(
-        //        packageBuilder.BuildEventPackage()
-        //    );
+            //TODO use PackageHandler in the future
+            requestHandler.SendPackage(
+                packageBuilder.BuildEventPackage()
+            );
 
-        //}
+        }
 
         //public void TrackRevenue(double amountInCents, string evenToken, Dictionary<string, string> parameters)
         //{
@@ -76,7 +77,7 @@ namespace adeven.AdjustIo
 
         private AIPackageBuilder GetDefaultPackageBuilder()
         {
-            return new AIPackageBuilder
+            var packageBuilder = new AIPackageBuilder
             {
                 UserAgent = AIActivityHandler.UserAgent,
                 ClientSdk = AIActivityHandler.ClientSdk,
@@ -88,13 +89,14 @@ namespace adeven.AdjustIo
                 FbAttributionId = AIActivityHandler.FbAttributionId,
                 Environment = AIActivityHandler.Environment,
             };
+            packageBuilder.FillDefaults();
+            return packageBuilder;
         }
 
         private void Start()
         {
             //if firsts Session
             var sessionBuilder = GetDefaultPackageBuilder();
-            sessionBuilder.FillDefaults();
 
             requestHandler.SendPackage(
                 sessionBuilder.BuildSessionPackage()
