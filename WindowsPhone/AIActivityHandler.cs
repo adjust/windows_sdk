@@ -24,8 +24,8 @@ namespace adeven.AdjustIo
         public AIActivityHandler(string appToken)
         {
             AIActivityHandler.AppToken = appToken;
-            AIActivityHandler.MacSha1 = "";
-            AIActivityHandler.MacShortMd5 = "";
+            AIActivityHandler.MacSha1 = Util.GetDeviceId();
+            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(AIActivityHandler.MacSha1);
             AIActivityHandler.IdForAdvertisers = "";
             AIActivityHandler.FbAttributionId = "";
             AIActivityHandler.IsTrackingEnabled = false;
@@ -94,6 +94,7 @@ namespace adeven.AdjustIo
         {
             //if firsts Session
             var sessionBuilder = GetDefaultPackageBuilder();
+            sessionBuilder.FillDefaults();
 
             requestHandler.SendPackage(
                 sessionBuilder.BuildSessionPackage()

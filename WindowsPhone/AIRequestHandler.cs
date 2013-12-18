@@ -119,7 +119,8 @@ namespace adeven.AdjustIo
                 //TODO put here backgroundWorker cancelation 
                 //  if we need to comunicate that an error occurred to Package Handler
             }
-            catch (ArgumentException e)
+            //catch (ArgumentException e)
+            catch (Exception e)
             {
                 Debug.WriteLine(e.Message);
             }

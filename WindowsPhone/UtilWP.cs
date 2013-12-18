@@ -28,8 +28,16 @@ namespace adeven.AdjustIo
                 return null;
             }
 
-            string deviceId = Base32Encoding.ToString(id as byte[]);
+            string deviceId = Convert.ToBase64String(id as byte[]);
             return deviceId;
+        }
+
+        internal static string GetMd5Hash(string input)
+        {
+            var md5 = new MD5.MD5();
+
+            md5.Value = input;
+            return md5.FingerPrint;
         }
 
         public static string GetUserAgent()

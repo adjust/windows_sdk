@@ -38,8 +38,8 @@ namespace adeven.AdjustIo
 
         //TODO change ToString() to serializer, possible ServiceStack.Text
 
-        internal AIPackageBuilder ()
-	    {
+        internal void FillDefaults()
+        {
             activityPackage = new AIActivityPackage
             {
                 UserAgent = this.UserAgent,
@@ -62,7 +62,7 @@ namespace adeven.AdjustIo
                     {"time_spent"   , TimeSpent.ToString()  },
                 }
             };
-	    }
+        }
 
         internal AIActivityPackage BuildSessionPackage()
         {
