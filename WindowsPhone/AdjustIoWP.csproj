@@ -86,6 +86,7 @@
     <Compile Include="AdjustIoWP.cs" />
     <Compile Include="AIActivityHandler.cs" />
     <Compile Include="AIActivityPackage.cs" />
+    <Compile Include="AIActivityState.cs" />
     <Compile Include="AIPackageBuilder.cs" />
     <Compile Include="AIPackageHandler.cs" />
     <Compile Include="AIRequestHandler.cs" />

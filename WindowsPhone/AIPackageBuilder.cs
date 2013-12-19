@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace adeven.AdjustIo
 {
-    class AIPackageBuilder
+    public class AIPackageBuilder
     {
         //general
         internal string AppToken { get; set; }
@@ -22,7 +22,7 @@ namespace adeven.AdjustIo
         //session
         internal int SessionCount { get; set; }
         internal int SubSessionCount { get; set; }
-        internal DateTime CreatedAt { get; set; }
+        internal double CreatedAt { get; set; }
         internal double SessionLength { get; set; }
         internal double TimeSpent { get; set; }
         internal double LastInterval { get; set; }
