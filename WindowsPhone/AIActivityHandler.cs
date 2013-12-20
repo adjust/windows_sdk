@@ -16,11 +16,11 @@ namespace adeven.AdjustIo
     class AIActivityHandler
     {
         private const string ActivityStateFilename = "AdjustIOActivityState";
-        private const double SessionInterval      = 30 * 60;  // 30 minutes
-        private const double SubSessionInterval = 1;        // 1 second 
+        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0);          // 30 minutes
+        private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
 
-        static AIRequestHandler requestHandler = new AIRequestHandler();
-        static AIActivityState activityState = null;
+        static AIRequestHandler RequestHandler = new AIRequestHandler();
+        static AIActivityState ActivityState = null;
 
         static string AppToken;
         static string MacSha1;
@@ -30,11 +30,13 @@ namespace adeven.AdjustIo
         static string UserAgent;
         static string ClientSdk;
         static bool IsTrackingEnabled;
-        static string Environment;
+
+        internal static string Environment { get; private set; }
+        internal static bool IsBufferedEventsEnabled { get; private set; }
 
         public AIActivityHandler(string appToken)
         {
-            if (IsAppTokenNull(appToken)) return;
+            if (!CheckAppToken(appToken)) return;
 
             if (appToken.Length != 12) {
                 AILogger.Error("Malformed App Token '{0}'", appToken);
@@ -50,6 +52,7 @@ namespace adeven.AdjustIo
             AIActivityHandler.UserAgent = Util.GetUserAgent();
             AIActivityHandler.ClientSdk = Util.ClientSdk;
             AIActivityHandler.Environment = "unknown";
+            AIActivityHandler.IsBufferedEventsEnabled = false;
 
             //test file not exists
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
@@ -69,32 +72,48 @@ namespace adeven.AdjustIo
             AIActivityHandler.Environment = enviornment;
         }
 
+        public void SetBufferedEvents(bool enabledEventBuffering)
+        {
+            AIActivityHandler.IsBufferedEventsEnabled = enabledEventBuffering;
+        }
+
         public void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
-        //    string paramString = Util.GetBase64EncodedParameters(callbackParameters);
-
-        //    var parameters = new Dictionary<string, string> {
-        //        { "app_id", AdjustIo.appId },
-        //        //TODO change app_id to app_token. Ver ios app
-        //        { "mac", AdjustIo.deviceId },
-        //        { "id", EventToken },
-        //        { "params", paramString}
-        //    };
+            if (!CheckAppToken(AppToken)) return;
+            if (!CheckActivityState(ActivityState)) return;
+            if (!CheckEventToken(eventToken)) return;
+            if (!CheckEventTokenLenght(eventToken)) return;
 
             var packageBuilder = GetDefaultPackageBuilder();
 
             packageBuilder.EventToken = eventToken;
             packageBuilder.CallBackParameters = callbackParameters;
 
-        //    //event specific attributes
-        //    packageBuilder.EventCount = 0;
+            var now = DateTime.Now;
 
-            //TODO use PackageHandler in the future
-            requestHandler.SendPackage(
-                packageBuilder.BuildEventPackage()
+            UpdateActivityState();
+            ActivityState.CreatedAt = now;
+            ActivityState.EventCount++;
+
+            ActivityState.InjectSessionAttributes(packageBuilder);
+            var package = packageBuilder.BuildEventPackage();
+            
+            RequestHandler.SendPackage(
+                package
             );
 
+            if (IsBufferedEventsEnabled)
+            {
+                AILogger.Info("Buffered event{0}", package.Suffix);
+            }
+            else
+            {
+                //TODO packageHandler.sendFirstPackage()
+            }
+
+            WriteActivityState();
+            AILogger.Debug("Event {0}", ActivityState.EventCount);
         }
 
         //public void TrackRevenue(double amountInCents, string evenToken, Dictionary<string, string> parameters)
@@ -132,7 +151,7 @@ namespace adeven.AdjustIo
             using (var stream = storage.OpenFile(ActivityStateFilename, FileMode.OpenOrCreate))
             {
                 stream.Seek(0, SeekOrigin.Begin);
-                AIActivityState.SerializeToStream(stream, activityState);
+                AIActivityState.SerializeToStream(stream, ActivityState);
             }
         }
 
@@ -143,9 +162,9 @@ namespace adeven.AdjustIo
             {
                 using (var stream = storage.OpenFile(ActivityStateFilename, FileMode.Open))
                 {
-                    activityState = AIActivityState.DeserializeFromStream(stream);
+                    ActivityState = AIActivityState.DeserializeFromStream(stream);
                 }
-                AILogger.Verbose("Restored activity state {0}", activityState);
+                AILogger.Verbose("Restored activity state {0}", ActivityState);
             }
             catch (IsolatedStorageException ise)
             {
@@ -161,42 +180,70 @@ namespace adeven.AdjustIo
             }
             
             //start with a fresh activity state in case of any exception
-            activityState = null;
+            ActivityState = null;
         }
 
         #endregion
 
+        //return whether or not activity state should be written
+        private bool UpdateActivityState()
+        {
+            if (!CheckActivityState(ActivityState)) 
+                return false;
+
+            var now = DateTime.Now;
+            var lastInterval = now - ActivityState.LastActivity.Value;
+
+            if (lastInterval.Ticks < 0)
+            {
+                AILogger.Error("Time Travel!");
+                ActivityState.LastActivity = now;
+                return true;
+            }
+
+            //ignore past updates 
+            if (lastInterval > SessionInterval)
+                return false;
+
+            ActivityState.SessionLenght += lastInterval;
+            ActivityState.TimeSpent += lastInterval;
+            ActivityState.LastActivity = now;
+
+            return lastInterval > SubSessionInterval;
+        }
+
         private void Start()
         {
-            if (IsAppTokenNull(AppToken)) return;
+            if (!CheckAppToken(AppToken)) return;
 
             //TODO package Handler start package
             //TODO start timer
 
-            double nowInSeconds = Util.ConvertToUnixTimestamp(DateTime.Now);
+            var now = DateTime.Now;
 
             //if firsts Session
-            if (activityState == null)
+            if (ActivityState == null)
             {
                 //Create fresh activity state
-                activityState = new AIActivityState();
-                activityState.SessionCount = 1; //first session
-                activityState.CreatedAt = nowInSeconds;
+                ActivityState = new AIActivityState();
+                ActivityState.SessionCount = 1; //first session
+                ActivityState.CreatedAt = now;
 
                 TransferSessionPackage();
 
-                activityState.ResetSessionAttributes(nowInSeconds);
+                ActivityState.ResetSessionAttributes(now);
                 WriteActivityState();
 
                 AILogger.Info("First session");
                 return;
             }
 
-            double lastInterval = nowInSeconds - activityState.LastActivity;
-            if (lastInterval < 0)
+            var lastInterval = now - ActivityState.LastActivity.Value;
+
+            if (lastInterval.Ticks < 0)
             {
                 AILogger.Error("Time Travel!");
-                activityState.LastActivity = nowInSeconds;
+                ActivityState.LastActivity = now;
                 WriteActivityState();
                 return;
             }
@@ -204,28 +251,28 @@ namespace adeven.AdjustIo
             //new session
             if (lastInterval > SessionInterval)
             {
-                activityState.SessionCount++;
-                activityState.CreatedAt = nowInSeconds;
-                activityState.LastInterval = lastInterval;
+                ActivityState.SessionCount++;
+                ActivityState.CreatedAt = now;
+                ActivityState.LastInterval = lastInterval;
 
                 TransferSessionPackage();
-                activityState.ResetSessionAttributes(nowInSeconds);
+                ActivityState.ResetSessionAttributes(now);
                 WriteActivityState();
 
-                AILogger.Debug("Session {0}", activityState.SessionCount);
+                AILogger.Debug("Session {0}", ActivityState.SessionCount);
                 return;
             }
 
             //new subsession
             if (lastInterval > SubSessionInterval)
             {
-                activityState.SubSessionCount++;
-                activityState.SessionLenght += lastInterval;
-                activityState.LastActivity = nowInSeconds;
+                ActivityState.SubSessionCount++;
+                ActivityState.SessionLenght += lastInterval;
+                ActivityState.LastActivity = now;
 
                 WriteActivityState();
                 AILogger.Info("Processed Subsession {0} of Session {1}",
-                    activityState.SubSessionCount, activityState.SessionCount);
+                    ActivityState.SubSessionCount, ActivityState.SessionCount);
                 return;
             }
         }
@@ -234,23 +281,53 @@ namespace adeven.AdjustIo
         {
             //Build Session Package
             var sessionBuilder = GetDefaultPackageBuilder();
-            activityState.InjectSessionAttributes(sessionBuilder);
+            ActivityState.InjectSessionAttributes(sessionBuilder);
             var sessionPackage = sessionBuilder.BuildSessionPackage();
 
             //Send Session Package
-            requestHandler.SendPackage(
+            RequestHandler.SendPackage(
                 sessionPackage
             );
         }
 
-        private bool IsAppTokenNull(string appToken)
+        private bool CheckAppToken(string appToken)
         {
             if (string.IsNullOrEmpty(appToken))
             {
                 AILogger.Error("Missing App Token");
-                return true;
+                return false;
             }
-            return false;
+            return true;
+        }
+
+        private bool CheckActivityState(AIActivityState activityState)
+        {
+            if (activityState == null)
+            {
+                AILogger.Error("Missing activity state");
+                return false;
+            }
+            return true;
+        }
+
+        private bool CheckEventToken(string eventToken)
+        {
+            if (eventToken == null)
+            {
+                AILogger.Error("Missing Event Token");
+                return false;
+            }
+            return true;
+        }
+
+        private bool CheckEventTokenLenght(string eventToken)
+        {
+            if (eventToken != null && eventToken.Length != 6)
+            {
+                AILogger.Error("Malformed Event Token '{0}'", eventToken);
+                return false; 
+            }
+            return true;
         }
     }
 }

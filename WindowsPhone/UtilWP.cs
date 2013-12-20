@@ -70,20 +70,23 @@ namespace adeven.AdjustIo
             return paramString;
         }
 
-        public static string GetBase64EncodedParameters(Dictionary<string, string> parameters)
+        public static double SecondsFormat(this DateTime? date)
         {
-            string json = JsonConvert.SerializeObject(parameters);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            string encoded = Convert.ToBase64String(bytes);
-            return encoded;
+            if (date == null)
+                return -1;
+
+            DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            TimeSpan diff = date.Value.ToUniversalTime() - origin;
+            return diff.TotalSeconds;
         }
 
-        public static double ConvertToUnixTimestamp(DateTime date)
+        public static double SecondsFormat(this TimeSpan? timeSpan)
         {
-            DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            TimeSpan diff = date.ToUniversalTime() - origin;
-            return Math.Floor(diff.TotalSeconds);
-        } 
+            if (timeSpan == null)
+                return -1;
+            else
+                return timeSpan.Value.Seconds;
+        }
 
         private static string getDeviceManufacturer()
         {

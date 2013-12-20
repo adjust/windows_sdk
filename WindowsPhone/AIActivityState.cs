@@ -16,33 +16,33 @@ namespace adeven.AdjustIo
 
         //session atributes
         public int SubSessionCount { get; set; }
-        public double SessionLenght { get; set; } // all duration in seconds
-        public double TimeSpent { get; set; }
-        public double LastActivity { get; set; } // all times in seconds sinze 1970
+        public TimeSpan? SessionLenght { get; set; } // all duration in seconds
+        public TimeSpan? TimeSpent { get; set; }
+        public DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
 
-        public double CreatedAt { get; set; }
-        public double LastInterval { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public TimeSpan? LastInterval { get; set; }
 
         public AIActivityState()
         {
             EventCount      = 0;
             SessionCount    = 0;
             SubSessionCount = -1; //-1 means unknown
-            SessionLenght   = -1;
-            TimeSpent       = -1;
-            LastActivity    = -1;
-            CreatedAt       = -1;
-            LastInterval    = -1;
+            SessionLenght   = null;
+            TimeSpent       = null;
+            LastActivity    = null;
+            CreatedAt       = null;
+            LastInterval    = null;
         }
 
-        public void ResetSessionAttributes(double nowInSeconds)
+        public void ResetSessionAttributes(DateTime now)
         {
             SubSessionCount = 1;
-            SessionLenght   = 0;
-            TimeSpent       = 0;
-            LastActivity    = nowInSeconds;
-            CreatedAt       = -1;
-            LastInterval    = 1;
+            SessionLenght   = new TimeSpan();
+            TimeSpent       = new TimeSpan();
+            LastActivity    = now;
+            CreatedAt       = null;
+            LastInterval    = null;
         }
 
         public void InjectSessionAttributes(AIPackageBuilder packageBuilder)
@@ -57,9 +57,9 @@ namespace adeven.AdjustIo
                 EventCount,
                 SessionCount,
                 SubSessionCount,
-                SessionLenght,
-                TimeSpent,
-                LastActivity
+                SessionLenght.SecondsFormat(),
+                TimeSpent.SecondsFormat(),
+                LastActivity.SecondsFormat()
             );
         }
 
@@ -71,11 +71,11 @@ namespace adeven.AdjustIo
                 writer.Write(activity.EventCount);
                 writer.Write(activity.SessionCount);
                 writer.Write(activity.SubSessionCount);
-                writer.Write(activity.SessionLenght);
-                writer.Write(activity.TimeSpent);
-                writer.Write(activity.LastActivity);
-                writer.Write(activity.CreatedAt );
-                writer.Write(activity.LastInterval);
+                writer.Write(SerializeTimeSpan(activity.SessionLenght));
+                writer.Write(SerializeTimeSpan(activity.TimeSpent));
+                writer.Write(SerializeDatetime(activity.LastActivity));
+                writer.Write(SerializeDatetime(activity.CreatedAt ));
+                writer.Write(SerializeTimeSpan(activity.LastInterval));
             }
         }
 
@@ -84,18 +84,51 @@ namespace adeven.AdjustIo
             AIActivityState activity = null;
             using (var reader = new BinaryReader(stream))
             {
-                activity = new AIActivityState();
-                activity.EventCount = reader.ReadInt32();
-                activity.SessionCount = reader.ReadInt32();
-                activity.SubSessionCount = reader.ReadInt32();
-                activity.SessionLenght = reader.ReadDouble();
-                activity.TimeSpent = reader.ReadDouble();
-                activity.LastActivity = reader.ReadDouble();
-                activity.CreatedAt = reader.ReadDouble();
-                activity.LastInterval = reader.ReadDouble();
+                activity                    = new AIActivityState();
+                activity.EventCount         = reader.ReadInt32();
+                activity.SessionCount       = reader.ReadInt32();
+                activity.SubSessionCount    = reader.ReadInt32();
+                activity.SessionLenght      = DeserializeTimeSpan(reader.ReadInt64());
+                activity.TimeSpent          = DeserializeTimeSpan(reader.ReadInt64());
+                activity.LastActivity       = DeserializeDateTime(reader.ReadInt64());
+                activity.CreatedAt          = DeserializeDateTime(reader.ReadInt64());
+                activity.LastInterval       = DeserializeTimeSpan(reader.ReadInt64());
             }
             return activity;
         }
+
+        private static Int64 SerializeTimeSpan(TimeSpan? timeSpan)
+        {
+            if (timeSpan.HasValue)
+                return timeSpan.Value.Ticks;
+            else
+                return -1;
+        }
+
+        private static Int64 SerializeDatetime(DateTime? dateTime)
+        {
+            if (dateTime.HasValue)
+                return dateTime.Value.Ticks;
+            else
+                return -1;
+        }
+
+        private static TimeSpan? DeserializeTimeSpan(Int64 ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new TimeSpan(ticks);
+        }
+
+        private static DateTime? DeserializeDateTime(Int64 ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new DateTime(ticks);
+        }
+
         #endregion
 
         private void InjectGeneralAttributes(AIPackageBuilder packageBuilder)

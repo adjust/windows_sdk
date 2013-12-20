@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,10 +23,10 @@ namespace adeven.AdjustIo
         //session
         internal int SessionCount { get; set; }
         internal int SubSessionCount { get; set; }
-        internal double CreatedAt { get; set; }
-        internal double SessionLength { get; set; }
-        internal double TimeSpent { get; set; }
-        internal double LastInterval { get; set; }
+        internal DateTime? CreatedAt { get; set; }
+        internal TimeSpan? SessionLength { get; set; }
+        internal TimeSpan? TimeSpent { get; set; }
+        internal TimeSpan? LastInterval { get; set; }
 
         //events
         internal int EventCount { get; set; }
@@ -44,29 +45,27 @@ namespace adeven.AdjustIo
             {
                 UserAgent = this.UserAgent,
                 ClientSdk = this.ClientSdk,
-                Parameters = new Dictionary<string, string>
-                {
-                    //general
-                    {"created_at"   , CreatedAt.ToString()  },
-                    {"app_token"    , AppToken              },
-                    {"mac_sha1"     , MacSha1               },
-                    {"mac_md5"      , MacShortMD5           },
-                    {"idfa"         , IdForAdvertisers      },
-                    {"fb_id"        , FbAttributionId       },
-                    {"environment"  , Environment           },
-                    {"tracking_enable"  , IsTrackingEnable.ToString()   },
-                    //session related (used for events as well)
-                    {"session_count"    , SessionCount.ToString()       },
-                    {"subsession_count" , SubSessionCount.ToString()    },
-                    {"session_length"   , SessionLength.ToString()      },
-                    {"time_spent"   , TimeSpent.ToString()  },
-                }
+                Parameters = new Dictionary<string, string>(),
             };
+            //general
+            SaveParameter("created_at"      , CreatedAt);
+            SaveParameter("app_token"       , AppToken);
+            SaveParameter("mac_sha1"        , MacSha1);
+            SaveParameter("mac_md5"         , MacShortMD5);
+            SaveParameter("idfa"            , IdForAdvertisers);
+            SaveParameter("fb_id"           , FbAttributionId);
+            SaveParameter("environment"     , Environment);
+            SaveParameter("tracking_enable" , IsTrackingEnable );
+            //    //session related (used for events as well)
+            SaveParameter("session_count"   , SessionCount);
+            SaveParameter("subsession_count", SubSessionCount);
+            SaveParameter("session_length"  , SessionLength);
+            SaveParameter("time_spent"      , TimeSpent);
         }
 
         internal AIActivityPackage BuildSessionPackage()
         {
-            activityPackage.Parameters.Add("last_interval", LastInterval.ToString());
+            SaveParameter("last_interval", LastInterval);
 
             activityPackage.Path = @"/startup";
             activityPackage.Kind = "session start";
@@ -77,26 +76,77 @@ namespace adeven.AdjustIo
 
         internal AIActivityPackage BuildEventPackage()
         {
-            activityPackage.Parameters.Add("event_count", EventCount.ToString());
-            activityPackage.Parameters.Add("event_token", EventToken);
-            activityPackage.Parameters.Add("params", Util.GetBase64EncodedParameters(CallBackParameters));
+            SaveParameter("event_count", EventCount);
+            SaveParameter("event_token", EventToken);
+            SaveParameter("params", CallBackParameters);
 
             activityPackage.Path = @"/event";
             activityPackage.Kind = "event";
-            
             activityPackage.Suffix = this.EventSuffix();
 
             return activityPackage;
         }
-
-        //internal AIActivityPackage BuildRevenuePackage()
-        //{
-//}
 
         private string EventSuffix()
         {
             return String.Format(" '{0}'", EventToken);
         }
 
+        #region SaveParameter
+        private void SaveParameter(string key, string value)
+        {
+            if (String.IsNullOrEmpty(value))
+                return;
+
+            activityPackage.Parameters.Add(key, value);
+        }
+
+        private void SaveParameter(string key, DateTime? value)
+        {
+            if (!value.HasValue || value.Value.Ticks < 0)
+                return;
+
+            var timeZone = value.Value.ToString("zzz");
+            var rfc822TimeZone = timeZone.Remove(3,1);
+            var sDTwOutTimeZone = value.Value.ToString("yyyy-MM-ddTHH:mm:ss");
+            var sDateTime = String.Format("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            activityPackage.Parameters.Add(key, sDateTime);
+        }
+
+        private void SaveParameter(string key, int value)
+        {
+            if (value < 0)
+                return;
+
+            activityPackage.Parameters.Add(key, value.ToString());
+        }
+
+        private void SaveParameter(string key, bool value)
+        {
+            SaveParameter(key, Convert.ToInt32(value));
+        }
+
+        private void SaveParameter(string key, TimeSpan? value)
+        {
+            if (!value.HasValue || value.Value.Ticks < 0)
+                return;
+
+            double roundedSeconds = Math.Round(value.Value.TotalSeconds, 0, MidpointRounding.AwayFromZero);
+
+            SaveParameter(key, (int)roundedSeconds);
+        }
+
+        private void SaveParameter(string key, Dictionary<string, string> value)
+        {
+            if (value == null)
+                return;
+
+            string json = JsonConvert.SerializeObject(value);
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            string encoded = Convert.ToBase64String(bytes);
+
+            activityPackage.Parameters.Add(key, encoded);
+        }
+#endregion
     }
 }

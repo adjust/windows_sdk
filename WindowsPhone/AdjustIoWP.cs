@@ -124,6 +124,20 @@ namespace adeven.AdjustIo
             }
         }
 
+        public static void SetEventBufferingEnabled(bool enabledEventBuffering)
+        {
+            if (activityHandler == null)
+            {
+                AILogger.Error("Please call 'SetEventBufferingEnabled' after 'AppDidLaunch'!");
+                return;
+            }
+
+            activityHandler.SetBufferedEvents(enabledEventBuffering);
+
+            if (AIActivityHandler.IsBufferedEventsEnabled)
+                AILogger.Info("Event buffering is enabled");
+        }
+
         //public static void TrackEventAsync(string eventToken,
         //          Dictionary<string, string> callbackParameters = null)
         //{ 
