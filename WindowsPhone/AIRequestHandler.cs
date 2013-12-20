@@ -20,6 +20,12 @@ namespace adeven.AdjustIo
         private string paramString;
         private ManualResetEvent allDone;
 
+        private class RequestState
+        {
+            public AIActivityPackage package;
+            public WebRequest request;
+        }
+
         public AIRequestHandler()
         {
             allDone = new ManualResetEvent(false);
@@ -53,7 +59,8 @@ namespace adeven.AdjustIo
             paramString = Util.GetStringEncodedParameters(package.Parameters);
 
             // start the asynchronous operation
-            request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
+            request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback),
+                new RequestState { package = package, request = request });
 
             // Keep the main thread from continuing while the asynchronous 
             // operation completes. 
@@ -80,7 +87,8 @@ namespace adeven.AdjustIo
         private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
         {
             // Recover the request object
-            var request = asynchronousResult.AsyncState as HttpWebRequest;
+            var requestState = asynchronousResult.AsyncState as RequestState;
+            var request = requestState.request as HttpWebRequest;
             
             // End the operation
             Stream postStream = request.EndGetRequestStream(asynchronousResult);
@@ -93,36 +101,46 @@ namespace adeven.AdjustIo
             postStream.Dispose();
 
             // Start the asynchronous operation to get the response
-            request.BeginGetResponse(new AsyncCallback(GetResponseCallback), request);
+            request.BeginGetResponse(new AsyncCallback(GetResponseCallback), requestState);
         }
 
         private void GetResponseCallback(IAsyncResult asynchronousResult)
         {
+            // Recover the request object
+            RequestState requestState = null;
+            HttpWebRequest request = null;
+
             try
             {
-                var request = asynchronousResult.AsyncState as HttpWebRequest;
-                
-                // End the operation
-                var response = request.EndGetResponse(asynchronousResult) as HttpWebResponse;
-                var responseString = readResponse(response);
+                requestState = asynchronousResult.AsyncState as RequestState;
+                request = requestState.request as HttpWebRequest;
 
-                response.Close();
-                //Debug.WriteLine("[{0}] {1}", Util.LogTag, SuccessMessage);
+                // End the operation
+                using (var response = request.EndGetResponse(asynchronousResult) as HttpWebResponse)
+                {
+                    var responseString = readResponse(response);
+                    if (responseString == "OK")
+                    {
+                        AILogger.Info("{0}", requestState.package.SuccessMessage());
+                    } else {
+                        AILogger.Error("{0}. ({1})", requestState.package.FailureMessage(), responseString.Trim());
+                    }
+                }
             }
-                //TODO ask welle why should we try again instead of dropping
             catch (WebException e)
             {
-                var response = e.Response as HttpWebResponse;
-                var responseString = readResponse(response);
-                response.Close();
-                //Debug.WriteLine("[{0}] {1} ({2})", Util.LogTag, FailureMessage, responseString);
+                using (var response = e.Response as HttpWebResponse)
+                {
+                    var responseString = readResponse(response);
+                    AILogger.Error("{0}. ({1})", requestState.package.FailureMessage(), responseString.Trim());
+                }
+
                 //TODO put here backgroundWorker cancelation 
                 //  if we need to comunicate that an error occurred to Package Handler
             }
-            //catch (ArgumentException e)
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                AILogger.Error("{0}. ({1}) Will retry later", requestState.package.FailureMessage(), e.Message);
             }
             finally
             {

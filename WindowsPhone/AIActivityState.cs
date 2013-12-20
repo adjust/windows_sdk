@@ -51,6 +51,19 @@ namespace adeven.AdjustIo
             packageBuilder.LastInterval = LastInterval;
         }
 
+        public override string ToString()
+        {
+            return String.Format("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0}",
+                EventCount,
+                SessionCount,
+                SubSessionCount,
+                SessionLenght,
+                TimeSpent,
+                LastActivity
+            );
+        }
+
+        #region Serialization
         public static void SerializeToStream(Stream stream, AIActivityState activity)
         {
             using (var writer = new BinaryWriter(stream))
@@ -83,6 +96,7 @@ namespace adeven.AdjustIo
             }
             return activity;
         }
+        #endregion
 
         private void InjectGeneralAttributes(AIPackageBuilder packageBuilder)
         {

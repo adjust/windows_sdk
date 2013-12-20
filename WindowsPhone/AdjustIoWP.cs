@@ -11,7 +11,6 @@ namespace adeven.AdjustIo
         public static void AppDidLaunch(string appToken)
         {
             activityHandler = new AIActivityHandler(appToken);
-            //trackSessionStart();
         }
 
         //public static void AppDidActivate(string appToken)
@@ -91,9 +90,14 @@ namespace adeven.AdjustIo
             activityHandler.TrackEvent(eventToken, callbackParameters);
         }
 
+        public static void SetLogLevel(AILogLevel logLevel)
+        {
+            AILogger.LogLevel = logLevel;
+        }
+
         //public static void TrackEventAsync(string eventToken,
         //          Dictionary<string, string> callbackParameters = null)
-        //{
+        //{ 
         //    var activityHandler = new AIActivityHandler 
         //    {
         //        AppToken = appToken,

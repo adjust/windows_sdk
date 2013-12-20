@@ -17,5 +17,15 @@ namespace adeven.AdjustIo
         //logs
         internal string Kind { get; set; }
         internal string Suffix { get; set; }
+
+        internal string SuccessMessage()
+        {
+            return String.Format("Tracked {0}{1}", Kind, Suffix);
+        }
+
+        internal string FailureMessage()
+        {
+            return String.Format("Failed to track {0}{1}", Kind, Suffix);
+        }
     }
 }

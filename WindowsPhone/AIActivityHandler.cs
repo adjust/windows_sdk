@@ -16,6 +16,8 @@ namespace adeven.AdjustIo
     class AIActivityHandler
     {
         private const string ActivityStateFilename = "AdjustIOActivityState";
+        private const double SessionInterval      = 30 * 60;  // 30 minutes
+        private const double SubSessionInterval = 1;        // 1 second 
 
         static AIRequestHandler requestHandler = new AIRequestHandler();
         static AIActivityState activityState = null;
@@ -32,6 +34,13 @@ namespace adeven.AdjustIo
 
         public AIActivityHandler(string appToken)
         {
+            if (IsAppTokenNull(appToken)) return;
+
+            if (appToken.Length != 12) {
+                AILogger.Error("Malformed App Token '{0}'", appToken);
+                return;
+            }
+
             AIActivityHandler.AppToken = appToken;
             AIActivityHandler.MacSha1 = Util.GetDeviceId();
             AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(AIActivityHandler.MacSha1);
@@ -43,14 +52,14 @@ namespace adeven.AdjustIo
             AIActivityHandler.Environment = "unknown";
 
             //test file not exists
-            //IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
-            //if (storage.FileExists(ActivityStateFilename))
-            //    storage.DeleteFile(ActivityStateFilename);
+            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
+            if (storage.FileExists(ActivityStateFilename))
+                storage.DeleteFile(ActivityStateFilename);
 
             //we can run synchronously because there is no result
             //see http://stackoverflow.com/questions/5095183/how-would-i-run-an-async-taskt-method-synchronously
             //RestoreActivityStateAsync().Wait();
-            RestoreActivityState();
+            ReadActivityState();
 
             Start();
         }
@@ -116,7 +125,7 @@ namespace adeven.AdjustIo
 
         #region ActivityStateIO
         
-        public void SaveActivityState()
+        private void WriteActivityState()
         {
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
 
@@ -127,7 +136,7 @@ namespace adeven.AdjustIo
             }
         }
 
-        public void RestoreActivityState()
+        private void ReadActivityState()
         {
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
             try
@@ -136,30 +145,37 @@ namespace adeven.AdjustIo
                 {
                     activityState = AIActivityState.DeserializeFromStream(stream);
                 }
+                AILogger.Verbose("Restored activity state {0}", activityState);
             }
             catch (IsolatedStorageException ise)
             {
-                //The isolated store has been removed.
-                //-or-
-                //Isolated storage is disabled.
+                AILogger.Verbose("Activity state file not found");
             }
             catch(FileNotFoundException fnfe)
             {
-                //No file was found and the mode is set to Open.
+                AILogger.Verbose("Activity state file not found");
             }
             catch (Exception e)
             {
+                AILogger.Error("Failed to read activity state ({0})", e);
             }
+            
+            //start with a fresh activity state in case of any exception
+            activityState = null;
         }
 
         #endregion
 
         private void Start()
         {
+            if (IsAppTokenNull(AppToken)) return;
+
+            //TODO package Handler start package
+            //TODO start timer
+
             double nowInSeconds = Util.ConvertToUnixTimestamp(DateTime.Now);
 
             //if firsts Session
-            //test to write on top of already existing file
             if (activityState == null)
             {
                 //Create fresh activity state
@@ -167,21 +183,74 @@ namespace adeven.AdjustIo
                 activityState.SessionCount = 1; //first session
                 activityState.CreatedAt = nowInSeconds;
 
-                //Build Session Package
-                var sessionBuilder = GetDefaultPackageBuilder();
-                activityState.InjectSessionAttributes(sessionBuilder);
-                var sessionPackage = sessionBuilder.BuildSessionPackage();
-                
-                //Send Session Package
-                //TODO add package handler
-                requestHandler.SendPackage(
-                    sessionPackage
-                );
+                TransferSessionPackage();
 
                 activityState.ResetSessionAttributes(nowInSeconds);
-                //SaveActivityStateAsync().Wait();
-                SaveActivityState();
+                WriteActivityState();
+
+                AILogger.Info("First session");
+                return;
             }
+
+            double lastInterval = nowInSeconds - activityState.LastActivity;
+            if (lastInterval < 0)
+            {
+                AILogger.Error("Time Travel!");
+                activityState.LastActivity = nowInSeconds;
+                WriteActivityState();
+                return;
+            }
+
+            //new session
+            if (lastInterval > SessionInterval)
+            {
+                activityState.SessionCount++;
+                activityState.CreatedAt = nowInSeconds;
+                activityState.LastInterval = lastInterval;
+
+                TransferSessionPackage();
+                activityState.ResetSessionAttributes(nowInSeconds);
+                WriteActivityState();
+
+                AILogger.Debug("Session {0}", activityState.SessionCount);
+                return;
+            }
+
+            //new subsession
+            if (lastInterval > SubSessionInterval)
+            {
+                activityState.SubSessionCount++;
+                activityState.SessionLenght += lastInterval;
+                activityState.LastActivity = nowInSeconds;
+
+                WriteActivityState();
+                AILogger.Info("Processed Subsession {0} of Session {1}",
+                    activityState.SubSessionCount, activityState.SessionCount);
+                return;
+            }
+        }
+
+        private void TransferSessionPackage()
+        {
+            //Build Session Package
+            var sessionBuilder = GetDefaultPackageBuilder();
+            activityState.InjectSessionAttributes(sessionBuilder);
+            var sessionPackage = sessionBuilder.BuildSessionPackage();
+
+            //Send Session Package
+            requestHandler.SendPackage(
+                sessionPackage
+            );
+        }
+
+        private bool IsAppTokenNull(string appToken)
+        {
+            if (string.IsNullOrEmpty(appToken))
+            {
+                AILogger.Error("Missing App Token");
+                return true;
+            }
+            return false;
         }
     }
 }
