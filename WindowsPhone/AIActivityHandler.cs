@@ -19,22 +19,22 @@ namespace adeven.AdjustIo
         private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0);          // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
 
-        static AIRequestHandler RequestHandler = new AIRequestHandler();
-        static AIActivityState ActivityState = null;
+        private static AIRequestHandler RequestHandler = new AIRequestHandler();
+        private static AIActivityState ActivityState = null;
 
-        static string AppToken;
-        static string MacSha1;
-        static string MacShortMd5;
-        static string IdForAdvertisers;
-        static string FbAttributionId;
-        static string UserAgent;
-        static string ClientSdk;
-        static bool IsTrackingEnabled;
+        private static string AppToken;
+        private static string MacSha1;
+        private static string MacShortMd5;
+        private static string IdForAdvertisers;
+        private static string FbAttributionId;
+        private static string UserAgent;
+        private static string ClientSdk;
+        private static bool IsTrackingEnabled;
 
         internal static string Environment { get; private set; }
         internal static bool IsBufferedEventsEnabled { get; private set; }
 
-        public AIActivityHandler(string appToken)
+        internal AIActivityHandler(string appToken)
         {
             if (!CheckAppToken(appToken)) return;
 
@@ -67,17 +67,17 @@ namespace adeven.AdjustIo
             Start();
         }
 
-        public void SetEnvironment(string enviornment)
+        internal void SetEnvironment(string enviornment)
         {
             AIActivityHandler.Environment = enviornment;
         }
 
-        public void SetBufferedEvents(bool enabledEventBuffering)
+        internal void SetBufferedEvents(bool enabledEventBuffering)
         {
             AIActivityHandler.IsBufferedEventsEnabled = enabledEventBuffering;
         }
 
-        public void TrackEvent(string eventToken,
+        internal void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
             if (!CheckAppToken(AppToken)) return;
@@ -116,6 +116,12 @@ namespace adeven.AdjustIo
             AILogger.Debug("Event {0}", ActivityState.EventCount);
         }
 
+        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        {
+            if (!CheckAppToken(AppToken)) return;
+            if (!CheckActivityState(ActivityState)) return;
+            //if (!chec 
+        }
         //public void TrackRevenue(double amountInCents, string evenToken, Dictionary<string, string> parameters)
         //{
         //    int amountInMillis = (int)Math.Round(10 * amountInCents);
@@ -326,6 +332,16 @@ namespace adeven.AdjustIo
             {
                 AILogger.Error("Malformed Event Token '{0}'", eventToken);
                 return false; 
+            }
+            return true;
+        }
+
+        private bool CheckAmount(double amount)
+        {
+            if (amount < 0.0)
+            {
+                AILogger.Error("Invalid amount {0:.0}", amount);
+                return false;
             }
             return true;
         }

@@ -93,6 +93,13 @@ namespace adeven.AdjustIo
             activityHandler.TrackEvent(eventToken, callbackParameters);
         }
 
+        public static void TrackRevenue(double amountInCents,
+            string eventToken = null,
+            Dictionary<string, string> callbackParameters = null)
+        {
+            activityHandler.TrackRevenue(amountInCents, eventToken, callbackParameters);
+        }
+
         public static void SetLogLevel(AILogLevel logLevel)
         {
             AILogger.LogLevel = logLevel;
