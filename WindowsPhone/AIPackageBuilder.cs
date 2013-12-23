@@ -76,9 +76,7 @@ namespace adeven.AdjustIo
 
         internal AIActivityPackage BuildEventPackage()
         {
-            SaveParameter("event_count", EventCount);
-            SaveParameter("event_token", EventToken);
-            SaveParameter("params", CallBackParameters);
+            InjectEventParameters();
 
             activityPackage.Path = @"/event";
             activityPackage.Kind = "event";
@@ -87,9 +85,40 @@ namespace adeven.AdjustIo
             return activityPackage;
         }
 
+        internal AIActivityPackage BuildRevenuePackage()
+        {
+            SaveParameter("amount", AmountInCents.ToString());
+            InjectEventParameters();
+
+            activityPackage.Path = @"/revenue";
+            activityPackage.Kind = "revenue";
+            activityPackage.Suffix = this.RevenueSuffx();
+
+            return activityPackage;
+        }
+
         private string EventSuffix()
         {
             return String.Format(" '{0}'", EventToken);
+        }
+
+        private string RevenueSuffx()
+        {
+            if (EventToken != null)
+            {
+                return String.Format(" ({0:.0} cent, '{1}')", AmountInCents, EventToken);
+            }
+            else
+            {
+                return String.Format(" ({0:.0} cent)", AmountInCents);
+            }
+        }
+
+        private void InjectEventParameters()
+        {
+            SaveParameter("event_count", EventCount);
+            SaveParameter("event_token", EventToken);
+            SaveParameter("params", CallBackParameters);
         }
 
         #region SaveParameter
@@ -147,6 +176,7 @@ namespace adeven.AdjustIo
 
             activityPackage.Parameters.Add(key, encoded);
         }
-#endregion
+
+        #endregion
     }
 }

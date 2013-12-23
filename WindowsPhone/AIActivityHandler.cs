@@ -94,18 +94,18 @@ namespace adeven.AdjustIo
 
             UpdateActivityState();
             ActivityState.CreatedAt = now;
-            ActivityState.EventCount++;
+            ActivityState.EventCount++; 
 
             ActivityState.InjectSessionAttributes(packageBuilder);
-            var package = packageBuilder.BuildEventPackage();
+            var eventPackage = packageBuilder.BuildEventPackage();
             
             RequestHandler.SendPackage(
-                package
+                eventPackage
             );
 
             if (IsBufferedEventsEnabled)
             {
-                AILogger.Info("Buffered event{0}", package.Suffix);
+                AILogger.Info("Buffered event{0}", eventPackage.Suffix);
             }
             else
             {
@@ -120,7 +120,40 @@ namespace adeven.AdjustIo
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckActivityState(ActivityState)) return;
-            //if (!chec 
+            if (!CheckAmount(amountInCents)) return;
+            if (!CheckEventTokenLenght(eventToken)) return;
+
+            var packageBuilder = GetDefaultPackageBuilder();
+
+            packageBuilder.AmountInCents = amountInCents;
+            packageBuilder.EventToken = eventToken;
+            packageBuilder.CallBackParameters = callbackParameters;
+
+            var now = DateTime.Now;
+            UpdateActivityState();
+
+            ActivityState.CreatedAt = now;
+            ActivityState.EventCount++;
+
+            ActivityState.InjectSessionAttributes(packageBuilder);
+
+            var revenuePackage = packageBuilder.BuildRevenuePackage();
+
+            RequestHandler.SendPackage(
+                revenuePackage
+            );
+
+            if (IsBufferedEventsEnabled)
+            {
+                AILogger.Info("Buffered revenue{0}", revenuePackage.Suffix);
+            }
+            else
+            {
+                //TODO packageHandler.sendFirstPackage()
+            }
+
+            WriteActivityState();
+            AILogger.Debug("Event {0} revenue", ActivityState.EventCount);
         }
         //public void TrackRevenue(double amountInCents, string evenToken, Dictionary<string, string> parameters)
         //{
