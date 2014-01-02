@@ -34,37 +34,17 @@ namespace adeven.AdjustIo
         internal static string Environment { get; private set; }
         internal static bool IsBufferedEventsEnabled { get; private set; }
 
+        //internal static NitoTaskQueue InternalQueue;
+        private static SimpleTaskQueue InternalQueue;
+
         internal AIActivityHandler(string appToken)
         {
-            if (!CheckAppToken(appToken)) return;
-
-            if (appToken.Length != 12) {
-                AILogger.Error("Malformed App Token '{0}'", appToken);
-                return;
-            }
-
-            AIActivityHandler.AppToken = appToken;
-            AIActivityHandler.MacSha1 = Util.GetDeviceId();
-            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(AIActivityHandler.MacSha1);
-            AIActivityHandler.IdForAdvertisers = "";
-            AIActivityHandler.FbAttributionId = "";
-            AIActivityHandler.IsTrackingEnabled = false;
-            AIActivityHandler.UserAgent = Util.GetUserAgent();
-            AIActivityHandler.ClientSdk = Util.ClientSdk;
+            //InternalQueue = new TaskQueue() { Name = "io.adjust.ActivityQueue" };
+            InternalQueue = new SimpleTaskQueue { Name = "io.adjust.ActivityQueue" };
             AIActivityHandler.Environment = "unknown";
-            AIActivityHandler.IsBufferedEventsEnabled = false;
+            AIActivityHandler.ClientSdk = Util.ClientSdk;
 
-            //test file not exists
-            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
-            if (storage.FileExists(ActivityStateFilename))
-                storage.DeleteFile(ActivityStateFilename);
-
-            //we can run synchronously because there is no result
-            //see http://stackoverflow.com/questions/5095183/how-would-i-run-an-async-taskt-method-synchronously
-            //RestoreActivityStateAsync().Wait();
-            ReadActivityState();
-
-            Start();
+            InternalQueue.Enqueue(() => InitInternal(appToken));
         }
 
         internal void SetEnvironment(string enviornment)
@@ -80,6 +60,43 @@ namespace adeven.AdjustIo
         internal void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
+            InternalQueue.Enqueue(() => InternalTrackEventAsync(eventToken, callbackParameters));
+        }
+
+        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        {
+            InternalQueue.Enqueue(() => InternalTrackRevenueAsync (amountInCents, eventToken, callbackParameters));
+        }
+
+        private async Task InitInternal(string appToken)
+        {
+            AIActivityHandler.AppToken = appToken;
+            AIActivityHandler.MacSha1 = Util.GetDeviceId();
+            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(AIActivityHandler.MacSha1);
+            AIActivityHandler.IdForAdvertisers = "";
+            AIActivityHandler.FbAttributionId = "";
+            AIActivityHandler.IsTrackingEnabled = false;
+            AIActivityHandler.UserAgent = Util.GetUserAgent();
+            AIActivityHandler.IsBufferedEventsEnabled = false;
+
+            //test file not exists
+            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
+            if (storage.FileExists(ActivityStateFilename))
+                storage.DeleteFile(ActivityStateFilename);
+
+            //we can run synchronously because there is no result
+            //see http://stackoverflow.com/questions/5095183/how-would-i-run-an-async-taskt-method-synchronously
+            //RestoreActivityStateAsync().Wait();
+            ReadActivityState();
+
+            Start();
+        }
+
+        private async Task InternalTrackEventAsync(string eventToken,
+            Dictionary<string, string> callbackParameters)
+        {
+            var tcs = new TaskCompletionSource<object>();
+
             if (!CheckAppToken(AppToken)) return;
             if (!CheckActivityState(ActivityState)) return;
             if (!CheckEventToken(eventToken)) return;
@@ -116,7 +133,7 @@ namespace adeven.AdjustIo
             AILogger.Debug("Event {0}", ActivityState.EventCount);
         }
 
-        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        internal async Task InternalTrackRevenueAsync(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckActivityState(ActivityState)) return;
@@ -155,14 +172,7 @@ namespace adeven.AdjustIo
             WriteActivityState();
             AILogger.Debug("Event {0} revenue", ActivityState.EventCount);
         }
-        //public void TrackRevenue(double amountInCents, string evenToken, Dictionary<string, string> parameters)
-        //{
-        //    int amountInMillis = (int)Math.Round(10 * amountInCents);
-        //    string amount = amountInMillis.ToString();
-        //    string paramString = Util.GetBase64EncodedParameters(parameters);
-
-        //}
-
+        
         private AIPackageBuilder GetDefaultPackageBuilder()
         {
             var packageBuilder = new AIPackageBuilder
@@ -254,6 +264,7 @@ namespace adeven.AdjustIo
         private void Start()
         {
             if (!CheckAppToken(AppToken)) return;
+            if (!CheckAppTokenLength(AppToken)) return;
 
             //TODO package Handler start package
             //TODO start timer
@@ -329,11 +340,22 @@ namespace adeven.AdjustIo
             );
         }
 
+        #region Checks
         private bool CheckAppToken(string appToken)
         {
             if (string.IsNullOrEmpty(appToken))
             {
                 AILogger.Error("Missing App Token");
+                return false;
+            }
+            return true;
+        }
+
+        private bool CheckAppTokenLength(string appToken)
+        {
+            if (appToken.Length != 12)
+            {
+                AILogger.Error("Malformed App Token '{0}'",appToken);
                 return false;
             }
             return true;
@@ -378,5 +400,7 @@ namespace adeven.AdjustIo
             }
             return true;
         }
+        #endregion
+
     }
 }
