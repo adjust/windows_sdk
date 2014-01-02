@@ -89,12 +89,12 @@
     <Compile Include="AIActivityState.cs" />
     <Compile Include="AILogger.cs" />
     <Compile Include="AIPackageBuilder.cs" />
-    <Compile Include="AIPackageHandler.cs" />
     <Compile Include="AIRequestHandler.cs" />
     <Compile Include="AsyncProducerConsumerCollection.cs" />
     <Compile Include="Base32Encoding.cs" />
     <Compile Include="helper.cs" />
     <Compile Include="MD5.cs" />
+    <Compile Include="AIPackageHandler.cs" />
     <Compile Include="PostRequestWP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NitoTaskQueue.cs" />

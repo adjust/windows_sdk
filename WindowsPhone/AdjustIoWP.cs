@@ -9,7 +9,7 @@ namespace adeven.AdjustIo
         public const string AIEnvironmentSandbox = "sandbox";
         public const string AIEnvironmentProduction = "production";
         
-        static AIActivityHandler activityHandler;
+        private static AIActivityHandler activityHandler;
 
         public static void AppDidLaunch(string appToken)
         {

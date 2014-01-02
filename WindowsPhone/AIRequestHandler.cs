@@ -13,12 +13,14 @@ namespace adeven.AdjustIo
 {
     class AIRequestHandler
     {
-        public string SuccessMessage { get; set; }
-        public string FailureMessage { get; set; }
+        private BackgroundWorker Worker;
+        private string ParamString;
+        private ManualResetEvent AllDone;
+        private AIPackageHandler PackageHandler;
 
-        private BackgroundWorker backgroundWorker;
-        private string paramString;
-        private ManualResetEvent allDone;
+        internal string SuccessMessage { get; set; }
+        internal string FailureMessage { get; set; }
+        internal bool IsBusy { get { return Worker.IsBusy; } }
 
         private class RequestState
         {
@@ -26,20 +28,22 @@ namespace adeven.AdjustIo
             public WebRequest request;
         }
 
-        public AIRequestHandler()
+        internal AIRequestHandler(AIPackageHandler packageHandler)
         {
-            allDone = new ManualResetEvent(false);
+            AllDone = new ManualResetEvent(false);
 
-            backgroundWorker = new BackgroundWorker();
-            backgroundWorker.DoWork += new DoWorkEventHandler(WorkSendPackage);
-            backgroundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerSendCompleted);
+            Worker = new BackgroundWorker();
+            Worker.DoWork += new DoWorkEventHandler(WorkSendPackage);
+            Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerSendCompleted);
 
+            PackageHandler = packageHandler;
         }
+
         internal void SendPackage(AIActivityPackage package)
         {
-            if (backgroundWorker.IsBusy != true)
+            if (Worker.IsBusy != true)
             {
-                backgroundWorker.RunWorkerAsync(package);
+                Worker.RunWorkerAsync(package);
             }
         }
 
@@ -56,7 +60,7 @@ namespace adeven.AdjustIo
             request.Headers["User-Agent"] = package.UserAgent;
             //TODO include the request timeout
 
-            paramString = Util.GetStringEncodedParameters(package.Parameters);
+            ParamString = Util.GetStringEncodedParameters(package.Parameters);
 
             // start the asynchronous operation
             request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback),
@@ -64,25 +68,25 @@ namespace adeven.AdjustIo
 
             // Keep the main thread from continuing while the asynchronous 
             // operation completes. 
-            allDone.WaitOne();
+            AllDone.WaitOne();
         }
 
         //TODO what is necessary to comunicate to the package handler?
         private void WorkerSendCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (e.Cancelled == true)
+            //if (e.Cancelled == true)
+            //{
+            //}
+            //else 
+            if (!(e.Error == null))
             {
+                PackageHandler.CloseFirstPackage();
             }
-
-            else if (!(e.Error == null))
-            {
-            }
-
             else
             {
+                PackageHandler.SendNextPackage();
             }
         }
-
 
         private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
         {
@@ -94,10 +98,10 @@ namespace adeven.AdjustIo
             Stream postStream = request.EndGetRequestStream(asynchronousResult);
 
             // Convert the string into a byte array
-            byte[] byteArray = Encoding.UTF8.GetBytes(paramString);
+            byte[] byteArray = Encoding.UTF8.GetBytes(ParamString);
 
             // Write to the request stream
-            postStream.Write(byteArray, 0, paramString.Length);
+            postStream.Write(byteArray, 0, ParamString.Length);
             postStream.Dispose();
 
             // Start the asynchronous operation to get the response
@@ -141,10 +145,11 @@ namespace adeven.AdjustIo
             catch (Exception e)
             {
                 AILogger.Error("{0}. ({1}) Will retry later", requestState.package.FailureMessage(), e.Message);
+                throw;
             }
             finally
             {
-                allDone.Set();
+                AllDone.Set();
             }
         }
 

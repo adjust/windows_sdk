@@ -19,7 +19,8 @@ namespace adeven.AdjustIo
         private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0);          // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
 
-        private static AIRequestHandler RequestHandler = new AIRequestHandler();
+        //private static AIRequestHandler RequestHandler = new AIRequestHandler();
+        private static AIPackageHandler PackageHandler = new AIPackageHandler();
         private static AIActivityState ActivityState = null;
 
         private static string AppToken;
@@ -34,7 +35,7 @@ namespace adeven.AdjustIo
         internal static string Environment { get; private set; }
         internal static bool IsBufferedEventsEnabled { get; private set; }
 
-        //internal static NitoTaskQueue InternalQueue;
+        //private static NitoTaskQueue InternalQueue;
         private static SimpleTaskQueue InternalQueue;
 
         internal AIActivityHandler(string appToken)
@@ -44,7 +45,7 @@ namespace adeven.AdjustIo
             AIActivityHandler.Environment = "unknown";
             AIActivityHandler.ClientSdk = Util.ClientSdk;
 
-            InternalQueue.Enqueue(() => InitInternal(appToken));
+            InternalQueue.Enqueue(() => InitInternalAsync(appToken));
         }
 
         internal void SetEnvironment(string enviornment)
@@ -68,7 +69,7 @@ namespace adeven.AdjustIo
             InternalQueue.Enqueue(() => InternalTrackRevenueAsync (amountInCents, eventToken, callbackParameters));
         }
 
-        private async Task InitInternal(string appToken)
+        private async Task InitInternalAsync(string appToken)
         {
             AIActivityHandler.AppToken = appToken;
             AIActivityHandler.MacSha1 = Util.GetDeviceId();
@@ -78,6 +79,8 @@ namespace adeven.AdjustIo
             AIActivityHandler.IsTrackingEnabled = false;
             AIActivityHandler.UserAgent = Util.GetUserAgent();
             AIActivityHandler.IsBufferedEventsEnabled = false;
+
+            PackageHandler = new AIPackageHandler();
 
             //test file not exists
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
@@ -115,10 +118,8 @@ namespace adeven.AdjustIo
 
             ActivityState.InjectSessionAttributes(packageBuilder);
             var eventPackage = packageBuilder.BuildEventPackage();
-            
-            RequestHandler.SendPackage(
-                eventPackage
-            );
+
+            PackageHandler.AddPackage(eventPackage);
 
             if (IsBufferedEventsEnabled)
             {
@@ -126,7 +127,7 @@ namespace adeven.AdjustIo
             }
             else
             {
-                //TODO packageHandler.sendFirstPackage()
+                PackageHandler.SendFirstPackage();
             }
 
             WriteActivityState();
@@ -156,9 +157,7 @@ namespace adeven.AdjustIo
 
             var revenuePackage = packageBuilder.BuildRevenuePackage();
 
-            RequestHandler.SendPackage(
-                revenuePackage
-            );
+            PackageHandler.AddPackage(revenuePackage);
 
             if (IsBufferedEventsEnabled)
             {
@@ -166,7 +165,7 @@ namespace adeven.AdjustIo
             }
             else
             {
-                //TODO packageHandler.sendFirstPackage()
+                PackageHandler.SendFirstPackage();
             }
 
             WriteActivityState();
@@ -214,6 +213,7 @@ namespace adeven.AdjustIo
                     ActivityState = AIActivityState.DeserializeFromStream(stream);
                 }
                 AILogger.Verbose("Restored activity state {0}", ActivityState);
+                return;
             }
             catch (IsolatedStorageException ise)
             {
@@ -266,7 +266,7 @@ namespace adeven.AdjustIo
             if (!CheckAppToken(AppToken)) return;
             if (!CheckAppTokenLength(AppToken)) return;
 
-            //TODO package Handler start package
+            PackageHandler.ResumeSending();
             //TODO start timer
 
             var now = DateTime.Now;
@@ -335,9 +335,8 @@ namespace adeven.AdjustIo
             var sessionPackage = sessionBuilder.BuildSessionPackage();
 
             //Send Session Package
-            RequestHandler.SendPackage(
-                sessionPackage
-            );
+            PackageHandler.AddPackage(sessionPackage);
+            PackageHandler.SendFirstPackage();
         }
 
         #region Checks
