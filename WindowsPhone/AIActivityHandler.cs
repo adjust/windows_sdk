@@ -41,7 +41,7 @@ namespace adeven.AdjustIo
         internal AIActivityHandler(string appToken)
         {
             //InternalQueue = new TaskQueue() { Name = "io.adjust.ActivityQueue" };
-            InternalQueue = new SimpleTaskQueue { Name = "io.adjust.ActivityQueue" };
+            InternalQueue = new SimpleTaskQueue("io.adjust.ActivityQueue");
             AIActivityHandler.Environment = "unknown";
             AIActivityHandler.ClientSdk = Util.ClientSdk;
 

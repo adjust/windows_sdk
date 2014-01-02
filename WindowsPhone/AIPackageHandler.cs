@@ -21,7 +21,7 @@ namespace adeven.AdjustIo
 
         internal AIPackageHandler()
         {
-            InternalQueue = new SimpleTaskQueue { Name = "io.adjust.PackageQueue" };
+            InternalQueue = new SimpleTaskQueue("io.adjust.PackageQueue");
             PackageQueue = new List<AIActivityPackage>();
             IsPaused = true;
 
@@ -61,6 +61,12 @@ namespace adeven.AdjustIo
         private async Task InitInternalAsync()
         {
             RequestHandler = new AIRequestHandler(this);
+
+            //test file not exists
+            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
+            if (storage.FileExists(PackageQueueFilename))
+                storage.DeleteFile(PackageQueueFilename);
+
             ReadPackageQueue();
         }
 
