@@ -13,7 +13,7 @@ namespace adeven.AdjustIo
         private const string PackageQueueFilename = "AdjustIOActivityState";
 
         //private static NitoTaskQueue InternalQueue;
-        private static SimpleTaskQueue InternalQueue;
+        private static AITaskQueue InternalQueue;
         private static List<AIActivityPackage> PackageQueue;
         private static AIRequestHandler RequestHandler;
 
@@ -21,7 +21,7 @@ namespace adeven.AdjustIo
 
         internal AIPackageHandler()
         {
-            InternalQueue = new SimpleTaskQueue("io.adjust.PackageQueue");
+            InternalQueue = new AITaskQueue("io.adjust.PackageQueue");
             PackageQueue = new List<AIActivityPackage>();
             IsPaused = true;
 

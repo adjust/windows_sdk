@@ -36,12 +36,12 @@ namespace adeven.AdjustIo
         internal static bool IsBufferedEventsEnabled { get; private set; }
 
         //private static NitoTaskQueue InternalQueue;
-        private static SimpleTaskQueue InternalQueue;
+        private static AITaskQueue InternalQueue;
 
         internal AIActivityHandler(string appToken)
         {
             //InternalQueue = new TaskQueue() { Name = "io.adjust.ActivityQueue" };
-            InternalQueue = new SimpleTaskQueue("io.adjust.ActivityQueue");
+            InternalQueue = new AITaskQueue("io.adjust.ActivityQueue");
             AIActivityHandler.Environment = "unknown";
             AIActivityHandler.ClientSdk = Util.ClientSdk;
 

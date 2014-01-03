@@ -90,6 +90,7 @@
     <Compile Include="AILogger.cs" />
     <Compile Include="AIPackageBuilder.cs" />
     <Compile Include="AIRequestHandler.cs" />
+    <Compile Include="AITaskQueue.cs" />
     <Compile Include="AsyncProducerConsumerCollection.cs" />
     <Compile Include="Base32Encoding.cs" />
     <Compile Include="helper.cs" />
