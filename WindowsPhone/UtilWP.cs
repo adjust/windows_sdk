@@ -85,7 +85,7 @@ namespace adeven.AdjustIo
             if (timeSpan == null)
                 return -1;
             else
-                return timeSpan.Value.Seconds;
+                return  timeSpan.Value.TotalSeconds;
         }
 
         private static string getDeviceManufacturer()

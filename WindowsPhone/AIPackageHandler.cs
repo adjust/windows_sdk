@@ -12,7 +12,6 @@ namespace adeven.AdjustIo
     {
         private const string PackageQueueFilename = "AdjustIOActivityState";
 
-        //private static NitoTaskQueue InternalQueue;
         private static AITaskQueue InternalQueue;
         private static List<AIActivityPackage> PackageQueue;
         private static AIRequestHandler RequestHandler;

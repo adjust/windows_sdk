@@ -13,15 +13,17 @@ using Windows.Storage.Streams;
 
 namespace adeven.AdjustIo
 {
-    class AIActivityHandler
+    internal class AIActivityHandler
     {
         private const string ActivityStateFilename = "AdjustIOActivityState";
         private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0);          // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
+        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0);             // 1 minute
 
         //private static AIRequestHandler RequestHandler = new AIRequestHandler();
         private static AIPackageHandler PackageHandler = new AIPackageHandler();
         private static AIActivityState ActivityState = null;
+        private static AITimer TimeKeeper = null;
 
         private static string AppToken;
         private static string MacSha1;
@@ -40,7 +42,6 @@ namespace adeven.AdjustIo
 
         internal AIActivityHandler(string appToken)
         {
-            //InternalQueue = new TaskQueue() { Name = "io.adjust.ActivityQueue" };
             InternalQueue = new AITaskQueue("io.adjust.ActivityQueue");
             AIActivityHandler.Environment = "unknown";
             AIActivityHandler.ClientSdk = Util.ClientSdk;
@@ -56,6 +57,16 @@ namespace adeven.AdjustIo
         internal void SetBufferedEvents(bool enabledEventBuffering)
         {
             AIActivityHandler.IsBufferedEventsEnabled = enabledEventBuffering;
+        }
+
+        internal void TrackSubsessionStart()
+        {
+            InternalQueue.Enqueue(() => InternalStartAsync());
+        }
+
+        internal void TrackSubsessionEnd()
+        {
+            InternalQueue.Enqueue(() => InternalEndAsync());
         }
 
         internal void TrackEvent(string eventToken,
@@ -92,7 +103,7 @@ namespace adeven.AdjustIo
             //RestoreActivityStateAsync().Wait();
             ReadActivityState();
 
-            Start();
+            await InternalStartAsync();
         }
 
         private async Task InternalTrackEventAsync(string eventToken,
@@ -134,7 +145,7 @@ namespace adeven.AdjustIo
             AILogger.Debug("Event {0}", ActivityState.EventCount);
         }
 
-        internal async Task InternalTrackRevenueAsync(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        private async Task InternalTrackRevenueAsync(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckActivityState(ActivityState)) return;
@@ -261,13 +272,14 @@ namespace adeven.AdjustIo
             return lastInterval > SubSessionInterval;
         }
 
-        private void Start()
+        #region Sessions
+        private async Task InternalStartAsync()
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckAppTokenLength(AppToken)) return;
 
             PackageHandler.ResumeSending();
-            //TODO start timer
+            StartTimer();
 
             var now = DateTime.Now;
 
@@ -327,6 +339,16 @@ namespace adeven.AdjustIo
             }
         }
 
+        private async Task InternalEndAsync()
+        {
+            if (!CheckAppToken(AppToken)) return;
+
+            PackageHandler.PauseSending();
+            StopTimer();
+            UpdateActivityState();
+            WriteActivityState();
+        }
+
         private void TransferSessionPackage()
         {
             //Build Session Package
@@ -338,7 +360,36 @@ namespace adeven.AdjustIo
             PackageHandler.AddPackage(sessionPackage);
             PackageHandler.SendFirstPackage();
         }
+        #endregion
 
+        #region Timer
+        private void StartTimer()
+        {
+            if (TimeKeeper == null)
+            {
+                TimeKeeper = new AITimer(SystemThreadingTimer, null, TimerInterval);
+            }
+            TimeKeeper.Resume();
+        }
+
+        private void StopTimer()
+        {
+            TimeKeeper.Suspend();
+        }
+
+        private void SystemThreadingTimer(object state)
+        {
+            InternalQueue.Enqueue(() => TimerFiredAsync());
+        }
+
+        private async Task TimerFiredAsync()
+        {
+            PackageHandler.SendFirstPackage();
+            if (UpdateActivityState())
+                WriteActivityState();
+        }
+        #endregion
+        
         #region Checks
         private bool CheckAppToken(string appToken)
         {

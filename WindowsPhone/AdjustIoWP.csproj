@@ -91,7 +91,7 @@
     <Compile Include="AIPackageBuilder.cs" />
     <Compile Include="AIRequestHandler.cs" />
     <Compile Include="AITaskQueue.cs" />
-    <Compile Include="AsyncProducerConsumerCollection.cs" />
+    <Compile Include="AITimer.cs" />
     <Compile Include="Base32Encoding.cs" />
     <Compile Include="helper.cs" />
     <Compile Include="MD5.cs" />
@@ -99,7 +99,6 @@
     <Compile Include="PostRequestWP.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NitoTaskQueue.cs" />
-    <Compile Include="SimpleTaskQueue.cs" />
     <Compile Include="UtilWP.cs" />
   </ItemGroup>
   <ItemGroup>
