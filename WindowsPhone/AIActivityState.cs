@@ -23,7 +23,7 @@ namespace adeven.AdjustIo
         public DateTime? CreatedAt { get; set; }
         public TimeSpan? LastInterval { get; set; }
 
-        public AIActivityState()
+        internal AIActivityState()
         {
             EventCount      = 0;
             SessionCount    = 0;
@@ -31,24 +31,32 @@ namespace adeven.AdjustIo
             SessionLenght   = null;
             TimeSpent       = null;
             LastActivity    = null;
+            AILogger.Verbose("LastActivity initialized");
             CreatedAt       = null;
             LastInterval    = null;
         }
 
-        public void ResetSessionAttributes(DateTime now)
+        internal void ResetSessionAttributes(DateTime now)
         {
             SubSessionCount = 1;
             SessionLenght   = new TimeSpan();
             TimeSpent       = new TimeSpan();
             LastActivity    = now;
+            AILogger.Verbose("LastActivity updated: {0}", LastActivity);
             CreatedAt       = null;
             LastInterval    = null;
         }
 
-        public void InjectSessionAttributes(AIPackageBuilder packageBuilder)
+        internal void InjectSessionAttributes(AIPackageBuilder packageBuilder)
         {
             InjectGeneralAttributes(packageBuilder);
             packageBuilder.LastInterval = LastInterval;
+        }
+
+        internal void InjectEventAttributes(AIPackageBuilder packageBuilder)
+        {
+            InjectGeneralAttributes(packageBuilder);
+            packageBuilder.EventCount = EventCount;
         }
 
         public override string ToString()
@@ -64,7 +72,7 @@ namespace adeven.AdjustIo
         }
 
         #region Serialization
-        public static void SerializeToStream(Stream stream, AIActivityState activity)
+        internal static void SerializeToStream(Stream stream, AIActivityState activity)
         {
             using (var writer = new BinaryWriter(stream))
             {
@@ -74,12 +82,13 @@ namespace adeven.AdjustIo
                 writer.Write(SerializeTimeSpan(activity.SessionLenght));
                 writer.Write(SerializeTimeSpan(activity.TimeSpent));
                 writer.Write(SerializeDatetime(activity.LastActivity));
+                AILogger.Verbose("LastActivity write: {0}", activity.LastActivity);
                 writer.Write(SerializeDatetime(activity.CreatedAt ));
                 writer.Write(SerializeTimeSpan(activity.LastInterval));
             }
         }
 
-        public static AIActivityState DeserializeFromStream(Stream stream)
+        internal static AIActivityState DeserializeFromStream(Stream stream)
         {
             AIActivityState activity = null;
             using (var reader = new BinaryReader(stream))
@@ -91,6 +100,7 @@ namespace adeven.AdjustIo
                 activity.SessionLenght      = DeserializeTimeSpan(reader.ReadInt64());
                 activity.TimeSpent          = DeserializeTimeSpan(reader.ReadInt64());
                 activity.LastActivity       = DeserializeDateTime(reader.ReadInt64());
+                AILogger.Verbose("LastActivity read: {0}", activity.LastActivity);
                 activity.CreatedAt          = DeserializeDateTime(reader.ReadInt64());
                 activity.LastInterval       = DeserializeTimeSpan(reader.ReadInt64());
             }

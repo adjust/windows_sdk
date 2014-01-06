@@ -70,24 +70,7 @@ namespace adeven.AdjustIo
             // operation completes. 
             AllDone.WaitOne();
         }
-
-        //TODO what is necessary to comunicate to the package handler?
-        private void WorkerSendCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            //if (e.Cancelled == true)
-            //{
-            //}
-            //else 
-            if (!(e.Error == null))
-            {
-                PackageHandler.CloseFirstPackage();
-            }
-            else
-            {
-                PackageHandler.SendNextPackage();
-            }
-        }
-
+        
         private void GetRequestStreamCallback(IAsyncResult asynchronousResult)
         {
             // Recover the request object
@@ -164,6 +147,23 @@ namespace adeven.AdjustIo
             streamResponse.Close();
 
             return responseString;
+        }
+
+        //TODO what is necessary to comunicate to the package handler?
+        private void WorkerSendCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //if (e.Cancelled == true)
+            //{
+            //}
+            //else 
+            if (!(e.Error == null))
+            {
+                PackageHandler.CloseFirstPackage();
+            }
+            else
+            {
+                PackageHandler.SendNextPackage();
+            }
         }
     }
 }

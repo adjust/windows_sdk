@@ -39,14 +39,19 @@ namespace adeven.AdjustIo
 
         //TODO change ToString() to serializer, possible ServiceStack.Text
 
-        internal void FillDefaults()
+        internal AIPackageBuilder()
         {
             activityPackage = new AIActivityPackage
             {
-                UserAgent = this.UserAgent,
-                ClientSdk = this.ClientSdk,
-                Parameters = new Dictionary<string, string>(),
+                Parameters = new Dictionary<string, string>()
             };
+        }
+
+        private void FillDefaults()
+        {
+            activityPackage.UserAgent = this.UserAgent;
+            activityPackage.ClientSdk = this.ClientSdk;
+            
             //general
             SaveParameter("created_at"      , CreatedAt);
             SaveParameter("app_token"       , AppToken);
@@ -65,6 +70,7 @@ namespace adeven.AdjustIo
 
         internal AIActivityPackage BuildSessionPackage()
         {
+            FillDefaults();
             SaveParameter("last_interval", LastInterval);
 
             activityPackage.Path = @"/startup";
@@ -76,6 +82,7 @@ namespace adeven.AdjustIo
 
         internal AIActivityPackage BuildEventPackage()
         {
+            FillDefaults();
             InjectEventParameters();
 
             activityPackage.Path = @"/event";
@@ -87,6 +94,7 @@ namespace adeven.AdjustIo
 
         internal AIActivityPackage BuildRevenuePackage()
         {
+            FillDefaults();
             SaveParameter("amount", AmountInCents.ToString());
             InjectEventParameters();
 

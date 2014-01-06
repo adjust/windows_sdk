@@ -29,7 +29,10 @@ namespace adeven.AdjustIo
                 if (TaskQueue.Count == 0)
                     WorkEvent.Set();
                 TaskQueue.Enqueue(task);
-                AILogger.Debug("TaskQueue {0} enqueued {1} task", Name, task.Method.Name);
+                //AILogger.Debug("TaskQueue {0} enqueued {1} task", Name, task.Method.Name); 
+
+
+
             }
         }
 
@@ -37,21 +40,21 @@ namespace adeven.AdjustIo
         {
             while (true)
             {
-                AILogger.Debug("TaskQueue {0} waiting", Name);
+                //AILogger.Debug("TaskQueue {0} waiting", Name);
                 WorkEvent.WaitOne();
                 while (true)
                 {
                     Func<Task> task;
                     lock (TaskQueue)
                     {
-                        AILogger.Debug("TaskQueue {0} got {1} tasks to process", Name, TaskQueue.Count);
+                        //AILogger.Debug("TaskQueue {0} got {1} tasks to process", Name, TaskQueue.Count);
                         if (TaskQueue.Count == 0)
                         {
                             WorkEvent.Reset();
                             break;
                         }
                         task = TaskQueue.Dequeue();
-                        AILogger.Debug("TaskQueue {0} dequeued {1} task", Name, task.Method.Name);
+                        //AILogger.Debug("TaskQueue {0} dequeued {1} task", Name, task.Method.Name);
                     }
                     try
                     {

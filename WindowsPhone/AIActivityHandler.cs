@@ -16,9 +16,9 @@ namespace adeven.AdjustIo
     internal class AIActivityHandler
     {
         private const string ActivityStateFilename = "AdjustIOActivityState";
-        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0);          // 30 minutes
+        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 0, 10);//todo 10 seconds          // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
-        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0);             // 1 minute
+        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 0, 5);//todo 5 sec             // 1 minute
 
         //private static AIRequestHandler RequestHandler = new AIRequestHandler();
         private static AIPackageHandler PackageHandler = new AIPackageHandler();
@@ -83,8 +83,8 @@ namespace adeven.AdjustIo
         private async Task InitInternalAsync(string appToken)
         {
             AIActivityHandler.AppToken = appToken;
-            AIActivityHandler.MacSha1 = Util.GetDeviceId();
-            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(AIActivityHandler.MacSha1);
+            //AIActivityHandler.MacSha1 = Util.GetDeviceId();
+            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(Util.GetDeviceId());
             AIActivityHandler.IdForAdvertisers = "";
             AIActivityHandler.FbAttributionId = "";
             AIActivityHandler.IsTrackingEnabled = false;
@@ -127,7 +127,7 @@ namespace adeven.AdjustIo
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++; 
 
-            ActivityState.InjectSessionAttributes(packageBuilder);
+            ActivityState.InjectEventAttributes(packageBuilder);
             var eventPackage = packageBuilder.BuildEventPackage();
 
             PackageHandler.AddPackage(eventPackage);
@@ -164,7 +164,7 @@ namespace adeven.AdjustIo
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++;
 
-            ActivityState.InjectSessionAttributes(packageBuilder);
+            ActivityState.InjectEventAttributes(packageBuilder);
 
             var revenuePackage = packageBuilder.BuildRevenuePackage();
 
@@ -197,7 +197,6 @@ namespace adeven.AdjustIo
                 FbAttributionId = AIActivityHandler.FbAttributionId,
                 Environment = AIActivityHandler.Environment,
             };
-            packageBuilder.FillDefaults();
             return packageBuilder;
         }
 
@@ -258,6 +257,7 @@ namespace adeven.AdjustIo
             {
                 AILogger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
+                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
                 return true;
             }
 
@@ -268,6 +268,7 @@ namespace adeven.AdjustIo
             ActivityState.SessionLenght += lastInterval;
             ActivityState.TimeSpent += lastInterval;
             ActivityState.LastActivity = now;
+            AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
 
             return lastInterval > SubSessionInterval;
         }
@@ -282,6 +283,8 @@ namespace adeven.AdjustIo
             StartTimer();
 
             var now = DateTime.Now;
+
+            AILogger.Verbose("now time ({0})", now);
 
             //if firsts Session
             if (ActivityState == null)
@@ -302,10 +305,13 @@ namespace adeven.AdjustIo
 
             var lastInterval = now - ActivityState.LastActivity.Value;
 
+            AILogger.Verbose("last interval ({0})", lastInterval);
+
             if (lastInterval.Ticks < 0)
             {
                 AILogger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
+                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
                 WriteActivityState();
                 return;
             }
@@ -331,6 +337,7 @@ namespace adeven.AdjustIo
                 ActivityState.SubSessionCount++;
                 ActivityState.SessionLenght += lastInterval;
                 ActivityState.LastActivity = now;
+                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
 
                 WriteActivityState();
                 AILogger.Info("Processed Subsession {0} of Session {1}",

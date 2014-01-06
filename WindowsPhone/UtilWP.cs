@@ -4,11 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
 using Windows.ApplicationModel.Store;
+using System.Linq;
 
 namespace adeven.AdjustIo
 {
@@ -24,9 +26,10 @@ namespace adeven.AdjustIo
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
             {
-                Debug.WriteLine("[{0}] This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.", Util.LogTag);
+                AILogger.Debug("[{0}] This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.", Util.LogTag);
                 return null;
             }
+            AILogger.Debug("Device unique Id ({0})", id);
 
             string deviceId = Convert.ToBase64String(id as byte[]);
             return deviceId;
@@ -59,15 +62,27 @@ namespace adeven.AdjustIo
             return userAgent;
         }
 
-        public static string GetStringEncodedParameters(Dictionary<string, string> parameters)
+        internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
-            string paramString = string.Empty;
-            foreach (KeyValuePair<string, string> pair in parameters)
+            if (parameters.Count == 0) return "";
+            var firstPair = parameters.First();
+
+            var stringBuilder = new StringBuilder(EncodedQueryParameter(firstPair, isFirstParameter: true));
+
+            foreach (var pair in parameters.Skip(1))//skips the first &
             {
-                paramString += "&" + pair.Key + "=" + pair.Value;
+                stringBuilder.Append(EncodedQueryParameter(pair));
             }
-            paramString = paramString.Substring(1);
-            return paramString;
+
+            return stringBuilder.ToString();
+        }
+
+        private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
+        {
+            if (isFirstParameter)
+                return String.Format("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+            else
+                return String.Format("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         public static double SecondsFormat(this DateTime? date)

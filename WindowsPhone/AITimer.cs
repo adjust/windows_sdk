@@ -30,7 +30,7 @@ namespace adeven.AdjustIo
             if (!IsSuspended) return;
 
             //todo ask welle if timer should fire after Resume or wait until interval 
-            TimeKeeper.Change((int)TimeInterval.TotalMilliseconds, (int)TimeInterval.TotalMilliseconds);
+            TimeKeeper.Change(0, (int)TimeInterval.TotalMilliseconds);
 
             IsSuspended = false;
         }
