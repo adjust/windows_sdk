@@ -257,7 +257,6 @@ namespace adeven.AdjustIo
             {
                 AILogger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
-                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
                 return true;
             }
 
@@ -268,7 +267,6 @@ namespace adeven.AdjustIo
             ActivityState.SessionLenght += lastInterval;
             ActivityState.TimeSpent += lastInterval;
             ActivityState.LastActivity = now;
-            AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
 
             return lastInterval > SubSessionInterval;
         }
@@ -311,7 +309,6 @@ namespace adeven.AdjustIo
             {
                 AILogger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
-                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
                 WriteActivityState();
                 return;
             }
@@ -337,7 +334,6 @@ namespace adeven.AdjustIo
                 ActivityState.SubSessionCount++;
                 ActivityState.SessionLenght += lastInterval;
                 ActivityState.LastActivity = now;
-                AILogger.Verbose("LastActivity updated: {0}", ActivityState.LastActivity);
 
                 WriteActivityState();
                 AILogger.Info("Processed Subsession {0} of Session {1}",

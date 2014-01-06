@@ -99,9 +99,30 @@
     <Compile Include="UtilWP.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Threading.Tasks">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Async.1.0.165\lib\wp8\Microsoft.Threading.Tasks.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Async.1.0.165\lib\wp8\Microsoft.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Threading.Tasks.Extensions.Phone">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Async.1.0.165\lib\wp8\Microsoft.Threading.Tasks.Extensions.Phone.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\sl3-wp\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Net.Http.2.2.18\lib\sl4-windowsphone71\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Extensions">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Net.Http.2.2.18\lib\sl4-windowsphone71\System.Net.Http.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives">
+      <HintPath>..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Net.Http.2.2.18\lib\sl4-windowsphone71\System.Net.Http.Primitives.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -109,6 +130,11 @@
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).$(TargetFrameworkVersion).Overrides.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\$(TargetFrameworkIdentifier)\$(TargetFrameworkVersion)\Microsoft.$(TargetFrameworkIdentifier).CSharp.targets" />
   <ProjectExtensions />
+  <Import Project="..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Build.1.0.13\tools\Microsoft.Bcl.Build.targets" Condition="Exists('..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Build.1.0.13\tools\Microsoft.Bcl.Build.targets')" />
+  <Target Name="EnsureBclBuildImported" BeforeTargets="BeforeBuild" Condition="'$(BclBuildImported)' == ''">
+    <Error Condition="!Exists('..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Build.1.0.13\tools\Microsoft.Bcl.Build.targets')" Text="This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=317567." HelpKeyword="BCLBUILD2001" />
+    <Error Condition="Exists('..\..\..\visual studio 2012\Projects\PedroTest\packages\Microsoft.Bcl.Build.1.0.13\tools\Microsoft.Bcl.Build.targets')" Text="The build restored NuGet packages. Build the project again to include these packages in the build. For more information, see http://go.microsoft.com/fwlink/?LinkID=317568." HelpKeyword="BCLBUILD2002" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

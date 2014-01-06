@@ -31,7 +31,6 @@ namespace adeven.AdjustIo
             SessionLenght   = null;
             TimeSpent       = null;
             LastActivity    = null;
-            AILogger.Verbose("LastActivity initialized");
             CreatedAt       = null;
             LastInterval    = null;
         }
@@ -42,7 +41,6 @@ namespace adeven.AdjustIo
             SessionLenght   = new TimeSpan();
             TimeSpent       = new TimeSpan();
             LastActivity    = now;
-            AILogger.Verbose("LastActivity updated: {0}", LastActivity);
             CreatedAt       = null;
             LastInterval    = null;
         }
@@ -82,7 +80,6 @@ namespace adeven.AdjustIo
                 writer.Write(SerializeTimeSpan(activity.SessionLenght));
                 writer.Write(SerializeTimeSpan(activity.TimeSpent));
                 writer.Write(SerializeDatetime(activity.LastActivity));
-                AILogger.Verbose("LastActivity write: {0}", activity.LastActivity);
                 writer.Write(SerializeDatetime(activity.CreatedAt ));
                 writer.Write(SerializeTimeSpan(activity.LastInterval));
             }
@@ -100,7 +97,6 @@ namespace adeven.AdjustIo
                 activity.SessionLenght      = DeserializeTimeSpan(reader.ReadInt64());
                 activity.TimeSpent          = DeserializeTimeSpan(reader.ReadInt64());
                 activity.LastActivity       = DeserializeDateTime(reader.ReadInt64());
-                AILogger.Verbose("LastActivity read: {0}", activity.LastActivity);
                 activity.CreatedAt          = DeserializeDateTime(reader.ReadInt64());
                 activity.LastInterval       = DeserializeTimeSpan(reader.ReadInt64());
             }

@@ -54,7 +54,9 @@ namespace adeven.AdjustIo
 
         internal void CloseFirstPackage()
         {
-            //Todo ask welle the use of the semaphore
+            //Necessary in iOS because there is a semaphore controlling the Request Handler
+            //  but not here because the Background Worker only accepts one task at a time
+            AILogger.Debug("Close Package");
         }
 
         private async Task InitInternalAsync()
@@ -88,7 +90,6 @@ namespace adeven.AdjustIo
                 return;
             }
 
-            //Todo ask welle why is this necessary
             if (RequestHandler.IsBusy)
             {
                 AILogger.Verbose("Package handler is already sending");
@@ -96,13 +97,6 @@ namespace adeven.AdjustIo
             }
 
             var activityPackage = PackageQueue.First();
-            //todo I do not know how this test can fail?
-            if (activityPackage.GetType() != typeof(AIActivityPackage))
-            {
-                AILogger.Error("Failed to read activity package");
-                SendNextInternalAsync();
-                return;
-            }
 
             RequestHandler.SendPackage(
                 activityPackage
@@ -113,8 +107,8 @@ namespace adeven.AdjustIo
         {
             PackageQueue.RemoveAt(0);
             WritePacakgeQueue();
-            //todo perceber dispatch_semaphore_signal
-            SendFirstInternalAsync();
+            
+            await SendFirstInternalAsync();
         }
 
         private void WritePacakgeQueue()
@@ -128,7 +122,6 @@ namespace adeven.AdjustIo
                     stream.Seek(0, SeekOrigin.Begin);
                     AIActivityPackage.SerializeListToStream(stream, PackageQueue);
                 }
-                //Todo ask welle what is exclude from backup
                 AILogger.Debug("Package handler wrote {0} packages", PackageQueue.Count);
             }
             catch (Exception ex)

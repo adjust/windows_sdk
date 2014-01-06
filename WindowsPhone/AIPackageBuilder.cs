@@ -37,8 +37,6 @@ namespace adeven.AdjustIo
         //defaults
         private AIActivityPackage activityPackage { get; set; }
 
-        //TODO change ToString() to serializer, possible ServiceStack.Text
-
         internal AIPackageBuilder()
         {
             activityPackage = new AIActivityPackage
