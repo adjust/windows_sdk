@@ -63,7 +63,7 @@ namespace adeven.AdjustIo
         {
             RequestHandler = new AIRequestHandler(this);
 
-            //test file not exists
+            //todo test file not exists
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
             if (storage.FileExists(PackageQueueFilename))
                 storage.DeleteFile(PackageQueueFilename);

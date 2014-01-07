@@ -93,14 +93,11 @@ namespace adeven.AdjustIo
 
             PackageHandler = new AIPackageHandler();
 
-            //test file not exists
+            //todo test file not exists
             IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
             if (storage.FileExists(ActivityStateFilename))
                 storage.DeleteFile(ActivityStateFilename);
 
-            //we can run synchronously because there is no result
-            //see http://stackoverflow.com/questions/5095183/how-would-i-run-an-async-taskt-method-synchronously
-            //RestoreActivityStateAsync().Wait();
             ReadActivityState();
 
             await InternalStartAsync();

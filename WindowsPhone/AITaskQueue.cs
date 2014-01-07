@@ -14,7 +14,7 @@ namespace adeven.AdjustIo
 
         internal string Name { get; private set; }
 
-        public AITaskQueue(string name)
+        internal AITaskQueue(string name)
         {
             Name = name;
             TaskQueue = new Queue<Func<Task>>();
@@ -30,9 +30,6 @@ namespace adeven.AdjustIo
                     WorkEvent.Set();
                 TaskQueue.Enqueue(task);
                 //AILogger.Debug("TaskQueue {0} enqueued {1} task", Name, task.Method.Name); 
-
-
-
             }
         }
 

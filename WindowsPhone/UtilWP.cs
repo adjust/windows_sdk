@@ -14,14 +14,14 @@ using System.Linq;
 
 namespace adeven.AdjustIo
 {
-    public static class Util
+    static class Util
     {
         //public const string BaseUrl = "https://app.adjust.io";
         public const string BaseUrl = "https://stage.adjust.io";
         public const string ClientSdk = "winphone1.0";
         public const string LogTag = "AdjustIo";
 
-        public static string GetDeviceId()
+        internal static string GetDeviceId()
         {
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
@@ -41,25 +41,6 @@ namespace adeven.AdjustIo
 
             md5.Value = input;
             return md5.FingerPrint;
-        }
-
-        public static string GetUserAgent()
-        {
-            StringBuilder builder = new StringBuilder();
-            builder.Append(getAppName());
-            builder.Append(" " + getAppVersion());
-            builder.Append(" " + getAppAuthor());
-            builder.Append(" " + getAppPublisher());
-            builder.Append(" " + getDeviceType());
-            builder.Append(" " + getDeviceName());
-            builder.Append(" " + getDeviceManufacturer());
-            builder.Append(" " + getOsName());
-            builder.Append(" " + getOsVersion());
-            builder.Append(" " + getLanguage());
-            builder.Append(" " + getCountry());
-
-            string userAgent = builder.ToString();
-            return userAgent;
         }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
@@ -85,7 +66,7 @@ namespace adeven.AdjustIo
                 return String.Format("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
-        public static double SecondsFormat(this DateTime? date)
+        internal static double SecondsFormat(this DateTime? date)
         {
             if (date == null)
                 return -1;
@@ -95,12 +76,66 @@ namespace adeven.AdjustIo
             return diff.TotalSeconds;
         }
 
-        public static double SecondsFormat(this TimeSpan? timeSpan)
+        internal static double SecondsFormat(this TimeSpan? timeSpan)
         {
             if (timeSpan == null)
                 return -1;
             else
                 return  timeSpan.Value.TotalSeconds;
+        }
+
+        #region Serialization
+        internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
+        {
+            if (timeSpan.HasValue)
+                return timeSpan.Value.Ticks;
+            else
+                return -1;
+        }
+
+        internal static Int64 SerializeDatetimeToLong(DateTime? dateTime)
+        {
+            if (dateTime.HasValue)
+                return dateTime.Value.Ticks;
+            else
+                return -1;
+        }
+
+        internal static TimeSpan? DeserializeTimeSpanFromLong(Int64 ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new TimeSpan(ticks);
+        }
+
+        internal static DateTime? DeserializeDateTimeFromLong(Int64 ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new DateTime(ticks);
+        }
+        #endregion
+
+        #region User Agent
+        internal static string GetUserAgent()
+        {
+            StringBuilder builder = new StringBuilder();
+            builder.Append(getAppName());
+            builder.Append(" " + getAppVersion());
+            builder.Append(" " + getAppAuthor());
+            builder.Append(" " + getAppPublisher());
+            builder.Append(" " + getDeviceType());
+            builder.Append(" " + getDeviceName());
+            builder.Append(" " + getDeviceManufacturer());
+            builder.Append(" " + getOsName());
+            builder.Append(" " + getOsVersion());
+            builder.Append(" " + getLanguage());
+            builder.Append(" " + getCountry());
+
+            string userAgent = builder.ToString();
+            return userAgent;
         }
 
         private static string getDeviceManufacturer()
@@ -251,5 +286,6 @@ namespace adeven.AdjustIo
 
             return result;
         }
+        #endregion
     }
 }

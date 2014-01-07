@@ -15,30 +15,20 @@ namespace adeven.AdjustIo
     class AIRequestHandler
     {
         private BackgroundWorker Worker;
-        private string ParamString;
-        private ManualResetEvent AllDone;
         private AIPackageHandler PackageHandler;
-        private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);
+        private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
-        internal string SuccessMessage { get; set; }
-        internal string FailureMessage { get; set; }
         internal bool IsBusy { get { return Worker.IsBusy; } }
-
-        private class RequestState
-        {
-            public AIActivityPackage package;
-            public WebRequest request;
-            public DoWorkEventArgs eventArgs;
-        }
 
         internal AIRequestHandler(AIPackageHandler packageHandler)
         {
-            AllDone = new ManualResetEvent(false);
-
             Worker = new BackgroundWorker();
             Worker.WorkerSupportsCancellation = true;
+
+            //choose implementation Native (WebRequest) or Library (Microsoft.Net.Http)
             //Worker.DoWork += new DoWorkEventHandler(SendPackageWebRequest);
             Worker.DoWork += new DoWorkEventHandler(SendPackageHttpClient);
+            
             Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerSendCompleted);
 
             PackageHandler = packageHandler;
@@ -52,6 +42,7 @@ namespace adeven.AdjustIo
             }
         }
 
+        #region HttpClient
         private void SendPackageHttpClient(object sender, DoWorkEventArgs eventArgs)
         {
             SendPackageHttpClientAsync(eventArgs).Wait();
@@ -60,8 +51,7 @@ namespace adeven.AdjustIo
         private async Task SendPackageHttpClientAsync(DoWorkEventArgs eventArgs)
         {
             var package = eventArgs.Argument as AIActivityPackage;
-            var url = Util.BaseUrl + "x" + package.Path;
-
+            
             try
             {
                 using (var httpClient = new HttpClient())
@@ -70,6 +60,7 @@ namespace adeven.AdjustIo
                     httpClient.DefaultRequestHeaders.Add("Client-SDK", package.ClientSdk);
                     httpClient.DefaultRequestHeaders.Add("User-Agent", package.UserAgent);
 
+                    var url = Util.BaseUrl + package.Path;
                     using (var httpResponseMessage = await httpClient.PostAsync(
                         url, new FormUrlEncodedContent(package.Parameters)))
                     using (var content = httpResponseMessage.Content)
@@ -78,54 +69,66 @@ namespace adeven.AdjustIo
                         {
                             AILogger.Info("{0}", package.SuccessMessage());
                         }
-                        else
+                        else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   //500
+                            || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         //501
                         {
-                            AILogger.Error("{0}, Status not OK: {1}, Response: {2}", package.FailureMessage()
+                            AILogger.Error("{0}. Status {1} and response: {2}."
+                                                                        , package.FailureMessage()
                                                                         , httpResponseMessage.StatusCode
                                                                         , await content.ReadAsStringAsync());
+                        }
+                        else
+                        {
+                            AILogger.Error("{0}. Status {1} and response: {2}. Will try again later."
+                                                                        , package.FailureMessage()
+                                                                        , httpResponseMessage.StatusCode
+                                                                        , await content.ReadAsStringAsync());
+                            eventArgs.Cancel = true;
                         }
                     }
                 }
             }
+            catch (WebException we)
+            {
+                using (var response = we.Response as HttpWebResponse)
+                {
+                    AILogger.Error("{0}. WebException with Status {1} and response: '{2}'. Will retry later"
+                                    , package.FailureMessage()
+                                    , response.StatusCode
+                                    , readResponse(response));
+                }
+                eventArgs.Cancel = true;
+            }
             catch (Exception ex)
             {
-                AILogger.Error("{0}. ({1}) Will retry later", package.FailureMessage(), ex.Message);
+                AILogger.Error("{0}. Exception: {1}. Will retry later", package.FailureMessage(), ex.Message);
                 eventArgs.Cancel = true;
             }
         }
+        #endregion
 
+        #region WebRequest
         private void SendPackageWebRequest(object sender, DoWorkEventArgs eventArgs)
         {
-            var package = eventArgs.Argument as AIActivityPackage;
-
-            var url = Util.BaseUrl + package.Path;
-
-            var request = WebRequest.Create(url);
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.Method = "POST";
-            request.Headers["Client-SDK"] = package.ClientSdk;
-            request.Headers["User-Agent"] = package.UserAgent;
-
-            var sendPackageTask = SendRequestPackageAsync(request, package, eventArgs);
-
-            var completedTask = TaskEx.WhenAny(sendPackageTask, Task.Delay(Timeout));
-            completedTask.Wait();
-
-            if (sendPackageTask.Status == TaskStatus.RanToCompletion
-                || sendPackageTask.Status == TaskStatus.Canceled
-                || sendPackageTask.Status == TaskStatus.Faulted)
-                return;
-            else
-            {
-                request.Abort();
-                eventArgs.Cancel = true;
-            }
+            SendRequestPackageAsync(eventArgs).Wait();
         }
 
-        private async Task SendRequestPackageAsync(WebRequest request, AIActivityPackage package, DoWorkEventArgs eventArgs)
+        private async Task SendRequestPackageAsync(DoWorkEventArgs eventArgs)
         {
+            var package = eventArgs.Argument as AIActivityPackage;
             try
             {
+                var url = Util.BaseUrl + package.Path;
+                //var url = "http://www.google.com:81";
+                //"http://www.google.com:81"; //timeout test
+                //"invalid site"
+
+                var request = WebRequest.Create(url);
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.Method = "POST";
+                request.Headers["Client-SDK"] = package.ClientSdk;
+                request.Headers["User-Agent"] = package.UserAgent;
+
                 var postStreamTask = request.GetRequestStreamAsync();
 
                 var paramString = Util.GetStringEncodedParameters(package.Parameters);
@@ -135,19 +138,20 @@ namespace adeven.AdjustIo
 
                 var postStream = await postStreamTask;
                 // Write to the request stream
-                postStream.Write(byteArray, 0, ParamString.Length);
+                postStream.Write(byteArray, 0, paramString.Length);
                 postStream.Dispose();
 
                 using (var webResponse = await request.GetResponseAsync() as HttpWebResponse)
                 {
-                    var responseString = readResponse(webResponse);
-                    if (responseString == "OK")
+                    if (webResponse.StatusCode == HttpStatusCode.OK)
                     {
                         AILogger.Info("{0}", package.SuccessMessage());
                     }
                     else
                     {
-                        AILogger.Error("Status not OK {0}. ({1})", package.FailureMessage(), responseString.Trim());
+                        AILogger.Error("{0}, Status not OK: {1} and response: '{2}'", package.FailureMessage()
+                                                                                , webResponse.StatusCode
+                                                                                , readResponse(webResponse));
                     }
                 }
             }
@@ -155,30 +159,29 @@ namespace adeven.AdjustIo
             {
                 using (var response = we.Response as HttpWebResponse)
                 {
-                    var responseString = readResponse(response);
-                    AILogger.Error("WebException {0}. ({1}) Will retry later", package.FailureMessage(), responseString.Trim());
+                    AILogger.Error("{0}. WebException with Status {1} and response: '{2}'. Will retry later"
+                                    , package.FailureMessage()
+                                    , response.StatusCode
+                                    , readResponse(response));
                 }
                 eventArgs.Cancel = true;
             }
             catch (Exception ex)
             {
-                AILogger.Error("{0}. ({1}) Will retry later", package.FailureMessage(), ex.Message);
+                AILogger.Error("{0}. Exception: {1}. Will retry later", package.FailureMessage(), ex.Message);
                 eventArgs.Cancel = true;
             }
         }
-        
+
         private static string readResponse(HttpWebResponse response)
         {
-            var streamResponse = response.GetResponseStream();
-            var streamReader = new StreamReader(streamResponse);
-            var responseString = streamReader.ReadToEnd().Trim();
-
-            // Close the stream object
-            streamReader.Close();
-            streamResponse.Close();
-
-            return responseString;
+            using (var streamResponse = response.GetResponseStream())
+            using (var streamReader = new StreamReader(streamResponse))
+            {
+                return streamReader.ReadToEnd().Trim();
+            }
         }
+        #endregion
 
         private void WorkerSendCompleted(object sender, RunWorkerCompletedEventArgs e)
         {

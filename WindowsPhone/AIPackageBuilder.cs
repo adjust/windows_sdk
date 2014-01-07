@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace adeven.AdjustIo
 {
-    public class AIPackageBuilder
+    class AIPackageBuilder
     {
         //general
         internal string AppToken { get; set; }
