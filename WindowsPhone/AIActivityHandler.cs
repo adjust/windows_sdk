@@ -222,11 +222,11 @@ namespace adeven.AdjustIo
                 AILogger.Verbose("Restored activity state {0}", ActivityState);
                 return;
             }
-            catch (IsolatedStorageException ise)
+            catch (IsolatedStorageException)
             {
                 AILogger.Verbose("Activity state file not found");
             }
-            catch(FileNotFoundException fnfe)
+            catch(FileNotFoundException)
             {
                 AILogger.Verbose("Activity state file not found");
             }

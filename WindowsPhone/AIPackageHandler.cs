@@ -124,7 +124,7 @@ namespace adeven.AdjustIo
                 }
                 AILogger.Debug("Package handler wrote {0} packages", PackageQueue.Count);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 AILogger.Error("Failed to write package queue");
             }
@@ -142,11 +142,11 @@ namespace adeven.AdjustIo
                 AILogger.Verbose("Package Handler read {0} packages", PackageQueue.Count);
                 return;
             }
-            catch (IsolatedStorageException ise)
+            catch (IsolatedStorageException)
             {
                 AILogger.Verbose("Package queue file not found");
             }
-            catch (FileNotFoundException fnfe)
+            catch (FileNotFoundException)
             {
                 AILogger.Verbose("Package queue file not found");
             }
