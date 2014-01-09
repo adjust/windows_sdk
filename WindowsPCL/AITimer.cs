@@ -4,24 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
+using WindowsLibrary;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
     class AITimer
     {
-        private Timer TimeKeeper;
+        //using wrapper for Timer, reason: http://stackoverflow.com/questions/12555049/timer-in-portable-library
+        private PCLTimer TimeKeeper;
         private TimeSpan TimeInterval;
         private bool IsSuspended;
 
-        private object State;
-
-        internal AITimer(TimerCallback timerCallback, object state, TimeSpan timeInterval)
+        internal AITimer(PCLTimerCallback timerCallback, object state, TimeSpan timeInterval)
         {
             TimeInterval = timeInterval;
             
             IsSuspended = true;
-            TimeKeeper = new Timer(timerCallback, state
+            TimeKeeper = new PCLTimer(timerCallback, state
                 , Timeout.Infinite, Timeout.Infinite);
         }
 

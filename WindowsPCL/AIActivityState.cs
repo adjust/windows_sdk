@@ -6,7 +6,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
     class AIActivityState
     {

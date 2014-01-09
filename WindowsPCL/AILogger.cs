@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
     public enum AILogLevel
     {
@@ -16,10 +16,10 @@ namespace adeven.AdjustIo
         AILogLevelAssert,
     };
 
-    static class AILogger
+    public static class AILogger
     {
-        internal static string LogTag { get; set; }
-        internal static AILogLevel LogLevel{ get; set; }
+        public static string LogTag { get; set; }
+        public static AILogLevel LogLevel{ get; set; }
 
         static AILogger()
         {
@@ -27,32 +27,32 @@ namespace adeven.AdjustIo
             LogLevel = AILogLevel.AILogLevelInfo;
         }
 
-        internal static void Verbose(string message, params object[] parameters)
+        public static void Verbose(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelVerbose, message, parameters);
         }
 
-        internal static void Debug(string message, params object[] parameters)
+        public static void Debug(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelDebug, message, parameters);
         }
 
-        internal static void Info(string message, params object[] parameters)
+        public static void Info(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelInfo, message, parameters);
         }
 
-        internal static void Warn(string message, params object[] parameters)
+        public static void Warn(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelWarn, message, parameters);
         }
 
-        internal static void Error(string message, params object[] parameters)
+        public static void Error(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelError, message, parameters);
         }
 
-        internal static void Assert(string message, params object[] parameters)
+        public static void Assert(string message, params object[] parameters)
         {
             LoggingLevel(AILogLevel.AILogLevelAssert, message, parameters);
         }

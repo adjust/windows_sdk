@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
     class AIPackageBuilder
     {

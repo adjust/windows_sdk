@@ -5,31 +5,31 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
-    class AITaskQueue
+    class AIActionQueue
     {
-        private Queue<Func<Task>> TaskQueue;
+        private Queue<Action> ActionQueue;
         private ManualResetEvent WorkEvent;
 
         internal string Name { get; private set; }
 
-        internal AITaskQueue(string name)
+        internal AIActionQueue(string name)
         {
             Name = name;
-            TaskQueue = new Queue<Func<Task>>();
+            ActionQueue = new Queue<Action>();
             WorkEvent = new ManualResetEvent(false);
             Task.Factory.StartNew(() => ProcessTaskQueue(), TaskCreationOptions.LongRunning);
         }
 
-        internal void Enqueue(Func<Task> task)
+        internal void Enqueue(Action task)
         {
-            lock (TaskQueue)
+            lock (ActionQueue)
             {
-                if (TaskQueue.Count == 0)
+                if (ActionQueue.Count == 0)
                     WorkEvent.Set();
-                TaskQueue.Enqueue(task);
-                //AILogger.Debug("TaskQueue {0} enqueued {1} task", Name, task.Method.Name); 
+                ActionQueue.Enqueue(task);
+                AILogger.Verbose("ActionQueue {0} enqueued", Name); 
             }
         }
 
@@ -37,29 +37,29 @@ namespace adeven.AdjustIo
         {
             while (true)
             {
-                //AILogger.Debug("TaskQueue {0} waiting", Name);
+                AILogger.Debug("ActionQueue {0} waiting", Name);
                 WorkEvent.WaitOne();
                 while (true)
                 {
-                    Func<Task> task;
-                    lock (TaskQueue)
+                    Action action;
+                    lock (ActionQueue)
                     {
-                        //AILogger.Debug("TaskQueue {0} got {1} tasks to process", Name, TaskQueue.Count);
-                        if (TaskQueue.Count == 0)
+                        AILogger.Debug("ActionQueue {0} got {1} action to process", Name, ActionQueue.Count);
+                        if (ActionQueue.Count == 0)
                         {
                             WorkEvent.Reset();
                             break;
                         }
-                        task = TaskQueue.Dequeue();
-                        //AILogger.Debug("TaskQueue {0} dequeued {1} task", Name, task.Method.Name);
+                        action = ActionQueue.Dequeue();
+                        AILogger.Debug("ActionQueue  {0} dequeued", Name);
                     }
                     try
                     {
-                        task().Wait();
+                        action();
                     }
                     catch (Exception ex)
                     {
-                        AILogger.Error("TaskQueue {0} with exception ({1})", Name, ex);
+                        AILogger.Error("ActionQueue {0} with exception ({1})", Name, ex);
                     }
                 }
             }

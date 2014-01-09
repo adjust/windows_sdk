@@ -1,109 +1,114 @@
-﻿using System;
+﻿using PCLStorage;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.IsolatedStorage;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
-using Windows.Foundation;
-using Windows.Storage;
-using Windows.Storage.Streams;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
-    internal class AIActivityHandler
+    public class AIActivityHandler
     {
         private const string ActivityStateFilename = "AdjustIOActivityState";
-        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 0, 10);//todo 10 seconds          // 30 minutes
-        private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1);        // 1 second 
-        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 0, 5);//todo 5 sec             // 1 minute
+        private static readonly TimeSpan SessionInterval =      new TimeSpan(0, 30,  0);    // 30 minutes
+        private static readonly TimeSpan SubSessionInterval =   new TimeSpan(0,  0,  1);      // 1 second 
+        private static readonly TimeSpan TimerInterval =        new TimeSpan(0,  1,  0);      // 1 minute
 
-        //private static AIRequestHandler RequestHandler = new AIRequestHandler();
-        private static AIPackageHandler PackageHandler = new AIPackageHandler();
-        private static AIActivityState ActivityState = null;
-        private static AITimer TimeKeeper = null;
+        private AIPackageHandler PackageHandler = new AIPackageHandler();
+        private AIActivityState ActivityState = null;
+        private AITimer TimeKeeper = null;
 
-        private static string AppToken;
-        private static string MacSha1;
-        private static string MacShortMd5;
-        private static string IdForAdvertisers;
-        private static string FbAttributionId;
-        private static string UserAgent;
-        private static string ClientSdk;
-        private static bool IsTrackingEnabled;
+        private string AppToken;
+        private string MacSha1; //todo generate a sha1?
+        private string MacShortMd5;
+        private string IdForAdvertisers;
+        private string FbAttributionId;
+        private string UserAgent;
+        private string ClientSdk;
+        private bool IsTrackingEnabled;
+        private string DeviceId;
 
-        internal static string Environment { get; private set; }
-        internal static bool IsBufferedEventsEnabled { get; private set; }
+        public string Environment { get; private set; }
+        public static bool IsBufferedEventsEnabled { get; private set; }
+
+        public delegate string GetMd5Hash(string input);
+
+        private GetMd5Hash Md5Function;
 
         //private static NitoTaskQueue InternalQueue;
-        private static AITaskQueue InternalQueue;
+        private static AIActionQueue InternalQueue;
 
-        internal AIActivityHandler(string appToken)
+        public class DeviceUtil
         {
-            InternalQueue = new AITaskQueue("io.adjust.ActivityQueue");
-            AIActivityHandler.Environment = "unknown";
-            AIActivityHandler.ClientSdk = Util.ClientSdk;
-
-            InternalQueue.Enqueue(() => InitInternalAsync(appToken));
+            public string DeviceId;
+            public string ClientSdk;
+            public string UserAgent;
+            public GetMd5Hash Md5Function;
         }
 
-        internal void SetEnvironment(string enviornment)
+        public AIActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
-            AIActivityHandler.Environment = enviornment;
+            InternalQueue = new AIActionQueue("io.adjust.ActivityQueue");
+            Environment = "unknown";
+            ClientSdk = deviceUtil.ClientSdk;
+            DeviceId = deviceUtil.DeviceId;
+            UserAgent = deviceUtil.UserAgent;
+            Md5Function = deviceUtil.Md5Function;
+
+            InternalQueue.Enqueue(() => InitInternal(appToken));
         }
 
-        internal void SetBufferedEvents(bool enabledEventBuffering)
+        public void SetEnvironment(string enviornment)
         {
-            AIActivityHandler.IsBufferedEventsEnabled = enabledEventBuffering;
+            Environment = enviornment;
         }
 
-        internal void TrackSubsessionStart()
+        public void SetBufferedEvents(bool enabledEventBuffering)
         {
-            InternalQueue.Enqueue(() => InternalStartAsync());
+            IsBufferedEventsEnabled = enabledEventBuffering;
         }
 
-        internal void TrackSubsessionEnd()
+        public void TrackSubsessionStart()
         {
-            InternalQueue.Enqueue(() => InternalEndAsync());
+            InternalQueue.Enqueue(InternalStart);
         }
 
-        internal void TrackEvent(string eventToken,
+        public void TrackSubsessionEnd()
+        {
+            InternalQueue.Enqueue(InternalEndAsync);
+        }
+
+        public void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
-            InternalQueue.Enqueue(() => InternalTrackEventAsync(eventToken, callbackParameters));
+            InternalQueue.Enqueue(() => InternalTrackEvent(eventToken, callbackParameters));
         }
 
-        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        public void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
-            InternalQueue.Enqueue(() => InternalTrackRevenueAsync (amountInCents, eventToken, callbackParameters));
+            InternalQueue.Enqueue(() => InternalTrackRevenue (amountInCents, eventToken, callbackParameters));
         }
 
-        private async Task InitInternalAsync(string appToken)
+        private void InitInternal(string appToken)
         {
-            AIActivityHandler.AppToken = appToken;
-            //AIActivityHandler.MacSha1 = Util.GetDeviceId();
-            AIActivityHandler.MacShortMd5 = Util.GetMd5Hash(Util.GetDeviceId());
-            AIActivityHandler.IdForAdvertisers = "";
-            AIActivityHandler.FbAttributionId = "";
-            AIActivityHandler.IsTrackingEnabled = false;
-            AIActivityHandler.UserAgent = Util.GetUserAgent();
-            AIActivityHandler.IsBufferedEventsEnabled = false;
+            AppToken = appToken;
+            //MacSha1 = Util.GetDeviceId();
+            MacShortMd5 = Md5Function(DeviceId);
+            IdForAdvertisers = "";
+            FbAttributionId = "";
+            IsTrackingEnabled = false;
+            IsBufferedEventsEnabled = false;
 
             PackageHandler = new AIPackageHandler();
 
             //todo test file not exists
-            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
-            if (storage.FileExists(ActivityStateFilename))
-                storage.DeleteFile(ActivityStateFilename);
+            Util.DeleteFile(ActivityStateFilename);
 
             ReadActivityState();
 
-            await InternalStartAsync();
+            InternalStart();
         }
 
-        private async Task InternalTrackEventAsync(string eventToken,
+        private void InternalTrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
             var tcs = new TaskCompletionSource<object>();
@@ -142,7 +147,7 @@ namespace adeven.AdjustIo
             AILogger.Debug("Event {0}", ActivityState.EventCount);
         }
 
-        private async Task InternalTrackRevenueAsync(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        private void InternalTrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckActivityState(ActivityState)) return;
@@ -184,62 +189,34 @@ namespace adeven.AdjustIo
         {
             var packageBuilder = new AIPackageBuilder
             {
-                UserAgent = AIActivityHandler.UserAgent,
-                ClientSdk = AIActivityHandler.ClientSdk,
-                AppToken = AIActivityHandler.AppToken,
-                MacShortMD5 = AIActivityHandler.MacShortMd5,
-                MacSha1 = AIActivityHandler.MacSha1,
-                IsTrackingEnable = AIActivityHandler.IsTrackingEnabled,
-                IdForAdvertisers = AIActivityHandler.IdForAdvertisers,
-                FbAttributionId = AIActivityHandler.FbAttributionId,
-                Environment = AIActivityHandler.Environment,
+                UserAgent           = UserAgent,
+                ClientSdk           = ClientSdk,
+                AppToken            = AppToken,
+                MacShortMD5         = MacShortMd5,
+                MacSha1             = MacSha1,
+                IsTrackingEnable    = IsTrackingEnabled,
+                IdForAdvertisers    = IdForAdvertisers,
+                FbAttributionId     = FbAttributionId,
+                Environment         = Environment,
             };
             return packageBuilder;
         }
 
-        #region ActivityStateIO
-        
         private void WriteActivityState()
         {
-            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
-
-            using (var stream = storage.OpenFile(ActivityStateFilename, FileMode.OpenOrCreate))
-            {
-                stream.Seek(0, SeekOrigin.Begin);
-                AIActivityState.SerializeToStream(stream, ActivityState);
-            }
+            Util.SerializeToFile(ActivityStateFilename, AIActivityState.SerializeToStream, ActivityState);
         }
 
         private void ReadActivityState()
         {
-            IsolatedStorageFile storage = IsolatedStorageFile.GetUserStoreForApplication();
-            try
+            if (!Util.TryDeserializeFromFile(ActivityStateFilename,
+                AIActivityState.DeserializeFromStream
+                , out ActivityState))
             {
-                using (var stream = storage.OpenFile(ActivityStateFilename, FileMode.Open))
-                {
-                    ActivityState = AIActivityState.DeserializeFromStream(stream);
-                }
-                AILogger.Verbose("Restored activity state {0}", ActivityState);
-                return;
+                //error read, start with fresh
+                ActivityState = null;
             }
-            catch (IsolatedStorageException)
-            {
-                AILogger.Verbose("Activity state file not found");
-            }
-            catch(FileNotFoundException)
-            {
-                AILogger.Verbose("Activity state file not found");
-            }
-            catch (Exception e)
-            {
-                AILogger.Error("Failed to read activity state ({0})", e);
-            }
-            
-            //start with a fresh activity state in case of any exception
-            ActivityState = null;
         }
-
-        #endregion
 
         //return whether or not activity state should be written
         private bool UpdateActivityState()
@@ -269,7 +246,7 @@ namespace adeven.AdjustIo
         }
 
         #region Sessions
-        private async Task InternalStartAsync()
+        private void InternalStart()
         {
             if (!CheckAppToken(AppToken)) return;
             if (!CheckAppTokenLength(AppToken)) return;
@@ -339,7 +316,7 @@ namespace adeven.AdjustIo
             }
         }
 
-        private async Task InternalEndAsync()
+        private void InternalEndAsync()
         {
             if (!CheckAppToken(AppToken)) return;
 
@@ -379,10 +356,10 @@ namespace adeven.AdjustIo
 
         private void SystemThreadingTimer(object state)
         {
-            InternalQueue.Enqueue(() => TimerFiredAsync());
+            InternalQueue.Enqueue(TimerFired);
         }
 
-        private async Task TimerFiredAsync()
+        private void TimerFired()
         {
             PackageHandler.SendFirstPackage();
             if (UpdateActivityState())

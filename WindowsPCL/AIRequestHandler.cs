@@ -10,43 +10,43 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo
+namespace adeven.AdjustIo.PCL
 {
-    class AIRequestHandler
+    internal class AIRequestHandler
     {
-        private BackgroundWorker Worker;
-        private AIPackageHandler PackageHandler;
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
-        internal bool IsBusy { get { return Worker.IsBusy; } }
+        private AIPackageHandler PackageHandler;
+        private Task<bool> RunningTask;
 
+        private bool IsRunning { get { return RunningTask.Status == TaskStatus.Running; } }
+        
         internal AIRequestHandler(AIPackageHandler packageHandler)
         {
-            Worker = new BackgroundWorker();
-            Worker.WorkerSupportsCancellation = true;
-            Worker.DoWork += new DoWorkEventHandler(SendPackageHttpClient);
-            Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerSendCompleted);
-
             PackageHandler = packageHandler;
+            RunningTask = new Task<bool>(() => SendPackageHttpClient());
         }
 
-        internal void SendPackage(AIActivityPackage package)
+        internal bool TrySendFirstPackage()
         {
-            if (Worker.IsBusy != true)
-            {
-                Worker.RunWorkerAsync(package);
+            lock (RunningTask)
+            { 
+                if (!IsRunning)
+                {
+                    RunningTask = Task.Factory.StartNew(() => SendPackageHttpClient());
+                    RunningTask.ContinueWith((success) => PackageSent(success));
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
         }
 
-        private void SendPackageHttpClient(object sender, DoWorkEventArgs eventArgs)
+        private bool SendPackageHttpClient()
         {
-            SendPackageHttpClientAsync(eventArgs).Wait();
-        }
-
-        private async Task SendPackageHttpClientAsync(DoWorkEventArgs eventArgs)
-        {
-            var package = eventArgs.Argument as AIActivityPackage;
-            
+            var package = PackageHandler.FirstPackage();
             try
             {
                 using (var httpClient = new HttpClient())
@@ -56,13 +56,17 @@ namespace adeven.AdjustIo
                     httpClient.DefaultRequestHeaders.Add("User-Agent", package.UserAgent);
 
                     var url = Util.BaseUrl + package.Path;
-                    using (var httpResponseMessage = await httpClient.PostAsync(
-                        url, new FormUrlEncodedContent(package.Parameters)))
+
+                    using (var httpResponseMessage = httpClient.PostAsync(
+                        url, new FormUrlEncodedContent(package.Parameters)).Result)
                     using (var content = httpResponseMessage.Content)
                     {
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
                             AILogger.Info("{0}", package.SuccessMessage());
+
+                            //PackageHandler.SendNextPackage();
+                            return true;
                         }
                         else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   //500
                             || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         //501
@@ -70,15 +74,17 @@ namespace adeven.AdjustIo
                             AILogger.Error("{0}. Status {1} and response: {2}."
                                                                         , package.FailureMessage()
                                                                         , httpResponseMessage.StatusCode
-                                                                        , await content.ReadAsStringAsync());
+                                                                        , content.ReadAsStringAsync().Result);
+
+                            //PackageHandler.SendNextPackage();
+                            return true;
                         }
                         else
                         {
                             AILogger.Error("{0}. Status {1} and response: {2}. Will try again later."
                                                                         , package.FailureMessage()
                                                                         , httpResponseMessage.StatusCode
-                                                                        , await content.ReadAsStringAsync());
-                            eventArgs.Cancel = true;
+                                                                        , content.ReadAsStringAsync().Result);
                         }
                     }
                 }
@@ -86,45 +92,30 @@ namespace adeven.AdjustIo
             catch (WebException we)
             {
                 using (var response = we.Response as HttpWebResponse)
+                using (var streamResponse = response.GetResponseStream())
+                using (var streamReader = new StreamReader(streamResponse))
                 {
                     AILogger.Error("{0}. WebException with Status {1} and response: '{2}'. Will retry later"
                                     , package.FailureMessage()
                                     , response.StatusCode
-                                    , readResponse(response));
+                                    , streamReader.ReadToEnd().Trim());
                 }
-                eventArgs.Cancel = true;
             }
             catch (Exception ex)
             {
                 AILogger.Error("{0}. Exception: {1}. Will retry later", package.FailureMessage(), ex.Message);
-                eventArgs.Cancel = true;
             }
-        }
-        
-        private static string readResponse(HttpWebResponse response)
-        {
-            using (var streamResponse = response.GetResponseStream())
-            using (var streamReader = new StreamReader(streamResponse))
-            {
-                return streamReader.ReadToEnd().Trim();
-            }
+
+            //PackageHandler.CloseFirstPackage();
+            return false;
         }
 
-        private void WorkerSendCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void PackageSent(Task<bool> WasSuccessful)
         {
-            if (e.Cancelled == true)
-            {
-                PackageHandler.CloseFirstPackage();
-            }
-            else 
-            if (!(e.Error == null))
-            {
-                PackageHandler.CloseFirstPackage();
-            }
-            else
-            {
+            if (WasSuccessful.Result)
                 PackageHandler.SendNextPackage();
-            }
+            else
+                PackageHandler.CloseFirstPackage();
         }
     }
 }
