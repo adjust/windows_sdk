@@ -25,74 +25,64 @@ namespace adeven.AdjustIo.PCL
         private string UserAgent;
         private string ClientSdk;
         private bool IsTrackingEnabled;
-        private string DeviceId;
+//      private string DeviceId;
 
         public string Environment { get; private set; }
         public static bool IsBufferedEventsEnabled { get; private set; }
 
-        public delegate string GetMd5Hash(string input);
-
-        private GetMd5Hash Md5Function;
-
         //private static NitoTaskQueue InternalQueue;
-        private static AIActionQueue InternalQueue;
+        private AIActionQueue InternalQueue;
 
-        public class DeviceUtil
-        {
-            public string DeviceId;
-            public string ClientSdk;
-            public string UserAgent;
-            public GetMd5Hash Md5Function;
-        }
+        private DeviceUtil DeviceSpecific;
+        
 
-        public AIActivityHandler(string appToken, DeviceUtil deviceUtil)
+        internal AIActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
+            DeviceSpecific = deviceUtil;
+            AppToken = appToken;
+
             InternalQueue = new AIActionQueue("io.adjust.ActivityQueue");
-            Environment = "unknown";
-            ClientSdk = deviceUtil.ClientSdk;
-            DeviceId = deviceUtil.DeviceId;
-            UserAgent = deviceUtil.UserAgent;
-            Md5Function = deviceUtil.Md5Function;
-
-            InternalQueue.Enqueue(() => InitInternal(appToken));
+            InternalQueue.Enqueue(() => InitInternal());
         }
 
-        public void SetEnvironment(string enviornment)
+        internal void SetEnvironment(string enviornment)
         {
             Environment = enviornment;
         }
 
-        public void SetBufferedEvents(bool enabledEventBuffering)
+        internal void SetBufferedEvents(bool enabledEventBuffering)
         {
             IsBufferedEventsEnabled = enabledEventBuffering;
         }
 
-        public void TrackSubsessionStart()
+        internal void TrackSubsessionStart()
         {
             InternalQueue.Enqueue(InternalStart);
         }
 
-        public void TrackSubsessionEnd()
+        internal void TrackSubsessionEnd()
         {
             InternalQueue.Enqueue(InternalEndAsync);
         }
 
-        public void TrackEvent(string eventToken,
+        internal void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => InternalTrackEvent(eventToken, callbackParameters));
         }
 
-        public void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => InternalTrackRevenue (amountInCents, eventToken, callbackParameters));
         }
 
-        private void InitInternal(string appToken)
+        private void InitInternal()
         {
-            AppToken = appToken;
+            Environment = "unknown";
+            ClientSdk = DeviceSpecific.ClientSdk;
+            UserAgent = DeviceSpecific.GetUserAgent();
             //MacSha1 = Util.GetDeviceId();
-            MacShortMd5 = Md5Function(DeviceId);
+            MacShortMd5 = DeviceSpecific.GetMd5Hash(DeviceSpecific.GetDeviceId());
             IdForAdvertisers = "";
             FbAttributionId = "";
             IsTrackingEnabled = false;

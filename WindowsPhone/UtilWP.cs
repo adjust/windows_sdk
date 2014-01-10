@@ -1,42 +1,44 @@
-﻿using Microsoft.Phone.Info;
+﻿using adeven.AdjustIo.PCL;
+using Microsoft.Phone.Info;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.IO.IsolatedStorage;
+using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows;
+using System.Threading.Tasks;
 using System.Xml.Linq;
-using Windows.ApplicationModel.Store;
-using PCL = adeven.AdjustIo.PCL;
 
 namespace adeven.AdjustIo
 {
-    static class Util
+    internal class UtilWP : DeviceUtil
     {
-        public const string ClientSdk = "winphone1.0";
-        public const string LogTag = "AdjustIo";
+        public override string AIEnvironmentSandbox { get { return "sandbox"; } }
+        public override string AIEnvironmentProduction { get { return "production"; } }
 
-        internal static string GetDeviceId()
+        public override string ClientSdk { get { return "winphone1.0"; } }
+
+        public override string GetDeviceId()
         {
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
             {
-                PCL.AILogger.Debug("[{0}] This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.", Util.LogTag);
+                AILogger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
                 return null;
             }
-            PCL.AILogger.Debug("Device unique Id ({0})", id);
+            AILogger.Debug("Device unique Id ({0})", id);
 
             string deviceId = Convert.ToBase64String(id as byte[]);
             return deviceId;
         }
 
-        internal static string GetMd5Hash(string input)
+        public override string GetMd5Hash(string input)
         {
             return MD5Core.GetHashString(input);
         }
 
-        #region User Agent
-        internal static string GetUserAgent()
+        public override string GetUserAgent()
         {
             return String.Join(" ", getAppName(),
                                     getAppVersion(),
@@ -51,60 +53,7 @@ namespace adeven.AdjustIo
                                     getCountry());
         }
 
-        private static string getDeviceManufacturer()
-        {
-            string manufacturer = DeviceStatus.DeviceManufacturer;
-            string sanitized = sanitizeString(manufacturer);
-            return sanitized;
-        }
-
-        private static string getDeviceName()
-        {
-            string deviceName = DeviceStatus.DeviceName;
-            string sanitized = sanitizeString(deviceName);
-            return sanitized;
-        }
-
-        private static string getDeviceType()
-        {
-            var deviceType = Microsoft.Devices.Environment.DeviceType;
-            switch (deviceType)
-            {
-                case Microsoft.Devices.DeviceType.Device: return "phone";
-                case Microsoft.Devices.DeviceType.Emulator: return "emulator";
-                default: return "unknown";
-            }
-        }
-
-        private static string getAppId()
-        {
-            Guid guid = CurrentApp.AppId;
-            string appId = guid.ToString();
-            string sanitized = sanitizeString(appId);
-            return sanitized;
-        }
-
-        private static string getAppUrl()
-        {
-            Uri uri = CurrentApp.LinkUri;
-            string url = uri.ToString();
-            string sanitized = sanitizeString(url);
-            return sanitized;
-        }
-
-        private static string getAppFullName()
-        {
-            string fullName = Application.Current.GetType().FullName;
-            string sanitized = sanitizeString(fullName);
-            return sanitized;
-        }
-
-        private static XDocument getManifest()
-        {
-            XDocument manifest = XDocument.Load("WMAppManifest.xml");
-            return manifest;
-        }
-
+        #region User Agent
         private static string getAppName()
         {
             string title = getManifest().Root.Element("App").Attribute("Title").Value;
@@ -140,6 +89,44 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
+        private static string getDeviceType()
+        {
+            var deviceType = Microsoft.Devices.Environment.DeviceType;
+            switch (deviceType)
+            {
+                case Microsoft.Devices.DeviceType.Device: return "phone";
+                case Microsoft.Devices.DeviceType.Emulator: return "emulator";
+                default: return "unknown";
+            }
+        }
+
+        private static string getDeviceName()
+        {
+            string deviceName = DeviceStatus.DeviceName;
+            string sanitized = sanitizeString(deviceName);
+            return sanitized;
+        }
+
+        private static string getDeviceManufacturer()
+        {
+            string manufacturer = DeviceStatus.DeviceManufacturer;
+            string sanitized = sanitizeString(manufacturer);
+            return sanitized;
+        }
+
+        private static string getOsName()
+        {
+            return "windowsphone";
+        }
+
+        private static string getOsVersion()
+        {
+            Version v = System.Environment.OSVersion.Version;
+            string version = string.Format("{0}.{1}", v.Major, v.Minor);
+            string sanitized = sanitizeString(version);
+            return sanitized;
+        }
+
         private static string getLanguage()
         {
             CultureInfo currentCulture = CultureInfo.CurrentUICulture;
@@ -170,17 +157,10 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getOsName()
+        private static XDocument getManifest()
         {
-            return "windowsphone";
-        }
-
-        private static string getOsVersion()
-        {
-            Version v = System.Environment.OSVersion.Version;
-            string version = string.Format("{0}.{1}", v.Major, v.Minor);
-            string sanitized = sanitizeString(version);
-            return sanitized;
+            XDocument manifest = XDocument.Load("WMAppManifest.xml");
+            return manifest;
         }
 
         private static string sanitizeString(string s, string defaultString = "unknown")

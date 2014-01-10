@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WindowsLibrary
+namespace adeven.AdjustIo.PCLnet40
 {
     public delegate void PCLTimerCallback(object state);
 

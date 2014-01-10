@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AdjustApi.cs" />
     <Compile Include="AIActivityHandler.cs" />
     <Compile Include="AIActivityPackage.cs" />
     <Compile Include="AIActivityState.cs" />
@@ -44,6 +45,7 @@
     <Compile Include="AIRequestHandler.cs" />
     <Compile Include="AIActionQueue.cs" />
     <Compile Include="AITimer.cs" />
+    <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilPCL.cs" />
   </ItemGroup>
