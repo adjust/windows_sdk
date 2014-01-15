@@ -3,20 +3,23 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace adeven.AdjustIo.PCL
 {
-    class AIActivityPackage
+    internal class ActivityPackage
     {
-        //data
+        // data
         internal string Path { get; set; }
+
         internal string UserAgent { get; set; }
+
         internal string ClientSdk { get; set; }
+
         internal Dictionary<string, string> Parameters { get; set; }
 
-        //logs
+        // logs
         internal string Kind { get; set; }
+
         internal string Suffix { get; set; }
 
         internal string SuccessMessage()
@@ -56,7 +59,8 @@ namespace adeven.AdjustIo.PCL
         }
 
         #region Serialization
-        internal static void SerializeToStream(Stream stream, AIActivityPackage activityPackage)
+
+        internal static void SerializeToStream(Stream stream, ActivityPackage activityPackage)
         {
             using (var writer = new BinaryWriter(stream))
             {
@@ -68,7 +72,7 @@ namespace adeven.AdjustIo.PCL
 
                 var parametersArray = activityPackage.Parameters.ToArray();
                 writer.Write(parametersArray.Length);
-                for(int i = 0; i < parametersArray.Length; i++)
+                for (int i = 0; i < parametersArray.Length; i++)
                 {
                     writer.Write(parametersArray[i].Key);
                     writer.Write(parametersArray[i].Value);
@@ -76,18 +80,18 @@ namespace adeven.AdjustIo.PCL
             }
         }
 
-        internal static AIActivityPackage DeserializeFromStream(Stream stream)
+        internal static ActivityPackage DeserializeFromStream(Stream stream)
         {
-            AIActivityPackage activityPackage = null;
+            ActivityPackage activityPackage = null;
             using (var reader = new BinaryReader(stream))
             {
-                activityPackage = new AIActivityPackage();
+                activityPackage = new ActivityPackage();
                 activityPackage.Path = reader.ReadString();
                 activityPackage.UserAgent = reader.ReadString();
                 activityPackage.ClientSdk = reader.ReadString();
                 activityPackage.Kind = reader.ReadString();
                 activityPackage.Suffix = reader.ReadString();
-                
+
                 var parameterLength = reader.ReadInt32();
                 activityPackage.Parameters = new Dictionary<string, string>(parameterLength);
 
@@ -97,12 +101,12 @@ namespace adeven.AdjustIo.PCL
                         reader.ReadString(),
                         reader.ReadString()
                     );
-                } 
+                }
             }
             return activityPackage;
         }
 
-        internal static void SerializeListToStream(Stream stream, List<AIActivityPackage> activityPackageList)
+        internal static void SerializeListToStream(Stream stream, List<ActivityPackage> activityPackageList)
         {
             using (var writer = new BinaryWriter(stream))
             {
@@ -110,30 +114,29 @@ namespace adeven.AdjustIo.PCL
                 writer.Write(activityPackageArray.Length);
                 for (int i = 0; i < activityPackageArray.Length; i++)
                 {
-                    AIActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
+                    ActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
                 }
             }
         }
 
-        internal static List<AIActivityPackage> DeserializeListFromStream(Stream stream)
+        internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
         {
-            List<AIActivityPackage> activityPackageList = null;
+            List<ActivityPackage> activityPackageList = null;
             using (var reader = new BinaryReader(stream))
             {
                 var activityPackageLength = reader.ReadInt32();
-                activityPackageList = new List<AIActivityPackage>(activityPackageLength);
+                activityPackageList = new List<ActivityPackage>(activityPackageLength);
 
                 for (int i = 0; i < activityPackageLength; i++)
                 {
                     activityPackageList.Add(
-                        AIActivityPackage.DeserializeFromStream(stream)
+                        ActivityPackage.DeserializeFromStream(stream)
                     );
                 }
             }
             return activityPackageList;
         }
 
-        #endregion
-
+        #endregion Serialization
     }
 }

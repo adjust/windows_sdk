@@ -1,20 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace adeven.AdjustIo.PCL
 {
-    public abstract class DeviceUtil
+    public interface DeviceUtil
     {
-        public abstract string AIEnvironmentSandbox { get; }
-        public abstract string AIEnvironmentProduction { get; }
+        string EnvironmentSandbox { get; }
 
-        public abstract string ClientSdk { get; }
+        string EnvironmentProduction { get; }
 
-        public abstract string GetDeviceId();
-        public abstract string GetUserAgent();
-        public abstract string GetMd5Hash(string input);
+        string ClientSdk { get; }
+
+        string GetDeviceId();
+
+        string GetUserAgent();
+
+        string GetMd5Hash(string input);
+
+        T DeserializeFromFile<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
+            where T : class;
+
+        void SerializeToFile<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
+            where T : class;
     }
 }

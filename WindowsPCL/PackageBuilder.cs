@@ -1,45 +1,51 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace adeven.AdjustIo.PCL
 {
-    class AIPackageBuilder
+    internal class PackageBuilder
     {
-        //general
+        // general
         internal string AppToken { get; set; }
-        internal string MacSha1 { get; set; }
-        internal string MacShortMD5 { get; set; }
-        internal string IdForAdvertisers { get; set; }
-        internal string FbAttributionId { get; set; }
-        internal string Environment { get; set; }
-        internal string UserAgent { get; set; }
-        internal string ClientSdk { get; set; }
-        internal bool IsTrackingEnable { get; set; }
 
-        //session
+        internal string MacShortMD5 { get; set; }
+
+        internal string Environment { get; set; }
+
+        internal string UserAgent { get; set; }
+
+        internal string ClientSdk { get; set; }
+
+        // session
         internal int SessionCount { get; set; }
+
         internal int SubSessionCount { get; set; }
+
         internal DateTime? CreatedAt { get; set; }
+
         internal TimeSpan? SessionLength { get; set; }
+
         internal TimeSpan? TimeSpent { get; set; }
+
         internal TimeSpan? LastInterval { get; set; }
 
-        //events
+        // events
         internal int EventCount { get; set; }
+
         internal string EventToken { get; set; }
-        internal Dictionary<string, string> CallBackParameters { get; set; }
+
+        internal Dictionary<string, string> CallbackParameters { get; set; }
+
         internal double AmountInCents { get; set; }
 
-        //defaults
-        private AIActivityPackage activityPackage { get; set; }
+        // defaults
+        private ActivityPackage activityPackage { get; set; }
 
-        internal AIPackageBuilder()
+        internal PackageBuilder()
         {
-            activityPackage = new AIActivityPackage
+            activityPackage = new ActivityPackage
             {
                 Parameters = new Dictionary<string, string>()
             };
@@ -49,24 +55,20 @@ namespace adeven.AdjustIo.PCL
         {
             activityPackage.UserAgent = this.UserAgent;
             activityPackage.ClientSdk = this.ClientSdk;
-            
-            //general
-            SaveParameter("created_at"      , CreatedAt);
-            SaveParameter("app_token"       , AppToken);
-            SaveParameter("mac_sha1"        , MacSha1);
-            SaveParameter("mac_md5"         , MacShortMD5);
-            SaveParameter("idfa"            , IdForAdvertisers);
-            SaveParameter("fb_id"           , FbAttributionId);
-            SaveParameter("environment"     , Environment);
-            SaveParameter("tracking_enable" , IsTrackingEnable );
-            //    //session related (used for events as well)
-            SaveParameter("session_count"   , SessionCount);
+
+            // general
+            SaveParameter("created_at", CreatedAt);
+            SaveParameter("app_token", AppToken);
+            SaveParameter("mac_md5", MacShortMD5);
+            SaveParameter("environment", Environment);
+            // session related (used for events as well)
+            SaveParameter("session_count", SessionCount);
             SaveParameter("subsession_count", SubSessionCount);
-            SaveParameter("session_length"  , SessionLength);
-            SaveParameter("time_spent"      , TimeSpent);
+            SaveParameter("session_length", SessionLength);
+            SaveParameter("time_spent", TimeSpent);
         }
 
-        internal AIActivityPackage BuildSessionPackage()
+        internal ActivityPackage BuildSessionPackage()
         {
             FillDefaults();
             SaveParameter("last_interval", LastInterval);
@@ -78,7 +80,7 @@ namespace adeven.AdjustIo.PCL
             return activityPackage;
         }
 
-        internal AIActivityPackage BuildEventPackage()
+        internal ActivityPackage BuildEventPackage()
         {
             FillDefaults();
             InjectEventParameters();
@@ -90,7 +92,7 @@ namespace adeven.AdjustIo.PCL
             return activityPackage;
         }
 
-        internal AIActivityPackage BuildRevenuePackage()
+        internal ActivityPackage BuildRevenuePackage()
         {
             FillDefaults();
             SaveParameter("amount", AmountInCents.ToString());
@@ -124,10 +126,11 @@ namespace adeven.AdjustIo.PCL
         {
             SaveParameter("event_count", EventCount);
             SaveParameter("event_token", EventToken);
-            SaveParameter("params", CallBackParameters);
+            SaveParameter("params", CallbackParameters);
         }
 
         #region SaveParameter
+
         private void SaveParameter(string key, string value)
         {
             if (String.IsNullOrEmpty(value))
@@ -142,7 +145,7 @@ namespace adeven.AdjustIo.PCL
                 return;
 
             var timeZone = value.Value.ToString("zzz");
-            var rfc822TimeZone = timeZone.Remove(3,1);
+            var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.Value.ToString("yyyy-MM-ddTHH:mm:ss");
             var sDateTime = String.Format("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
             activityPackage.Parameters.Add(key, sDateTime);
@@ -183,6 +186,6 @@ namespace adeven.AdjustIo.PCL
             activityPackage.Parameters.Add(key, encoded);
         }
 
-        #endregion
+        #endregion SaveParameter
     }
 }

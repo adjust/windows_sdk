@@ -1,59 +1,121 @@
 ﻿using adeven.AdjustIo.PCL;
 using Microsoft.Phone.Info;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
+using System.IO;
+using System.IO.IsolatedStorage;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace adeven.AdjustIo
 {
     internal class UtilWP : DeviceUtil
     {
-        public override string AIEnvironmentSandbox { get { return "sandbox"; } }
-        public override string AIEnvironmentProduction { get { return "production"; } }
+        public string EnvironmentSandbox { get { return "sandbox"; } }
 
-        public override string ClientSdk { get { return "winphone1.0"; } }
+        public string EnvironmentProduction { get { return "production"; } }
 
-        public override string GetDeviceId()
+        public string ClientSdk { get { return "winphone1.0"; } }
+
+        public string GetDeviceId()
         {
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
             {
-                AILogger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
+                Logger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
                 return null;
             }
-            AILogger.Debug("Device unique Id ({0})", id);
+            Logger.Debug("Device unique Id ({0})", id);
 
             string deviceId = Convert.ToBase64String(id as byte[]);
             return deviceId;
         }
 
-        public override string GetMd5Hash(string input)
+        public string GetMd5Hash(string input)
         {
             return MD5Core.GetHashString(input);
         }
 
-        public override string GetUserAgent()
+        public T DeserializeFromFile<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
+            where T : class
         {
-            return String.Join(" ", getAppName(),
-                                    getAppVersion(),
-                                    getAppAuthor(),
-                                    getAppPublisher(),
-                                    getDeviceType(),
-                                    getDeviceName(),
-                                    getDeviceManufacturer(),
-                                    getOsName(),
-                                    getOsVersion(),
-                                    getLanguage(),
-                                    getCountry());
+            try
+            {
+                T output;
+                using (var storage = IsolatedStorageFile.GetUserStoreForApplication())
+                using (var stream = storage.OpenFile(fileName, FileMode.Open))
+                {
+                    output = ObjectReader(stream);
+                }
+                Logger.Verbose("Read from file {0}", fileName);
+                return output;
+            }
+            //catch (IsolatedStorageException)
+            //{
+            //    Logger.Error("Failed to read file {0} (not found)", fileName);
+            //}
+            //catch (FileNotFoundException)
+            //{
+            //    Logger.Error("Failed to read file {0} (not found)", fileName);
+            //}
+            catch (Exception e)
+            {
+                Logger.Error("Failed to read file {0} ({1})", fileName, e);
+            }
+
+            //start fresh
+            return defaultReturn();
+        }
+
+        public void SerializeToFile<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
+            where T : class
+        {
+            try
+            {
+                using (var storage = IsolatedStorageFile.GetUserStoreForApplication())
+                {
+                    if (storage.FileExists(fileName))
+                        storage.DeleteFile(fileName);
+
+                    using (var stream = storage.CreateFile(fileName))
+                    {
+                        stream.Seek(0, SeekOrigin.Begin);
+                        ObjectWriter(stream, input);
+                    }
+
+                    //using (var stream = storage.OpenFile(filename, FileMode.OpenOrCreate))
+                    //{
+                    //    stream.Seek(0, SeekOrigin.Begin);
+                    //    ObjectWriter(stream, input);
+                    //}
+                }
+                Logger.Verbose("Wrote to file {0}", fileName);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
+            }
+        }
+
+        public string GetUserAgent()
+        {
+            return String.Join(" ",
+                getAppName(),
+                getAppVersion(),
+                getAppAuthor(),
+                getAppPublisher(),
+                getDeviceType(),
+                getDeviceName(),
+                getDeviceManufacturer(),
+                getOsName(),
+                getOsVersion(),
+                getLanguage(),
+                getCountry());
         }
 
         #region User Agent
+
         private static string getAppName()
         {
             string title = getManifest().Root.Element("App").Attribute("Title").Value;
@@ -179,6 +241,7 @@ namespace adeven.AdjustIo
 
             return result;
         }
-        #endregion
+
+        #endregion User Agent
     }
 }

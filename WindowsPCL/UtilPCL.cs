@@ -1,17 +1,16 @@
-﻿using System;
+﻿using PCLStorage;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using PCLStorage;
-using PCLStorage.Exceptions;
 using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace adeven.AdjustIo.PCL
 {
     internal static class Util
     {
         //internal const string BaseUrl = "https://app.adjust.io";
-        internal const string BaseUrl = "https://stage.adjust.io"; // todo remove
+        internal const string BaseUrl = "https://stage.adjust.io"; // TODO remove
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -20,7 +19,7 @@ namespace adeven.AdjustIo.PCL
 
             var stringBuilder = new StringBuilder(EncodedQueryParameter(firstPair, isFirstParameter: true));
 
-            foreach (var pair in parameters.Skip(1))//skips the first &
+            foreach (var pair in parameters.Skip(1))// skips the first "&"
             {
                 stringBuilder.Append(EncodedQueryParameter(pair));
             }
@@ -37,28 +36,60 @@ namespace adeven.AdjustIo.PCL
                 if (activityStateFile != null)
                 {
                     activityStateFile.DeleteAsync().Wait();
-                    AILogger.Verbose("File {0} deleted", filename);
+                    Logger.Verbose("File {0} deleted", filename);
                 }
                 else
                 {
-                    AILogger.Verbose("File {0} doesn't exist to delete", filename);
+                    Logger.Verbose("File {0} doesn't exist to delete", filename);
                 }
             }
             catch (PCLStorage.Exceptions.FileNotFoundException)
             {
-                AILogger.Verbose("File {0} doesn't exist to delete", filename);
+                Logger.Verbose("File {0} doesn't exist to delete", filename);
             }
             catch (Exception)
             {
-                AILogger.Debug("Error deleting {0} file", filename);
+                Logger.Debug("Error deleting {0} file", filename);
             }
         }
 
-        internal static bool TryDeserializeFromFile<T>(string fileName, Func<Stream,T> ObjectReader, out T output)
+        // TODO test file is not found in WP WS and W platforms
+        internal static bool IsFileNotFound(this Exception ex)
+        {
+            // check if the exception type is File Not Found (FNF)
+            if (ex is PCLStorage.Exceptions.FileNotFoundException
+                || ex is FileNotFoundException)
+                return true;
+
+            // if the exception it's not FNF and doesn't have an inner exception
+            // then it's not a FNF
+            if (ex.InnerException == null)
+                return false;
+
+            // check recursively if the inner exception is FNF
+            if (ex.InnerException.IsFileNotFound())
+                return true;
+
+            // if the exception is an aggregate of exceptions
+            // we'll check each of them recursively if they are FNF
+            var agg = ex as AggregateException;
+            if (agg != null)
+            {
+                foreach (var innerEx in agg.InnerExceptions)
+                {
+                    if (innerEx.IsFileNotFound())
+                        return true;
+                }
+            }
+
+            // if all checks fails, the exception must not be a FNF
+            return false;
+        }
+
+        internal static T DeserializeFromFile<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
             where T : class
         {
-            output = null;
-            try 
+            try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
                 var activityStateFile = localStorage.GetFileAsync(fileName).Result;
@@ -68,44 +99,45 @@ namespace adeven.AdjustIo.PCL
                     throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
                 }
 
+                T output;
                 using (var stream = activityStateFile.OpenAsync(FileAccess.Read).Result)
                 {
                     output = ObjectReader(stream);
                 }
-                AILogger.Verbose("Restored from file {0}", fileName);
+                Logger.Verbose("Read from file {0}", fileName);
 
-                //successful read
-                return true;
+                // successful read
+                return output;
             }
-            catch(PCLStorage.Exceptions.FileNotFoundException)
+            catch (Exception ex)
             {
-                AILogger.Error("Restore not possible. File {0} not found", fileName);
+                if (ex.IsFileNotFound())
+                    Logger.Error("Failed to read file {0} (not found)", fileName);
+                else
+                    Logger.Error("Failed to read file {0} ({1})", fileName, ex.Message);
             }
-            catch(Exception ex)
-            {
-                AILogger.Error("Failed to restore from file {0} exception {1}", fileName, ex.Message);
-            }
-            return false;
+            // fresh start
+            return defaultReturn();
         }
 
-        internal static void SerializeToFile<T>(string filename, Action<Stream, T> ObjectWriter, T input)
+        internal static void SerializeToFile<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
             where T : class
         {
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
-                var newActivityStateFile = localStorage.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting).Result;
+                var newActivityStateFile = localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting).Result;
 
                 using (var stream = newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite).Result)
                 {
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);
                 }
-                AILogger.Verbose("Object wrote to file {0}", filename);
+                Logger.Verbose("Wrote to file {0}", fileName);
             }
             catch (Exception ex)
             {
-                AILogger.Error("Failed to write object from file {0}, with error {1}", filename, ex.Message);
+                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
             }
         }
 
@@ -132,10 +164,11 @@ namespace adeven.AdjustIo.PCL
             if (timeSpan == null)
                 return -1;
             else
-                return  timeSpan.Value.TotalSeconds;
+                return timeSpan.Value.TotalSeconds;
         }
 
         #region Serialization
+
         internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
         {
             if (timeSpan.HasValue)
@@ -167,7 +200,7 @@ namespace adeven.AdjustIo.PCL
             else
                 return new DateTime(ticks);
         }
-        #endregion
 
+        #endregion Serialization
     }
 }

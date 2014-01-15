@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,6 +11,7 @@ using System.Xml.Linq;
 using Windows.ApplicationModel;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
+using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
@@ -18,18 +20,19 @@ namespace adeven.AdjustIo
 {
     internal class UtilWS : DeviceUtil
     {
-        public override string AIEnvironmentSandbox { get { return "sandbox"; } }
-        public override string AIEnvironmentProduction { get { return "production"; } }
+        public string EnvironmentSandbox { get { return "sandbox"; } }
 
-        public override string ClientSdk { get { return "winstore1.0"; } }
+        public string EnvironmentProduction { get { return "production"; } }
 
-        public override string GetDeviceId()
+        public string ClientSdk { get { return "winstore1.0"; } }
+
+        public string GetDeviceId()
         {
             return GetDeviceIdHardware();
             //return GetDeviceIdNetwork();
         }
 
-        public string GetDeviceIdHardware()
+        private string GetDeviceIdHardware()
         {
             var token = HardwareIdentification.GetPackageSpecificToken(null);
             var hardwareId = token.Id;
@@ -41,7 +44,7 @@ namespace adeven.AdjustIo
             return BitConverter.ToString(bytes);
         }
 
-        public string GetDeviceIdNetwork()
+        private string GetDeviceIdNetwork()
         {
             var profiles = Windows.Networking.Connectivity.NetworkInformation.GetConnectionProfiles();
             var iter = profiles.GetEnumerator();
@@ -51,7 +54,7 @@ namespace adeven.AdjustIo
             return adapterId;
         }
 
-        public override string GetMd5Hash(string input)
+        public string GetMd5Hash(string input)
         {
             var alg = HashAlgorithmProvider.OpenAlgorithm("MD5");
             IBuffer buff = CryptographicBuffer.ConvertStringToBinary(input, BinaryStringEncoding.Utf8);
@@ -60,22 +63,83 @@ namespace adeven.AdjustIo
             return res;
         }
 
-        public override string GetUserAgent()
+        public T DeserializeFromFile<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
+            where T : class
         {
-            return String.Join(" ", getAppName(),
-                                    getAppVersion(),
-                                    getAppPublisher(),
-                                    getDeviceType(),
-                                    getDeviceName(),
-                                    getArchitecture(),
-                                    getOsName(),
-                                    getOsVersion(),
-                                    getLanguage(),
-                                    getCountry());
+            try
+            {
+                var localFolder = ApplicationData.Current.LocalFolder;
+                var localFile = localFolder.GetFileAsync(fileName).GetResults();
+
+                if (localFile == null)
+                    return defaultReturn();
+
+                T output;
+                using (var stream = localFile.OpenStreamForReadAsync().Result)
+                {
+                    output = ObjectReader(stream);
+                }
+                Logger.Verbose("Read from file {0}", fileName);
+                return output;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to read file {0} ({1})", fileName, ex);
+            }
+
+            return defaultReturn();
+        }
+
+        public void SerializeToFile<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
+            where T : class
+        {
+            try
+            {
+                var localFolder = ApplicationData.Current.LocalFolder;
+                //var localFile = localFolder.GetFileAsync(fileName).GetResults();
+
+                //if (localFile != null)
+                //    localFile.DeleteAsync().GetResults();
+
+                var newFile = localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting).GetResults();
+
+                //using (var randomAccessStream = newFile.OpenAsync(FileAccessMode.ReadWrite).GetResults())
+                //using (var outputStram = randomAccessStream.GetOutputStreamAt(0))
+                //using (var dataWriter = new DataWriter(outputStram))
+                //{
+                //    dataWriter.write
+                //}
+
+                using (var stream = newFile.OpenStreamForWriteAsync().Result)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    ObjectWriter(stream, input);
+                }
+                Logger.Verbose("Wrote to file {0}", fileName);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
+            }
+        }
+
+        public string GetUserAgent()
+        {
+            return String.Join(" ",
+                getAppName(),
+                getAppVersion(),
+                getAppPublisher(),
+                getDeviceType(),
+                getDeviceName(),
+                getArchitecture(),
+                getOsName(),
+                getOsVersion(),
+                getLanguage(),
+                getCountry());
         }
 
         #region User Agent
-        
+
         private string getAppDisplayName()
         {
             string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
@@ -217,6 +281,6 @@ namespace adeven.AdjustIo
             return result;
         }
 
-        #endregion
+        #endregion User Agent
     }
 }
