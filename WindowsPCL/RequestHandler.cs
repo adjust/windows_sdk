@@ -22,7 +22,7 @@ namespace adeven.AdjustIo.PCL
         {
             Task.Factory.StartNew(() => SendInternal(package))
                 // continuation used to prevent unhandled exceptions in SendInternal
-                // not releasing the WaitHandle in PackageHandler and preventing deadlocks
+                // not signaling the WaitHandle in PackageHandler and preventing deadlocks
                 .ContinueWith((success) => PackageSent(success));
         }
 

@@ -108,7 +108,7 @@ namespace adeven.AdjustIo.PCL
                 WritePackageQueue();
             }
             finally
-            // preventing an exception not releasing the WaitHandle
+            // preventing an exception not signaling the WaitHandle
             {
                 InternalWaitHandle.Set(); // open the door (signals the wait handle)
             }

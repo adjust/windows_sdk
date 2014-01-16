@@ -38,6 +38,7 @@ namespace adeven.AdjustIo
             return MD5Core.GetHashString(input);
         }
 
+        // TODO delete if PCL Storage works in WP & WS
         public async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
             where T : class
         {
@@ -69,6 +70,7 @@ namespace adeven.AdjustIo
             return defaultReturn();
         }
 
+        // TODO delete if PCL Storage works in WP & WS
         public async Task SerializeToFileAsync<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
             where T : class
         {
