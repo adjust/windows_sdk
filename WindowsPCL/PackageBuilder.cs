@@ -7,10 +7,15 @@ namespace adeven.AdjustIo.PCL
 {
     internal class PackageBuilder
     {
+        // possible Ids
+        internal string DeviceUniqueId { get; set; }
+
+        internal string HardwareId { get; set; }
+
+        internal string NetworkAdapterId { get; set; }
+
         // general
         internal string AppToken { get; set; }
-
-        internal string MacShortMD5 { get; set; }
 
         internal string Environment { get; set; }
 
@@ -59,7 +64,9 @@ namespace adeven.AdjustIo.PCL
             // general
             SaveParameter("created_at", CreatedAt);
             SaveParameter("app_token", AppToken);
-            SaveParameter("mac_md5", MacShortMD5);
+            SaveParameter("duid", DeviceUniqueId);
+            SaveParameter("hwid", HardwareId);
+            SaveParameter("naid", NetworkAdapterId);
             SaveParameter("environment", Environment);
             // session related (used for events as well)
             SaveParameter("session_count", SessionCount);

@@ -10,12 +10,15 @@ namespace adeven.AdjustIo.PCL
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
         private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
-        private PackageHandler PackageHandler;
+        private PackageHandler PackageHandler = null;
         private ActivityState ActivityState = null;
         private PCLnet45Timer TimeKeeper = null;
 
+        private string DeviceUniqueId;
+        private string HardwareId;
+        private string NetworkAdapterId;
+
         private string AppToken;
-        private string MacShortMd5;
         private string UserAgent;
         private string ClientSdk;
 
@@ -75,7 +78,11 @@ namespace adeven.AdjustIo.PCL
             Environment = "unknown";
             ClientSdk = DeviceSpecific.ClientSdk;
             UserAgent = DeviceSpecific.GetUserAgent();
-            MacShortMd5 = DeviceSpecific.GetMd5Hash(DeviceSpecific.GetDeviceId());
+
+            DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
+            HardwareId = deviceUtil.GetHardwareId();
+            NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
+
             IsBufferedEventsEnabled = false;
 
             PackageHandler = new PackageHandler(deviceUtil);
@@ -302,7 +309,9 @@ namespace adeven.AdjustIo.PCL
                 UserAgent = UserAgent,
                 ClientSdk = ClientSdk,
                 AppToken = AppToken,
-                MacShortMD5 = MacShortMd5,
+                DeviceUniqueId = DeviceUniqueId,
+                HardwareId = HardwareId,
+                NetworkAdapterId = NetworkAdapterId,
                 Environment = Environment,
             };
             return packageBuilder;

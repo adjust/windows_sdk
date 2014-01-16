@@ -26,13 +26,21 @@ namespace adeven.AdjustIo
 
         public string ClientSdk { get { return "winstore1.0"; } }
 
-        public string GetDeviceId()
+        public string GetMd5Hash(string input)
         {
-            return GetDeviceIdHardware();
-            //return GetDeviceIdNetwork();
+            var alg = HashAlgorithmProvider.OpenAlgorithm("MD5");
+            IBuffer buff = CryptographicBuffer.ConvertStringToBinary(input, BinaryStringEncoding.Utf8);
+            var hashed = alg.HashData(buff);
+            var res = CryptographicBuffer.EncodeToHexString(hashed);
+            return res;
         }
 
-        private string GetDeviceIdHardware()
+        public string GetDeviceUniqueId()
+        {
+            return null; //deviceUniqueId is from WP
+        }
+
+        public string GetHardwareId()
         {
             var token = HardwareIdentification.GetPackageSpecificToken(null);
             var hardwareId = token.Id;
@@ -44,7 +52,7 @@ namespace adeven.AdjustIo
             return BitConverter.ToString(bytes);
         }
 
-        private string GetDeviceIdNetwork()
+        public string GetNetworkAdapterId()
         {
             var profiles = Windows.Networking.Connectivity.NetworkInformation.GetConnectionProfiles();
             var iter = profiles.GetEnumerator();
@@ -52,15 +60,6 @@ namespace adeven.AdjustIo
             var adapter = iter.Current.NetworkAdapter;
             string adapterId = adapter.NetworkAdapterId.ToString();
             return adapterId;
-        }
-
-        public string GetMd5Hash(string input)
-        {
-            var alg = HashAlgorithmProvider.OpenAlgorithm("MD5");
-            IBuffer buff = CryptographicBuffer.ConvertStringToBinary(input, BinaryStringEncoding.Utf8);
-            var hashed = alg.HashData(buff);
-            var res = CryptographicBuffer.EncodeToHexString(hashed);
-            return res;
         }
 
         // TODO delete if PCL Storage works in WP & WS

@@ -12,8 +12,6 @@ namespace adeven.AdjustIo.PCL
 
         string ClientSdk { get; }
 
-        string GetDeviceId();
-
         string GetUserAgent();
 
         string GetMd5Hash(string input);
@@ -24,5 +22,11 @@ namespace adeven.AdjustIo.PCL
 
         //Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
         //    where T : class;
+
+        string GetDeviceUniqueId();
+
+        string GetHardwareId();
+
+        string GetNetworkAdapterId();
     }
 }

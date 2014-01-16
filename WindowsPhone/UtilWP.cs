@@ -19,7 +19,12 @@ namespace adeven.AdjustIo
 
         public string ClientSdk { get { return "winphone1.0"; } }
 
-        public string GetDeviceId()
+        public string GetMd5Hash(string input)
+        {
+            return MD5Core.GetHashString(input);
+        }
+
+        public string GetDeviceUniqueId()
         {
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
@@ -33,9 +38,14 @@ namespace adeven.AdjustIo
             return deviceId;
         }
 
-        public string GetMd5Hash(string input)
+        public string GetHardwareId()
         {
-            return MD5Core.GetHashString(input);
+            return null; // hardwareId is from WS
+        }
+
+        public string GetNetworkAdapterId()
+        {
+            return null; // networkAdapter is from WS
         }
 
         // TODO delete if PCL Storage works in WP & WS
