@@ -47,7 +47,7 @@ namespace adeven.AdjustIo.PCL
                         Logger.Debug("ActionQueue {0} got {1} action to process", Name, InternalQueue.Count);
                         if (InternalQueue.Count == 0)
                         {
-                            ManualHandle.Reset(); // closes the door
+                            ManualHandle.Reset(); // closes the door (non-signals the wait handle)
                             break;
                         }
                         action = InternalQueue.Dequeue();

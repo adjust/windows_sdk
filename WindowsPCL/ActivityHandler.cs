@@ -239,18 +239,21 @@ namespace adeven.AdjustIo.PCL
 
         private void WriteActivityState()
         {
-            //Util.SerializeToFile(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState);
-            DeviceSpecific.SerializeToFile(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState);
+            Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState).Wait();
+            // TODO delete if PCL Storage works in WP & WS
+            //DeviceSpecific.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState).Wait();
         }
 
         private void ReadActivityState()
         {
-            //ActivityState = Util.DeserializeFromFile(ActivityStateFileName,
-            //    ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-            //    () => null); //default value in case of error
-            ActivityState = DeviceSpecific.DeserializeFromFile(ActivityStateFileName,
+            ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-                () => null); //default value in case of error
+                () => null) //default value in case of error
+                .Result;
+            // TODO delete if PCL Storage works in WP & WS
+            //ActivityState = DeviceSpecific.DeserializeFromFileAsync(ActivityStateFileName,
+            //    ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
+            //    () => null).Result; //default value in case of error
         }
 
         // return whether or not activity state should be written

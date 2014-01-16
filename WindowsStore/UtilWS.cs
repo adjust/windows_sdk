@@ -63,19 +63,20 @@ namespace adeven.AdjustIo
             return res;
         }
 
-        public T DeserializeFromFile<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
+        // TODO delete if PCL Storage works in WP & WS
+        public async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
             where T : class
         {
             try
             {
                 var localFolder = ApplicationData.Current.LocalFolder;
-                var localFile = localFolder.GetFileAsync(fileName).GetResults();
+                var localFile = await localFolder.GetFileAsync(fileName);
 
                 if (localFile == null)
                     return defaultReturn();
 
                 T output;
-                using (var stream = localFile.OpenStreamForReadAsync().Result)
+                using (var stream = await localFile.OpenStreamForReadAsync())
                 {
                     output = ObjectReader(stream);
                 }
@@ -90,18 +91,23 @@ namespace adeven.AdjustIo
             return defaultReturn();
         }
 
-        public void SerializeToFile<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
+        // TODO delete if PCL Storage works in WP & WS
+        public async Task SerializeToFileAsync<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
             where T : class
         {
             try
             {
                 var localFolder = ApplicationData.Current.LocalFolder;
-                //var localFile = localFolder.GetFileAsync(fileName).GetResults();
+                try
+                {
+                    var localFile = await localFolder.GetFileAsync(fileName);
 
-                //if (localFile != null)
-                //    localFile.DeleteAsync().GetResults();
+                    if (localFile != null)
+                        await localFile.DeleteAsync();
+                }
+                catch (FileNotFoundException) { }
 
-                var newFile = localFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting).GetResults();
+                var newFile = await localFolder.CreateFileAsync(fileName);
 
                 //using (var randomAccessStream = newFile.OpenAsync(FileAccessMode.ReadWrite).GetResults())
                 //using (var outputStram = randomAccessStream.GetOutputStreamAt(0))
@@ -110,7 +116,8 @@ namespace adeven.AdjustIo
                 //    dataWriter.write
                 //}
 
-                using (var stream = newFile.OpenStreamForWriteAsync().Result)
+                using (var ras = await newFile.OpenAsync(FileAccessMode.ReadWrite))
+                using (var stream = ras.AsStreamForWrite())
                 {
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);

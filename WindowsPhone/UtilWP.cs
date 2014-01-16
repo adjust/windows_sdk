@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.IsolatedStorage;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace adeven.AdjustIo
@@ -37,7 +38,7 @@ namespace adeven.AdjustIo
             return MD5Core.GetHashString(input);
         }
 
-        public T DeserializeFromFile<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
+        public async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
             where T : class
         {
             try
@@ -68,7 +69,7 @@ namespace adeven.AdjustIo
             return defaultReturn();
         }
 
-        public void SerializeToFile<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
+        public async Task SerializeToFileAsync<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
             where T : class
         {
             try

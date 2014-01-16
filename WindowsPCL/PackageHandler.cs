@@ -25,7 +25,7 @@ namespace adeven.AdjustIo.PCL
             IsPaused = true;
             DeviceSpecific = deviceUtil;
 
-            InternalWaitHandle = new ManualResetEvent(true);
+            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
             InternalQueue.Enqueue(InitInternal);
         }
@@ -47,7 +47,7 @@ namespace adeven.AdjustIo.PCL
 
         internal void CloseFirstPackage()
         {
-            InternalWaitHandle.Set();
+            InternalWaitHandle.Set(); // open the door (signals the wait handle)
         }
 
         internal void PauseSending()
@@ -88,9 +88,10 @@ namespace adeven.AdjustIo.PCL
 
             // no need to lock InternalWaitHandle between WaitOne(0) call and Reset()
             // because all Internal methods of PackageHandler can be only executed by 1 thread at a time
-            if (InternalWaitHandle.WaitOne(0))
+
+            if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
-                InternalWaitHandle.Reset();
+                InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
                 InternalRequestHandler.SendPackage(PackageQueue.First());
             }
             else
@@ -107,27 +108,33 @@ namespace adeven.AdjustIo.PCL
                 WritePackageQueue();
             }
             finally
+            // preventing an exception not releasing the WaitHandle
             {
-                // preventing an exception not releasing the WaitHandle
-                InternalWaitHandle.Set();
+                InternalWaitHandle.Set(); // open the door (signals the wait handle)
             }
             SendFirstInternal();
         }
 
         private void WritePackageQueue()
         {
-            //Util.SerializeToFile(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue);
-            DeviceSpecific.SerializeToFile(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue);
+            Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue).Wait();
+
+            // TODO delete if PCL Storage works in WP & WS
+            //DeviceSpecific.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue).Wait();
         }
 
         private void ReadPackageQueue()
         {
-            //PackageQueue = Util.DeserializeFromFile(PackageQueueFilename,
-            //    ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
-            //    () => new List<ActivityPackage>()); //default value in case of error
-            PackageQueue = DeviceSpecific.DeserializeFromFile(PackageQueueFilename,
+            PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
-                () => new List<ActivityPackage>()); //default value in case of error
+                () => new List<ActivityPackage>()) //default value in case of error
+                .Result;
+
+            // TODO delete if PCL Storage works in WP & WS
+            //PackageQueue = DeviceSpecific.DeserializeFromFileAsync(PackageQueueFilename,
+            //    ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
+            //    () => new List<ActivityPackage>()) //default value in case of error
+            //    .Result;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace adeven.AdjustIo.PCL
 {
@@ -86,13 +87,13 @@ namespace adeven.AdjustIo.PCL
             return false;
         }
 
-        internal static T DeserializeFromFile<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
+        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
             where T : class
         {
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
-                var activityStateFile = localStorage.GetFileAsync(fileName).Result;
+                var activityStateFile = await localStorage.GetFileAsync(fileName);
 
                 if (activityStateFile == null)
                 {
@@ -100,7 +101,7 @@ namespace adeven.AdjustIo.PCL
                 }
 
                 T output;
-                using (var stream = activityStateFile.OpenAsync(FileAccess.Read).Result)
+                using (var stream = await activityStateFile.OpenAsync(FileAccess.Read))
                 {
                     output = ObjectReader(stream);
                 }
@@ -120,15 +121,15 @@ namespace adeven.AdjustIo.PCL
             return defaultReturn();
         }
 
-        internal static void SerializeToFile<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
+        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
             where T : class
         {
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
-                var newActivityStateFile = localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting).Result;
+                var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
 
-                using (var stream = newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite).Result)
+                using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
                 {
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);

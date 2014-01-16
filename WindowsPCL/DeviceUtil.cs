@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace adeven.AdjustIo.PCL
 {
@@ -17,10 +18,11 @@ namespace adeven.AdjustIo.PCL
 
         string GetMd5Hash(string input);
 
-        T DeserializeFromFile<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
-            where T : class;
+        // TODO delete if PCL Storage works in WP & WS
+        //Task<T> DeserializeFromFileAsync<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
+        //    where T : class;
 
-        void SerializeToFile<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
-            where T : class;
+        //Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
+        //    where T : class;
     }
 }
