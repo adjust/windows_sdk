@@ -137,6 +137,7 @@ namespace adeven.AdjustIo
                 getAppPublisher(),
                 getDeviceType(),
                 getDeviceName(),
+                getDeviceManufacturer(),
                 getArchitecture(),
                 getOsName(),
                 getOsVersion(),
@@ -146,40 +147,71 @@ namespace adeven.AdjustIo
 
         #region User Agent
 
-        private string getAppDisplayName()
+        private string getAppName()
         {
-            string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
-            XElement element = XDocument.Load("appxmanifest.xml").Root;
-            element = element.Element(XName.Get("Properties", namespaceName));
-            element = element.Element(XName.Get("DisplayName", namespaceName));
-            string displayName = element.Value;
-            string sanitized = sanitizeString(displayName);
+            PackageId package = getPackage();
+            string packageName = package.Name;
+            string sanitized = sanitizeString(packageName);
             return sanitized;
         }
 
-        private string getDeviceName()
+        private string getAppVersion()
         {
-            return "unknown";
+            PackageId package = getPackage();
+            PackageVersion pv = package.Version;
+            string version = string.Format("{0}.{1}", pv.Major, pv.Minor);
+            string sanitized = sanitizeString(version);
+            return sanitized;
+        }
+
+        private string getAppPublisher()
+        {
+            PackageId package = getPackage();
+            string publisher = package.Publisher;
+            string sanitized = sanitizeString(publisher);
+            return sanitized;
         }
 
         private string getDeviceType()
         {
-            return "unknown";
+            return SystemInfoEstimate.GetDeviceCategoryAsync().Result;
+        }
+
+        private string getDeviceName()
+        {
+            return SystemInfoEstimate.GetDeviceModelAsync().Result;
+        }
+
+        private string getDeviceManufacturer()
+        {
+            return SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
         }
 
         private string getArchitecture()
         {
-            PackageId package = getPackage();
-            ProcessorArchitecture architecture = package.Architecture;
-            switch (architecture)
-            {
-                case ProcessorArchitecture.Arm: return "arm";
-                case ProcessorArchitecture.X86: return "x86";
-                case ProcessorArchitecture.X64: return "x64";
-                case ProcessorArchitecture.Neutral: return "neutral";
-                case ProcessorArchitecture.Unknown: return "unknown";
-                default: return "unknown";
-            }
+            //PackageId package = getPackage();
+            //ProcessorArchitecture architecture = package.Architecture;
+            //switch (architecture)
+            //{
+            //    case ProcessorArchitecture.Arm: return "arm";
+            //    case ProcessorArchitecture.X86: return "x86";
+            //    case ProcessorArchitecture.X64: return "x64";
+            //    case ProcessorArchitecture.Neutral: return "neutral";
+            //    case ProcessorArchitecture.Unknown: return "unknown";
+            //    default: return "unknown";
+            //}
+
+            return SystemInfoEstimate.GetProcessorArchitectureAsync().Result.ToString();
+        }
+
+        private string getOsName()
+        {
+            return "windows";
+        }
+
+        private string getOsVersion()
+        {
+            return SystemInfoEstimate.GetWindowsVersionAsync().Result;
         }
 
         private string getLanguage()
@@ -212,29 +244,11 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private string getOsName()
-        {
-            return "windows";
-        }
-
-        private string getOsVersion()
-        {
-            return "8.0";
-        }
-
         private PackageId getPackage()
         {
             Package package = Package.Current;
             PackageId packageId = package.Id;
             return packageId;
-        }
-
-        private string getAppName()
-        {
-            PackageId package = getPackage();
-            string packageName = package.Name;
-            string sanitized = sanitizeString(packageName);
-            return sanitized;
         }
 
         private string getAppFamilyName()
@@ -253,20 +267,14 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private string getAppVersion()
+        private string getAppDisplayName()
         {
-            PackageId package = getPackage();
-            PackageVersion pv = package.Version;
-            string version = string.Format("{0}.{1}", pv.Major, pv.Minor);
-            string sanitized = sanitizeString(version);
-            return sanitized;
-        }
-
-        private string getAppPublisher()
-        {
-            PackageId package = getPackage();
-            string publisher = package.Publisher;
-            string sanitized = sanitizeString(publisher);
+            string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
+            XElement element = XDocument.Load("appxmanifest.xml").Root;
+            element = element.Element(XName.Get("Properties", namespaceName));
+            element = element.Element(XName.Get("DisplayName", namespaceName));
+            string displayName = element.Value;
+            string sanitized = sanitizeString(displayName);
             return sanitized;
         }
 

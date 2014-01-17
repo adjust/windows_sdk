@@ -110,6 +110,7 @@
   <ItemGroup>
     <Compile Include="AdjustWS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SystemInfoEstimate.cs" />
     <Compile Include="UtilWS.cs" />
   </ItemGroup>
   <ItemGroup>

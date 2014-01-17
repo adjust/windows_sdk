@@ -191,7 +191,7 @@ namespace adeven.AdjustIo
 
         private static string getOsName()
         {
-            return "windowsphone";
+            return "windows-phone";
         }
 
         private static string getOsVersion()
