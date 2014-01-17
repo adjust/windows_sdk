@@ -34,7 +34,8 @@ namespace adeven.AdjustIo.PCL
                 {
                     httpClient.Timeout = Timeout;
                     httpClient.DefaultRequestHeaders.Add("Client-SDK", package.ClientSdk);
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", package.UserAgent);
+                    httpClient.DefaultRequestHeaders.Add("User-Agent",
+                        package.UserAgent.Replace(",", "")); // misplaced commas throw format exception
 
                     var url = Util.BaseUrl + package.Path;
 
