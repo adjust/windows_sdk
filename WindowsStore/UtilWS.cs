@@ -49,7 +49,7 @@ namespace adeven.AdjustIo
             byte[] bytes = new byte[hardwareId.Length];
             dataReader.ReadBytes(bytes);
 
-            return BitConverter.ToString(bytes);
+            return Convert.ToBase64String(bytes);
         }
 
         public string GetNetworkAdapterId()

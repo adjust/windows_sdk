@@ -64,9 +64,9 @@ namespace adeven.AdjustIo.PCL
             // general
             SaveParameter("created_at", CreatedAt);
             SaveParameter("app_token", AppToken);
-            SaveParameter("duid", DeviceUniqueId);
-            SaveParameter("hwid", HardwareId);
-            SaveParameter("naid", NetworkAdapterId);
+            SaveParameter("wp_udid", DeviceUniqueId);
+            SaveParameter("ws_hwid", HardwareId);
+            SaveParameter("ws_naid", NetworkAdapterId);
             SaveParameter("environment", Environment);
             // session related (used for events as well)
             SaveParameter("session_count", SessionCount);
