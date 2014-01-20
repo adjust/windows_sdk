@@ -118,9 +118,6 @@ namespace adeven.AdjustIo.PCL
         private void WritePackageQueue()
         {
             Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue).Wait();
-
-            // TODO delete if PCL Storage works in WP & WS
-            //DeviceSpecific.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue).Wait();
         }
 
         private void ReadPackageQueue()
@@ -129,12 +126,6 @@ namespace adeven.AdjustIo.PCL
                 ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
                 () => new List<ActivityPackage>()) //default value in case of error
                 .Result;
-
-            // TODO delete if PCL Storage works in WP & WS
-            //PackageQueue = DeviceSpecific.DeserializeFromFileAsync(PackageQueueFilename,
-            //    ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
-            //    () => new List<ActivityPackage>()) //default value in case of error
-            //    .Result;
         }
     }
 }

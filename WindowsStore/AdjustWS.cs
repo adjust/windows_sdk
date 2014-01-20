@@ -78,7 +78,6 @@ namespace adeven.AdjustIo
         ///
         ///  This is used to calculate session attributes like session length and subsession count.
         ///  Call this in the OnSuspending method of your Windows.UI.Xaml.Application class.
-        /// TODO
         /// </summary>
         public static void AppDidDeactivate()
         {

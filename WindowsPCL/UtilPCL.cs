@@ -54,7 +54,6 @@ namespace adeven.AdjustIo.PCL
             }
         }
 
-        // TODO test file is not found in WP WS and W platforms
         internal static bool IsFileNotFound(this Exception ex)
         {
             // check if the exception type is File Not Found (FNF)

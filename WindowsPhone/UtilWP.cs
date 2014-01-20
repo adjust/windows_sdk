@@ -48,69 +48,6 @@ namespace adeven.AdjustIo
             return null; // networkAdapter is from WS
         }
 
-        // TODO delete if PCL Storage works in WP & WS
-        public async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<System.IO.Stream, T> ObjectReader, Func<T> defaultReturn)
-            where T : class
-        {
-            try
-            {
-                T output;
-                using (var storage = IsolatedStorageFile.GetUserStoreForApplication())
-                using (var stream = storage.OpenFile(fileName, FileMode.Open))
-                {
-                    output = ObjectReader(stream);
-                }
-                Logger.Verbose("Read from file {0}", fileName);
-                return output;
-            }
-            //catch (IsolatedStorageException)
-            //{
-            //    Logger.Error("Failed to read file {0} (not found)", fileName);
-            //}
-            //catch (FileNotFoundException)
-            //{
-            //    Logger.Error("Failed to read file {0} (not found)", fileName);
-            //}
-            catch (Exception e)
-            {
-                Logger.Error("Failed to read file {0} ({1})", fileName, e);
-            }
-
-            //start fresh
-            return defaultReturn();
-        }
-
-        // TODO delete if PCL Storage works in WP & WS
-        public async Task SerializeToFileAsync<T>(string fileName, Action<System.IO.Stream, T> ObjectWriter, T input)
-            where T : class
-        {
-            try
-            {
-                using (var storage = IsolatedStorageFile.GetUserStoreForApplication())
-                {
-                    if (storage.FileExists(fileName))
-                        storage.DeleteFile(fileName);
-
-                    using (var stream = storage.CreateFile(fileName))
-                    {
-                        stream.Seek(0, SeekOrigin.Begin);
-                        ObjectWriter(stream, input);
-                    }
-
-                    //using (var stream = storage.OpenFile(filename, FileMode.OpenOrCreate))
-                    //{
-                    //    stream.Seek(0, SeekOrigin.Begin);
-                    //    ObjectWriter(stream, input);
-                    //}
-                }
-                Logger.Verbose("Wrote to file {0}", fileName);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
-            }
-        }
-
         public string GetUserAgent()
         {
             return String.Join(" ",
