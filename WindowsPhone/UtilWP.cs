@@ -50,7 +50,7 @@ namespace adeven.AdjustIo
 
         public string GetUserAgent()
         {
-            return String.Join(" ",
+            var userAgent = String.Join(" ",
                 getAppName(),
                 getAppVersion(),
                 getAppAuthor(),
@@ -62,6 +62,8 @@ namespace adeven.AdjustIo
                 getOsVersion(),
                 getLanguage(),
                 getCountry());
+
+            return userAgent;
         }
 
         #region User Agent

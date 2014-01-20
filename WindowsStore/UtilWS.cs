@@ -64,7 +64,7 @@ namespace adeven.AdjustIo
 
         public string GetUserAgent()
         {
-            return String.Join(" ",
+            var userAgent = String.Join(" ",
                 getAppName(),
                 getAppVersion(),
                 getAppPublisher(),
@@ -76,6 +76,8 @@ namespace adeven.AdjustIo
                 getOsVersion(),
                 getLanguage(),
                 getCountry());
+
+            return userAgent;
         }
 
         #region User Agent
@@ -107,34 +109,34 @@ namespace adeven.AdjustIo
 
         private string getDeviceType()
         {
-            return SystemInfoEstimate.GetDeviceCategoryAsync().Result;
+            var deviceType = SystemInfoEstimate.GetDeviceCategoryAsync().Result;
+            return sanitizeString(deviceType);
         }
 
         private string getDeviceName()
         {
-            return SystemInfoEstimate.GetDeviceModelAsync().Result;
+            var deviceModel = SystemInfoEstimate.GetDeviceModelAsync().Result;
+            return sanitizeString(deviceModel);
         }
 
         private string getDeviceManufacturer()
         {
-            return SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
+            var deviceManufacturer = SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
+            return sanitizeString(deviceManufacturer);
         }
 
         private string getArchitecture()
         {
-            //PackageId package = getPackage();
-            //ProcessorArchitecture architecture = package.Architecture;
-            //switch (architecture)
-            //{
-            //    case ProcessorArchitecture.Arm: return "arm";
-            //    case ProcessorArchitecture.X86: return "x86";
-            //    case ProcessorArchitecture.X64: return "x64";
-            //    case ProcessorArchitecture.Neutral: return "neutral";
-            //    case ProcessorArchitecture.Unknown: return "unknown";
-            //    default: return "unknown";
-            //}
-
-            return SystemInfoEstimate.GetProcessorArchitectureAsync().Result.ToString();
+            ProcessorArchitecture architecture = SystemInfoEstimate.GetProcessorArchitectureAsync().Result;
+            switch (architecture)
+            {
+                case ProcessorArchitecture.Arm: return "arm";
+                case ProcessorArchitecture.X86: return "x86";
+                case ProcessorArchitecture.X64: return "x64";
+                case ProcessorArchitecture.Neutral: return "neutral";
+                case ProcessorArchitecture.Unknown: return "unknown";
+                default: return "unknown";
+            }
         }
 
         private string getOsName()
@@ -219,6 +221,7 @@ namespace adeven.AdjustIo
             }
 
             s = s.Replace('=', '_');
+            s = s.Replace(',', '.');
             string result = Regex.Replace(s, @"\s+", "");
             if (result.Length == 0)
             {
