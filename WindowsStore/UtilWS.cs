@@ -24,7 +24,7 @@ namespace adeven.AdjustIo
 
         public string EnvironmentProduction { get { return "production"; } }
 
-        public string ClientSdk { get { return "winstore1.0"; } }
+        public string ClientSdk { get { return "wstore2.1.0"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -65,7 +65,7 @@ namespace adeven.AdjustIo
         public string GetUserAgent()
         {
             var userAgent = String.Join(" ",
-                getAppName(),
+                getAppDisplayName(),
                 getAppVersion(),
                 getAppPublisher(),
                 getDeviceType(),
@@ -110,6 +110,12 @@ namespace adeven.AdjustIo
         private string getDeviceType()
         {
             var deviceType = SystemInfoEstimate.GetDeviceCategoryAsync().Result;
+            switch (deviceType)
+            {
+                case "Computer.Lunchbox": return "pc";
+                case "Computer.Tablet": return "tablet";
+                default: return "unknown";
+            }
             return sanitizeString(deviceType);
         }
 
