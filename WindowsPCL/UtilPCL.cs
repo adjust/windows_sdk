@@ -61,15 +61,6 @@ namespace adeven.AdjustIo.PCL
                 || ex is FileNotFoundException)
                 return true;
 
-            // if the exception it's not FNF and doesn't have an inner exception
-            // then it's not a FNF
-            if (ex.InnerException == null)
-                return false;
-
-            // check recursively if the inner exception is FNF
-            if (ex.InnerException.IsFileNotFound())
-                return true;
-
             // if the exception is an aggregate of exceptions
             // we'll check each of them recursively if they are FNF
             var agg = ex as AggregateException;
@@ -81,6 +72,15 @@ namespace adeven.AdjustIo.PCL
                         return true;
                 }
             }
+
+            // if the exception it's not FNF and doesn't have an inner exception
+            // then it's not a FNF
+            if (ex.InnerException == null)
+                return false;
+
+            // check recursively if the inner exception is FNF
+            if (ex.InnerException.IsFileNotFound())
+                return true;
 
             // if all checks fails, the exception must not be a FNF
             return false;
