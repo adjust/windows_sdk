@@ -29,7 +29,7 @@ namespace adeven.AdjustIo.PCL
                 if (InternalQueue.Count == 0)
                     ManualHandle.Set(); // open the door (signals the wait handle)
                 InternalQueue.Enqueue(task);
-                Logger.Verbose("ActionQueue {0} enqueued", Name);
+                // Logger.Verbose("ActionQueue {0} enqueued", Name);
             }
         }
 
@@ -37,21 +37,21 @@ namespace adeven.AdjustIo.PCL
         {
             while (true)
             {
-                Logger.Debug("ActionQueue {0} waiting", Name);
+                // Logger.Verbose("ActionQueue {0} waiting", Name);
                 ManualHandle.WaitOne(); // waits until the door is open
                 while (true)
                 {
                     Action action;
                     lock (InternalQueue)
                     {
-                        Logger.Debug("ActionQueue {0} got {1} action to process", Name, InternalQueue.Count);
+                        // Logger.Verbose("ActionQueue {0} got {1} action to process", Name, InternalQueue.Count);
                         if (InternalQueue.Count == 0)
                         {
                             ManualHandle.Reset(); // closes the door (non-signals the wait handle)
                             break;
                         }
                         action = InternalQueue.Dequeue();
-                        Logger.Debug("ActionQueue  {0} dequeued", Name);
+                        // Logger.Verbose("ActionQueue  {0} dequeued", Name);
                     }
                     try
                     {

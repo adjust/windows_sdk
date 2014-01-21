@@ -37,20 +37,20 @@ namespace adeven.AdjustIo.PCL
                 if (activityStateFile != null)
                 {
                     activityStateFile.DeleteAsync().Wait();
-                    Logger.Verbose("File {0} deleted", filename);
+                    Logger.Debug("File {0} deleted", filename);
                 }
                 else
                 {
-                    Logger.Verbose("File {0} doesn't exist to delete", filename);
+                    Logger.Debug("File {0} doesn't exist to delete", filename);
                 }
             }
             catch (PCLStorage.Exceptions.FileNotFoundException)
             {
-                Logger.Verbose("File {0} doesn't exist to delete", filename);
+                Logger.Debug("File {0} doesn't exist to delete", filename);
             }
             catch (Exception)
             {
-                Logger.Debug("Error deleting {0} file", filename);
+                Logger.Error("Error deleting {0} file", filename);
             }
         }
 
@@ -104,7 +104,7 @@ namespace adeven.AdjustIo.PCL
                 {
                     output = ObjectReader(stream);
                 }
-                Logger.Verbose("Read from file {0}", fileName);
+                Logger.Debug("Read from file {0}", fileName);
 
                 // successful read
                 return output;
@@ -133,7 +133,7 @@ namespace adeven.AdjustIo.PCL
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);
                 }
-                Logger.Verbose("Wrote to file {0}", fileName);
+                Logger.Debug("Wrote to file {0}", fileName);
             }
             catch (Exception ex)
             {
