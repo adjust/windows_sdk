@@ -21,7 +21,7 @@ namespace adeven.AdjustIo
     ///  Use the methods of this class to tell AdjustIo about the usage of your app.
     ///  See the README for details.
     /// </summary>
-    public class AdjustWS
+    public class AdjustIo
     {
         /// <summary>
         ///  Constants for our supported tracking environments.

@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsPCLnet40", "..\Windo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustIoWP", "..\WindowsPhone\AdjustIoWP.csproj", "{147466FE-FAF6-455A-8CA0-6819D0E7D82D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsStore", "..\WindowsStore\WindowsStore.csproj", "{882C2A80-B6A5-42A2-8E28-0749B2090D04}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWS", "..\WindowsStore\AdjustWS.csproj", "{882C2A80-B6A5-42A2-8E28-0749B2090D04}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
