@@ -2,6 +2,7 @@
 
 namespace adeven.AdjustIo.PCL
 {
+    // keep this enum in sync with WS and WP AdjustIo class
     public enum LogLevel
     {
         Verbose = 1,
@@ -26,48 +27,48 @@ namespace adeven.AdjustIo.PCL
 
         public static void Verbose(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Verbose, message, parameters);
+            LoggingLevel(LogLevel.Verbose, "v", message, parameters);
         }
 
         public static void Debug(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Debug, message, parameters);
+            LoggingLevel(LogLevel.Debug, "d", message, parameters);
         }
 
         public static void Info(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Info, message, parameters);
+            LoggingLevel(LogLevel.Info, "i", message, parameters);
         }
 
         public static void Warn(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Warn, message, parameters);
+            LoggingLevel(LogLevel.Warn, "w", message, parameters);
         }
 
         public static void Error(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Error, message, parameters);
+            LoggingLevel(LogLevel.Error, "e", message, parameters);
         }
 
         public static void Assert(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Assert, message, parameters);
+            LoggingLevel(LogLevel.Assert, "a", message, parameters);
         }
 
-        private static void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
+        private static void LoggingLevel(LogLevel logLevel, string logLevelString, string message, object[] parameters)
         {
             if (Logger.LogLevel > logLevel)
                 return;
-            LogMessage(message, parameters);
+            LogMessage(message, logLevelString, parameters);
         }
 
-        private static void LogMessage(string message, object[] parameters)
+        private static void LogMessage(string message, string logLevelString, object[] parameters)
         {
             string formattedMessage = String.Format(message, parameters);
             // write to Debug by new line '\n'
             foreach (string formattedLine in formattedMessage.Split(new char[] { '\n' }))
             {
-                System.Diagnostics.Debug.WriteLine("\t[{0}]{1} {2}", LogTag, LogLevel, formattedLine);
+                System.Diagnostics.Debug.WriteLine("\t[{0}]{1} {2}", LogTag, logLevelString, formattedLine);
             }
         }
     }
