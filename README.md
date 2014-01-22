@@ -42,7 +42,13 @@ You can improve the session tracking by calling `AppDidActivate` in `OnActivated
         AdjustIo.AppDidActivate();
         // ...
     }
+And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivated` for Windows Phone apps).
 
+    private void OnSuspending(object sender, SuspendingEventArgs e)
+    {
+        AdjustIo.AppDidDeactivate();
+        // ...
+    }
 ## Additional features
 
 Once you integrated the AdjustIo SDK into your project, you can take advantage of the following features wherever you see fit.
