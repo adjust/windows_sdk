@@ -25,17 +25,7 @@ In the Solution Explorer open the file `App.xaml.cs`. Add the `using` statement 
     AdjustIo.AppDidLaunch("<YourAppToken>");
 
 ![][launch]
-
-If you are building a Windows Phone app you need to add the `ID_CAP_IDENTITY_DEVICE` capability. In the Solution Explorer open the WMAppManifest.xml file, switch to the Capabilities tab and check the appropriate checkbox.
-
-![][capabilities]
-
-### 3. Build your app
-From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
-
-![][output]
-
-You can improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
+Improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
 
     protected override void OnActivated(IActivatedEventArgs args)
     {
@@ -49,6 +39,15 @@ And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivat
         AdjustIo.AppDidDeactivate();
         // ...
     }
+
+If you are building a Windows Phone app you need to add the `ID_CAP_IDENTITY_DEVICE` capability. In the Solution Explorer open the WMAppManifest.xml file, switch to the Capabilities tab and check the appropriate checkbox.
+
+![][capabilities]
+
+### 3. Build your app
+From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
+
+![][output]
 ## Additional features
 
 Once you integrated the AdjustIo SDK into your project, you can take advantage of the following features wherever you see fit.
