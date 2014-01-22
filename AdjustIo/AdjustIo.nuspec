@@ -6,7 +6,13 @@
         <title>AdjustIo</title>
         <authors>adeven</authors>
         <owners>adeven</owners>
-        <description>My package description.</description>
+        <description>This is the Windows SDK of AdjustIo. http://www.adjust.io</description>
+		<summary>This is the Windows SDK of AdjustIo.</summary>
+		<projectUrl>https://github.com/adeven/adjust_windows_sdk</projectUrl>
+		<iconUrl>http://i.imgur.com/lkovs.png</iconUrl>
+		<licenseUrl>https://github.com/adeven/adjust_windows_sdk</licenseUrl>
+		<copyright>Copyright adeven 2014</copyright>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
         <dependencies>
             <group targetFramework="WindowsPhone8.0">
                 <dependency id="Microsoft.Bcl.Build" version="1.0.13" />
@@ -26,14 +32,23 @@
                 <dependency id="Newtonsoft.Json" version="5.0.8" />
             </group>
         </dependencies>
+		<references>
+			<group targetFramework="WindowsPhone8.0">
+				<reference file="AdjustWP.dll" />
+			</group>
+			<group targetFramework=".NETCore4.5">
+				<reference file="AdjustWS.dll" />
+            </group>
+		</references>
+		<tags>AdjustIo</tags>
     </metadata>
     <files>
-        <file src="..\WindowsPhone\Bin\Release\AdjustWP.dll" target="lib\wp8\AdjustWP.dll" />
-        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\netcore45\WindowsPCL.dll" />
-		<file src="..\WindowsPCLnet40\bin\Release\WindowsPCLnet40.dll" target="lib\netcore45\WindowsPCLnet40.dll" />
+        <file src="..\WindowsPhone\bin\Debug\AdjustWP.dll" target="lib\wp8\AdjustWP.dll" />
+        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\wp8\WindowsPCL.dll" />
+		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPCLnet40.dll" target="lib\wp8\WindowsPCLnet40.dll" />
 		
-        <file src="..\WindowsStore\bin\Release\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
-        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\netcore45\WindowsPCL.dll" />
-		<file src="..\WindowsPCLnet40\bin\Release\WindowsPCLnet40.dll" target="lib\netcore45\WindowsPCLnet40.dll" />
+        <file src="..\WindowsStore\bin\Debug\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
+        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\netcore45\WindowsPCL.dll" />
+		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPCLnet40.dll" target="lib\netcore45\WindowsPCLnet40.dll" />
     </files>
 </package>
