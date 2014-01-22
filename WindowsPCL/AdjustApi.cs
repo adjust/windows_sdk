@@ -4,6 +4,11 @@ namespace adeven.AdjustIo.PCL
 {
     public class AdjustApi
     {
+        // keep this consts in sync with WS and WP AdjustIo class
+        private static string EnvironmentSandbox = "sandbox";
+
+        private static string EnvironmentProduction = "production";
+
         private static ActivityHandler activityHandler;
         private static DeviceUtil DeviceSpecific;
 
@@ -47,13 +52,13 @@ namespace adeven.AdjustIo.PCL
             {
                 Logger.Error("Please call 'SetEnvironment' after 'AppDidLaunch'!");
             }
-            else if (environment == DeviceSpecific.EnvironmentSandbox)
+            else if (environment == EnvironmentSandbox)
             {
                 activityHandler.SetEnvironment(environment);
                 Logger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
                     + " Don't forget to set the environment to AIEnvironmentProduction before publishing!");
             }
-            else if (environment == DeviceSpecific.EnvironmentProduction)
+            else if (environment == EnvironmentProduction)
             {
                 activityHandler.SetEnvironment(environment);
                 Logger.Assert("PRODUCTION: AdjustIo is running in Production mode."

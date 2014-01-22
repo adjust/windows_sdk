@@ -13,10 +13,6 @@ namespace adeven.AdjustIo
 {
     internal class UtilWP : DeviceUtil
     {
-        public string EnvironmentSandbox { get { return "sandbox"; } }
-
-        public string EnvironmentProduction { get { return "production"; } }
-
         public string ClientSdk { get { return "wphone2.1.0"; } }
 
         public string GetMd5Hash(string input)

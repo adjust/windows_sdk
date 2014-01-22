@@ -6,10 +6,6 @@ namespace adeven.AdjustIo.PCL
 {
     public interface DeviceUtil
     {
-        string EnvironmentSandbox { get; }
-
-        string EnvironmentProduction { get; }
-
         string ClientSdk { get; }
 
         string GetUserAgent();

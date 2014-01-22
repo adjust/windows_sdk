@@ -13,9 +13,9 @@ namespace adeven.AdjustIo
         /// <summary>
         ///  Constants for our supported tracking environments.
         /// </summary>
-        public string EnvironmentSandbox { get { return Util.EnvironmentSandbox; } }
+        public static readonly string EnvironmentSandbox = "sandbox";
 
-        public string EnvironmentProduction { get { return Util.EnvironmentProduction; } }
+        public static readonly string EnvironmentProduction = "production";
 
         public string ClientSdk { get { return Util.ClientSdk; } }
 

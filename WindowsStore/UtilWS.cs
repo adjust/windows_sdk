@@ -20,10 +20,6 @@ namespace adeven.AdjustIo
 {
     internal class UtilWS : DeviceUtil
     {
-        public string EnvironmentSandbox { get { return "sandbox"; } }
-
-        public string EnvironmentProduction { get { return "production"; } }
-
         public string ClientSdk { get { return "wstore2.1.0"; } }
 
         public string GetMd5Hash(string input)
