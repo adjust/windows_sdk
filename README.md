@@ -4,27 +4,118 @@ This is the Windows SDK of AdjustIo. You can read more about it at [adjust.io][]
 
 ## Basic Installation
 
-These are the minimal steps required to integrate the AdjustIo SDK into your Windows Store project. We are going to assume that you use Visual Studio 2012 with the NuGet package manager installed. The screenshots show the integration process for a Windows Store app, but the procedure is very similar for Windows Phone apps. The differences will get pointed out.
+These are the minimal steps required to integrate the AdjustIo SDK into your Windows Phone or Windows Store project. We are going to assume that you use Visual Studio 2013 with the latest NuGet package manager installed, but previous version that support Windows phone 8 or Windows 8 should work. The screenshots show the integration process for a Windows Phone app, but the procedure is very similar for Windows Store apps. The differences will get pointed out.
 
-### 1. Install the package AdjustIo
+### 1. Install the package AdjustIo using NuGet
 In the Visual Studio menu select `TOOLS|Library Package Manager|Package Manager Console` to open the Package Manager Console view.
 
-![][console]
+![][nuget_click]
 
 After the `PM>` prompt, enter the following line and press `<Enter>` to install the [AdjustIo package][NuGet]:
 
     Install-Package AdjustIo
 
-![][install]
+![][nuget_install]
 
-### 2. Integrate AdjustIo into your app
-In the Solution Explorer open the file `App.xaml.cs`. Add the `using` statement at the top of the file. In the `OnLaunched` method (`Application_Launching` for Windows Phone apps) of your app call the method `AppDidLaunch`. This tells AdjustIo about the launch of your Application. Replace `<YourAppToken>` with the App Token that you can find in your dashboard at [adjust.io][].
+It's also possible to install the AdjustIo package through the NuGet package manager for your Windows Phone or Windows Store project.
 
+### 2. Add capabilities (Windows Phone only)
+In the Solution Explorer open the `Properties\WMAppManifest.xml` file, switch to the Capabilities tab and check `ID_CAP_IDENTITY_DEVICE` checkbox.
+
+![][wp_capabilities]
+
+### 3. Integrate AdjustIo into your app
+
+In the Solution Explorer open the file `App.xaml.cs`. Add the `using adeven.AdjustIo;` statement at the top of the file.
+
+#### Windows Phone
+
+In the `Application_Launching` method of your app call the method `AppDidLaunch`. This tells AdjustIo about the launch of your Application. 
+
+
+```cs
     using adeven.AdjustIo;
     // ...
-    AdjustIo.AppDidLaunch("<YourAppToken>");
+    private void Application_Lauching
+    {
+        AdjustIo.AppDidLaunch("{YourAppToken}");
+        AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
+        AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+    }
+    protected override void OnActivated(IActivatedEventArgs args)
+    {
+        AdjustIo.AppDidActivate();
+        // ...
+    }
+    private void OnSuspending(object sender, SuspendingEventArgs e)
+    {
+        AdjustIo.AppDidDeactivate();
+        // ...
+    }
+```
 
-![][launch]
+#### Windows Store
+
+In the `OnLaunched` of your app call the method `AppDidLaunch`. This tells AdjustIo about the launch of your Application. 
+
+```cs
+    using adeven.AdjustIo;
+    // ...
+    AdjustIo.AppDidLaunch("{YourAppToken}");
+    AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
+    AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+    
+    Improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
+
+    protected override void OnActivated(IActivatedEventArgs args)
+    {
+        AdjustIo.AppDidActivate();
+        // ...
+    }
+And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivated` for Windows Phone apps).
+
+    private void OnSuspending(object sender, SuspendingEventArgs e)
+    {
+        AdjustIo.AppDidDeactivate();
+        // ...
+    }
+```
+![][app_integration]
+
+Replace `{YourAppToken}` with your App Token. You can find in your [dashboard].
+
+You can increase or decrease the amount of logs you see by calling the
+`SetLogLevel` method with one of the following parameters:
+
+```cs
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Verbose); // enable all logging
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Debug);   // enable more logging
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);    // the default
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Warn);    // disable info logging
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Error);   // disable warnings as well
+AdjustIo.SetLogLevel(AdjustIo.LogLevel.Assert);  // disable errors as well
+```
+
+Depending on whether or not you build your app for testing or for production
+you must call the `SetEnvironment:` method with one of these parameters:
+
+```cs
+AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+AdjustIo.SetEnvironment(AdjustIo.Environment.Production);
+```
+
+**Important:** This value should be set to `AdjustIo.Environment.SandBox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustIo.Environment.Production` just before you publish the app. Set it back to `AdjustIo.Environment.SandBox` when you start testing it again.
+
+We use this environment to distinguish between real traffic and artificial
+traffic from test devices. It is very important that you keep this value
+meaningful at all times! Especially if you are tracking revenue.
+
+### 3. Build your app
+Build and run your app. If the build succeeds, you successfully integrated AdjustIo into your app. After the app launched, you should see the debug log message `First session`.
+
+![][run_app]
+
+### 3. Build your app
 Improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
 
     protected override void OnActivated(IActivatedEventArgs args)
@@ -40,9 +131,6 @@ And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivat
         // ...
     }
 
-If you are building a Windows Phone app you need to add the `ID_CAP_IDENTITY_DEVICE` capability. In the Solution Explorer open the WMAppManifest.xml file, switch to the Capabilities tab and check the appropriate checkbox.
-
-![][capabilities]
 
 ### 3. Build your app
 From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
