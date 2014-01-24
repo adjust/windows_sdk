@@ -28,7 +28,7 @@ namespace adeven.AdjustIo
         /// </summary>
         public enum Environment
         {
-            SandBox,
+            Sandbox,
             Production,
         }
 
