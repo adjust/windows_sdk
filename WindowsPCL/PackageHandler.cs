@@ -7,7 +7,7 @@ namespace adeven.AdjustIo.PCL
 {
     internal class PackageHandler
     {
-        private const string PackageQueueFilename = "AdjustIOActivityState";
+        private const string PackageQueueFilename = "AdjustIOPackageQueue";
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
