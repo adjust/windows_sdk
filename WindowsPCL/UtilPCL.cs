@@ -91,6 +91,7 @@ namespace adeven.AdjustIo.PCL
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
+
                 var activityStateFile = await localStorage.GetFileAsync(fileName);
 
                 if (activityStateFile == null)
@@ -115,6 +116,7 @@ namespace adeven.AdjustIo.PCL
                 else
                     Logger.Error("Failed to read file {0} ({1})", fileName, ex.Message);
             }
+
             // fresh start
             return defaultReturn();
         }
