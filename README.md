@@ -36,23 +36,38 @@ In the `Application_Launching` method of your app call the method `AppDidLaunch`
 ```cs
     using adeven.AdjustIo;
     // ...
-    private void Application_Lauching
+    
+    public partial class App : Application
     {
-        AdjustIo.AppDidLaunch("{YourAppToken}");
-        AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
-        AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
-    }
-    protected override void OnActivated(IActivatedEventArgs args)
-    {
-        AdjustIo.AppDidActivate();
-        // ...
-    }
-    private void OnSuspending(object sender, SuspendingEventArgs e)
-    {
-        AdjustIo.AppDidDeactivate();
-        // ...
-    }
+        //...
+    
+        // Code to execute when the application is launching (eg, from Start)
+        // This code will not execute when the application is reactivated
+        private void Application_Launching(object sender, LaunchingEventArgs e)
+        {
+            AdjustIo.AppDidLaunch("{YourAppToken}");
+            AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
+            AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+            //...
+        }
+    
+        // Code to execute when the application is activated (brought to foreground)
+        // This code will not execute when the application is first launched
+        private void Application_Activated(object sender, ActivatedEventArgs e)
+        {
+            AdjustIo.AppDidActivate();
+            //...
+        }
+    
+        // Code to execute when the application is deactivated (sent to background)
+        // This code will not execute when the application is closing
+        private void Application_Deactivated(object sender, DeactivatedEventArgs e)
+        {
+            AdjustIo.AppDidDeactivate();
+        }
 ```
+
+![][wp_app_integration]
 
 #### Windows Store
 
@@ -61,26 +76,55 @@ In the `OnLaunched` of your app call the method `AppDidLaunch`. This tells Adjus
 ```cs
     using adeven.AdjustIo;
     // ...
-    AdjustIo.AppDidLaunch("{YourAppToken}");
-    AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
-    AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
     
-    Improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
-
-    protected override void OnActivated(IActivatedEventArgs args)
+    /// <summary>
+    /// Provides application-specific behavior to supplement the default Application class.
+    /// </summary>
+    sealed partial class App : Application
     {
-        AdjustIo.AppDidActivate();
-        // ...
-    }
-And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivated` for Windows Phone apps).
+        //...
+        
+        
+        /// <summary>
+        /// Invoked when the application is launched normally by the end user.  Other entry points
+        /// will be used such as when the application is launched to open a specific file.
+        /// </summary>
+        /// <param name="e">Details about the launch request and process.</param>
+        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        {
+            AdjustIo.AppDidLaunch("{YourAppToken}");
+            AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
+            AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+            //...
+        }
+        
+        /// <summary>
+        /// Invoked when application execution is being suspended.  Application state is saved
+        /// without knowing whether the application will be terminated or resumed with the contents
+        /// of memory still intact.
+        /// </summary>
+        /// <param name="sender">The source of the suspend request.</param>
+        /// <param name="e">Details about the suspend request.</param>
+        private void OnSuspending(object sender, SuspendingEventArgs e)
+        {
+            AdjustIo.AppDidDeactivate();
+            //...
+        }
 
-    private void OnSuspending(object sender, SuspendingEventArgs e)
-    {
-        AdjustIo.AppDidDeactivate();
-        // ...
-    }
+        /// <summary>
+        /// Invoked when the application is activated by some means other than normal
+        /// launching.
+        /// </summary>
+        /// <param name="args">Event data for the event.</param>
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            AdjustIo.AppDidActivate();
+            //...
+        }
 ```
-![][app_integration]
+![][ws_app_integration]
+
+### 4 Add AdjustIo settings
 
 Replace `{YourAppToken}` with your App Token. You can find in your [dashboard].
 
@@ -106,36 +150,14 @@ AdjustIo.SetEnvironment(AdjustIo.Environment.Production);
 
 **Important:** This value should be set to `AdjustIo.Environment.SandBox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustIo.Environment.Production` just before you publish the app. Set it back to `AdjustIo.Environment.SandBox` when you start testing it again.
 
-We use this environment to distinguish between real traffic and artificial
-traffic from test devices. It is very important that you keep this value
-meaningful at all times! Especially if you are tracking revenue.
+We use this environment to distinguish between real traffic and artificial traffic from test devices. It is very important that you keep this value meaningful at all times! Especially if you are tracking revenue.
 
-### 3. Build your app
-Build and run your app. If the build succeeds, you successfully integrated AdjustIo into your app. After the app launched, you should see the debug log message `First session`.
+### 5 Build your app
 
-![][run_app]
-
-### 3. Build your app
-Improve the session tracking by calling `AppDidActivate` in `OnActivated` (`Application_Activated` for Windows Phone apps).
-
-    protected override void OnActivated(IActivatedEventArgs args)
-    {
-        AdjustIo.AppDidActivate();
-        // ...
-    }
-And also by calling `AppDidDeactivate` in `OnSuspending` (`Application_Deactivated` for Windows Phone apps).
-
-    private void OnSuspending(object sender, SuspendingEventArgs e)
-    {
-        AdjustIo.AppDidDeactivate();
-        // ...
-    }
+From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `First session` in the Output view.
 
 
-### 3. Build your app
-From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
 
-![][output]
 ## Additional features
 
 Once you integrated the AdjustIo SDK into your project, you can take advantage of the following features wherever you see fit.
@@ -158,11 +180,11 @@ In that case we would track the event and send a request to `http://www.adeven.c
 ### Add tracking of revenue
 If your users can generate revenue by clicking on advertisements you can track those revenues. If the click is worth one Cent, you could make the following call to track that revenue:
 
-    AdjustIo.TrackRevenue(1.0f);
+    AdjustIo.TrackRevenue(1.0);
 
-The parameter is supposed to be in Cents and will get rounded to one decimal point. If you want to differentiate between different kinds of revenue you can get different event tokens for each kind. Again, you need to ask us for event tokens that you can then use. In that cas you would make a call like this:
+The parameter is supposed to be in Cents and will get rounded to one decimal point. If you want to differentiate between different kinds of revenue you can get different event tokens for each kind. Again, you need to ask us for event tokens that you can then use. In that case you would make a call like this:
 
-    AdjustIo.TrackRevenue(1.0f, "abc123");
+    AdjustIo.TrackRevenue(1.0, "abc123");
 
 You can also register a callback URL again and provide a dictionary of named parameters, just like it worked with normal events.
 
@@ -170,24 +192,32 @@ You can also register a callback URL again and provide a dictionary of named par
         { "key", "value" },
         { "foo", "bar" }
     };
-    AdjustIo.TrackRevenue(1.0f, "abc123", parameters);
+    AdjustIo.TrackRevenue(1.0, "abc123", parameters);
 
 In any case, don't forget to import AdjustIo. Again, there is no point in sending parameters if you haven't registered a callback URL for that revenue event.
 
+### Enable event buffering
+
+If your app makes heavy use of event tracking, you might want to delay some HTTP requests in order to send them in one batch every minute. You can enable event buffering by adding the following line after calling `AdjustIo.AppDidLaunch({YourAppToken)` at the launch of the app.
+
+```cs
+AdjustIo.SetEventBufferingEnabled(enabledEventBuffering: true);
+```
+
 [adjust.io]: http://www.adjust.io
 [nuget]: http://nuget.org/packages/AdjustIo
-[console]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/console.png
-[install]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/install.png
-[launch]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/launch.png
-[output]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/output.png
-[capabilities]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/capabilities.png
-
+[nuget_click]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/01_nuget_console_click.png
+[nuget_install]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/02_nuget_install.png
+[wp_capabilities]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/03_windows_phone_capabilities.png
+[wp_app_integration]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/04_wp_app_integration.png
+[ws_app_integration]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/05_ws_app_integration.png
+[run_app]: https://raw.github.com/adeven/adjust_sdk/master/Resources/windows/06_run_app.png
 
 ## License
 
 The adjust-sdk is licensed under the MIT License.
 
-Copyright (c) 2012 adeven GmbH,
+Copyright (c) 2014 adeven GmbH,
 http://www.adeven.com
 
 Permission is hereby granted, free of charge, to any person obtaining
