@@ -152,7 +152,7 @@ namespace adeven.AdjustIo
         ///   - Environment.Sandbox
         ///   - Environment.Production
         /// </param>
-        public static void SetEnvironment(Environment environment)
+        public static void SetEnvironment(AdjustIo.Environment environment)
         {
             AdjustApi.SetEnvironment((AdjustApi.Environment)environment);
         }
