@@ -54,17 +54,16 @@ namespace adeven.AdjustIo.PCL
                         {
                             Logger.Error("{0}. ({1}, {2}).",
                                 package.FailureMessage(),
-                                content.ReadAsStringAsync().Result,
-                                httpResponseMessage.StatusCode);
+                                content.ReadAsStringAsync().Result.TrimEnd('\r', '\n'),
+                                (int)httpResponseMessage.StatusCode);
 
                             return true;
                         }
                         else
                         {
-                            Logger.Error("{0}. ({1}, {2}). Will retry later.",
+                            Logger.Error("{0}. ({1}). Will retry later.",
                                 package.FailureMessage(),
-                                content.ReadAsStringAsync().Result,
-                                httpResponseMessage.StatusCode);
+                                (int)httpResponseMessage.StatusCode);
                         }
                     }
                 }
@@ -78,7 +77,7 @@ namespace adeven.AdjustIo.PCL
                     Logger.Error("{0}. ({1}, {2}). Will retry later.",
                         package.FailureMessage(),
                         streamReader.ReadToEnd().Trim(),
-                        response.StatusCode);
+                        (int)response.StatusCode);
                 }
             }
             catch (Exception ex)

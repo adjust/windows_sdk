@@ -51,7 +51,7 @@ namespace adeven.AdjustIo.PCL
                 stringBuilder.AppendFormat("Parameters:");
                 foreach (var keyValuePair in Parameters)
                 {
-                    stringBuilder.AppendFormat("\n\t\t{0:-16} {1}", keyValuePair.Key, keyValuePair.Value);
+                    stringBuilder.AppendFormat("\n\t\t{0} {1}", keyValuePair.Key.PadRight(16, ' '), keyValuePair.Value);
                 }
             }
 
