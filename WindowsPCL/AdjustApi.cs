@@ -7,7 +7,7 @@ namespace adeven.AdjustIo.PCL
         // keep this enum in sync with WS and WP AdjustIo class
         public enum Environment
         {
-            SandBox,
+            Sandbox,
             Production,
             Unknown
         }
@@ -55,7 +55,7 @@ namespace adeven.AdjustIo.PCL
             {
                 Logger.Error("Please call 'SetEnvironment' after 'AppDidLaunch'!");
             }
-            else if (environment == Environment.SandBox)
+            else if (environment == Environment.Sandbox)
             {
                 activityHandler.SetEnvironment(environment);
                 Logger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
