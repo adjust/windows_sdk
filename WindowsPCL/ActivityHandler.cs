@@ -34,6 +34,10 @@ namespace adeven.AdjustIo.PCL
         {
             DeviceSpecific = deviceUtil;
 
+            // default values
+            Environment = AdjustApi.Environment.Unknown;
+            IsBufferedEventsEnabled = false;
+
             InternalQueue = new ActionQueue("io.adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
@@ -75,15 +79,12 @@ namespace adeven.AdjustIo.PCL
             if (!CheckAppTokenLength(appToken)) return;
 
             AppToken = appToken;
-            Environment = AdjustApi.Environment.Unknown;
             ClientSdk = DeviceSpecific.ClientSdk;
             UserAgent = DeviceSpecific.GetUserAgent();
 
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
-
-            IsBufferedEventsEnabled = false;
 
             PackageHandler = new PackageHandler(deviceUtil);
 
