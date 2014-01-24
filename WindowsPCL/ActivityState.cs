@@ -23,8 +23,6 @@ namespace adeven.AdjustIo.PCL
 
         internal TimeSpan? LastInterval { get; set; }
 
-        internal int NewFieldTest { get; set; }
-
         internal ActivityState()
         {
             EventCount = 0;
@@ -73,55 +71,37 @@ namespace adeven.AdjustIo.PCL
 
         #region Serialization
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static void SerializeToStream(Stream stream, ActivityState activity)
         {
-            using (var writer = new BinaryWriter(stream))
-            {
-                writer.Write(activity.EventCount);
-                writer.Write(activity.SessionCount);
-                writer.Write(activity.SubSessionCount);
-                writer.Write(Util.SerializeTimeSpanToLong(activity.SessionLenght));
-                writer.Write(Util.SerializeTimeSpanToLong(activity.TimeSpent));
-                writer.Write(Util.SerializeDatetimeToLong(activity.LastActivity));
-                writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
-                writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
-            }
+            var writer = new BinaryWriter(stream);
+
+            writer.Write(activity.EventCount);
+            writer.Write(activity.SessionCount);
+            writer.Write(activity.SubSessionCount);
+            writer.Write(Util.SerializeTimeSpanToLong(activity.SessionLenght));
+            writer.Write(Util.SerializeTimeSpanToLong(activity.TimeSpent));
+            writer.Write(Util.SerializeDatetimeToLong(activity.LastActivity));
+            writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
+            writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
         }
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static ActivityState DeserializeFromStream(Stream stream)
         {
             ActivityState activity = null;
-            using (var reader = new BinaryReader(stream))
-            {
-                activity = new ActivityState();
-                activity.EventCount = reader.ReadInt32();
-                activity.SessionCount = reader.ReadInt32();
-                activity.SubSessionCount = reader.ReadInt32();
-                activity.SessionLenght = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-                activity.TimeSpent = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-                activity.LastActivity = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-                activity.CreatedAt = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-                activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-            }
-            return activity;
-        }
+            var reader = new BinaryReader(stream);
 
-        internal static ActivityState DeserializeFromStreamNewField(Stream stream)
-        {
-            ActivityState activity = null;
-            using (var reader = new BinaryReader(stream))
-            {
-                activity = new ActivityState();
-                activity.EventCount = reader.ReadInt32();
-                activity.SessionCount = reader.ReadInt32();
-                activity.SubSessionCount = reader.ReadInt32();
-                activity.SessionLenght = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-                activity.TimeSpent = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-                activity.LastActivity = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-                activity.CreatedAt = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-                activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-                activity.NewFieldTest = reader.ReadInt32();
-            }
+            activity = new ActivityState();
+            activity.EventCount = reader.ReadInt32();
+            activity.SessionCount = reader.ReadInt32();
+            activity.SubSessionCount = reader.ReadInt32();
+            activity.SessionLenght = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.TimeSpent = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.LastActivity = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
+            activity.CreatedAt = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
+            activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
+
             return activity;
         }
 

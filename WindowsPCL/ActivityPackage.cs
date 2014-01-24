@@ -60,80 +60,82 @@ namespace adeven.AdjustIo.PCL
 
         #region Serialization
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static void SerializeToStream(Stream stream, ActivityPackage activityPackage)
         {
-            using (var writer = new BinaryWriter(stream))
-            {
-                writer.Write(activityPackage.Path);
-                writer.Write(activityPackage.UserAgent);
-                writer.Write(activityPackage.ClientSdk);
-                writer.Write(activityPackage.Kind);
-                writer.Write(activityPackage.Suffix);
+            var writer = new BinaryWriter(stream);
 
-                var parametersArray = activityPackage.Parameters.ToArray();
-                writer.Write(parametersArray.Length);
-                for (int i = 0; i < parametersArray.Length; i++)
-                {
-                    writer.Write(parametersArray[i].Key);
-                    writer.Write(parametersArray[i].Value);
-                }
+            writer.Write(activityPackage.Path);
+            writer.Write(activityPackage.UserAgent);
+            writer.Write(activityPackage.ClientSdk);
+            writer.Write(activityPackage.Kind);
+            writer.Write(activityPackage.Suffix);
+
+            var parametersArray = activityPackage.Parameters.ToArray();
+            writer.Write(parametersArray.Length);
+            for (int i = 0; i < parametersArray.Length; i++)
+            {
+                writer.Write(parametersArray[i].Key);
+                writer.Write(parametersArray[i].Value);
             }
         }
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static ActivityPackage DeserializeFromStream(Stream stream)
         {
             ActivityPackage activityPackage = null;
-            using (var reader = new BinaryReader(stream))
+            var reader = new BinaryReader(stream);
+
+            activityPackage = new ActivityPackage();
+            activityPackage.Path = reader.ReadString();
+            activityPackage.UserAgent = reader.ReadString();
+            activityPackage.ClientSdk = reader.ReadString();
+            activityPackage.Kind = reader.ReadString();
+            activityPackage.Suffix = reader.ReadString();
+
+            var parameterLength = reader.ReadInt32();
+            activityPackage.Parameters = new Dictionary<string, string>(parameterLength);
+
+            for (int i = 0; i < parameterLength; i++)
             {
-                activityPackage = new ActivityPackage();
-                activityPackage.Path = reader.ReadString();
-                activityPackage.UserAgent = reader.ReadString();
-                activityPackage.ClientSdk = reader.ReadString();
-                activityPackage.Kind = reader.ReadString();
-                activityPackage.Suffix = reader.ReadString();
-
-                var parameterLength = reader.ReadInt32();
-                activityPackage.Parameters = new Dictionary<string, string>(parameterLength);
-
-                for (int i = 0; i < parameterLength; i++)
-                {
-                    activityPackage.Parameters.Add(
-                        reader.ReadString(),
-                        reader.ReadString()
-                    );
-                }
+                activityPackage.Parameters.Add(
+                    reader.ReadString(),
+                    reader.ReadString()
+                );
             }
+
             return activityPackage;
         }
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static void SerializeListToStream(Stream stream, List<ActivityPackage> activityPackageList)
         {
-            using (var writer = new BinaryWriter(stream))
+            var writer = new BinaryWriter(stream);
+
+            var activityPackageArray = activityPackageList.ToArray();
+            writer.Write(activityPackageArray.Length);
+            for (int i = 0; i < activityPackageArray.Length; i++)
             {
-                var activityPackageArray = activityPackageList.ToArray();
-                writer.Write(activityPackageArray.Length);
-                for (int i = 0; i < activityPackageArray.Length; i++)
-                {
-                    ActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
-                }
+                ActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
             }
         }
 
+        // does not close stream received. Caller is responsible to close if it wants it
         internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
         {
             List<ActivityPackage> activityPackageList = null;
-            using (var reader = new BinaryReader(stream))
-            {
-                var activityPackageLength = reader.ReadInt32();
-                activityPackageList = new List<ActivityPackage>(activityPackageLength);
+            var reader = new BinaryReader(stream);
 
-                for (int i = 0; i < activityPackageLength; i++)
-                {
-                    activityPackageList.Add(
-                        ActivityPackage.DeserializeFromStream(stream)
-                    );
-                }
+            var activityPackageLength = reader.ReadInt32();
+            activityPackageList = new List<ActivityPackage>(activityPackageLength);
+
+            for (int i = 0; i < activityPackageLength; i++)
+            {
+                activityPackageList.Add(
+                    ActivityPackage.DeserializeFromStream(stream)
+                );
             }
+
             return activityPackageList;
         }
 
