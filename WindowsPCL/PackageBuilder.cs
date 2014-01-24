@@ -102,7 +102,7 @@ namespace adeven.AdjustIo.PCL
         internal ActivityPackage BuildRevenuePackage()
         {
             FillDefaults();
-            SaveParameter("amount", AmountInCents.ToString());
+            SaveParameter("amount", AmountToString());
             InjectEventParameters();
 
             activityPackage.Path = @"/revenue";
@@ -134,6 +134,14 @@ namespace adeven.AdjustIo.PCL
             SaveParameter("event_count", EventCount);
             SaveParameter("event_token", EventToken);
             SaveParameter("params", CallbackParameters);
+        }
+
+        private string AmountToString()
+        {
+            int amountInMillis = (int)Math.Round(AmountInCents * 10);
+            AmountInCents = amountInMillis / 10.0; // now rounded to one decimal point
+            var amountString = amountInMillis.ToString();
+            return amountString;
         }
 
         #region SaveParameter
