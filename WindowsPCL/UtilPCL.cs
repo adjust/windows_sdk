@@ -121,7 +121,7 @@ namespace adeven.AdjustIo.PCL
             return defaultReturn();
         }
 
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input)
+        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input, string sucessMessage)
             where T : class
         {
             try
@@ -134,7 +134,7 @@ namespace adeven.AdjustIo.PCL
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);
                 }
-                Logger.Debug("Wrote to file {0}", fileName);
+                Logger.Debug("{0}", sucessMessage);
             }
             catch (Exception ex)
             {

@@ -117,7 +117,8 @@ namespace adeven.AdjustIo.PCL
 
         private void WritePackageQueue()
         {
-            Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue).Wait();
+            var sucessMessage = String.Format("Package handler wrote {0} packages", PackageQueue.Count);
+            Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue, sucessMessage).Wait();
         }
 
         private void ReadPackageQueue()

@@ -247,7 +247,8 @@ namespace adeven.AdjustIo.PCL
 
         private void WriteActivityState()
         {
-            Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState).Wait();
+            var sucessMessage = String.Format("Wrote activity state: {0}", ActivityState);
+            Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState, sucessMessage).Wait();
         }
 
         private void ReadActivityState()
