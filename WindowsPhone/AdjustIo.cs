@@ -13,12 +13,15 @@ namespace adeven.AdjustIo
         /// <summary>
         ///  Constants for our supported tracking environments.
         /// </summary>
-        public static readonly string EnvironmentSandbox = "sandbox";
+        public enum Environment
+        {
+            SandBox,
+            Production,
+        }
 
-        public static readonly string EnvironmentProduction = "production";
-
-        public string ClientSdk { get { return Util.ClientSdk; } }
-
+        /// <summary>
+        ///  Constants for our supported logging levels.
+        /// </summary>
         public enum LogLevel
         {
             Verbose = 1,
@@ -146,12 +149,12 @@ namespace adeven.AdjustIo
         /// </summary>
         /// <param name="environment">
         ///  The new environment. Supported values:
-        ///   - EnvironmentSandbox
-        ///   - EnvironmentProduction
+        ///   - Environment.Sandbox
+        ///   - Environment.Production
         /// </param>
-        public static void SetEnvironment(string environment)
+        public static void SetEnvironment(Environment environment)
         {
-            AdjustApi.SetEnvironment(environment);
+            AdjustApi.SetEnvironment((AdjustApi.Environment)environment);
         }
 
         /// <summary>

@@ -22,7 +22,7 @@ namespace adeven.AdjustIo.PCL
         private string UserAgent;
         private string ClientSdk;
 
-        public string Environment { get; private set; }
+        public AdjustApi.Environment Environment { get; private set; }
 
         public static bool IsBufferedEventsEnabled { get; private set; }
 
@@ -38,7 +38,7 @@ namespace adeven.AdjustIo.PCL
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
 
-        internal void SetEnvironment(string enviornment)
+        internal void SetEnvironment(AdjustApi.Environment enviornment)
         {
             Environment = enviornment;
         }
@@ -75,7 +75,7 @@ namespace adeven.AdjustIo.PCL
             if (!CheckAppTokenLength(appToken)) return;
 
             AppToken = appToken;
-            Environment = "unknown";
+            Environment = AdjustApi.Environment.Unknown;
             ClientSdk = DeviceSpecific.ClientSdk;
             UserAgent = DeviceSpecific.GetUserAgent();
 

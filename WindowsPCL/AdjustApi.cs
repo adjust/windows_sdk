@@ -4,10 +4,13 @@ namespace adeven.AdjustIo.PCL
 {
     public class AdjustApi
     {
-        // keep this consts in sync with WS and WP AdjustIo class
-        private static string EnvironmentSandbox = "sandbox";
-
-        private static string EnvironmentProduction = "production";
+        // keep this enum in sync with WS and WP AdjustIo class
+        public enum Environment
+        {
+            SandBox,
+            Production,
+            Unknown
+        }
 
         private static ActivityHandler activityHandler;
         private static DeviceUtil DeviceSpecific;
@@ -46,19 +49,19 @@ namespace adeven.AdjustIo.PCL
             PCL.Logger.LogLevel = (PCL.LogLevel)logLevel;
         }
 
-        public static void SetEnvironment(string environment)
+        public static void SetEnvironment(AdjustApi.Environment environment)
         {
             if (activityHandler == null)
             {
                 Logger.Error("Please call 'SetEnvironment' after 'AppDidLaunch'!");
             }
-            else if (environment == EnvironmentSandbox)
+            else if (environment == Environment.SandBox)
             {
                 activityHandler.SetEnvironment(environment);
                 Logger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
                     + " Don't forget to set the environment to AIEnvironmentProduction before publishing!");
             }
-            else if (environment == EnvironmentProduction)
+            else if (environment == Environment.Production)
             {
                 activityHandler.SetEnvironment(environment);
                 Logger.Assert("PRODUCTION: AdjustIo is running in Production mode."
@@ -67,8 +70,7 @@ namespace adeven.AdjustIo.PCL
             }
             else
             {
-                activityHandler.SetEnvironment("malformed");
-                Logger.Error("Malformerd environment: '{0}'", environment);
+                Logger.Error("Malformerd environment: '{0}'", environment.ToString());
             }
         }
 

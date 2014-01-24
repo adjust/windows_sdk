@@ -17,7 +17,7 @@ namespace adeven.AdjustIo.PCL
         // general
         internal string AppToken { get; set; }
 
-        internal string Environment { get; set; }
+        internal AdjustApi.Environment Environment { get; set; }
 
         internal string UserAgent { get; set; }
 
@@ -67,7 +67,7 @@ namespace adeven.AdjustIo.PCL
             SaveParameter("wp_udid", DeviceUniqueId);
             SaveParameter("ws_hwid", HardwareId);
             SaveParameter("ws_naid", NetworkAdapterId);
-            SaveParameter("environment", Environment);
+            SaveParameter("environment", Environment.ToString().ToLower());
             // session related (used for events as well)
             SaveParameter("session_count", SessionCount);
             SaveParameter("subsession_count", SubSessionCount);
