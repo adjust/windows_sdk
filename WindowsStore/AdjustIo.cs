@@ -47,6 +47,25 @@ namespace adeven.AdjustIo
 
         private static DeviceUtil Util = new UtilWS();
 
+        private static bool firstVisibilityChanged = true;
+
+        public static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        {
+            if (firstVisibilityChanged)
+            {
+                firstVisibilityChanged = false;
+                return;
+            }
+            if (args.Visible)
+            {
+                AdjustIo.AppDidActivate();
+            }
+            else
+            {
+                AdjustIo.AppDidDeactivate();
+            }
+        }
+
         #region AdjustApi
 
         /// <summary>
