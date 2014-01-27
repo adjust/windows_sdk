@@ -14,6 +14,7 @@ using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
 using Windows.UI.Core;
+using Windows.UI.Xaml;
 
 namespace adeven.AdjustIo
 {
@@ -50,7 +51,10 @@ namespace adeven.AdjustIo
 
         private static bool firstVisibilityChanged = true;
 
-        public static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        /// <summary>
+        ///  Tell AdjustIo that the application is activated (brought to foreground) or deactivated (sent to background).
+        /// </summary>
+        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
         {
             if (firstVisibilityChanged)
             {
@@ -59,11 +63,11 @@ namespace adeven.AdjustIo
             }
             if (args.Visible)
             {
-                AdjustIo.AppDidActivate();
+                AdjustApi.AppDidActivate();
             }
             else
             {
-                AdjustIo.AppDidDeactivate();
+                AdjustApi.AppDidDeactivate();
             }
         }
 
@@ -83,28 +87,7 @@ namespace adeven.AdjustIo
         public static void AppDidLaunch(string appToken)
         {
             AdjustApi.AppDidLaunch(appToken, Util);
-        }
-
-        /// <summary>
-        ///  Tell AdjustIo that the application is activated (brought to foreground).
-        ///
-        ///  This is used to keep track of the current session state.
-        ///  Call this in the OnActivated method of your Windows.UI.Xaml.Application class.
-        /// </summary>
-        public static void AppDidActivate()
-        {
-            AdjustApi.AppDidActivate();
-        }
-
-        /// <summary>
-        ///  Tell AdjustIo that the application is deactivated (sent to background).
-        ///
-        ///  This is used to calculate session attributes like session length and subsession count.
-        ///  Call this in the OnSuspending method of your Windows.UI.Xaml.Application class.
-        /// </summary>
-        public static void AppDidDeactivate()
-        {
-            AdjustApi.AppDidDeactivate();
+            Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
         }
 
         /// <summary>
