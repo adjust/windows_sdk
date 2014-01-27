@@ -1,133 +1,69 @@
-﻿using Microsoft.Phone.Info;
-using Newtonsoft.Json;
+﻿using adeven.AdjustIo.PCL;
+using Microsoft.Phone.Info;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
-using System.Text;
+using System.IO;
+using System.IO.IsolatedStorage;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Windows;
+using System.Threading.Tasks;
 using System.Xml.Linq;
-using Windows.ApplicationModel.Store;
 
 namespace adeven.AdjustIo
 {
-    public static class Util
+    internal class UtilWP : DeviceUtil
     {
-        public const string BaseUrl = "http://app.adjust.io";
-        public const string ClientSdk = "winphone1.0";
-        public const string LogTag = "AdjustIo";
+        public string ClientSdk { get { return "wphone2.1.0"; } }
 
-        public static string GetAppId()
+        public string GetMd5Hash(string input)
         {
-            string appId = getAppId();
-            return appId;
+            return MD5Core.GetHashString(input);
         }
 
-        public static string GetDeviceId()
+        public string GetDeviceUniqueId()
         {
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
             {
-                Debug.WriteLine("[{0}] This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.", Util.LogTag);
+                Logger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
                 return null;
             }
+            string deviceId = Convert.ToBase64String(id as byte[]);
 
-            string deviceId = Base32Encoding.ToString(id as byte[]);
+            Logger.Debug("Device unique Id ({0})", deviceId);
+
             return deviceId;
         }
 
-        public static string GetUserAgent()
+        public string GetHardwareId()
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append(getAppName());
-            builder.Append(" " + getAppVersion());
-            builder.Append(" " + getAppAuthor());
-            builder.Append(" " + getAppPublisher());
-            builder.Append(" " + getDeviceType());
-            builder.Append(" " + getDeviceName());
-            builder.Append(" " + getDeviceManufacturer());
-            builder.Append(" " + getOsName());
-            builder.Append(" " + getOsVersion());
-            builder.Append(" " + getLanguage());
-            builder.Append(" " + getCountry());
+            return null; // hardwareId is from WS
+        }
 
-            string userAgent = builder.ToString();
+        public string GetNetworkAdapterId()
+        {
+            return null; // networkAdapter is from WS
+        }
+
+        public string GetUserAgent()
+        {
+            var userAgent = String.Join(" ",
+                getAppName(),
+                getAppVersion(),
+                getAppAuthor(),
+                getAppPublisher(),
+                getDeviceType(),
+                getDeviceName(),
+                getDeviceManufacturer(),
+                getOsName(),
+                getOsVersion(),
+                getLanguage(),
+                getCountry());
+
             return userAgent;
         }
 
-        public static string GetStringEncodedParameters(Dictionary<string, string> parameters)
-        {
-            string paramString = string.Empty;
-            foreach (KeyValuePair<string, string> pair in parameters)
-            {
-                paramString += "&" + pair.Key + "=" + pair.Value;
-            }
-            paramString = paramString.Substring(1);
-            return paramString;
-        }
-
-        public static string GetBase64EncodedParameters(Dictionary<string, string> parameters)
-        {
-            string json = JsonConvert.SerializeObject(parameters);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            string encoded = Convert.ToBase64String(bytes);
-            return encoded;
-        }
-
-        private static string getDeviceManufacturer()
-        {
-            string manufacturer = DeviceStatus.DeviceManufacturer;
-            string sanitized = sanitizeString(manufacturer);
-            return sanitized;
-        }
-
-        private static string getDeviceName()
-        {
-            string deviceName = DeviceStatus.DeviceName;
-            string sanitized = sanitizeString(deviceName);
-            return sanitized;
-        }
-
-        private static string getDeviceType()
-        {
-            var deviceType = Microsoft.Devices.Environment.DeviceType;
-            switch (deviceType)
-            {
-                case Microsoft.Devices.DeviceType.Device: return "phone";
-                case Microsoft.Devices.DeviceType.Emulator: return "emulator";
-                default: return "unknown";
-            }
-        }
-
-        private static string getAppId()
-        {
-            Guid guid = CurrentApp.AppId;
-            string appId = guid.ToString();
-            string sanitized = sanitizeString(appId);
-            return sanitized;
-        }
-
-        private static string getAppUrl()
-        {
-            Uri uri = CurrentApp.LinkUri;
-            string url = uri.ToString();
-            string sanitized = sanitizeString(url);
-            return sanitized;
-        }
-
-        private static string getAppFullName()
-        {
-            string fullName = Application.Current.GetType().FullName;
-            string sanitized = sanitizeString(fullName);
-            return sanitized;
-        }
-
-        private static XDocument getManifest()
-        {
-            XDocument manifest = XDocument.Load("WMAppManifest.xml");
-            return manifest;
-        }
+        #region User Agent
 
         private static string getAppName()
         {
@@ -164,6 +100,44 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
+        private static string getDeviceType()
+        {
+            var deviceType = Microsoft.Devices.Environment.DeviceType;
+            switch (deviceType)
+            {
+                case Microsoft.Devices.DeviceType.Device: return "phone";
+                case Microsoft.Devices.DeviceType.Emulator: return "emulator";
+                default: return "unknown";
+            }
+        }
+
+        private static string getDeviceName()
+        {
+            string deviceName = DeviceStatus.DeviceName;
+            string sanitized = sanitizeString(deviceName);
+            return sanitized;
+        }
+
+        private static string getDeviceManufacturer()
+        {
+            string manufacturer = DeviceStatus.DeviceManufacturer;
+            string sanitized = sanitizeString(manufacturer);
+            return sanitized;
+        }
+
+        private static string getOsName()
+        {
+            return "windows-phone";
+        }
+
+        private static string getOsVersion()
+        {
+            Version v = System.Environment.OSVersion.Version;
+            string version = string.Format("{0}.{1}", v.Major, v.Minor);
+            string sanitized = sanitizeString(version);
+            return sanitized;
+        }
+
         private static string getLanguage()
         {
             CultureInfo currentCulture = CultureInfo.CurrentUICulture;
@@ -194,17 +168,10 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getOsName()
+        private static XDocument getManifest()
         {
-            return "windowsphone";
-        }
-
-        private static string getOsVersion()
-        {
-            Version v = System.Environment.OSVersion.Version;
-            string version = string.Format("{0}.{1}", v.Major, v.Minor);
-            string sanitized = sanitizeString(version);
-            return sanitized;
+            XDocument manifest = XDocument.Load("WMAppManifest.xml");
+            return manifest;
         }
 
         private static string sanitizeString(string s, string defaultString = "unknown")
@@ -223,5 +190,7 @@ namespace adeven.AdjustIo
 
             return result;
         }
+
+        #endregion User Agent
     }
 }

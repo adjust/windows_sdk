@@ -1,28 +1,54 @@
-﻿using Newtonsoft.Json;
+﻿using adeven.AdjustIo.PCL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Windows.ApplicationModel;
+using Windows.Security.Cryptography;
+using Windows.Security.Cryptography.Core;
+using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.System;
+using Windows.System.Profile;
 
 namespace adeven.AdjustIo
 {
-    public static class Util
+    internal class UtilWS : DeviceUtil
     {
-        public const string BaseUrl = "http://app.adjust.io";
-        public const string ClientSdk = "winstore1.0";
-        public const string LogTag = "AdjustIo";
+        public string ClientSdk { get { return "wstore2.1.0"; } }
 
-        public static string GetAppId()
+        public string GetMd5Hash(string input)
         {
-            string appId = getAppFamilyName();
-            return appId;
+            var alg = HashAlgorithmProvider.OpenAlgorithm("MD5");
+            IBuffer buff = CryptographicBuffer.ConvertStringToBinary(input, BinaryStringEncoding.Utf8);
+            var hashed = alg.HashData(buff);
+            var res = CryptographicBuffer.EncodeToHexString(hashed);
+            return res;
         }
 
-        public static string GetDeviceId()
+        public string GetDeviceUniqueId()
+        {
+            return null; //deviceUniqueId is from WP
+        }
+
+        public string GetHardwareId()
+        {
+            var token = HardwareIdentification.GetPackageSpecificToken(null);
+            var hardwareId = token.Id;
+            var dataReader = Windows.Storage.Streams.DataReader.FromBuffer(hardwareId);
+
+            byte[] bytes = new byte[hardwareId.Length];
+            dataReader.ReadBytes(bytes);
+
+            return Convert.ToBase64String(bytes);
+        }
+
+        public string GetNetworkAdapterId()
         {
             var profiles = Windows.Networking.Connectivity.NetworkInformation.GetConnectionProfiles();
             var iter = profiles.GetEnumerator();
@@ -32,68 +58,78 @@ namespace adeven.AdjustIo
             return adapterId;
         }
 
-        public static string GetUserAgent()
+        public string GetUserAgent()
         {
-            StringBuilder builder = new StringBuilder();
-            builder.Append(getAppDisplayName());
-            builder.Append(" " + getAppVersion());
-            builder.Append(" " + getAppPublisher());
-            builder.Append(" " + getDeviceType());
-            builder.Append(" " + getDeviceName());
-            builder.Append(" " + getArchitecture());
-            builder.Append(" " + getOsName());
-            builder.Append(" " + getOsVersion());
-            builder.Append(" " + getLanguage());
-            builder.Append(" " + getCountry());
+            var userAgent = String.Join(" ",
+                getAppDisplayName(),
+                getAppVersion(),
+                getAppPublisher(),
+                getDeviceType(),
+                getDeviceName(),
+                getDeviceManufacturer(),
+                getArchitecture(),
+                getOsName(),
+                getOsVersion(),
+                getLanguage(),
+                getCountry());
 
-            string userAgent = builder.ToString();
             return userAgent;
         }
 
-        public static string GetBase64EncodedParameters(Dictionary<string, string> parameters)
-        {
-            string json = JsonConvert.SerializeObject(parameters);
-            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
-            string encoded = Convert.ToBase64String(bytes);
-            return encoded;
-        }
+        #region User Agent
 
-        public static string GetStringEncodedParameters(Dictionary<string, string> parameters)
+        private string getAppName()
         {
-            string paramString = string.Empty;
-            foreach (KeyValuePair<string, string> pair in parameters)
-            {
-                paramString += "&" + pair.Key + "=" + pair.Value;
-            }
-            paramString = paramString.Substring(1);
-            return paramString;
-        }
-
-        private static string getAppDisplayName()
-        {
-            string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
-            XElement element = XDocument.Load("appxmanifest.xml").Root;
-            element = element.Element(XName.Get("Properties", namespaceName));
-            element = element.Element(XName.Get("DisplayName", namespaceName));
-            string displayName = element.Value;
-            string sanitized = sanitizeString(displayName);
+            PackageId package = getPackage();
+            string packageName = package.Name;
+            string sanitized = sanitizeString(packageName);
             return sanitized;
         }
 
-        private static string getDeviceName()
-        {
-            return "unknown";
-        }
-
-        private static string getDeviceType()
-        {
-            return "unknown";
-        }
-
-        private static string getArchitecture()
+        private string getAppVersion()
         {
             PackageId package = getPackage();
-            ProcessorArchitecture architecture = package.Architecture;
+            PackageVersion pv = package.Version;
+            string version = string.Format("{0}.{1}", pv.Major, pv.Minor);
+            string sanitized = sanitizeString(version);
+            return sanitized;
+        }
+
+        private string getAppPublisher()
+        {
+            PackageId package = getPackage();
+            string publisher = package.Publisher;
+            string sanitized = sanitizeString(publisher);
+            return sanitized;
+        }
+
+        private string getDeviceType()
+        {
+            var deviceType = SystemInfoEstimate.GetDeviceCategoryAsync().Result;
+            switch (deviceType)
+            {
+                case "Computer.Lunchbox": return "pc";
+                case "Computer.Tablet": return "tablet";
+                default: return "unknown";
+            }
+            return sanitizeString(deviceType);
+        }
+
+        private string getDeviceName()
+        {
+            var deviceModel = SystemInfoEstimate.GetDeviceModelAsync().Result;
+            return sanitizeString(deviceModel);
+        }
+
+        private string getDeviceManufacturer()
+        {
+            var deviceManufacturer = SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
+            return sanitizeString(deviceManufacturer);
+        }
+
+        private string getArchitecture()
+        {
+            ProcessorArchitecture architecture = SystemInfoEstimate.GetProcessorArchitectureAsync().Result;
             switch (architecture)
             {
                 case ProcessorArchitecture.Arm: return "arm";
@@ -105,7 +141,17 @@ namespace adeven.AdjustIo
             }
         }
 
-        private static string getLanguage()
+        private string getOsName()
+        {
+            return "windows";
+        }
+
+        private string getOsVersion()
+        {
+            return SystemInfoEstimate.GetWindowsVersionAsync().Result;
+        }
+
+        private string getLanguage()
         {
             CultureInfo currentCulture = CultureInfo.CurrentUICulture;
             string cultureName = currentCulture.Name;
@@ -119,7 +165,7 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getCountry()
+        private string getCountry()
         {
             CultureInfo currentCulture = CultureInfo.CurrentCulture;
             string cultureName = currentCulture.Name;
@@ -135,32 +181,14 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getOsName()
-        {
-            return "windows";
-        }
-
-        private static string getOsVersion()
-        {
-            return "8.0";
-        }
-
-        private static PackageId getPackage()
+        private PackageId getPackage()
         {
             Package package = Package.Current;
             PackageId packageId = package.Id;
             return packageId;
         }
 
-        private static string getAppName()
-        {
-            PackageId package = getPackage();
-            string packageName = package.Name;
-            string sanitized = sanitizeString(packageName);
-            return sanitized;
-        }
-
-        private static string getAppFamilyName()
+        private string getAppFamilyName()
         {
             PackageId package = getPackage();
             string packageName = package.FamilyName;
@@ -168,7 +196,7 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getAppFullName()
+        private string getAppFullName()
         {
             PackageId package = getPackage();
             string fullName = package.FullName;
@@ -176,24 +204,18 @@ namespace adeven.AdjustIo
             return sanitized;
         }
 
-        private static string getAppVersion()
+        private string getAppDisplayName()
         {
-            PackageId package = getPackage();
-            PackageVersion pv = package.Version;
-            string version = string.Format("{0}.{1}", pv.Major, pv.Minor);
-            string sanitized = sanitizeString(version);
+            string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
+            XElement element = XDocument.Load("appxmanifest.xml").Root;
+            element = element.Element(XName.Get("Properties", namespaceName));
+            element = element.Element(XName.Get("DisplayName", namespaceName));
+            string displayName = element.Value;
+            string sanitized = sanitizeString(displayName);
             return sanitized;
         }
 
-        private static string getAppPublisher()
-        {
-            PackageId package = getPackage();
-            string publisher = package.Publisher;
-            string sanitized = sanitizeString(publisher);
-            return sanitized;
-        }
-
-        private static string sanitizeString(string s, string defaultString = "unknown")
+        private string sanitizeString(string s, string defaultString = "unknown")
         {
             if (s == null)
             {
@@ -201,6 +223,7 @@ namespace adeven.AdjustIo
             }
 
             s = s.Replace('=', '_');
+            s = s.Replace(',', '.');
             string result = Regex.Replace(s, @"\s+", "");
             if (result.Length == 0)
             {
@@ -209,5 +232,7 @@ namespace adeven.AdjustIo
 
             return result;
         }
+
+        #endregion User Agent
     }
 }
