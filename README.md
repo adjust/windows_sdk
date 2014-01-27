@@ -93,8 +93,6 @@ sealed partial class App : Application
         AdjustIo.AppDidLaunch("{YourAppToken}");
         AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
         AdjustIo.SetEnvironment(AdjustIo.Environment.Sandbox);
-
-        Window.Current.CoreWindow.VisibilityChanged += AdjustIo.VisibilityChanged;
         // ...
     }
 }
