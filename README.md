@@ -35,39 +35,34 @@ In the `Application_Launching` method of your app call the method `AppDidLaunch`
 
 ```cs
     using adeven.AdjustIo;
-    // ...
     
     public partial class App : Application
     {
-        //...
-    
-        // Code to execute when the application is launching (eg, from Start)
-        // This code will not execute when the application is reactivated
         private void Application_Launching(object sender, LaunchingEventArgs e)
         {
             AdjustIo.AppDidLaunch("{YourAppToken}");
             AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
-            AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+            AdjustIo.SetEnvironment(AdjustIo.Environment.Sandbox);
             //...
         }
     
-        // Code to execute when the application is activated (brought to foreground)
-        // This code will not execute when the application is first launched
         private void Application_Activated(object sender, ActivatedEventArgs e)
         {
             AdjustIo.AppDidActivate();
             //...
         }
     
-        // Code to execute when the application is deactivated (sent to background)
-        // This code will not execute when the application is closing
         private void Application_Deactivated(object sender, DeactivatedEventArgs e)
         {
             AdjustIo.AppDidDeactivate();
+            //...
         }
+    }
 ```
 
 ![][wp_app_integration]
+
+Registering the activation and deactivation improves session tracking. In the method `Application_Activated` of your app call  `AppDidActivate` and in the method `Application_Deactivated` of your app call the method `AppDidDeactivate`.
 
 #### Windows Store
 
@@ -75,54 +70,23 @@ In the `OnLaunched` of your app call the method `AppDidLaunch`. This tells Adjus
 
 ```cs
     using adeven.AdjustIo;
-    // ...
     
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     sealed partial class App : Application
     {
-        //...
-        
-        
-        /// <summary>
-        /// Invoked when the application is launched normally by the end user.  Other entry points
-        /// will be used such as when the application is launched to open a specific file.
-        /// </summary>
-        /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
             AdjustIo.AppDidLaunch("{YourAppToken}");
             AdjustIo.SetLogLevel(AdjustIo.LogLevel.Info);
-            AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+            AdjustIo.SetEnvironment(AdjustIo.Environment.Sandbox);
+            
+            Window.Current.CoreWindow.VisibilityChanged += AdjustIo.VisibilityChanged;
             //...
         }
-        
-        /// <summary>
-        /// Invoked when application execution is being suspended.  Application state is saved
-        /// without knowing whether the application will be terminated or resumed with the contents
-        /// of memory still intact.
-        /// </summary>
-        /// <param name="sender">The source of the suspend request.</param>
-        /// <param name="e">Details about the suspend request.</param>
-        private void OnSuspending(object sender, SuspendingEventArgs e)
-        {
-            AdjustIo.AppDidDeactivate();
-            //...
-        }
-
-        /// <summary>
-        /// Invoked when the application is activated by some means other than normal
-        /// launching.
-        /// </summary>
-        /// <param name="args">Event data for the event.</param>
-        protected override void OnActivated(IActivatedEventArgs args)
-        {
-            AdjustIo.AppDidActivate();
-            //...
-        }
+    }
 ```
 ![][ws_app_integration]
+
+Registering the activation and deactivation improves session tracking.  You can register the visibility changed event in `Window.Current.CoreWindow.VisibilityChanged` to the `VisibilityChanged` method in the AdjustIo SDK
 
 ### 4 Add AdjustIo settings
 
@@ -144,19 +108,19 @@ Depending on whether or not you build your app for testing or for production
 you must call the `SetEnvironment:` method with one of these parameters:
 
 ```cs
-AdjustIo.SetEnvironment(AdjustIo.Environment.SandBox);
+AdjustIo.SetEnvironment(AdjustIo.Environment.Sandbox);
 AdjustIo.SetEnvironment(AdjustIo.Environment.Production);
 ```
 
-**Important:** This value should be set to `AdjustIo.Environment.SandBox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustIo.Environment.Production` just before you publish the app. Set it back to `AdjustIo.Environment.SandBox` when you start testing it again.
+**Important:** This value should be set to `AdjustIo.Environment.Sandbox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustIo.Environment.Production` just before you publish the app. Set it back to `AdjustIo.Environment.Sandbox` when you start testing it again.
 
 We use this environment to distinguish between real traffic and artificial traffic from test devices. It is very important that you keep this value meaningful at all times! Especially if you are tracking revenue.
 
 ### 5 Build your app
 
-From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `First session` in the Output view.
+From the menu select `DEBUG|Start Debugging`. After the app launched, you should see the debug log `Tracked session start` in the Output view.
 
-
+![][run_app]
 
 ## Additional features
 
@@ -164,41 +128,41 @@ Once you integrated the AdjustIo SDK into your project, you can take advantage o
 
 ### Add tracking of custom events
 You can tell AdjustIo about every event you consider to be of your interest. Suppose you want to track every click on a button. Currently you would have to ask us for an event token and we would give you one, like `abc123`. In your button's `Button_Click` method you could then add the following code to track the click:
-
+```
     AdjustIo.TrackEvent("abc123");
-
-You can also register a callback URL for that event and we will send a request to the URL whenever the event happens. In that cas you can also put some key-value-pairs in a dictionary and pass it to the trackEvent method. We will then forward these named parameters to your callback URL. Suppose you registered the URL `http://www.adeven.com/callback` for your event and execute the following lines:
-
+```
+You can also register a callback URL for that event and we will send a request to the URL whenever the event happens. In that case you can also put some key-value-pairs in a dictionary and pass it to the `TrackEvent`  method. We will then forward these named parameters to your callback URL. Suppose you registered the URL `http://www.adeven.com/callback` for your event and execute the following lines:
+```cs
     var parameters = new Dictionary<string, string> {
         { "key", "value" },
         { "foo", "bar" }
     };
     AdjustIo.TrackEvent("abc123", parameters);
-
+```
 In that case we would track the event and send a request to `http://www.adeven.com/callback?key=value&foo=bar`. In any case you need to import AdjustIo with `using adeven.AdjustIo` in any file that makes use of the SDK. Please note that we don't store your custom parameters. If you haven't registered a callback URL for an event, there is no point in sending us parameters.
 
 ### Add tracking of revenue
 If your users can generate revenue by clicking on advertisements you can track those revenues. If the click is worth one Cent, you could make the following call to track that revenue:
-
+```cs
     AdjustIo.TrackRevenue(1.0);
-
+```
 The parameter is supposed to be in Cents and will get rounded to one decimal point. If you want to differentiate between different kinds of revenue you can get different event tokens for each kind. Again, you need to ask us for event tokens that you can then use. In that case you would make a call like this:
-
+```cs
     AdjustIo.TrackRevenue(1.0, "abc123");
-
+```
 You can also register a callback URL again and provide a dictionary of named parameters, just like it worked with normal events.
-
+```cs
     var parameters = new Dictionary<string, string> {
         { "key", "value" },
         { "foo", "bar" }
     };
     AdjustIo.TrackRevenue(1.0, "abc123", parameters);
-
+```
 In any case, don't forget to import AdjustIo. Again, there is no point in sending parameters if you haven't registered a callback URL for that revenue event.
 
 ### Enable event buffering
 
-If your app makes heavy use of event tracking, you might want to delay some HTTP requests in order to send them in one batch every minute. You can enable event buffering by adding the following line after calling `AdjustIo.AppDidLaunch({YourAppToken)` at the launch of the app.
+If your app makes heavy use of event tracking, you might want to delay some HTTP requests in order to send them in one batch every minute. You can enable event buffering by adding the following line after calling `AdjustIo.AppDidLaunch("{YourAppToken}")` at the launch of the app.
 
 ```cs
 AdjustIo.SetEventBufferingEnabled(enabledEventBuffering: true);
@@ -238,3 +202,4 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ 
