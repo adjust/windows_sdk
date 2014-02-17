@@ -1,11 +1,11 @@
 ## Summary
 
-This is the Windows SDK of AdjustIo. You can read more about it at
+This is the Windows SDK of adjust™. You can read more about it at
 [adjust.io][].
 
 ## Basic Installation
 
-These are the minimal steps required to integrate the AdjustIo SDK into your
+These are the minimal steps required to integrate the adjust SDK into your
 Windows Phone or Windows Store project. We are going to assume that you use
 Visual Studio 2013 with the latest NuGet package manager installed, but
 previous version that support Windows phone 8 or Windows 8 should work. The
@@ -39,7 +39,7 @@ to the Capabilities tab and check the `ID_CAP_IDENTITY_DEVICE` checkbox.
 
 ![][wp_capabilities]
 
-### 3. Integrate AdjustIo into your app
+### 3. Integrate adjust into your app
 
 In the Solution Explorer open the file `App.xaml.cs`. Add the `using
 adeven.AdjustIo;` statement at the top of the file.
@@ -81,7 +81,7 @@ public partial class App : Application
 #### Windows Store
 
 In the `OnLaunched` method of your app, call the method `AppDidLaunch`. This
-tells AdjustIo about the launch of your Application.
+tells adjust about the launch of your Application.
 
 ```cs
 using adeven.AdjustIo;
@@ -100,7 +100,7 @@ sealed partial class App : Application
 
 ![][ws_app_integration]
 
-### 4 Update AdjustIo settings
+### 4 Update adjust settings
 
 Replace the `{YourAppToken}` placeholder with your App Token. You can find in
 your [dashboard].
@@ -144,12 +144,12 @@ should see the debug log `Tracked session start` in the Output view.
 
 ## Additional features
 
-Once you integrated the AdjustIo SDK into your project, you can take advantage
+Once you integrated the adjust SDK into your project, you can take advantage
 of the following features wherever you see fit.
 
 ### Add tracking of custom events
 
-You can tell AdjustIo about every event you want. Suppose you want to track
+You can tell adjust about every event you want. Suppose you want to track
 every tap on a button. You would have to create a new Event Token in your
 [dashboard]. Let's say that Event Token is `abc123`. In your button's
 `Button_Click` method you could then add the following line to track the click:
