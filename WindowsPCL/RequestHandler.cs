@@ -1,5 +1,4 @@
 ﻿using adeven.Adjust.Common;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -54,7 +53,7 @@ namespace adeven.Adjust.PCL
                     using (var content = httpResponseMessage.Content)
                     {
                         var responseString = content.ReadAsStringAsync();
-                        InjectResponseData(responseData, responseString.Result);
+                        Util.InjectResponseData(responseData, responseString.Result);
 
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
@@ -93,7 +92,7 @@ namespace adeven.Adjust.PCL
                         responseString.Trim(),
                         (int)response.StatusCode);
 
-                    InjectError(responseData, responseString);
+                    Util.InjectResponseError(responseData, responseString);
                     responseData.WillRetry = true;
                 }
             }
@@ -101,7 +100,7 @@ namespace adeven.Adjust.PCL
             {
                 Logger.Error("{0}. ({1}). Will retry later", package.FailureMessage(), ex.Message);
 
-                InjectError(responseData, ex.Message);
+                Util.InjectResponseError(responseData, ex.Message);
                 responseData.WillRetry = true;
             }
 
@@ -127,27 +126,6 @@ namespace adeven.Adjust.PCL
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();
-        }
-
-        private void InjectResponseData(ResponseData responseData, string responseString)
-        {
-            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
-
-            if (responseDic == null)
-            {
-                Logger.Error("Failed to parse json response: {0}", responseString);
-                return;
-            }
-
-            responseDic.TryGetValue("error", out responseData.Error);
-            responseDic.TryGetValue("tracker_token", out responseData.TrackerToken);
-            responseDic.TryGetValue("tracker_name", out responseData.TrackerName);
-        }
-
-        private void InjectError(ResponseData responseData, string errorString = null)
-        {
-            responseData.Error = errorString;
-            responseData.Success = false;
         }
     }
 }

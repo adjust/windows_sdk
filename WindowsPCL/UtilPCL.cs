@@ -1,4 +1,6 @@
-﻿using PCLStorage;
+﻿using adeven.Adjust.Common;
+using Newtonsoft.Json;
+using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -168,6 +170,26 @@ namespace adeven.Adjust.PCL
                 return timeSpan.Value.TotalSeconds;
         }
 
+        internal static void InjectResponseData(ResponseData responseData, string responseString)
+        {
+            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+
+            if (responseDic == null)
+            {
+                Logger.Error("Failed to parse json response: {0}", responseString);
+                return;
+            }
+
+            responseDic.TryGetValue("error", out responseData.Error);
+            responseDic.TryGetValue("tracker_token", out responseData.TrackerToken);
+            responseDic.TryGetValue("tracker_name", out responseData.TrackerName);
+        }
+
+        internal static void InjectResponseError(ResponseData responseData, string errorString)
+        {
+            responseData.Error = errorString;
+            responseData.Success = false;
+        }
 
         internal static ActivityKind ActivityKindFromString(string activityKindString)
         {
@@ -185,6 +207,7 @@ namespace adeven.Adjust.PCL
         {
             return activityKind.ToString().ToLower();
         }
+
         #region Serialization
 
         internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
