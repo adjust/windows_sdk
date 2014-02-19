@@ -1,4 +1,5 @@
-﻿using adeven.AdjustIo.PCL;
+﻿using adeven.AdjustIo.Common;
+using adeven.AdjustIo.PCL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,28 +26,6 @@ namespace adeven.AdjustIo
     /// </summary>
     public class AdjustIo
     {
-        /// <summary>
-        ///  Constants for our supported tracking environments.
-        /// </summary>
-        public enum Environment
-        {
-            Sandbox,
-            Production,
-        }
-
-        /// <summary>
-        ///  Constants for our supported logging levels.
-        /// </summary>
-        public enum LogLevel
-        {
-            Verbose = 1,
-            Debug,
-            Info,
-            Warn,
-            Error,
-            Assert,
-        };
-
         private static DeviceUtil Util = new UtilWS();
 
         private static bool firstVisibilityChanged = true;
@@ -155,7 +134,7 @@ namespace adeven.AdjustIo
         /// </param>
         public static void SetLogLevel(LogLevel logLevel)
         {
-            AdjustApi.SetLogLevel((PCL.LogLevel)logLevel);
+            AdjustApi.SetLogLevel(logLevel);
         }
 
         /// <summary>
@@ -168,9 +147,9 @@ namespace adeven.AdjustIo
         ///   - Environment.Sandbox
         ///   - Environment.Production
         /// </param>
-        public static void SetEnvironment(AdjustIo.Environment environment)
+        public static void SetEnvironment(AdjustEnvironment environment)
         {
-            AdjustApi.SetEnvironment((AdjustApi.Environment)environment);
+            AdjustApi.SetEnvironment(environment);
         }
 
         /// <summary>
@@ -183,6 +162,11 @@ namespace adeven.AdjustIo
         public static void SetEventBufferingEnabled(bool enabledEventBuffering)
         {
             AdjustApi.SetEventBufferingEnabled(enabledEventBuffering);
+        }
+
+        public static void SetFinishedTrackingWithResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            AdjustApi.SetFinishedTrackingWithResponseDelegate(responseDelegate);
         }
 
         #endregion AdjustApi

@@ -79,6 +79,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AdjustCommon\AdjustCommon.csproj">
+      <Project>{c8f39a59-5d81-4a9f-93db-3d17801ff71e}</Project>
+      <Name>AdjustCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\WindowsPCLnet40\WindowsPCLnet40.csproj">
       <Project>{c739abc8-258e-4111-acd8-6ce58d00633d}</Project>
       <Name>WindowsPCLnet40</Name>

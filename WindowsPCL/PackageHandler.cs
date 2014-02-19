@@ -1,4 +1,5 @@
-﻿using System;
+﻿using adeven.AdjustIo.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -58,6 +59,11 @@ namespace adeven.AdjustIo.PCL
         internal void ResumeSending()
         {
             IsPaused = false;
+        }
+
+        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            InternalRequestHandler.SetResponseDelegate(responseDelegate);
         }
 
         private void InitInternal()

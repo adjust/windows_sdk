@@ -1,5 +1,7 @@
-﻿using System;
+﻿using adeven.AdjustIo.Common;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace adeven.AdjustIo.PCL
 {
@@ -38,6 +40,8 @@ namespace adeven.AdjustIo.PCL
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
 
+            PackageHandler = new PackageHandler(deviceUtil);
+
             InternalQueue = new ActionQueue("io.adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
@@ -73,6 +77,11 @@ namespace adeven.AdjustIo.PCL
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
+        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            PackageHandler.SetResponseDelegate(responseDelegate);
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
@@ -85,8 +94,6 @@ namespace adeven.AdjustIo.PCL
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
-
-            PackageHandler = new PackageHandler(deviceUtil);
 
             ReadActivityState();
 

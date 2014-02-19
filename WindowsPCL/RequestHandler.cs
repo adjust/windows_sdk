@@ -1,4 +1,7 @@
-﻿using System;
+﻿using adeven.AdjustIo.Common;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -12,10 +15,16 @@ namespace adeven.AdjustIo.PCL
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
         private PackageHandler PackageHandler;
+        private Action<ResponseData> ResponseDelegate;
 
         internal RequestHandler(PackageHandler packageHandler)
         {
             PackageHandler = packageHandler;
+        }
+
+        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            ResponseDelegate = responseDelegate;
         }
 
         internal void SendPackage(ActivityPackage package)
@@ -23,11 +32,12 @@ namespace adeven.AdjustIo.PCL
             Task.Factory.StartNew(() => SendInternal(package))
                 // continuation used to prevent unhandled exceptions in SendInternal
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
-                .ContinueWith((success) => PackageSent(success));
+                .ContinueWith((responseData) => PackageSent(responseData));
         }
 
-        private bool SendInternal(ActivityPackage package)
+        private ResponseData SendInternal(ActivityPackage package)
         {
+            ResponseData responseData = new ResponseData();
             try
             {
                 using (var httpClient = new HttpClient())
@@ -43,27 +53,30 @@ namespace adeven.AdjustIo.PCL
                     using (var httpResponseMessage = httpClient.PostAsync(url, parameters).Result)
                     using (var content = httpResponseMessage.Content)
                     {
+                        var responseString = content.ReadAsStringAsync();
+                        InjectResponseData(responseData, responseString.Result);
+
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
                             Logger.Info("{0}", package.SuccessMessage());
 
-                            return true;
+                            responseData.Success = true;
                         }
                         else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                             || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
                         {
                             Logger.Error("{0}. ({1}, {2}).",
                                 package.FailureMessage(),
-                                content.ReadAsStringAsync().Result.TrimEnd('\r', '\n'),
+                                responseString.Result.TrimEnd('\r', '\n'),
                                 (int)httpResponseMessage.StatusCode);
-
-                            return true;
                         }
                         else
                         {
                             Logger.Error("{0}. ({1}). Will retry later.",
                                 package.FailureMessage(),
                                 (int)httpResponseMessage.StatusCode);
+
+                            responseData.WillRetry = true;
                         }
                     }
                 }
@@ -74,34 +87,64 @@ namespace adeven.AdjustIo.PCL
                 using (var streamResponse = response.GetResponseStream())
                 using (var streamReader = new StreamReader(streamResponse))
                 {
+                    var responseString = streamReader.ReadToEnd();
                     Logger.Error("{0}. ({1}, {2}). Will retry later.",
                         package.FailureMessage(),
-                        streamReader.ReadToEnd().Trim(),
+                        responseString.Trim(),
                         (int)response.StatusCode);
+
+                    InjectError(responseData, responseString);
+                    responseData.WillRetry = true;
                 }
             }
             catch (Exception ex)
             {
                 Logger.Error("{0}. ({1}). Will retry later", package.FailureMessage(), ex.Message);
+
+                InjectError(responseData, ex.Message);
+                responseData.WillRetry = true;
             }
 
-            return false;
+            return responseData;
         }
 
-        private void PackageSent(Task<bool> SendTask)
+        private void PackageSent(Task<ResponseData> SendTask)
         {
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
             var successRunning =
                 !SendTask.IsFaulted
-                && !SendTask.IsCanceled
-                && SendTask.Result;
+                && !SendTask.IsCanceled;
 
-            if (successRunning)
+            if (successRunning && ResponseDelegate != null)
+                Task.Factory.StartNew(() => ResponseDelegate(SendTask.Result));
+
+            if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();
+        }
+
+        private void InjectResponseData(ResponseData responseData, string responseString)
+        {
+            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+
+            if (responseDic == null)
+            {
+                Logger.Error("Failed to parse json response: {0}", responseString);
+                return;
+            }
+
+            responseDic.TryGetValue("error", out responseData.Error);
+            responseDic.TryGetValue("tracker_token", out responseData.TrackerToken);
+            responseDic.TryGetValue("tracker_name", out responseData.TrackerName);
+        }
+
+        private void InjectError(ResponseData responseData, string errorString = null)
+        {
+            responseData.Error = errorString;
+            responseData.Success = false;
         }
     }
 }

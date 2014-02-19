@@ -1,18 +1,8 @@
-﻿using System;
+﻿using adeven.AdjustIo.Common;
+using System;
 
 namespace adeven.AdjustIo.PCL
 {
-    // keep this enum in sync with WS and WP AdjustIo class
-    public enum LogLevel
-    {
-        Verbose = 1,
-        Debug,
-        Info,
-        Warn,
-        Error,
-        Assert,
-    };
-
     public static class Logger
     {
         public static string LogTag { get; set; }

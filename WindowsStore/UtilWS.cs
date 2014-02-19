@@ -20,7 +20,7 @@ namespace adeven.AdjustIo
 {
     internal class UtilWS : DeviceUtil
     {
-        public string ClientSdk { get { return "wstore2.1.0"; } }
+        public string ClientSdk { get { return "wstore3.0.0"; } }
 
         public string GetMd5Hash(string input)
         {
