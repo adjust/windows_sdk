@@ -1,8 +1,8 @@
-﻿using adeven.Adjust.PCLnet40;
+﻿using AdjustSdk.PCLnet40;
 using System;
 using System.Threading;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal class PCLnet45Timer
     {

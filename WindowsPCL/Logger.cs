@@ -1,7 +1,7 @@
-﻿using adeven.Adjust.Common;
+﻿using AdjustSdk;
 using System;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     public static class Logger
     {

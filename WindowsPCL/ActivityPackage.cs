@@ -1,11 +1,11 @@
-﻿using adeven.Adjust.Common;
+﻿using AdjustSdk;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal class ActivityPackage
     {

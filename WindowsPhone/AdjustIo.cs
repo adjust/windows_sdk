@@ -1,9 +1,9 @@
-using adeven.Adjust.Common;
-using adeven.Adjust.PCL;
+using AdjustSdk;
+using AdjustSdk.PCL;
 using System;
 using System.Collections.Generic;
 
-namespace adeven.Adjust
+namespace AdjustSdk
 {
     /// <summary>
     ///  The main interface to Adjust.

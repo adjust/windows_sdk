@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal class ActivityState
     {

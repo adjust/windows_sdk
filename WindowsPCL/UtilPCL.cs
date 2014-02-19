@@ -1,4 +1,4 @@
-﻿using adeven.Adjust.Common;
+﻿using AdjustSdk;
 using Newtonsoft.Json;
 using PCLStorage;
 using System;
@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal static class Util
     {

@@ -1,10 +1,10 @@
-﻿using adeven.Adjust.Common;
+﻿using AdjustSdk;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal class PackageHandler
     {

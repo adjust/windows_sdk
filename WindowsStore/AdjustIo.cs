@@ -1,5 +1,5 @@
-﻿using adeven.Adjust.Common;
-using adeven.Adjust.PCL;
+﻿using AdjustSdk;
+using AdjustSdk.PCL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,7 +17,7 @@ using Windows.System.Profile;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 
-namespace adeven.Adjust
+namespace AdjustSdk
 {
     /// <summary>
     ///  The main interface to Adjust.

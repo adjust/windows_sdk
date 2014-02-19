@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace adeven.Adjust.Common
+﻿namespace AdjustSdk
 {
     /// <summary>
     ///  Constants for our supported logging levels.

@@ -1,10 +1,10 @@
-﻿using adeven.Adjust.Common;
+﻿using AdjustSdk;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace adeven.Adjust.PCL
+namespace AdjustSdk.PCL
 {
     internal class PackageBuilder
     {
