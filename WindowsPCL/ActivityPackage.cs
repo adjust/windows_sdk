@@ -1,4 +1,5 @@
-﻿using System;
+﻿using adeven.Adjust.Common;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace adeven.Adjust.PCL
         internal Dictionary<string, string> Parameters { get; set; }
 
         // logs
-        internal string Kind { get; set; }
+        internal ActivityKind Kind { get; set; }
 
         internal string Suffix { get; set; }
 
@@ -68,7 +69,7 @@ namespace adeven.Adjust.PCL
             writer.Write(activityPackage.Path);
             writer.Write(activityPackage.UserAgent);
             writer.Write(activityPackage.ClientSdk);
-            writer.Write(activityPackage.Kind);
+            writer.Write(Util.ActivityKindToString(activityPackage.Kind));
             writer.Write(activityPackage.Suffix);
 
             var parametersArray = activityPackage.Parameters.ToArray();
@@ -90,7 +91,7 @@ namespace adeven.Adjust.PCL
             activityPackage.Path = reader.ReadString();
             activityPackage.UserAgent = reader.ReadString();
             activityPackage.ClientSdk = reader.ReadString();
-            activityPackage.Kind = reader.ReadString();
+            activityPackage.Kind = Util.ActivityKindFromString(reader.ReadString());
             activityPackage.Suffix = reader.ReadString();
 
             var parameterLength = reader.ReadInt32();

@@ -81,7 +81,7 @@ namespace adeven.Adjust.PCL
             SaveParameter("last_interval", LastInterval);
 
             activityPackage.Path = @"/startup";
-            activityPackage.Kind = "session start";
+            activityPackage.Kind = ActivityKind.Session;
             activityPackage.Suffix = "";
 
             return activityPackage;
@@ -93,7 +93,7 @@ namespace adeven.Adjust.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/event";
-            activityPackage.Kind = "event";
+            activityPackage.Kind = ActivityKind.Event;
             activityPackage.Suffix = this.EventSuffix();
 
             return activityPackage;
@@ -106,7 +106,7 @@ namespace adeven.Adjust.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/revenue";
-            activityPackage.Kind = "revenue";
+            activityPackage.Kind = ActivityKind.Revenue;
             activityPackage.Suffix = this.RevenueSuffx();
 
             return activityPackage;

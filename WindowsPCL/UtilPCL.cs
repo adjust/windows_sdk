@@ -168,6 +168,23 @@ namespace adeven.Adjust.PCL
                 return timeSpan.Value.TotalSeconds;
         }
 
+
+        internal static ActivityKind ActivityKindFromString(string activityKindString)
+        {
+            if (activityKindString == "session")
+                return ActivityKind.Session;
+            else if (activityKindString == "event")
+                return ActivityKind.Event;
+            else if (activityKindString == "revenue")
+                return ActivityKind.Revenue;
+            else
+                return ActivityKind.Unkown;
+        }
+
+        internal static string ActivityKindToString(ActivityKind activityKind)
+        {
+            return activityKind.ToString().ToLower();
+        }
         #region Serialization
 
         internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)

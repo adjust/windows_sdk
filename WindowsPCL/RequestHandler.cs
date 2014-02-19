@@ -105,6 +105,9 @@ namespace adeven.Adjust.PCL
                 responseData.WillRetry = true;
             }
 
+            responseData.Kind = package.Kind;
+            responseData.ActivityKindString = Util.ActivityKindToString(responseData.Kind);
+
             return responseData;
         }
 
