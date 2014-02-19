@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using adeven.Adjust.Common;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,8 @@ namespace adeven.Adjust.PCL
         internal string UserAgent { get; set; }
 
         internal string ClientSdk { get; set; }
+
+        internal Guid Uuid { get; set; }
 
         // session
         internal int SessionCount { get; set; }
@@ -67,6 +70,7 @@ namespace adeven.Adjust.PCL
             SaveParameter("wp_udid", DeviceUniqueId);
             SaveParameter("ws_hwid", HardwareId);
             SaveParameter("ws_naid", NetworkAdapterId);
+            SaveParameter("win_uuid", Uuid.ToString());
             SaveParameter("environment", Environment.ToString().ToLower());
             // session related (used for events as well)
             SaveParameter("session_count", SessionCount);

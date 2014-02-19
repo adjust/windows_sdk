@@ -23,6 +23,8 @@ namespace adeven.Adjust.PCL
 
         internal TimeSpan? LastInterval { get; set; }
 
+        internal Guid Uuid { get; set; }
+
         internal ActivityState()
         {
             EventCount = 0;
@@ -33,6 +35,7 @@ namespace adeven.Adjust.PCL
             LastActivity = null;
             CreatedAt = null;
             LastInterval = null;
+            Uuid = Guid.NewGuid();
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -84,6 +87,7 @@ namespace adeven.Adjust.PCL
             writer.Write(Util.SerializeDatetimeToLong(activity.LastActivity));
             writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
             writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
+            writer.Write(activity.Uuid.ToString());
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -102,6 +106,16 @@ namespace adeven.Adjust.PCL
             activity.CreatedAt = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
             activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
 
+            // create Uuid for migrating devices
+            try
+            {
+                activity.Uuid = Guid.Parse(reader.ReadString());
+            }
+            catch (EndOfStreamException)
+            {
+                activity.Uuid = Guid.NewGuid();
+            }
+
             return activity;
         }
 
@@ -114,6 +128,7 @@ namespace adeven.Adjust.PCL
             packageBuilder.SessionLength = SessionLenght;
             packageBuilder.TimeSpent = TimeSpent;
             packageBuilder.CreatedAt = CreatedAt;
+            packageBuilder.Uuid = Uuid;
         }
     }
 }
