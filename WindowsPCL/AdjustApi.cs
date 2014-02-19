@@ -90,7 +90,7 @@ namespace AdjustSdk.PCL
                 Logger.Info("Event buffering is enabled");
         }
 
-        public static void SetFinishedTrackingWithResponseDelegate(Action<ResponseData> responseDelegate)
+        public static void SetResponseDelegate(Action<ResponseData> responseDelegate)
         {
             if (activityHandler == null)
             {
