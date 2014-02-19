@@ -214,6 +214,94 @@ In any case, don't forget to import Adjust. Again, there is no point in
 sending parameters if you haven't registered a callback URL for that revenue
 event.
 
+### Receive delegate callbacks
+
+Every time your app tries to track a session, an event or some revenue, you can
+be notified about the success of that operation and receive additional
+information about the current install. Follow these steps to implement the
+optional delegate protocol in your app delegate.
+
+1. Add the `using AdjustSdk` import and create a method with the signature of
+the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
+class.
+
+2. After calling the `AppDidLaunch` method of the AdjustSdk, at the start of
+your application, call the `SetResponseDelegate` with the previously created
+method. It is also be possible to use a lambda with the same signature.
+
+The delegate method will get called every time any activity was tracked or
+failed to track. Within the delegate method you have access to the
+`responseData` parameter. Here is a quick summary of its attributes:
+
+- `ActivityKind Kind` indicates what kind of activity was tracked. It has
+one of these values:
+
+```
+Session
+Event
+Revenue
+```
+
+- `string ActivityKindString` human readable version of the activity kind.
+Possible values:
+
+```
+session
+event
+revenue
+```
+
+- `bool Success` indicates whether or not the tracking attempt was
+  successful.
+- `bool WillRetry` is true when the request failed, but will be retried.
+- `string Error` an error message when the activity failed to track or
+  the response could not be parsed. Is `null` otherwise.
+- `string TrackerToken` the tracker token of the current install. Is `null` if
+  request failed or response could not be parsed.
+- `string TrackerName` the tracker name of the current install. Is `null` if
+  request failed or response could not be parsed.
+
+
+#### Windows Phone
+```cs
+using AdjustSdk;
+
+public partial class App : Application
+{
+    private void Application_Launching(object sender, LaunchingEventArgs e)
+    {
+        Adjust.AppDidLaunch("{YourAppToken}");
+        Adjust.SetResponseDelegate(OnResponseAdjust);
+        //...
+    }
+    
+    private void OnResponseAdjust(ResponseData responseData) 
+    {
+        //...
+    }
+}
+```
+
+#### Windows Store
+```cs
+using AdjustSdk;
+
+public partial class App : Application
+{
+    protected override void OnLaunched(LaunchActivatedEventArgs e)
+    {
+        Adjust.AppDidLaunch("{YourAppToken}");
+        Adjust.SetResponseDelegate(OnResponseAdjust);
+        //...
+    }
+    
+    private void OnResponseAdjust(ResponseData responseData) 
+    {
+        //...
+    }
+}
+```
+
 ### Enable event buffering
 
 If your app makes heavy use of event tracking, you might want to delay some
