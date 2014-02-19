@@ -60,7 +60,7 @@ namespace AdjustSdk
         /// </summary>
         /// <param name="appToken">
         ///   The App Token of your app. This unique identifier can
-        ///   be found it in your dashboard at http://adjust.io and should always
+        ///   be found it in your dashboard at http://adjust.com and should always
         ///   be 12 characters long.
         /// </param>
         public static void AppDidLaunch(string appToken)
@@ -72,14 +72,14 @@ namespace AdjustSdk
         /// <summary>
         ///  Tell Adjust that a particular event has happened.
         ///
-        ///  In your dashboard at http://adjust.io you can assign a callback URL to each
+        ///  In your dashboard at http://adjust.com you can assign a callback URL to each
         ///  event type. That URL will get called every time the event is triggered. On
         ///  top of that you can pass a set of parameters to the following method that
         ///  will be forwarded to these callbacks.
         /// </summary>
         /// <param name="eventToken">
         ///  The Event Token for this kind of event. They are created in the
-        ///  dashboard at http://adjust.io and should be six characters long.
+        ///  dashboard at http://adjust.com and should be six characters long.
         /// </param>
         /// <param name="callbackParameters">
         ///  An optional dictionary containing the callback parameters.
@@ -144,8 +144,8 @@ namespace AdjustSdk
         /// </summary>
         /// <param name="environment">
         ///  The new environment. Supported values:
-        ///   - Environment.Sandbox
-        ///   - Environment.Production
+        ///   - AdjustEnvironment.Sandbox
+        ///   - AdjustEnvironment.Production
         /// </param>
         public static void SetEnvironment(AdjustEnvironment environment)
         {
@@ -164,9 +164,13 @@ namespace AdjustSdk
             AdjustApi.SetEventBufferingEnabled(enabledEventBuffering);
         }
 
-        public static void SetFinishedTrackingWithResponseDelegate(Action<ResponseData> responseDelegate)
+        /// <summary>
+        /// Optional delegate method that will get called when a tracking attempt finished
+        /// </summary>
+        /// <param name="responseDelegate">The response data containing information about the activity and it's server response.</param>
+        public static void SetResponseDelegate(Action<ResponseData> responseDelegate)
         {
-            AdjustApi.SetFinishedTrackingWithResponseDelegate(responseDelegate);
+            AdjustApi.SetResponseDelegate(responseDelegate);
         }
 
         #endregion AdjustApi
