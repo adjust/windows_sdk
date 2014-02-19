@@ -1,4 +1,4 @@
-﻿using adeven.AdjustIo.Common;
+﻿using adeven.Adjust.Common;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     internal class RequestHandler
     {

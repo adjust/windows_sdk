@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     internal class ActivityPackage
     {

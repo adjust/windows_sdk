@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     public interface DeviceUtil
     {

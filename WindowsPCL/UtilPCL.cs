@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     internal static class Util
     {

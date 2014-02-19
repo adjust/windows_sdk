@@ -1,4 +1,4 @@
-﻿using adeven.AdjustIo.PCL;
+﻿using adeven.Adjust.PCL;
 using Microsoft.Phone.Info;
 using System;
 using System.Globalization;
@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace adeven.AdjustIo
+namespace adeven.Adjust
 {
     internal class UtilWP : DeviceUtil
     {

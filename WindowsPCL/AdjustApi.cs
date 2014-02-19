@@ -1,12 +1,12 @@
-﻿using adeven.AdjustIo.Common;
+﻿using adeven.Adjust.Common;
 using System;
 using System.Collections.Generic;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     public class AdjustApi
     {
-        // keep this enum in sync with WS and WP AdjustIo class
+        // keep this enum in sync with WS and WP Adjust class
         public enum Environment
         {
             Sandbox,
@@ -60,13 +60,13 @@ namespace adeven.AdjustIo.PCL
             else if ((AdjustApi.Environment)environment == AdjustApi.Environment.Sandbox)
             {
                 activityHandler.SetEnvironment((AdjustApi.Environment)environment);
-                Logger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
+                Logger.Assert("SANDBOX: Adjust is running in Sandbox mode. Use this setting for testing."
                     + " Don't forget to set the environment to AIEnvironmentProduction before publishing!");
             }
             else if ((AdjustApi.Environment)environment == AdjustApi.Environment.Production)
             {
                 activityHandler.SetEnvironment((AdjustApi.Environment)environment);
-                Logger.Assert("PRODUCTION: AdjustIo is running in Production mode."
+                Logger.Assert("PRODUCTION: Adjust is running in Production mode."
                     + " Use this setting only for the build that you want to publish."
                     + " Set the environment to AIEnvironmentSandbox if you want to test your app!");
             }

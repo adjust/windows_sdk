@@ -1,7 +1,7 @@
-﻿using adeven.AdjustIo.Common;
+﻿using adeven.Adjust.Common;
 using System;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     public static class Logger
     {
@@ -11,7 +11,7 @@ namespace adeven.AdjustIo.PCL
 
         static Logger()
         {
-            LogTag = "AdjustIO";
+            LogTag = "Adjust";
             LogLevel = LogLevel.Info;
         }
 

@@ -1,9 +1,9 @@
-﻿using adeven.AdjustIo.Common;
+﻿using adeven.Adjust.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     public class ActivityHandler
     {

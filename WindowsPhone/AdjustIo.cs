@@ -1,25 +1,25 @@
-using adeven.AdjustIo.Common;
-using adeven.AdjustIo.PCL;
+using adeven.Adjust.Common;
+using adeven.Adjust.PCL;
 using System;
 using System.Collections.Generic;
 
-namespace adeven.AdjustIo
+namespace adeven.Adjust
 {
     /// <summary>
-    ///  The main interface to AdjustIo.
-    ///  Use the methods of this class to tell AdjustIo about the usage of your app.
+    ///  The main interface to Adjust.
+    ///  Use the methods of this class to tell Adjust about the usage of your app.
     ///  See the README for details.
     /// </summary>
-    public class AdjustIo
+    public class Adjust
     {
         private static DeviceUtil Util = new UtilWP();
 
         #region AdjustApi
 
         /// <summary>
-        ///  Tell AdjustIo that the application did launch.
+        ///  Tell Adjust that the application did launch.
         ///
-        ///  This is required to initialize AdjustIo. Call this in the Application_Launching
+        ///  This is required to initialize Adjust. Call this in the Application_Launching
         ///  method of your System.Windows.Application class.
         /// </summary>
         /// <param name="appToken">
@@ -33,7 +33,7 @@ namespace adeven.AdjustIo
         }
 
         /// <summary>
-        ///  Tell AdjustIo that the application is activated (brought to foreground).
+        ///  Tell Adjust that the application is activated (brought to foreground).
         ///
         ///  This is used to keep track of the current session state.
         ///  Call this in the Application_Activated method of your System.Windows.Application class.
@@ -44,7 +44,7 @@ namespace adeven.AdjustIo
         }
 
         /// <summary>
-        ///  Tell AdjustIo that the application is deactivated (sent to background).
+        ///  Tell Adjust that the application is deactivated (sent to background).
         ///
         ///  This is used to calculate session attributes like session length and subsession count.
         ///  Call this in the Application_Deactivated method of your System.Windows.Application class.
@@ -55,7 +55,7 @@ namespace adeven.AdjustIo
         }
 
         /// <summary>
-        ///  Tell AdjustIo that a particular event has happened.
+        ///  Tell Adjust that a particular event has happened.
         ///
         ///  In your dashboard at http://adjust.io you can assign a callback URL to each
         ///  event type. That URL will get called every time the event is triggered. On
@@ -77,7 +77,7 @@ namespace adeven.AdjustIo
         }
 
         /// <summary>
-        ///  Tell AdjustIo that a user generated some revenue.
+        ///  Tell Adjust that a user generated some revenue.
         ///
         ///  The amount is measured in cents and rounded to on digit after the
         ///  decimal point. If you want to differentiate between several revenue
@@ -102,9 +102,9 @@ namespace adeven.AdjustIo
         }
 
         /// <summary>
-        ///  Change the verbosity of AdjustIo's logs.
+        ///  Change the verbosity of Adjust's logs.
         ///
-        ///  You can increase or reduce the amount of logs from AdjustIo by passing
+        ///  You can increase or reduce the amount of logs from Adjust by passing
         ///  one of the following parameters. Use Log.ASSERT to disable all logging.
         /// </summary>
         /// <param name="logLevel">

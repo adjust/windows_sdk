@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace adeven.AdjustIo.PCL
+namespace adeven.Adjust.PCL
 {
     internal class ActivityState
     {

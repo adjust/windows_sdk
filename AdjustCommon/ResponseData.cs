@@ -1,4 +1,4 @@
-﻿namespace adeven.AdjustIo.Common
+﻿namespace adeven.Adjust.Common
 {
     public class ResponseData
     {

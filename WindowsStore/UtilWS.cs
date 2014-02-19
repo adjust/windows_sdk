@@ -1,4 +1,4 @@
-﻿using adeven.AdjustIo.PCL;
+﻿using adeven.Adjust.PCL;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,7 +16,7 @@ using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
 
-namespace adeven.AdjustIo
+namespace adeven.Adjust
 {
     internal class UtilWS : DeviceUtil
     {
