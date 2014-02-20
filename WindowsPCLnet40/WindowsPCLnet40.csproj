@@ -8,8 +8,8 @@
     <ProjectGuid>{C739ABC8-258E-4111-ACD8-6CE58D00633D}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WindowsPCLnet40</RootNamespace>
-    <AssemblyName>WindowsPCLnet40</AssemblyName>
+    <RootNamespace>AdjustSdk.PclNet40</RootNamespace>
+    <AssemblyName>WindowsPclNet40</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Profile136</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
