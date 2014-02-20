@@ -36,80 +36,109 @@ namespace AdjustSdk.Pcl
 
         private ResponseData SendInternal(ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
+            ResponseData responseData;
             try
             {
-                using (var httpClient = new HttpClient())
+                using (var httpResponseMessage = ExecuteRequest(activityPackage))
                 {
-                    httpClient.Timeout = Timeout;
-                    httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
-
-                    var url = Util.BaseUrl + activityPackage.Path;
-
-                    var parameters = new FormUrlEncodedContent(activityPackage.Parameters);
-
-                    using (var httpResponseMessage = httpClient.PostAsync(url, parameters).Result)
-                    using (var content = httpResponseMessage.Content)
-                    {
-                        var responseString = content.ReadAsStringAsync();
-                        responseData.SetResponseData(responseString.Result);
-
-                        if (httpResponseMessage.IsSuccessStatusCode)
-                        {
-                            responseData.Success = true;
-                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
-
-                            Logger.Info("{0}", activityPackage.SuccessMessage());
-                        }
-                        else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
-                            || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
-                        {
-                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
-
-                            Logger.Error("{0}. ({1}, {2}).",
-                                activityPackage.FailureMessage(),
-                                responseString.Result.TrimEnd('\r', '\n'),
-                                (int)httpResponseMessage.StatusCode);
-                        }
-                        else
-                        {
-                            responseData.WillRetry = true;
-                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
-
-                            Logger.Error("{0}. ({1}). Will retry later.",
-                                activityPackage.FailureMessage(),
-                                (int)httpResponseMessage.StatusCode);
-                        }
-                    }
+                    responseData = ProcessResponse(httpResponseMessage, activityPackage);
                 }
             }
-            catch (WebException we)
-            {
-                using (var response = we.Response as HttpWebResponse)
-                using (var streamResponse = response.GetResponseStream())
-                using (var streamReader = new StreamReader(streamResponse))
-                {
-                    var responseString = streamReader.ReadToEnd();
+            catch (WebException we) { responseData = ProcessException(we, activityPackage); }
+            catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }
 
+            return responseData;
+        }
+
+        private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.Timeout = Timeout;
+                httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
+                httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
+
+                var url = Util.BaseUrl + activityPackage.Path;
+
+                var parameters = new FormUrlEncodedContent(activityPackage.Parameters);
+
+                return httpClient.PostAsync(url, parameters).Result;
+            }
+        }
+
+        private ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
+        {
+            ResponseData responseData = new ResponseData();
+
+            using (var content = httpResponseMessage.Content)
+            {
+                var responseString = content.ReadAsStringAsync().Result;
+                responseData.SetResponseData(responseString);
+
+                if (httpResponseMessage.IsSuccessStatusCode)
+                {
+                    responseData.Success = true;
+                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
+
+                    Logger.Info("{0}", activityPackage.SuccessMessage());
+                }
+                else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
+                    || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
+                {
+                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
+
+                    Logger.Error("{0}. ({1}, {2}).",
+                        activityPackage.FailureMessage(),
+                        responseString.TrimEnd('\r', '\n'),
+                        (int)httpResponseMessage.StatusCode);
+                }
+                else
+                {
                     responseData.SetResponseData(responseString);
                     responseData.WillRetry = true;
                     PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
-                    Logger.Error("{0}. ({1}, {2}). Will retry later.",
+                    Logger.Error("{0}. ({1}). Will retry later.",
                         activityPackage.FailureMessage(),
-                        responseString.Trim(),
-                        (int)response.StatusCode);
+                        (int)httpResponseMessage.StatusCode);
                 }
             }
-            catch (Exception ex)
+
+            return responseData;
+        }
+
+        private ResponseData ProcessException(WebException webException, ActivityPackage activityPackage)
+        {
+            ResponseData responseData = new ResponseData();
+
+            using (var response = webException.Response as HttpWebResponse)
+            using (var streamResponse = response.GetResponseStream())
+            using (var streamReader = new StreamReader(streamResponse))
             {
-                responseData.SetResponseError(ex.Message);
+                var responseString = streamReader.ReadToEnd();
+
+                responseData.SetResponseData(responseString);
                 responseData.WillRetry = true;
                 PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
-                Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), ex.Message);
+                Logger.Error("{0}. ({1}, {2}). Will retry later.",
+                    activityPackage.FailureMessage(),
+                    responseString.Trim(),
+                    (int)response.StatusCode);
             }
+
+            return responseData;
+        }
+
+        private ResponseData ProcessException(Exception exception, ActivityPackage activityPackage)
+        {
+            ResponseData responseData = new ResponseData();
+
+            responseData.SetResponseError(exception.Message);
+            responseData.WillRetry = true;
+            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
+
+            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
 
             return responseData;
         }
