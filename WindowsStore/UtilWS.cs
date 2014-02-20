@@ -1,4 +1,4 @@
-﻿using AdjustSdk.PCL;
+﻿using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,6 +15,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
+using Windows.UI.Core;
 
 namespace AdjustSdk
 {
@@ -43,6 +44,7 @@ namespace AdjustSdk
             var dataReader = Windows.Storage.Streams.DataReader.FromBuffer(hardwareId);
 
             byte[] bytes = new byte[hardwareId.Length];
+
             dataReader.ReadBytes(bytes);
 
             return Convert.ToBase64String(bytes);
@@ -74,6 +76,12 @@ namespace AdjustSdk
                 getCountry());
 
             return userAgent;
+        }
+
+        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
+        {
+            var dispacher = CoreWindow.GetForCurrentThread().Dispatcher;
+            dispacher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
         }
 
         #region User Agent

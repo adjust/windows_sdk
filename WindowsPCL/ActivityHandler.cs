@@ -20,6 +20,9 @@ namespace AdjustSdk.Pcl
         private ActivityState ActivityState;
         private TimerPclNet45 TimeKeeper;
         private ActionQueue InternalQueue;
+        private Action<ResponseData> ResponseDelegate;
+
+        private Action<Action<ResponseData>, ResponseData> ResponseDelegateAction;
 
         private string DeviceUniqueId;
         private string HardwareId;
@@ -29,17 +32,12 @@ namespace AdjustSdk.Pcl
         private string UserAgent;
         private string ClientSdk;
 
-        private DeviceUtil DeviceSpecific;
-
         internal ActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
-            DeviceSpecific = deviceUtil;
-
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
 
-            PackageHandler = new PackageHandler(deviceUtil);
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
@@ -52,6 +50,11 @@ namespace AdjustSdk.Pcl
         internal void SetBufferedEvents(bool enabledEventBuffering)
         {
             IsBufferedEventsEnabled = enabledEventBuffering;
+        }
+
+        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            ResponseDelegate = responseDelegate;
         }
 
         internal void TrackSubsessionStart()
@@ -75,9 +78,9 @@ namespace AdjustSdk.Pcl
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
-        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        internal void FinishTrackingWithResponse(ResponseData responseData)
         {
-            PackageHandler.SetResponseDelegate(responseDelegate);
+            ResponseDelegateAction(ResponseDelegate, responseData);
         }
 
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
@@ -92,6 +95,9 @@ namespace AdjustSdk.Pcl
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
+
+            PackageHandler = new PackageHandler(this);
+            ResponseDelegateAction = deviceUtil.RunResponseDelegate;
 
             ReadActivityState();
 

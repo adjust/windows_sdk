@@ -1,4 +1,4 @@
-﻿using AdjustSdk.PCL;
+﻿using AdjustSdk.Pcl;
 using Microsoft.Phone.Info;
 using System;
 using System.Globalization;
@@ -7,6 +7,7 @@ using System.IO.IsolatedStorage;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml.Linq;
 
 namespace AdjustSdk
@@ -61,6 +62,11 @@ namespace AdjustSdk
                 getCountry());
 
             return userAgent;
+        }
+
+        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
+        {
+            Deployment.Current.Dispatcher.BeginInvoke(() => responseDelegate(responseData));
         }
 
         #region User Agent

@@ -16,20 +16,18 @@ namespace AdjustSdk.Pcl
         private ActivityHandler ActivityHandler;
 
         private ManualResetEvent InternalWaitHandle;
-        private DeviceUtil DeviceSpecific;
 
         internal bool IsPaused;
 
-        internal PackageHandler(DeviceUtil deviceUtil)
+        internal PackageHandler(ActivityHandler activityHandler)
         {
             InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
             IsPaused = true;
-            DeviceSpecific = deviceUtil;
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            InternalQueue.Enqueue(InitInternal);
+            InternalQueue.Enqueue(() => InitInternal(activityHandler));
         }
 
         internal void AddPackage(ActivityPackage activityPackage)
@@ -62,14 +60,16 @@ namespace AdjustSdk.Pcl
             IsPaused = false;
         }
 
-        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        internal void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
         {
-            InternalRequestHandler.SetResponseDelegate(responseDelegate);
+            responseData.ActivityKind = activityPackage.ActivityKind;
+            ActivityHandler.FinishTrackingWithResponse(responseData);
         }
 
-        private void InitInternal()
+        private void InitInternal(ActivityHandler activityHandler)
         {
-            InternalRequestHandler = new RequestHandler(this);
+            ActivityHandler = activityHandler;
+            RequestHandler = new RequestHandler(this);
 
             ReadPackageQueue();
         }
@@ -99,7 +99,7 @@ namespace AdjustSdk.Pcl
             if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
                 InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                InternalRequestHandler.SendPackage(PackageQueue.First());
+                RequestHandler.SendPackage(PackageQueue.First());
             }
             else
             {

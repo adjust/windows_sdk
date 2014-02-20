@@ -18,5 +18,6 @@ namespace AdjustSdk.Pcl
 
         string GetNetworkAdapterId();
 
+        void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData);
     }
 }

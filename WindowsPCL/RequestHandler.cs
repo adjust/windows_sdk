@@ -58,12 +58,14 @@ namespace AdjustSdk.Pcl
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
                             responseData.Success = true;
+                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                             Logger.Info("{0}", activityPackage.SuccessMessage());
                         }
                         else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                             || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
                         {
+                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                             Logger.Error("{0}. ({1}, {2}).",
                                 activityPackage.FailureMessage(),
@@ -73,6 +75,7 @@ namespace AdjustSdk.Pcl
                         else
                         {
                             responseData.WillRetry = true;
+                            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                             Logger.Error("{0}. ({1}). Will retry later.",
                                 activityPackage.FailureMessage(),
@@ -91,6 +94,7 @@ namespace AdjustSdk.Pcl
 
                     responseData.SetResponseData(responseString);
                     responseData.WillRetry = true;
+                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                     Logger.Error("{0}. ({1}, {2}). Will retry later.",
                         activityPackage.FailureMessage(),
@@ -102,6 +106,7 @@ namespace AdjustSdk.Pcl
             {
                 responseData.SetResponseError(ex.Message);
                 responseData.WillRetry = true;
+                PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                 Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), ex.Message);
             }
@@ -118,8 +123,6 @@ namespace AdjustSdk.Pcl
                 !SendTask.IsFaulted
                 && !SendTask.IsCanceled;
 
-            if (successRunning && ResponseDelegate != null)
-                Task.Factory.StartNew(() => ResponseDelegate(SendTask.Result));
             if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else
