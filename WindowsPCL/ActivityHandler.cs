@@ -3,18 +3,23 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     public class ActivityHandler
     {
+        public AdjustApi.Environment Environment { get; private set; }
+
+        public bool IsBufferedEventsEnabled { get; private set; }
+
         private const string ActivityStateFileName = "AdjustIOActivityState";
         private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0); // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
         private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
-        private PackageHandler PackageHandler = null;
-        private ActivityState ActivityState = null;
-        private PCLnet45Timer TimeKeeper = null;
+        private PackageHandler PackageHandler;
+        private ActivityState ActivityState;
+        private TimerPclNet45 TimeKeeper;
+        private ActionQueue InternalQueue;
 
         private string DeviceUniqueId;
         private string HardwareId;
@@ -23,12 +28,6 @@ namespace AdjustSdk.PCL
         private string AppToken;
         private string UserAgent;
         private string ClientSdk;
-
-        public AdjustApi.Environment Environment { get; private set; }
-
-        public static bool IsBufferedEventsEnabled { get; private set; }
-
-        private ActionQueue InternalQueue;
 
         private DeviceUtil DeviceSpecific;
 
@@ -41,8 +40,7 @@ namespace AdjustSdk.PCL
             IsBufferedEventsEnabled = false;
 
             PackageHandler = new PackageHandler(deviceUtil);
-
-            InternalQueue = new ActionQueue("io.adjust.ActivityQueue");
+            InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
 
@@ -88,8 +86,8 @@ namespace AdjustSdk.PCL
             if (!CheckAppTokenLength(appToken)) return;
 
             AppToken = appToken;
-            ClientSdk = DeviceSpecific.ClientSdk;
-            UserAgent = DeviceSpecific.GetUserAgent();
+            ClientSdk = deviceUtil.ClientSdk;
+            UserAgent = deviceUtil.GetUserAgent();
 
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
             HardwareId = deviceUtil.GetHardwareId();
@@ -326,7 +324,7 @@ namespace AdjustSdk.PCL
         {
             if (TimeKeeper == null)
             {
-                TimeKeeper = new PCLnet45Timer(SystemThreadingTimer, null, TimerInterval);
+                TimeKeeper = new TimerPclNet45(SystemThreadingTimer, null, TimerInterval);
             }
             TimeKeeper.Resume();
         }

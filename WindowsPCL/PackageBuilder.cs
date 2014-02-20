@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     internal class PackageBuilder
     {
@@ -85,7 +85,7 @@ namespace AdjustSdk.PCL
             SaveParameter("last_interval", LastInterval);
 
             activityPackage.Path = @"/startup";
-            activityPackage.Kind = ActivityKind.Session;
+            activityPackage.ActivityKind = ActivityKind.Session;
             activityPackage.Suffix = "";
 
             return activityPackage;
@@ -97,7 +97,7 @@ namespace AdjustSdk.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/event";
-            activityPackage.Kind = ActivityKind.Event;
+            activityPackage.ActivityKind = ActivityKind.Event;
             activityPackage.Suffix = this.EventSuffix();
 
             return activityPackage;
@@ -110,7 +110,7 @@ namespace AdjustSdk.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/revenue";
-            activityPackage.Kind = ActivityKind.Revenue;
+            activityPackage.ActivityKind = ActivityKind.Revenue;
             activityPackage.Suffix = this.RevenueSuffx();
 
             return activityPackage;

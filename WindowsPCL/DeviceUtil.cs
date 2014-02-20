@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     public interface DeviceUtil
     {
@@ -17,5 +17,6 @@ namespace AdjustSdk.PCL
         string GetHardwareId();
 
         string GetNetworkAdapterId();
+
     }
 }

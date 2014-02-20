@@ -1,4 +1,8 @@
-﻿namespace AdjustSdk
+﻿using AdjustSdk.Pcl;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+
+namespace AdjustSdk
 {
     public class ResponseData
     {
@@ -39,14 +43,42 @@
 
         // returns human readable version of activityKind
         // (session, event, revenue), see above
-        public string ActivityKindString { get; set; }
+        public string ActivityKindString { get { return ActivityKindUtil.ToString(ActivityKind); } }
+
+        #region internal
+
+        public void SetResponseData(string responseString)
+        {
+            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+
+            if (responseDic == null)
+            {
+                Error = string.Format("Failed to parse json response: {0}", responseString);
+                return;
+            }
+
+            responseDic.TryGetValue("error", out Error);
+            responseDic.TryGetValue("tracker_token", out TrackerToken);
+            responseDic.TryGetValue("tracker_name", out TrackerName);
+        }
+
+        public void SetResponseError(string errorString)
+        {
+            Error = errorString;
+            Success = false;
+        }
+
+        #endregion internal
 
         public override string ToString()
         {
-            return string.Format("",
+            return string.Format("[kind: {0} success:{1} willRetry:{2} error:{3} trackerToken:{4} trackerName:{5}]",
                 ActivityKindString,
                 Success,
                 WillRetry,
+                Error.Quote(),
+                TrackerToken,
+                TrackerName.Quote());
         }
     }
 }

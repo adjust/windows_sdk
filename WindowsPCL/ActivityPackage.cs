@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     internal class ActivityPackage
     {
@@ -19,24 +19,24 @@ namespace AdjustSdk.PCL
         internal Dictionary<string, string> Parameters { get; set; }
 
         // logs
-        internal ActivityKind Kind { get; set; }
+        internal ActivityKind ActivityKind { get; set; }
 
         internal string Suffix { get; set; }
 
         internal string SuccessMessage()
         {
-            return String.Format("Tracked {0}{1}", Kind, Suffix);
+            return String.Format("Tracked {0}{1}", ActivityKind, Suffix);
         }
 
         internal string FailureMessage()
         {
-            return String.Format("Failed to track {0}{1}", Kind, Suffix);
+            return String.Format("Failed to track {0}{1}", ActivityKind, Suffix);
         }
 
         public override string ToString()
         {
             return String.Format("{0}{1} {2}",
-                Kind, Suffix, Path);
+                ActivityKind, Suffix, Path);
         }
 
         internal string ExtendedString()
@@ -69,7 +69,7 @@ namespace AdjustSdk.PCL
             writer.Write(activityPackage.Path);
             writer.Write(activityPackage.UserAgent);
             writer.Write(activityPackage.ClientSdk);
-            writer.Write(Util.ActivityKindToString(activityPackage.Kind));
+            writer.Write(ActivityKindUtil.ToString(activityPackage.ActivityKind));
             writer.Write(activityPackage.Suffix);
 
             var parametersArray = activityPackage.Parameters.ToArray();
@@ -91,7 +91,7 @@ namespace AdjustSdk.PCL
             activityPackage.Path = reader.ReadString();
             activityPackage.UserAgent = reader.ReadString();
             activityPackage.ClientSdk = reader.ReadString();
-            activityPackage.Kind = Util.ActivityKindFromString(reader.ReadString());
+            activityPackage.ActivityKind = ActivityKindUtil.FromString(reader.ReadString());
             activityPackage.Suffix = reader.ReadString();
 
             var parameterLength = reader.ReadInt32();

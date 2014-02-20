@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     internal static class Util
     {
@@ -170,42 +170,12 @@ namespace AdjustSdk.PCL
                 return timeSpan.Value.TotalSeconds;
         }
 
-        internal static void InjectResponseData(ResponseData responseData, string responseString)
+        internal static string Quote(this string input)
         {
-            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+            if (input == null || !input.Contains(" "))
+                return input;
 
-            if (responseDic == null)
-            {
-                Logger.Error("Failed to parse json response: {0}", responseString);
-                return;
-            }
-
-            responseDic.TryGetValue("error", out responseData.Error);
-            responseDic.TryGetValue("tracker_token", out responseData.TrackerToken);
-            responseDic.TryGetValue("tracker_name", out responseData.TrackerName);
-        }
-
-        internal static void InjectResponseError(ResponseData responseData, string errorString)
-        {
-            responseData.Error = errorString;
-            responseData.Success = false;
-        }
-
-        internal static ActivityKind ActivityKindFromString(string activityKindString)
-        {
-            if (activityKindString == "session")
-                return ActivityKind.Session;
-            else if (activityKindString == "event")
-                return ActivityKind.Event;
-            else if (activityKindString == "revenue")
-                return ActivityKind.Revenue;
-            else
-                return ActivityKind.Unkown;
-        }
-
-        internal static string ActivityKindToString(ActivityKind activityKind)
-        {
-            return activityKind.ToString().ToLower();
+            return string.Format("'{0}'", input);
         }
 
         #region Serialization

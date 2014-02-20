@@ -5,21 +5,21 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.PCLnet40
+namespace AdjustSdk.PclNet40
 {
-    public delegate void PCLnet40TimerCallback(object state);
+    public delegate void TimerPclNet40Callback(object state);
 
     //wrapper for System.Threading.Timer Class
-    public class PCLnet40Timer : IDisposable
+    public class TimerPclNet40 : IDisposable
     {
         private Timer _timer;
 
-        public PCLnet40Timer(PCLnet40TimerCallback callback, object state, int dueTime, int period)
+        public TimerPclNet40(TimerPclNet40Callback callback, object state, int dueTime, int period)
         {
             _timer = new Timer(new TimerCallback(callback), state, dueTime, period);
         }
 
-        public PCLnet40Timer(PCLnet40TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+        public TimerPclNet40(TimerPclNet40Callback callback, object state, TimeSpan dueTime, TimeSpan period)
         {
             _timer = new Timer(new TimerCallback(callback), state, dueTime, period);
         }

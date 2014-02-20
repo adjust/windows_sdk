@@ -122,13 +122,9 @@
     <Reference Include="System.Windows.Interactivity, Version=3.9.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AdjustCommon\AdjustCommon.csproj">
-      <Project>{C8F39A59-5D81-4A9F-93DB-3D17801FF71E}</Project>
-      <Name>AdjustCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WindowsPCL\WindowsPCL.csproj">
+    <ProjectReference Include="..\WindowsPCL\WindowsPcl.csproj">
       <Project>{1037B76A-1170-414D-AFAE-4C4621E78007}</Project>
-      <Name>WindowsPCL</Name>
+      <Name>WindowsPcl</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

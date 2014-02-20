@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     public class AdjustApi
     {
@@ -86,7 +86,7 @@ namespace AdjustSdk.PCL
 
             activityHandler.SetBufferedEvents(enabledEventBuffering);
 
-            if (ActivityHandler.IsBufferedEventsEnabled)
+            if (activityHandler.IsBufferedEventsEnabled)
                 Logger.Info("Event buffering is enabled");
         }
 
@@ -94,7 +94,7 @@ namespace AdjustSdk.PCL
         {
             if (activityHandler == null)
             {
-                Logger.Error("Please call 'SetEventBufferingEnabled' after 'AppDidLaunch'!");
+                Logger.Error("Please call 'SetResponseDelegate' after 'AppDidLaunch'!");
                 return;
             }
 

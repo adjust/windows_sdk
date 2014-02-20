@@ -102,13 +102,9 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-    <ProjectReference Include="..\AdjustCommon\AdjustCommon.csproj">
-      <Project>{c8f39a59-5d81-4a9f-93db-3d17801ff71e}</Project>
-      <Name>AdjustCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WindowsPCL\WindowsPCL.csproj">
+    <ProjectReference Include="..\WindowsPCL\WindowsPcl.csproj">
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
-      <Name>WindowsPCL</Name>
+      <Name>WindowsPcl</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

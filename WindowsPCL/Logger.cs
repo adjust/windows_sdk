@@ -1,7 +1,7 @@
 ﻿using AdjustSdk;
 using System;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     public static class Logger
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     internal class PackageHandler
     {
@@ -12,7 +12,8 @@ namespace AdjustSdk.PCL
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
-        private RequestHandler InternalRequestHandler;
+        private RequestHandler RequestHandler;
+        private ActivityHandler ActivityHandler;
 
         private ManualResetEvent InternalWaitHandle;
         private DeviceUtil DeviceSpecific;
@@ -21,7 +22,7 @@ namespace AdjustSdk.PCL
 
         internal PackageHandler(DeviceUtil deviceUtil)
         {
-            InternalQueue = new ActionQueue("io.adjust.PackageQueue");
+            InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
             IsPaused = true;
             DeviceSpecific = deviceUtil;

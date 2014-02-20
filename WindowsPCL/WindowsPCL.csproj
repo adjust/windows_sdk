@@ -35,11 +35,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ActivityKind.cs" />
     <Compile Include="AdjustApi.cs" />
     <Compile Include="ActivityHandler.cs" />
     <Compile Include="ActivityPackage.cs" />
     <Compile Include="ActivityState.cs" />
+    <Compile Include="Environment.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="LogLevel.cs" />
     <Compile Include="PackageBuilder.cs" />
     <Compile Include="PackageHandler.cs" />
     <Compile Include="RequestHandler.cs" />
@@ -47,7 +50,8 @@
     <Compile Include="PCLnet45Timer.cs" />
     <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UtilPCL.cs" />
+    <Compile Include="ResponseData.cs" />
+    <Compile Include="UtilPcl.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Threading.Tasks">
@@ -79,13 +83,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AdjustCommon\AdjustCommon.csproj">
-      <Project>{c8f39a59-5d81-4a9f-93db-3d17801ff71e}</Project>
-      <Name>AdjustCommon</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WindowsPCLnet40\WindowsPCLnet40.csproj">
+    <ProjectReference Include="..\WindowsPCLnet40\WindowsPclNet40.csproj">
       <Project>{c739abc8-258e-4111-acd8-6ce58d00633d}</Project>
-      <Name>WindowsPCLnet40</Name>
+      <Name>WindowsPclNet40</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

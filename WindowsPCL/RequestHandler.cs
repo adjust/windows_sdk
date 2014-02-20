@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.PCL
+namespace AdjustSdk.Pcl
 {
     internal class RequestHandler
     {
@@ -34,7 +34,7 @@ namespace AdjustSdk.PCL
                 .ContinueWith((responseData) => PackageSent(responseData));
         }
 
-        private ResponseData SendInternal(ActivityPackage package)
+        private ResponseData SendInternal(ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
             try
@@ -42,40 +42,41 @@ namespace AdjustSdk.PCL
                 using (var httpClient = new HttpClient())
                 {
                     httpClient.Timeout = Timeout;
-                    httpClient.DefaultRequestHeaders.Add("Client-SDK", package.ClientSdk);
-                    httpClient.DefaultRequestHeaders.Add("User-Agent", package.UserAgent);
+                    httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
+                    httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
 
-                    var url = Util.BaseUrl + package.Path;
+                    var url = Util.BaseUrl + activityPackage.Path;
 
-                    var parameters = new FormUrlEncodedContent(package.Parameters);
+                    var parameters = new FormUrlEncodedContent(activityPackage.Parameters);
 
                     using (var httpResponseMessage = httpClient.PostAsync(url, parameters).Result)
                     using (var content = httpResponseMessage.Content)
                     {
                         var responseString = content.ReadAsStringAsync();
-                        Util.InjectResponseData(responseData, responseString.Result);
+                        responseData.SetResponseData(responseString.Result);
 
                         if (httpResponseMessage.IsSuccessStatusCode)
                         {
-                            Logger.Info("{0}", package.SuccessMessage());
-
                             responseData.Success = true;
+
+                            Logger.Info("{0}", activityPackage.SuccessMessage());
                         }
                         else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                             || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
                         {
+
                             Logger.Error("{0}. ({1}, {2}).",
-                                package.FailureMessage(),
+                                activityPackage.FailureMessage(),
                                 responseString.Result.TrimEnd('\r', '\n'),
                                 (int)httpResponseMessage.StatusCode);
                         }
                         else
                         {
-                            Logger.Error("{0}. ({1}). Will retry later.",
-                                package.FailureMessage(),
-                                (int)httpResponseMessage.StatusCode);
-
                             responseData.WillRetry = true;
+
+                            Logger.Error("{0}. ({1}). Will retry later.",
+                                activityPackage.FailureMessage(),
+                                (int)httpResponseMessage.StatusCode);
                         }
                     }
                 }
@@ -87,25 +88,23 @@ namespace AdjustSdk.PCL
                 using (var streamReader = new StreamReader(streamResponse))
                 {
                     var responseString = streamReader.ReadToEnd();
+
+                    responseData.SetResponseData(responseString);
+                    responseData.WillRetry = true;
+
                     Logger.Error("{0}. ({1}, {2}). Will retry later.",
-                        package.FailureMessage(),
+                        activityPackage.FailureMessage(),
                         responseString.Trim(),
                         (int)response.StatusCode);
-
-                    Util.InjectResponseError(responseData, responseString);
-                    responseData.WillRetry = true;
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error("{0}. ({1}). Will retry later", package.FailureMessage(), ex.Message);
-
-                Util.InjectResponseError(responseData, ex.Message);
+                responseData.SetResponseError(ex.Message);
                 responseData.WillRetry = true;
-            }
 
-            responseData.Kind = package.Kind;
-            responseData.ActivityKindString = Util.ActivityKindToString(responseData.Kind);
+                Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), ex.Message);
+            }
 
             return responseData;
         }
@@ -121,7 +120,6 @@ namespace AdjustSdk.PCL
 
             if (successRunning && ResponseDelegate != null)
                 Task.Factory.StartNew(() => ResponseDelegate(SendTask.Result));
-
             if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else
