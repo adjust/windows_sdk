@@ -2,8 +2,8 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>2.1.0</version>
-        <title>AdjustIo</title>
+        <version>2.9.0</version>
+        <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
         <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>

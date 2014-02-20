@@ -85,7 +85,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AdjustIo.cs" />
+    <Compile Include="Adjust.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilWP.cs" />
   </ItemGroup>
