@@ -80,7 +80,8 @@ namespace AdjustSdk.Pcl
 
         internal void FinishTrackingWithResponse(ResponseData responseData)
         {
-            ResponseDelegateAction(ResponseDelegate, responseData);
+            if (ResponseDelegate != null)
+                ResponseDelegateAction(ResponseDelegate, responseData);
         }
 
         private void InitInternal(string appToken, DeviceUtil deviceUtil)

@@ -21,6 +21,14 @@ namespace AdjustSdk
 {
     internal class UtilWS : DeviceUtil
     {
+        private CoreDispatcher Dispatcher;
+
+        public UtilWS()
+        {
+            // must be called from the UI thread
+            Dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+        }
+
         public string ClientSdk { get { return "wstore3.0.0"; } }
 
         public string GetMd5Hash(string input)
@@ -80,8 +88,7 @@ namespace AdjustSdk
 
         public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
         {
-            var dispacher = CoreWindow.GetForCurrentThread().Dispatcher;
-            dispacher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
+            Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
         }
 
         #region User Agent

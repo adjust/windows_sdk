@@ -7,7 +7,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{882C2A80-B6A5-42A2-8E28-0749B2090D04}</ProjectGuid>
-    <OutputType>appcontainerexe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AdjustSdk</RootNamespace>
     <AssemblyName>AdjustWS</AssemblyName>

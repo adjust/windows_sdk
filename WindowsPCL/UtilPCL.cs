@@ -12,7 +12,7 @@ namespace AdjustSdk.Pcl
 {
     internal static class Util
     {
-        internal const string BaseUrl = "https://stage.adjust.io";// TODO "https://app.adjust.io";
+        internal const string BaseUrl = "https://app.adjust.io";
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {

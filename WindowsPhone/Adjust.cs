@@ -1,4 +1,3 @@
-using AdjustSdk;
 using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
