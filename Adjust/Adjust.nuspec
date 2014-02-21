@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>2.9.0</version>
+        <version>2.9.1</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
         <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
-		<summary>This is the Windows SDK of AdjustIo.</summary>
+		<summary>This is the Windows SDK of Adjust.</summary>
 		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
 		<iconUrl>http://i.imgur.com/lkovs.png</iconUrl>
 		<licenseUrl>https://github.com/adjust/adjust_windows_sdk</licenseUrl>
@@ -42,7 +42,7 @@
 				<reference file="WindowsPcl.dll" />
             </group>
 		</references>
-		<tags>AdjustIo</tags>
+		<tags>Adjust</tags>
     </metadata>
     <files>
         <file src="..\WindowsPhone\bin\Debug\AdjustWP.dll" target="lib\wp8\AdjustWP.dll" />
