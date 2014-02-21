@@ -5,7 +5,7 @@ all adjust SDK calls.
 
 1. Open the nuget manager console. In the Visual Studio menu select 
    `TOOLS → Library Package Manager → Package Manager Console` to open the Package
-   Manager Console view
+   Manager Console view.
 
        ![][nuget_click]
 
@@ -19,9 +19,9 @@ all adjust SDK calls.
        ![][nuget_uninstall]
 
    It's also possible to uninstall the AdjustIo package through the NuGet package manager
-   for your Windows Phone or Windows Store project
+   for your Windows Phone or Windows Store project.
 
-3. Install the AdjustIo package. After uninstalling the AdjustIo package, keep in the
+3. Install the Adjust package. After uninstalling the AdjustIo package, keep in the
    same `PM>` prompt. Enter the following line and press `<Enter>` to install the
    new [Adjust package][NuGet]:
 
