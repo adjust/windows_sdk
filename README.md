@@ -100,7 +100,7 @@ sealed partial class App : Application
 
 ![][ws_app_integration]
 
-### 4 Update Adjust settings
+### 4. Update Adjust settings
 
 Replace the `{YourAppToken}` placeholder with your App Token. You can find in
 your [dashboard].
@@ -135,7 +135,7 @@ We use this environment to distinguish between real traffic and artificial
 traffic from test devices. It is very important that you keep this value
 meaningful at all times! Especially if you are tracking revenue.
 
-### 5 Build your app
+### 5. Build your app
 
 From the menu select `DEBUG → Start Debugging`. After the app launched, you
 should see the debug log `Tracked session start` in the Output view.
@@ -147,7 +147,7 @@ should see the debug log `Tracked session start` in the Output view.
 Once you integrated the Adjust SDK into your project, you can take advantage
 of the following features wherever you see fit.
 
-### Add tracking of custom events
+### 6. Add tracking of custom events
 
 You can tell Adjust about every event you want. Suppose you want to track
 every tap on a button. You would have to create a new Event Token in your
@@ -180,7 +180,7 @@ Please note that we don't store your custom parameters. If you haven't
 registered a callback URL for an event, there is no point in sending us
 parameters.
 
-### Add tracking of revenue
+### 7. Add tracking of revenue
 
 If your users can generate revenue by clicking on advertisements you can track
 those revenues. If the click is worth one cent, you could make the following
@@ -214,12 +214,12 @@ In any case, don't forget to import Adjust. Again, there is no point in
 sending parameters if you haven't registered a callback URL for that revenue
 event.
 
-### Receive delegate callbacks
+### 8. Receive delegate callbacks
 
 Every time your app tries to track a session, an event or some revenue, you can
 be notified about the success of that operation and receive additional
-information about the current install. Follow these steps to implement the
-optional delegate protocol in your app delegate.
+information about the current install. Follow these steps to implement a
+delegate to this event.
 
 1. Add the `using AdjustSdk` import and create a method with the signature of
 the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
@@ -233,7 +233,7 @@ The delegate method will get called every time any activity was tracked or
 failed to track. Within the delegate method you have access to the
 `responseData` parameter. Here is a quick summary of its attributes:
 
-- `ActivityKind Kind` indicates what kind of activity was tracked. It has
+- `ActivityKind ActivityKind` indicates what kind of activity was tracked. It has
 one of these values:
 
 ```
@@ -302,7 +302,7 @@ public partial class App : Application
 }
 ```
 
-### Enable event buffering
+### 9.Enable event buffering
 
 If your app makes heavy use of event tracking, you might want to delay some
 HTTP requests in order to send them in one batch every minute. You can enable
