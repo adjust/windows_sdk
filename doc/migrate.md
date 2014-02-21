@@ -12,11 +12,11 @@ all adjust SDK calls.
 2. Uninstall the Adjust package. After the `PM>` prompt, enter the following
    line and press `<Enter>` to uninstall the AdjustIo package:
 
-   ```
-   Uninstall-Package AdjustIo
-   ```
+    ```
+    Uninstall-Package AdjustIo
+    ```
 
-       ![][nuget_uninstall]
+    ![][nuget_migration_uninstall]
 
    It's also possible to uninstall the AdjustIo package through the NuGet package manager
    for your Windows Phone or Windows Store project.
@@ -29,7 +29,7 @@ all adjust SDK calls.
    Install-Package adjust
    ```
 
-       ![][nuget_migration_install]
+    ![][nuget_migration_install]
 
 4. Replace the namespace import. In the Visual Studio menu select
    `EDIT → Find and Replace → Replace in Files` to open the Find and Replace window.
@@ -79,5 +79,5 @@ details.
 [README]: ../README.md
 [nuget_click]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/01_nuget_console_click.png
 [nuget_migration_uninstall]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/02_nuget_migration_uninstall.png
-[nuget_migration_install]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/03_migration_install.png
+[nuget_migration_install]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/03_nuget_migration_install.png
 [replace]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/04_replace.png
