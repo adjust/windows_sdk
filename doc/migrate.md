@@ -34,7 +34,7 @@ all adjust SDK calls.
 4. Replace the namespace import. In the Visual Studio menu select
    `EDIT → Find and Replace → Replace in Files` to open the Find and Replace window.
    Search for the import `using adeven.AdjustIo` and replace it for the import
-   `using AdjustSdk`. Tick the radiobox `Keep Modified files open after Replace All` so
+   `using AdjustSdk`. Tick the checkbox `Keep Modified files open after Replace All` so
    it's easier to perform the next step. The file `App.xaml.cs` should be open, as
    well the ones used to track an event and/or revenue.
 
