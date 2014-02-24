@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>2.9.1</version>
+        <version>3.0.0</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
         <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
 		<summary>This is the Windows SDK of Adjust.</summary>
 		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
-		<iconUrl>http://i.imgur.com/lkovs.png</iconUrl>
+		<iconUrl>https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/gravatar.gif</iconUrl>
 		<licenseUrl>https://github.com/adjust/adjust_windows_sdk</licenseUrl>
 		<copyright>Copyright adjust 2014</copyright>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
