@@ -1,9 +1,10 @@
-﻿using System;
+﻿using AdjustSdk;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     internal class PackageHandler
     {
@@ -11,23 +12,22 @@ namespace adeven.AdjustIo.PCL
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
-        private RequestHandler InternalRequestHandler;
+        private RequestHandler RequestHandler;
+        private ActivityHandler ActivityHandler;
 
         private ManualResetEvent InternalWaitHandle;
-        private DeviceUtil DeviceSpecific;
 
         internal bool IsPaused;
 
-        internal PackageHandler(DeviceUtil deviceUtil)
+        internal PackageHandler(ActivityHandler activityHandler)
         {
-            InternalQueue = new ActionQueue("io.adjust.PackageQueue");
+            InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
             IsPaused = true;
-            DeviceSpecific = deviceUtil;
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            InternalQueue.Enqueue(InitInternal);
+            InternalQueue.Enqueue(() => InitInternal(activityHandler));
         }
 
         internal void AddPackage(ActivityPackage activityPackage)
@@ -60,9 +60,16 @@ namespace adeven.AdjustIo.PCL
             IsPaused = false;
         }
 
-        private void InitInternal()
+        internal void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
         {
-            InternalRequestHandler = new RequestHandler(this);
+            responseData.ActivityKind = activityPackage.ActivityKind;
+            ActivityHandler.FinishTrackingWithResponse(responseData);
+        }
+
+        private void InitInternal(ActivityHandler activityHandler)
+        {
+            ActivityHandler = activityHandler;
+            RequestHandler = new RequestHandler(this);
 
             ReadPackageQueue();
         }
@@ -92,7 +99,7 @@ namespace adeven.AdjustIo.PCL
             if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
                 InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                InternalRequestHandler.SendPackage(PackageQueue.First());
+                RequestHandler.SendPackage(PackageQueue.First());
             }
             else
             {

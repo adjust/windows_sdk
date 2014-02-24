@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using AdjustSdk;
+using System;
+using System.Collections.Generic;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     public class AdjustApi
     {
-        // keep this enum in sync with WS and WP AdjustIo class
+        // keep this enum in sync with WS and WP Adjust class
         public enum Environment
         {
             Sandbox,
@@ -46,25 +48,25 @@ namespace adeven.AdjustIo.PCL
 
         public static void SetLogLevel(LogLevel logLevel)
         {
-            PCL.Logger.LogLevel = (PCL.LogLevel)logLevel;
+            Logger.LogLevel = logLevel;
         }
 
-        public static void SetEnvironment(AdjustApi.Environment environment)
+        public static void SetEnvironment(AdjustEnvironment environment)
         {
             if (activityHandler == null)
             {
                 Logger.Error("Please call 'SetEnvironment' after 'AppDidLaunch'!");
             }
-            else if (environment == Environment.Sandbox)
+            else if ((AdjustApi.Environment)environment == AdjustApi.Environment.Sandbox)
             {
-                activityHandler.SetEnvironment(environment);
-                Logger.Assert("SANDBOX: AdjustIo is running in Sandbox mode. Use this setting for testing."
+                activityHandler.SetEnvironment((AdjustApi.Environment)environment);
+                Logger.Assert("SANDBOX: Adjust is running in Sandbox mode. Use this setting for testing."
                     + " Don't forget to set the environment to AIEnvironmentProduction before publishing!");
             }
-            else if (environment == Environment.Production)
+            else if ((AdjustApi.Environment)environment == AdjustApi.Environment.Production)
             {
-                activityHandler.SetEnvironment(environment);
-                Logger.Assert("PRODUCTION: AdjustIo is running in Production mode."
+                activityHandler.SetEnvironment((AdjustApi.Environment)environment);
+                Logger.Assert("PRODUCTION: Adjust is running in Production mode."
                     + " Use this setting only for the build that you want to publish."
                     + " Set the environment to AIEnvironmentSandbox if you want to test your app!");
             }
@@ -84,8 +86,19 @@ namespace adeven.AdjustIo.PCL
 
             activityHandler.SetBufferedEvents(enabledEventBuffering);
 
-            if (ActivityHandler.IsBufferedEventsEnabled)
+            if (activityHandler.IsBufferedEventsEnabled)
                 Logger.Info("Event buffering is enabled");
+        }
+
+        public static void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            if (activityHandler == null)
+            {
+                Logger.Error("Please call 'SetResponseDelegate' after 'AppDidLaunch'!");
+                return;
+            }
+
+            activityHandler.SetResponseDelegate(responseDelegate);
         }
     }
 }

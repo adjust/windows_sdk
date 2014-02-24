@@ -1,18 +1,28 @@
-﻿using System;
+﻿using AdjustSdk;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     public class ActivityHandler
     {
+        public AdjustApi.Environment Environment { get; private set; }
+
+        public bool IsBufferedEventsEnabled { get; private set; }
+
         private const string ActivityStateFileName = "AdjustIOActivityState";
         private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0); // 30 minutes
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
         private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
-        private PackageHandler PackageHandler = null;
-        private ActivityState ActivityState = null;
-        private PCLnet45Timer TimeKeeper = null;
+        private PackageHandler PackageHandler;
+        private ActivityState ActivityState;
+        private TimerPclNet45 TimeKeeper;
+        private ActionQueue InternalQueue;
+        private Action<ResponseData> ResponseDelegate;
+
+        private Action<Action<ResponseData>, ResponseData> ResponseDelegateAction;
 
         private string DeviceUniqueId;
         private string HardwareId;
@@ -22,23 +32,13 @@ namespace adeven.AdjustIo.PCL
         private string UserAgent;
         private string ClientSdk;
 
-        public AdjustApi.Environment Environment { get; private set; }
-
-        public static bool IsBufferedEventsEnabled { get; private set; }
-
-        private ActionQueue InternalQueue;
-
-        private DeviceUtil DeviceSpecific;
-
         internal ActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
-            DeviceSpecific = deviceUtil;
-
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
 
-            InternalQueue = new ActionQueue("io.adjust.ActivityQueue");
+            InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
 
@@ -50,6 +50,11 @@ namespace adeven.AdjustIo.PCL
         internal void SetBufferedEvents(bool enabledEventBuffering)
         {
             IsBufferedEventsEnabled = enabledEventBuffering;
+        }
+
+        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        {
+            ResponseDelegate = responseDelegate;
         }
 
         internal void TrackSubsessionStart()
@@ -73,20 +78,27 @@ namespace adeven.AdjustIo.PCL
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
+        internal void FinishTrackingWithResponse(ResponseData responseData)
+        {
+            if (ResponseDelegate != null)
+                ResponseDelegateAction(ResponseDelegate, responseData);
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
             if (!CheckAppTokenLength(appToken)) return;
 
             AppToken = appToken;
-            ClientSdk = DeviceSpecific.ClientSdk;
-            UserAgent = DeviceSpecific.GetUserAgent();
+            ClientSdk = deviceUtil.ClientSdk;
+            UserAgent = deviceUtil.GetUserAgent();
 
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
 
-            PackageHandler = new PackageHandler(deviceUtil);
+            PackageHandler = new PackageHandler(this);
+            ResponseDelegateAction = deviceUtil.RunResponseDelegate;
 
             ReadActivityState();
 
@@ -319,7 +331,7 @@ namespace adeven.AdjustIo.PCL
         {
             if (TimeKeeper == null)
             {
-                TimeKeeper = new PCLnet45Timer(SystemThreadingTimer, null, TimerInterval);
+                TimeKeeper = new TimerPclNet45(SystemThreadingTimer, null, TimerInterval);
             }
             TimeKeeper.Resume();
         }

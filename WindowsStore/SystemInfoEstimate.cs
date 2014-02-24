@@ -5,7 +5,7 @@ using Windows.Devices.Enumeration.Pnp;
 using Windows.System;
 
 // from http://attackpattern.com/2013/03/device-information-in-windows-8-store-apps/
-namespace adeven.AdjustIo
+namespace AdjustSdk
 {
     // Copyright (c) Attack Pattern LLC.  All rights reserved.
     // Licensed under the Apache License, Version 2.0 (the "License");

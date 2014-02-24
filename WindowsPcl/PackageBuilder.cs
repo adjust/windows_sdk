@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using AdjustSdk;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     internal class PackageBuilder
     {
@@ -22,6 +23,8 @@ namespace adeven.AdjustIo.PCL
         internal string UserAgent { get; set; }
 
         internal string ClientSdk { get; set; }
+
+        internal Guid Uuid { get; set; }
 
         // session
         internal int SessionCount { get; set; }
@@ -67,6 +70,7 @@ namespace adeven.AdjustIo.PCL
             SaveParameter("wp_udid", DeviceUniqueId);
             SaveParameter("ws_hwid", HardwareId);
             SaveParameter("ws_naid", NetworkAdapterId);
+            SaveParameter("win_uuid", Uuid.ToString());
             SaveParameter("environment", Environment.ToString().ToLower());
             // session related (used for events as well)
             SaveParameter("session_count", SessionCount);
@@ -81,7 +85,7 @@ namespace adeven.AdjustIo.PCL
             SaveParameter("last_interval", LastInterval);
 
             activityPackage.Path = @"/startup";
-            activityPackage.Kind = "session start";
+            activityPackage.ActivityKind = ActivityKind.Session;
             activityPackage.Suffix = "";
 
             return activityPackage;
@@ -93,7 +97,7 @@ namespace adeven.AdjustIo.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/event";
-            activityPackage.Kind = "event";
+            activityPackage.ActivityKind = ActivityKind.Event;
             activityPackage.Suffix = this.EventSuffix();
 
             return activityPackage;
@@ -106,7 +110,7 @@ namespace adeven.AdjustIo.PCL
             InjectEventParameters();
 
             activityPackage.Path = @"/revenue";
-            activityPackage.Kind = "revenue";
+            activityPackage.ActivityKind = ActivityKind.Revenue;
             activityPackage.Suffix = this.RevenueSuffx();
 
             return activityPackage;

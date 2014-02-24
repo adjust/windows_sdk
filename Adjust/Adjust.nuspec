@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
-        <id>AdjustIo</id>
-        <version>2.1.0</version>
-        <title>AdjustIo</title>
-        <authors>adeven</authors>
-        <owners>adeven</owners>
-        <description>This is the Windows SDK of AdjustIo. http://www.adjust.io</description>
-		<summary>This is the Windows SDK of AdjustIo.</summary>
-		<projectUrl>https://github.com/adeven/adjust_windows_sdk</projectUrl>
-		<iconUrl>http://i.imgur.com/lkovs.png</iconUrl>
-		<licenseUrl>https://github.com/adeven/adjust_windows_sdk</licenseUrl>
-		<copyright>Copyright adeven 2014</copyright>
+        <id>Adjust</id>
+        <version>3.0.0</version>
+        <title>Adjust</title>
+        <authors>Adjust</authors>
+        <owners>Adjust</owners>
+        <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
+		<summary>This is the Windows SDK of Adjust.</summary>
+		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
+		<iconUrl>https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/gravatar.gif</iconUrl>
+		<licenseUrl>https://github.com/adjust/adjust_windows_sdk</licenseUrl>
+		<copyright>Copyright adjust 2014</copyright>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
         <dependencies>
             <group targetFramework="WindowsPhone8.0">
@@ -35,20 +35,22 @@
 		<references>
 			<group targetFramework="WindowsPhone8.0">
 				<reference file="AdjustWP.dll" />
+				<reference file="WindowsPcl.dll" />
 			</group>
 			<group targetFramework=".NETCore4.5">
 				<reference file="AdjustWS.dll" />
+				<reference file="WindowsPcl.dll" />
             </group>
 		</references>
-		<tags>AdjustIo</tags>
+		<tags>Adjust</tags>
     </metadata>
     <files>
         <file src="..\WindowsPhone\bin\Debug\AdjustWP.dll" target="lib\wp8\AdjustWP.dll" />
-        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\wp8\WindowsPCL.dll" />
-		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPCLnet40.dll" target="lib\wp8\WindowsPCLnet40.dll" />
+        <file src="..\WindowsPCL\bin\Debug\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
 		
         <file src="..\WindowsStore\bin\Debug\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
-        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\netcore45\WindowsPCL.dll" />
-		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPCLnet40.dll" target="lib\netcore45\WindowsPCLnet40.dll" />
+        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
     </files>
 </package>

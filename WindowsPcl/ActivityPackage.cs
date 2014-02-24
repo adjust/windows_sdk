@@ -1,10 +1,11 @@
-﻿using System;
+﻿using AdjustSdk;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     internal class ActivityPackage
     {
@@ -18,24 +19,24 @@ namespace adeven.AdjustIo.PCL
         internal Dictionary<string, string> Parameters { get; set; }
 
         // logs
-        internal string Kind { get; set; }
+        internal ActivityKind ActivityKind { get; set; }
 
         internal string Suffix { get; set; }
 
         internal string SuccessMessage()
         {
-            return String.Format("Tracked {0}{1}", Kind, Suffix);
+            return String.Format("Tracked {0}{1}", ActivityKind, Suffix);
         }
 
         internal string FailureMessage()
         {
-            return String.Format("Failed to track {0}{1}", Kind, Suffix);
+            return String.Format("Failed to track {0}{1}", ActivityKind, Suffix);
         }
 
         public override string ToString()
         {
             return String.Format("{0}{1} {2}",
-                Kind, Suffix, Path);
+                ActivityKind, Suffix, Path);
         }
 
         internal string ExtendedString()
@@ -68,7 +69,7 @@ namespace adeven.AdjustIo.PCL
             writer.Write(activityPackage.Path);
             writer.Write(activityPackage.UserAgent);
             writer.Write(activityPackage.ClientSdk);
-            writer.Write(activityPackage.Kind);
+            writer.Write(ActivityKindUtil.ToString(activityPackage.ActivityKind));
             writer.Write(activityPackage.Suffix);
 
             var parametersArray = activityPackage.Parameters.ToArray();
@@ -90,7 +91,7 @@ namespace adeven.AdjustIo.PCL
             activityPackage.Path = reader.ReadString();
             activityPackage.UserAgent = reader.ReadString();
             activityPackage.ClientSdk = reader.ReadString();
-            activityPackage.Kind = reader.ReadString();
+            activityPackage.ActivityKind = ActivityKindUtil.FromString(reader.ReadString());
             activityPackage.Suffix = reader.ReadString();
 
             var parameterLength = reader.ReadInt32();

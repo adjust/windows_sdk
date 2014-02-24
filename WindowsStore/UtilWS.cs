@@ -1,4 +1,4 @@
-﻿using adeven.AdjustIo.PCL;
+﻿using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,12 +15,21 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
+using Windows.UI.Core;
 
-namespace adeven.AdjustIo
+namespace AdjustSdk
 {
     internal class UtilWS : DeviceUtil
     {
-        public string ClientSdk { get { return "wstore2.1.0"; } }
+        private CoreDispatcher Dispatcher;
+
+        public UtilWS()
+        {
+            // must be called from the UI thread
+            Dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+        }
+
+        public string ClientSdk { get { return "wstore3.0.0"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -43,6 +52,7 @@ namespace adeven.AdjustIo
             var dataReader = Windows.Storage.Streams.DataReader.FromBuffer(hardwareId);
 
             byte[] bytes = new byte[hardwareId.Length];
+
             dataReader.ReadBytes(bytes);
 
             return Convert.ToBase64String(bytes);
@@ -74,6 +84,11 @@ namespace adeven.AdjustIo
                 getCountry());
 
             return userAgent;
+        }
+
+        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
+        {
+            Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
         }
 
         #region User Agent

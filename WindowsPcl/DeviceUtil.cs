@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     public interface DeviceUtil
     {
@@ -17,5 +17,7 @@ namespace adeven.AdjustIo.PCL
         string GetHardwareId();
 
         string GetNetworkAdapterId();
+
+        void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData);
     }
 }

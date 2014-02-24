@@ -1,4 +1,6 @@
-﻿using PCLStorage;
+﻿using AdjustSdk;
+using Newtonsoft.Json;
+using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace adeven.AdjustIo.PCL
+namespace AdjustSdk.Pcl
 {
     internal static class Util
     {
@@ -166,6 +168,14 @@ namespace adeven.AdjustIo.PCL
                 return -1;
             else
                 return timeSpan.Value.TotalSeconds;
+        }
+
+        internal static string Quote(this string input)
+        {
+            if (input == null || !input.Contains(" "))
+                return input;
+
+            return string.Format("'{0}'", input);
         }
 
         #region Serialization

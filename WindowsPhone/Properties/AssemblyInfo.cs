@@ -2,13 +2,13 @@
 using System.Resources;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyVersion("1.0")]
-[assembly: AssemblyTitle("AdjustIo")]
-[assembly: AssemblyDescription("Windows SDK of AdjustIo http://www.adjust.io")]
+[assembly: AssemblyVersion("3.0")]
+[assembly: AssemblyTitle("Adjust")]
+[assembly: AssemblyDescription("Windows SDK of Adjust http://www.adjust.com")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("adeven")]
-[assembly: AssemblyProduct("AdjustIo")]
-[assembly: AssemblyCopyright("Copyright © adeven 2012")]
+[assembly: AssemblyCompany("Adjust")]
+[assembly: AssemblyProduct("Adjust")]
+[assembly: AssemblyCopyright("Copyright © Adjust 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]

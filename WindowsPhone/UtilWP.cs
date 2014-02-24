@@ -1,4 +1,4 @@
-﻿using adeven.AdjustIo.PCL;
+﻿using AdjustSdk.Pcl;
 using Microsoft.Phone.Info;
 using System;
 using System.Globalization;
@@ -7,13 +7,14 @@ using System.IO.IsolatedStorage;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Xml.Linq;
 
-namespace adeven.AdjustIo
+namespace AdjustSdk
 {
     internal class UtilWP : DeviceUtil
     {
-        public string ClientSdk { get { return "wphone2.1.0"; } }
+        public string ClientSdk { get { return "wphone3.0.0"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -61,6 +62,11 @@ namespace adeven.AdjustIo
                 getCountry());
 
             return userAgent;
+        }
+
+        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
+        {
+            Deployment.Current.Dispatcher.BeginInvoke(() => responseDelegate(responseData));
         }
 
         #region User Agent
