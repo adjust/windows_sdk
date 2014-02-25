@@ -21,6 +21,7 @@ namespace AdjustSdk.Pcl
         private TimerPclNet45 TimeKeeper;
         private ActionQueue InternalQueue;
         private Action<ResponseData> ResponseDelegate;
+        private ILogger Logger;
 
         private Action<Action<ResponseData>, ResponseData> ResponseDelegateAction;
 
@@ -37,6 +38,7 @@ namespace AdjustSdk.Pcl
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
+            Logger = AdjustFactory.Logger;
 
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));

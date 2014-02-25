@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace AdjustSdk.Pcl
 {
-    internal class PackageHandler
+    internal class PackageHandler : IPackageHandler
     {
         private const string PackageQueueFilename = "AdjustIOPackageQueue";
 
@@ -14,53 +14,55 @@ namespace AdjustSdk.Pcl
         private List<ActivityPackage> PackageQueue;
         private RequestHandler RequestHandler;
         private ActivityHandler ActivityHandler;
+        private ILogger Logger;
 
         private ManualResetEvent InternalWaitHandle;
 
-        internal bool IsPaused;
+        private bool IsPaused;
 
-        internal PackageHandler(ActivityHandler activityHandler)
+        public PackageHandler(ActivityHandler activityHandler)
         {
             InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
             IsPaused = true;
+            Logger = AdjustFactory.Logger;
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
             InternalQueue.Enqueue(() => InitInternal(activityHandler));
         }
 
-        internal void AddPackage(ActivityPackage activityPackage)
+        public void AddPackage(ActivityPackage activityPackage)
         {
             InternalQueue.Enqueue(() => AddInternal(activityPackage));
         }
 
-        internal void SendFirstPackage()
+        public void SendFirstPackage()
         {
             InternalQueue.Enqueue(SendFirstInternal);
         }
 
-        internal void SendNextPackage()
+        public void SendNextPackage()
         {
             InternalQueue.Enqueue(SendNextInternal);
         }
 
-        internal void CloseFirstPackage()
+        public void CloseFirstPackage()
         {
             InternalWaitHandle.Set(); // open the door (signals the wait handle)
         }
 
-        internal void PauseSending()
+        public void PauseSending()
         {
             IsPaused = true;
         }
 
-        internal void ResumeSending()
+        public void ResumeSending()
         {
             IsPaused = false;
         }
 
-        internal void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
+        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
         {
             responseData.ActivityKind = activityPackage.ActivityKind;
             ActivityHandler.FinishTrackingWithResponse(responseData);

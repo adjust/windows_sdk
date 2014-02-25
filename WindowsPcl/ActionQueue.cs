@@ -8,6 +8,7 @@ namespace AdjustSdk.Pcl
     internal class ActionQueue
     {
         private Queue<Action> InternalQueue;
+        private ILogger Logger;
 
         // more info about Wait handles in http://www.yoda.arachsys.com/csharp/threads/waithandles.shtml
         private ManualResetEvent ManualHandle;
@@ -19,6 +20,7 @@ namespace AdjustSdk.Pcl
             Name = name;
             InternalQueue = new Queue<Action>();
             ManualHandle = new ManualResetEvent(false); // door starts closed (non-signaled)
+            Logger = AdjustFactory.Logger;
             Task.Factory.StartNew(() => ProcessTaskQueue(), TaskCreationOptions.LongRunning);
         }
 

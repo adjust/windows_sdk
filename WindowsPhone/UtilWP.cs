@@ -23,15 +23,16 @@ namespace AdjustSdk
 
         public string GetDeviceUniqueId()
         {
+            var logger = AdjustFactory.Logger;
             object id;
             if (!DeviceExtendedProperties.TryGetValue("DeviceUniqueId", out id))
             {
-                Logger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
+                logger.Error("This SDK requires the capability ID_CAP_IDENTITY_DEVICE. You might need to adjust your manifest file. See the README for details.");
                 return null;
             }
             string deviceId = Convert.ToBase64String(id as byte[]);
 
-            Logger.Debug("Device unique Id ({0})", deviceId);
+            logger.Debug("Device unique Id ({0})", deviceId);
 
             return deviceId;
         }

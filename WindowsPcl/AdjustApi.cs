@@ -16,6 +16,7 @@ namespace AdjustSdk.Pcl
 
         private static ActivityHandler activityHandler;
         private static DeviceUtil DeviceSpecific;
+        private static ILogger Logger = AdjustFactory.Logger;
 
         public static void AppDidLaunch(string appToken, DeviceUtil deviceSpecific)
         {

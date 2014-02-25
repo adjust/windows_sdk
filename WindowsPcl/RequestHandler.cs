@@ -9,24 +9,26 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    internal class RequestHandler
+    internal class RequestHandler : AdjustSdk.Pcl.IRequestHandler
     {
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
         private PackageHandler PackageHandler;
         private Action<ResponseData> ResponseDelegate;
+        private ILogger Logger;
 
-        internal RequestHandler(PackageHandler packageHandler)
+        public RequestHandler(PackageHandler packageHandler)
         {
             PackageHandler = packageHandler;
+            Logger = AdjustFactory.Logger;
         }
 
-        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
         {
             ResponseDelegate = responseDelegate;
         }
 
-        internal void SendPackage(ActivityPackage package)
+        public void SendPackage(ActivityPackage package)
         {
             Task.Factory.StartNew(() => SendInternal(package))
                 // continuation used to prevent unhandled exceptions in SendInternal

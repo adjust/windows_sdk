@@ -13,6 +13,7 @@ namespace AdjustSdk.Pcl
     internal static class Util
     {
         internal const string BaseUrl = "https://app.adjust.io";
+        private static ILogger Logger = AdjustFactory.Logger;
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {

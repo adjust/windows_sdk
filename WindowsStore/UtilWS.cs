@@ -127,7 +127,6 @@ namespace AdjustSdk
                 case "Computer.Tablet": return "tablet";
                 default: return "unknown";
             }
-            return sanitizeString(deviceType);
         }
 
         private string getDeviceName()
