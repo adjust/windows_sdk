@@ -13,11 +13,11 @@ namespace AdjustSdk.Pcl
     {
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
-        private PackageHandler PackageHandler;
+        private IPackageHandler PackageHandler;
         private Action<ResponseData> ResponseDelegate;
         private ILogger Logger;
 
-        public RequestHandler(PackageHandler packageHandler)
+        public RequestHandler(IPackageHandler packageHandler)
         {
             PackageHandler = packageHandler;
             Logger = AdjustFactory.Logger;

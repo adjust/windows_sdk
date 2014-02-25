@@ -12,7 +12,7 @@ namespace AdjustSdk.Pcl
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
-        private RequestHandler RequestHandler;
+        private IRequestHandler RequestHandler;
         private ActivityHandler ActivityHandler;
         private ILogger Logger;
 
@@ -71,7 +71,7 @@ namespace AdjustSdk.Pcl
         private void InitInternal(ActivityHandler activityHandler)
         {
             ActivityHandler = activityHandler;
-            RequestHandler = new RequestHandler(this);
+            RequestHandler = AdjustFactory.GetRequestHandler(this);
 
             ReadPackageQueue();
         }

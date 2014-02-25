@@ -7,7 +7,7 @@ using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    internal class ActivityPackage
+    public class ActivityPackage
     {
         // data
         internal string Path { get; set; }

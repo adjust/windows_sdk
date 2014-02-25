@@ -16,7 +16,7 @@ namespace AdjustSdk.Pcl
         private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
         private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
-        private PackageHandler PackageHandler;
+        private IPackageHandler PackageHandler;
         private ActivityState ActivityState;
         private TimerPclNet45 TimeKeeper;
         private ActionQueue InternalQueue;
@@ -99,7 +99,7 @@ namespace AdjustSdk.Pcl
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
 
-            PackageHandler = new PackageHandler(this);
+            PackageHandler = AdjustFactory.GetPackageHandler(this);
             ResponseDelegateAction = deviceUtil.RunResponseDelegate;
 
             ReadActivityState();
