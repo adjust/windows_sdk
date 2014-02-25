@@ -16,38 +16,41 @@ namespace AdjustSdk.Pcl
 
         public void Verbose(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Verbose, "v", message, parameters);
+            LoggingLevel(LogLevel.Verbose, message, parameters);
         }
 
         public void Debug(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Debug, "d", message, parameters);
+            LoggingLevel(LogLevel.Debug, message, parameters);
         }
 
         public void Info(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Info, "i", message, parameters);
+            LoggingLevel(LogLevel.Info, message, parameters);
         }
 
         public void Warn(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Warn, "w", message, parameters);
+            LoggingLevel(LogLevel.Warn, message, parameters);
         }
 
         public void Error(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Error, "e", message, parameters);
+            LoggingLevel(LogLevel.Error, message, parameters);
         }
 
         public void Assert(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Assert, "a", message, parameters);
+            LoggingLevel(LogLevel.Assert, message, parameters);
         }
 
-        private void LoggingLevel(LogLevel logLevel, string logLevelString, string message, object[] parameters)
+        private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
         {
             if (LogLevel > logLevel)
                 return;
+
+            var logLevelString = logLevel.ToString().Substring(0, 1).ToLower();
+
             LogMessage(message, logLevelString, parameters);
         }
 
