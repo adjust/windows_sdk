@@ -6,52 +6,52 @@ using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    internal class PackageBuilder
+    public class PackageBuilder
     {
         // possible Ids
-        internal string DeviceUniqueId { get; set; }
+        public string DeviceUniqueId { get; set; }
 
-        internal string HardwareId { get; set; }
+        public string HardwareId { get; set; }
 
-        internal string NetworkAdapterId { get; set; }
+        public string NetworkAdapterId { get; set; }
 
         // general
-        internal string AppToken { get; set; }
+        public string AppToken { get; set; }
 
-        internal AdjustApi.Environment Environment { get; set; }
+        public AdjustApi.Environment Environment { get; set; }
 
-        internal string UserAgent { get; set; }
+        public string UserAgent { get; set; }
 
-        internal string ClientSdk { get; set; }
+        public string ClientSdk { get; set; }
 
-        internal Guid Uuid { get; set; }
+        public Guid Uuid { get; set; }
 
         // session
-        internal int SessionCount { get; set; }
+        public int SessionCount { get; set; }
 
-        internal int SubSessionCount { get; set; }
+        public int SubSessionCount { get; set; }
 
-        internal DateTime? CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
-        internal TimeSpan? SessionLength { get; set; }
+        public TimeSpan? SessionLength { get; set; }
 
-        internal TimeSpan? TimeSpent { get; set; }
+        public TimeSpan? TimeSpent { get; set; }
 
-        internal TimeSpan? LastInterval { get; set; }
+        public TimeSpan? LastInterval { get; set; }
 
         // events
-        internal int EventCount { get; set; }
+        public int EventCount { get; set; }
 
-        internal string EventToken { get; set; }
+        public string EventToken { get; set; }
 
-        internal Dictionary<string, string> CallbackParameters { get; set; }
+        public Dictionary<string, string> CallbackParameters { get; set; }
 
-        internal double AmountInCents { get; set; }
+        public double AmountInCents { get; set; }
 
         // defaults
         private ActivityPackage activityPackage { get; set; }
 
-        internal PackageBuilder()
+        public PackageBuilder()
         {
             activityPackage = new ActivityPackage
             {
@@ -79,7 +79,7 @@ namespace AdjustSdk.Pcl
             SaveParameter("time_spent", TimeSpent);
         }
 
-        internal ActivityPackage BuildSessionPackage()
+        public ActivityPackage BuildSessionPackage()
         {
             FillDefaults();
             SaveParameter("last_interval", LastInterval);
@@ -91,7 +91,7 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
 
-        internal ActivityPackage BuildEventPackage()
+        public ActivityPackage BuildEventPackage()
         {
             FillDefaults();
             InjectEventParameters();
@@ -103,7 +103,7 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
 
-        internal ActivityPackage BuildRevenuePackage()
+        public ActivityPackage BuildRevenuePackage()
         {
             FillDefaults();
             SaveParameter("amount", AmountToString());

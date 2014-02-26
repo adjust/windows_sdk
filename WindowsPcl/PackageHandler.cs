@@ -6,21 +6,21 @@ using System.Threading;
 
 namespace AdjustSdk.Pcl
 {
-    internal class PackageHandler : IPackageHandler
+    public class PackageHandler : IPackageHandler
     {
         private const string PackageQueueFilename = "AdjustIOPackageQueue";
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
         private IRequestHandler RequestHandler;
-        private ActivityHandler ActivityHandler;
+        private IActivityHandler ActivityHandler;
         private ILogger Logger;
 
         private ManualResetEvent InternalWaitHandle;
 
         private bool IsPaused;
 
-        public PackageHandler(ActivityHandler activityHandler)
+        public PackageHandler(IActivityHandler activityHandler)
         {
             InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
@@ -68,7 +68,7 @@ namespace AdjustSdk.Pcl
             ActivityHandler.FinishTrackingWithResponse(responseData);
         }
 
-        private void InitInternal(ActivityHandler activityHandler)
+        private void InitInternal(IActivityHandler activityHandler)
         {
             ActivityHandler = activityHandler;
             RequestHandler = AdjustFactory.GetRequestHandler(this);

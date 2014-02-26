@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    public class ActivityHandler
+    public class ActivityHandler : IActivityHandler
     {
         public AdjustApi.Environment Environment { get; private set; }
 

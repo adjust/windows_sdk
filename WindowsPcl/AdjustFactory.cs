@@ -25,7 +25,7 @@ namespace AdjustSdk.Pcl
             set { InternalLogger = value; }
         }
 
-        public static IPackageHandler GetPackageHandler(ActivityHandler activityHandler)
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler)
         {
             if (InternalPackageHandler == null)
                 return new PackageHandler(activityHandler);

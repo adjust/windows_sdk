@@ -36,19 +36,6 @@ namespace AdjustSdk.WS.Test
             UtilWS = null;
         }
 
-        private bool IsParameterEqual(int expected, Dictionary<string, string> parameter, string key)
-        {
-            string value;
-            if (!parameter.TryGetValue(key, out value))
-                return false;
-
-            int actual;
-            if (!Int32.TryParse(value, out actual))
-                return false;
-
-            return expected == actual;
-        }
-
         [TestMethod]
         public void TestFirstSessionWS()
         {
@@ -134,6 +121,19 @@ namespace AdjustSdk.WS.Test
             // last interval shoule be -1, same as before
             Assert.IsFalse(parameters.ContainsKey("last_interval"),
                 firstSessionPackage.ExtendedString());
+        }
+
+        private bool IsParameterEqual(int expected, Dictionary<string, string> parameter, string key)
+        {
+            string value;
+            if (!parameter.TryGetValue(key, out value))
+                return false;
+
+            int actual;
+            if (!Int32.TryParse(value, out actual))
+                return false;
+
+            return expected == actual;
         }
     }
 }

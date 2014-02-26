@@ -82,6 +82,7 @@ namespace AdjustSdk.Pcl.Test
 
         private bool DeleteLevelUntil(int logLevel, string beginsWith)
         {
+            System.Diagnostics.Debug.WriteLine("Check: {0}", beginsWith);
             var logList = LogMap[logLevel];
             for (int i = 0; i < logList.Count; i++)
             {

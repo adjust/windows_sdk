@@ -42,6 +42,7 @@
     <Compile Include="ActivityState.cs" />
     <Compile Include="AdjustFactory.cs" />
     <Compile Include="Environment.cs" />
+    <Compile Include="IActivityHandler.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IPackageHandler.cs" />
     <Compile Include="IRequestHandler.cs" />
