@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    internal static class Util
+    public static class Util
     {
         internal const string BaseUrl = "https://app.adjust.io";
         private static ILogger Logger = AdjustFactory.Logger;
@@ -30,7 +30,7 @@ namespace AdjustSdk.Pcl
             return stringBuilder.ToString();
         }
 
-        internal static void DeleteFile(string filename)
+        public static bool DeleteFile(string filename)
         {
             try
             {
@@ -39,20 +39,25 @@ namespace AdjustSdk.Pcl
                 if (activityStateFile != null)
                 {
                     activityStateFile.DeleteAsync().Wait();
-                    Logger.Debug("File {0} deleted", filename);
+
+                    //Logger.Debug("File {0} deleted", filename);
+                    return true;
                 }
                 else
                 {
-                    Logger.Debug("File {0} doesn't exist to delete", filename);
+                    //Logger.Debug("File {0} doesn't exist to delete", filename);
+                    return false;
                 }
             }
             catch (PCLStorage.Exceptions.FileNotFoundException)
             {
-                Logger.Debug("File {0} doesn't exist to delete", filename);
+                //Logger.Debug("File {0} doesn't exist to delete", filename);
+                return false;
             }
             catch (Exception)
             {
-                Logger.Error("Error deleting {0} file", filename);
+                //Logger.Error("Error deleting {0} file", filename);
+                return false;
             }
         }
 

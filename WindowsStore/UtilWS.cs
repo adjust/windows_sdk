@@ -19,14 +19,16 @@ using Windows.UI.Core;
 
 namespace AdjustSdk
 {
-    internal class UtilWS : DeviceUtil
+    public class UtilWS : DeviceUtil
     {
         private CoreDispatcher Dispatcher;
 
         public UtilWS()
         {
             // must be called from the UI thread
-            Dispatcher = CoreWindow.GetForCurrentThread().Dispatcher;
+            var coreWindow = CoreWindow.GetForCurrentThread();
+            if (coreWindow != null)
+                Dispatcher = coreWindow.Dispatcher;
         }
 
         public string ClientSdk { get { return "wstore3.0.0"; } }
@@ -88,7 +90,14 @@ namespace AdjustSdk
 
         public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
         {
-            Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
+            // TODO fallback to threadpool if null?
+            if (Dispatcher != null)
+                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
+        }
+
+        public async Task Sleep(int milliseconds)
+        {
+            await Task.Delay(milliseconds);
         }
 
         #region User Agent

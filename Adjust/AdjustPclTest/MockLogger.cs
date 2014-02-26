@@ -5,20 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdjustSdk.Test.Pcl
+namespace AdjustSdk.Pcl.Test
 {
-    internal class MockLogger : ILogger
+    public class MockLogger : ILogger
     {
         private const int LogLevelTest = 7;
         private const string LogTag = "Adjust";
 
         private StringBuilder LogBuffer;
-        private Dictionary<int, IList<string>> LogMap;
+        private Dictionary<int, List<string>> LogMap;
 
-        internal MockLogger()
+        public MockLogger()
         {
             LogBuffer = new StringBuilder();
-            LogMap = new Dictionary<int, IList<string>>(7)
+            LogMap = new Dictionary<int, List<string>>(7)
             {
                 { (int)LogLevel.Verbose, new List<string>() },
                 { (int)LogLevel.Debug, new List<string>() },
@@ -32,7 +32,7 @@ namespace AdjustSdk.Test.Pcl
 
         public LogLevel LogLevel
         {
-            set { throw new NotImplementedException(); }
+            set { Test("Logger setLogLevel: {0}", value); }
         }
 
         public void Verbose(string message, params object[] parameters)
@@ -68,6 +68,38 @@ namespace AdjustSdk.Test.Pcl
         public void Test(string message, params object[] parameters)
         {
             LogMessage(message, LogLevelTest, "t", parameters);
+        }
+
+        public bool DeleteLogUntil(LogLevel loglevel, string beginsWith)
+        {
+            return DeleteLevelUntil((int)loglevel, beginsWith);
+        }
+
+        public bool DeleteTestUntil(string beginsWith)
+        {
+            return DeleteLevelUntil(LogLevelTest, beginsWith);
+        }
+
+        private bool DeleteLevelUntil(int logLevel, string beginsWith)
+        {
+            var logList = LogMap[logLevel];
+            for (int i = 0; i < logList.Count; i++)
+            {
+                var logMessage = logList[i];
+                if (logMessage.StartsWith(beginsWith))
+                {
+                    Test("{0} found", logMessage);
+                    logList.RemoveRange(0, i + 1);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public override string ToString()
+        {
+            return LogBuffer.ToString();
         }
 
         private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)

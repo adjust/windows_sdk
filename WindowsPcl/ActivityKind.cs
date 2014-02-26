@@ -10,7 +10,7 @@
 
     public static class ActivityKindUtil
     {
-        internal static ActivityKind FromString(string activityKindString)
+        public static ActivityKind FromString(string activityKindString)
         {
             if (activityKindString == "session")
                 return ActivityKind.Session;
@@ -22,7 +22,7 @@
                 return ActivityKind.Unkown;
         }
 
-        internal static string ToString(ActivityKind activityKind)
+        public static string ToString(ActivityKind activityKind)
         {
             return activityKind.ToString().ToLower();
         }

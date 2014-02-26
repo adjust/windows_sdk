@@ -33,7 +33,7 @@ namespace AdjustSdk.Pcl
         private string UserAgent;
         private string ClientSdk;
 
-        internal ActivityHandler(string appToken, DeviceUtil deviceUtil)
+        public ActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
             // default values
             Environment = AdjustApi.Environment.Unknown;
@@ -44,43 +44,43 @@ namespace AdjustSdk.Pcl
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
 
-        internal void SetEnvironment(AdjustApi.Environment enviornment)
+        public void SetEnvironment(AdjustApi.Environment enviornment)
         {
             Environment = enviornment;
         }
 
-        internal void SetBufferedEvents(bool enabledEventBuffering)
+        public void SetBufferedEvents(bool enabledEventBuffering)
         {
             IsBufferedEventsEnabled = enabledEventBuffering;
         }
 
-        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
         {
             ResponseDelegate = responseDelegate;
         }
 
-        internal void TrackSubsessionStart()
+        public void TrackSubsessionStart()
         {
             InternalQueue.Enqueue(StartInternal);
         }
 
-        internal void TrackSubsessionEnd()
+        public void TrackSubsessionEnd()
         {
             InternalQueue.Enqueue(EndInternal);
         }
 
-        internal void TrackEvent(string eventToken,
+        public void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => EventInternal(eventToken, callbackParameters));
         }
 
-        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        public void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
-        internal void FinishTrackingWithResponse(ResponseData responseData)
+        public void FinishTrackingWithResponse(ResponseData responseData)
         {
             if (ResponseDelegate != null)
                 ResponseDelegateAction(ResponseDelegate, responseData);
@@ -114,9 +114,7 @@ namespace AdjustSdk.Pcl
 
             var now = DateTime.Now;
 
-            Logger.Verbose("Now time ({0})", now);
-
-            // if firsts Session
+            // very firsts Session
             if (ActivityState == null)
             {
                 // create fresh activity state
