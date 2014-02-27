@@ -29,6 +29,7 @@ namespace AdjustSdk.WS.Test
             AdjustFactory.SetRequestHandler(MockRequestHandler);
         }
 
+        [TestCleanup]
         public void TearDown()
         {
             AdjustFactory.SetRequestHandler(null);

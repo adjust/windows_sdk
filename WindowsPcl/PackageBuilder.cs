@@ -125,11 +125,11 @@ namespace AdjustSdk.Pcl
         {
             if (EventToken != null)
             {
-                return String.Format(" ({0:.0} cent, '{1}')", AmountInCents, EventToken);
+                return String.Format(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
             }
             else
             {
-                return String.Format(" ({0:.0} cent)", AmountInCents);
+                return String.Format(" ({0:0.0} cent)", AmountInCents);
             }
         }
 
@@ -142,7 +142,7 @@ namespace AdjustSdk.Pcl
 
         private string AmountToString()
         {
-            int amountInMillis = (int)Math.Round(AmountInCents * 10);
+            int amountInMillis = (int)Math.Round(AmountInCents * 10, MidpointRounding.AwayFromZero);
             AmountInCents = amountInMillis / 10.0; // now rounded to one decimal point
             var amountString = amountInMillis.ToString();
             return amountString;

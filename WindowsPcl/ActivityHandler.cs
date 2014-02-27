@@ -12,9 +12,9 @@ namespace AdjustSdk.Pcl
         public bool IsBufferedEventsEnabled { get; private set; }
 
         private const string ActivityStateFileName = "AdjustIOActivityState";
-        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0); // 30 minutes
-        private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
-        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
+        private TimeSpan SessionInterval;
+        private TimeSpan SubsessionInterval;
+        private readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
         private IPackageHandler PackageHandler;
         private ActivityState ActivityState;
@@ -39,6 +39,9 @@ namespace AdjustSdk.Pcl
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
             Logger = AdjustFactory.Logger;
+
+            SessionInterval = AdjustFactory.GetSessionInterval();
+            SubsessionInterval = AdjustFactory.GetSubsessionInterval();
 
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
@@ -159,7 +162,7 @@ namespace AdjustSdk.Pcl
             }
 
             // new subsession
-            if (lastInterval > SubSessionInterval)
+            if (lastInterval > SubsessionInterval)
             {
                 ActivityState.SubSessionCount++;
                 ActivityState.SessionLenght += lastInterval;
@@ -299,7 +302,7 @@ namespace AdjustSdk.Pcl
             ActivityState.TimeSpent += lastInterval;
             ActivityState.LastActivity = now;
 
-            return lastInterval > SubSessionInterval;
+            return lastInterval > SubsessionInterval;
         }
 
         private void TransferSessionPackage()

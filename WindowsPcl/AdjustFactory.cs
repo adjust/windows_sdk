@@ -13,6 +13,8 @@ namespace AdjustSdk.Pcl
         private static IPackageHandler InternalPackageHandler;
         private static IRequestHandler InternalRequestHandler;
         private static HttpMessageHandler InternalHttpMessageHandler;
+        private static TimeSpan? InternalSessionInterval;
+        private static TimeSpan? InternalSubsessionInterval;
 
         public static ILogger Logger
         {
@@ -48,6 +50,22 @@ namespace AdjustSdk.Pcl
             return InternalHttpMessageHandler;
         }
 
+        public static TimeSpan GetSessionInterval()
+        {
+            if (!InternalSessionInterval.HasValue)
+                return new TimeSpan(0, 30, 0); // 30 minutes
+            else
+                return InternalSessionInterval.Value;
+        }
+
+        public static TimeSpan GetSubsessionInterval()
+        {
+            if (!InternalSubsessionInterval.HasValue)
+                return new TimeSpan(0, 0, 1); // 1 second
+            else
+                return InternalSubsessionInterval.Value;
+        }
+
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
             InternalPackageHandler = packageHandler;
@@ -61,6 +79,16 @@ namespace AdjustSdk.Pcl
         public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
             InternalHttpMessageHandler = httpMessageHandler;
+        }
+
+        public static void SetSessionInterval(TimeSpan? sessionInterval)
+        {
+            InternalSessionInterval = sessionInterval;
+        }
+
+        public static void SetSubsessionInterval(TimeSpan? subsessionInterval)
+        {
+            InternalSubsessionInterval = subsessionInterval;
         }
     }
 }
