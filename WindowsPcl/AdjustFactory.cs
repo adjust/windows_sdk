@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace AdjustSdk.Pcl
         private static ILogger InternalLogger;
         private static IPackageHandler InternalPackageHandler;
         private static IRequestHandler InternalRequestHandler;
+        private static HttpMessageHandler InternalHttpMessageHandler;
 
         public static ILogger Logger
         {
@@ -41,6 +43,11 @@ namespace AdjustSdk.Pcl
                 return InternalRequestHandler;
         }
 
+        public static HttpMessageHandler GetHttpMessageHandler()
+        {
+            return InternalHttpMessageHandler;
+        }
+
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
             InternalPackageHandler = packageHandler;
@@ -49,6 +56,11 @@ namespace AdjustSdk.Pcl
         public static void SetRequestHandler(IRequestHandler requestHandler)
         {
             InternalRequestHandler = requestHandler;
+        }
+
+        public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
+        {
+            InternalHttpMessageHandler = httpMessageHandler;
         }
     }
 }

@@ -17,6 +17,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWPTest", "AdjustWPTes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWSTest", "AdjustWSTest\AdjustWSTest.csproj", "{C07AED5D-1A21-47F2-AB88-C2DB72C7DEFF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DCEB96BB-F224-4226-B19E-C3FF88A3E5E1}"
+	ProjectSection(SolutionItems) = preProject
+		Adjust.testsettings = Adjust.testsettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

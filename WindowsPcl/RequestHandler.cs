@@ -9,18 +9,26 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    internal class RequestHandler : AdjustSdk.Pcl.IRequestHandler
+    public class RequestHandler : IRequestHandler
     {
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
         private IPackageHandler PackageHandler;
         private Action<ResponseData> ResponseDelegate;
         private ILogger Logger;
+        private HttpMessageHandler HttpMessageHandler;
+
+        private struct SendResponse
+        {
+            internal ActivityPackage ActivtyPackage;
+            internal ResponseData ResponseData;
+        }
 
         public RequestHandler(IPackageHandler packageHandler)
         {
             PackageHandler = packageHandler;
             Logger = AdjustFactory.Logger;
+            HttpMessageHandler = AdjustFactory.GetHttpMessageHandler();
         }
 
         public void SetResponseDelegate(Action<ResponseData> responseDelegate)
@@ -33,10 +41,10 @@ namespace AdjustSdk.Pcl
             Task.Factory.StartNew(() => SendInternal(package))
                 // continuation used to prevent unhandled exceptions in SendInternal
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
-                .ContinueWith((responseData) => PackageSent(responseData));
+                .ContinueWith((sendResponse) => PackageSent(sendResponse));
         }
 
-        private ResponseData SendInternal(ActivityPackage activityPackage)
+        private SendResponse SendInternal(ActivityPackage activityPackage)
         {
             ResponseData responseData;
             try
@@ -49,12 +57,16 @@ namespace AdjustSdk.Pcl
             catch (WebException we) { responseData = ProcessException(we, activityPackage); }
             catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }
 
-            return responseData;
+            return new SendResponse
+            {
+                ActivtyPackage = activityPackage,
+                ResponseData = responseData
+            };
         }
 
         private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
         {
-            using (var httpClient = new HttpClient())
+            using (var httpClient = new HttpClient(HttpMessageHandler))
             {
                 httpClient.Timeout = Timeout;
                 httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
@@ -75,20 +87,18 @@ namespace AdjustSdk.Pcl
             using (var content = httpResponseMessage.Content)
             {
                 var responseString = content.ReadAsStringAsync().Result;
+
                 responseData.SetResponseData(responseString);
 
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
                     responseData.Success = true;
-                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                     Logger.Info("{0}", activityPackage.SuccessMessage());
                 }
                 else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                     || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
                 {
-                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
-
                     Logger.Error("{0}. ({1}, {2}).",
                         activityPackage.FailureMessage(),
                         responseString.TrimEnd('\r', '\n'),
@@ -98,7 +108,6 @@ namespace AdjustSdk.Pcl
                 {
                     responseData.SetResponseData(responseString);
                     responseData.WillRetry = true;
-                    PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                     Logger.Error("{0}. ({1}). Will retry later.",
                         activityPackage.FailureMessage(),
@@ -121,7 +130,6 @@ namespace AdjustSdk.Pcl
 
                 responseData.SetResponseData(responseString);
                 responseData.WillRetry = true;
-                PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
                 Logger.Error("{0}. ({1}, {2}). Will retry later.",
                     activityPackage.FailureMessage(),
@@ -138,14 +146,13 @@ namespace AdjustSdk.Pcl
 
             responseData.SetResponseError(exception.Message);
             responseData.WillRetry = true;
-            PackageHandler.FinishedTrackingActivity(activityPackage, responseData);
 
             Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
 
             return responseData;
         }
 
-        private void PackageSent(Task<ResponseData> SendTask)
+        private void PackageSent(Task<SendResponse> SendTask)
         {
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
@@ -154,7 +161,12 @@ namespace AdjustSdk.Pcl
                 !SendTask.IsFaulted
                 && !SendTask.IsCanceled;
 
-            if (successRunning && !SendTask.Result.WillRetry)
+            if (successRunning)
+                PackageHandler.FinishedTrackingActivity(
+                    activityPackage: SendTask.Result.ActivtyPackage,
+                    responseData: SendTask.Result.ResponseData);
+
+            if (successRunning && !SendTask.Result.ResponseData.WillRetry)
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();

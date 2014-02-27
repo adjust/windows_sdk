@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace AdjustSdk
@@ -49,7 +50,13 @@ namespace AdjustSdk
 
         public void SetResponseData(string responseString)
         {
-            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+            Dictionary<string, string> responseDic = null;
+            try
+            {
+                responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+            }
+            catch (Exception)
+            { }
 
             if (responseDic == null)
             {

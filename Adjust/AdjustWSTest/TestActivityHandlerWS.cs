@@ -19,13 +19,13 @@ namespace AdjustSdk.WS.Test
         [TestInitialize]
         public void SetUp()
         {
+            UtilWS = new UtilWS();
+
             MockLogger = new MockLogger();
             AdjustFactory.Logger = MockLogger;
 
             MockPackageHandler = new MockPackageHandler(MockLogger);
             AdjustFactory.SetPackageHandler(MockPackageHandler);
-
-            UtilWS = new UtilWS();
         }
 
         [TestCleanup]
@@ -33,7 +33,6 @@ namespace AdjustSdk.WS.Test
         {
             AdjustFactory.SetPackageHandler(null);
             AdjustFactory.Logger = null;
-            UtilWS = null;
         }
 
         [TestMethod]

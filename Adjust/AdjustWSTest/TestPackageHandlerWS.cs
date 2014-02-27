@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace AdjustSdk.WS.Test
 {
     [TestClass]
-    public class TestPackageHandler
+    public class TestPackageHandlerWS
     {
         private MockLogger MockLogger;
         private MockRequestHandler MockRequestHandler;
@@ -20,25 +20,23 @@ namespace AdjustSdk.WS.Test
         [TestInitialize]
         public void SetUp()
         {
+            UtilWS = new UtilWS();
+
             MockLogger = new MockLogger();
             AdjustFactory.Logger = MockLogger;
 
             MockRequestHandler = new MockRequestHandler(MockLogger);
             AdjustFactory.SetRequestHandler(MockRequestHandler);
-
-            UtilWS = new UtilWS();
         }
 
-        [TestCleanup]
         public void TearDown()
         {
             AdjustFactory.SetRequestHandler(null);
             AdjustFactory.Logger = null;
-            UtilWS = null;
         }
 
         [TestMethod]
-        public void TestFirstPackage()
+        public void TestFirstPackageWS()
         {
             // deleting previously created package queue file to make a new queue
             MockLogger.Test("Was the package queue file deleted? {0}", Util.DeleteFile("AdjustIOPackageQueue"));
@@ -50,7 +48,11 @@ namespace AdjustSdk.WS.Test
             packageHandler.ResumeSending();
 
             // build a package
-            var packageBuilder = new PackageBuilder() { UserAgent = "", ClientSdk = "" };
+            var packageBuilder = new PackageBuilder()
+            {
+                UserAgent = UtilWS.GetUserAgent(),
+                ClientSdk = UtilWS.ClientSdk,
+            };
             var sessionPackage = packageBuilder.BuildSessionPackage();
 
             // and add it to the queue
@@ -63,7 +65,7 @@ namespace AdjustSdk.WS.Test
 
             // it's necessary to sleep the activity for a while after each handler call
             // to let the internal queue act
-            UtilWS.Sleep(5000).Wait();
+            UtilWS.Sleep(1000).Wait();
 
             // test that the file did not exist in the first run of the application
             Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Failed to read file AdjustIOPackageQueue (not found)"),
