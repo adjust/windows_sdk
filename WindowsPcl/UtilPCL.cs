@@ -93,7 +93,10 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
+        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
+            Func<Stream, T> ObjectReader,
+            Func<T> defaultReturn,
+            Func<T, string> successMessage)
             where T : class
         {
             try
@@ -112,7 +115,7 @@ namespace AdjustSdk.Pcl
                 {
                     output = ObjectReader(stream);
                 }
-                Logger.Debug("Read from file {0}", fileName);
+                Logger.Debug(successMessage(output));
 
                 // successful read
                 return output;

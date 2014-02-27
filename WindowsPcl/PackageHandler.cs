@@ -132,9 +132,12 @@ namespace AdjustSdk.Pcl
 
         private void ReadPackageQueue()
         {
+            Func<List<ActivityPackage>, string> successMessage = (queue) => String.Format("Package handler read {0} packages", queue.Count);
+
             PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
-                ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
-                () => new List<ActivityPackage>()) //default value in case of error
+                ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
+                () => new List<ActivityPackage>(), // default value in case of error
+                successMessage) // message generated for the queue, if it was succesfully read
                 .Result;
         }
     }

@@ -265,9 +265,13 @@ namespace AdjustSdk.Pcl
 
         private void ReadActivityState()
         {
+            Func<ActivityState, string> successMessage = (activityState) =>
+                String.Format("Read activity state:{0} uuid {1}", activityState, ActivityState.Uuid);
+
             ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-                () => null) //default value in case of error
+                () => null, //default value in case of error
+                successMessage) // message generated for the activity state, if it was succesfully read
                 .Result;
         }
 
