@@ -112,6 +112,8 @@ namespace AdjustSdk.Pcl
 
         private void StartInternal()
         {
+            if (!CheckAppToken(AppToken)) return;
+
             PackageHandler.ResumeSending();
             StartTimer();
 
@@ -418,7 +420,7 @@ namespace AdjustSdk.Pcl
         {
             if (amount < 0.0)
             {
-                Logger.Error("Invalid amount {0:.0}", amount);
+                Logger.Error("Invalid amount {0:0.0}", amount);
                 return false;
             }
             return true;

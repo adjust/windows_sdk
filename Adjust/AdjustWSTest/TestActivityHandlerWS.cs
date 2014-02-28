@@ -426,7 +426,30 @@ namespace AdjustSdk.WS.Test
 
             UtilWS.Sleep(1000).Wait();
 
-            // check the malformed token XXX
+            // check the malformed token
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Malformed App Token '12345678901'"),
+                MockLogger.ToString());
+
+            // test invalid event and revenue from a valid activity handler
+            activityHandler = new ActivityHandler("123456789012", UtilWS);
+
+            activityHandler.TrackEvent(null, null);
+            activityHandler.TrackRevenue(-0.1, null, null);
+            activityHandler.TrackEvent("12345", null);
+
+            UtilWS.Sleep(1000).Wait();
+
+            // check null event token
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Missing Event Token"),
+                MockLogger.ToString());
+
+            // check invalid revenue amount
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Invalid amount -0.1"),
+                MockLogger.ToString());
+
+            // check invalid event token
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Malformed Event Token '12345'"),
+                MockLogger.ToString());
         }
 
         private bool IsParameterEqual(int expected, Dictionary<string, string> parameter, string key)
