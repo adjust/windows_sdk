@@ -47,7 +47,10 @@ namespace AdjustSdk.Pcl
 
         public static HttpMessageHandler GetHttpMessageHandler()
         {
-            return InternalHttpMessageHandler;
+            if (InternalHttpMessageHandler == null)
+                return new HttpClientHandler();
+            else
+                return InternalHttpMessageHandler;
         }
 
         public static TimeSpan GetSessionInterval()
