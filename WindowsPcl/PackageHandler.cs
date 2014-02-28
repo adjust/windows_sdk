@@ -126,13 +126,13 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueue()
         {
-            var sucessMessage = String.Format("Package handler wrote {0} packages", PackageQueue.Count);
+            var sucessMessage = Util.f("Package handler wrote {0} packages", PackageQueue.Count);
             Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue, sucessMessage).Wait();
         }
 
         private void ReadPackageQueue()
         {
-            Func<List<ActivityPackage>, string> successMessage = (queue) => String.Format("Package handler read {0} packages", queue.Count);
+            Func<List<ActivityPackage>, string> successMessage = (queue) => Util.f("Package handler read {0} packages", queue.Count);
 
             PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage

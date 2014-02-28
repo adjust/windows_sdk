@@ -264,14 +264,14 @@ namespace AdjustSdk.Pcl
 
         private void WriteActivityState()
         {
-            var sucessMessage = String.Format("Wrote activity state: {0}", ActivityState);
+            var sucessMessage = Util.f("Wrote activity state: {0}", ActivityState);
             Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState, sucessMessage).Wait();
         }
 
         private void ReadActivityState()
         {
             Func<ActivityState, string> successMessage = (activityState) =>
-                String.Format("Read activity state:{0} uuid {1}", activityState, ActivityState.Uuid);
+                Util.f("Read activity state:{0} uuid {1}", activityState, ActivityState.Uuid);
 
             ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState

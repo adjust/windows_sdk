@@ -25,17 +25,17 @@ namespace AdjustSdk.Pcl
 
         public string SuccessMessage()
         {
-            return String.Format("Tracked {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.f("Tracked {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public string FailureMessage()
         {
-            return String.Format("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.f("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public override string ToString()
         {
-            return String.Format("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.f("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public string ExtendedString()

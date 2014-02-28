@@ -9,8 +9,8 @@
     <ProjectGuid>{C07AED5D-1A21-47F2-AB88-C2DB72C7DEFF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AdjustSdk.WS.Test</RootNamespace>
-    <AssemblyName>AdjustWSTests</AssemblyName>
+    <RootNamespace>AdjustTest.WS</RootNamespace>
+    <AssemblyName>AdjustWSTest</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformVersion>8.1</TargetPlatformVersion>
     <MinimumVisualStudioVersion>12</MinimumVisualStudioVersion>
@@ -112,6 +112,7 @@
     <SDKReference Include="TestPlatform, Version=11.0" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssertTestPlatform.cs" />
     <Compile Include="TestActivityHandlerWS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestPackageHandlerWS.cs" />
@@ -147,9 +148,9 @@
       <Project>{882c2a80-b6a5-42a2-8e28-0749b2090d04}</Project>
       <Name>AdjustWS</Name>
     </ProjectReference>
-    <ProjectReference Include="..\AdjustPclTest\AdjustPclTest.csproj">
+    <ProjectReference Include="..\AdjustPclTest\AdjustTestPcl.csproj">
       <Project>{1c45afc4-db01-4d8e-95c6-9ec258e55c65}</Project>
-      <Name>AdjustPclTest</Name>
+      <Name>AdjustTestPcl</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

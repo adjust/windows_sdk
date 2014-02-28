@@ -6,11 +6,11 @@ using System.Resources;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AdjustWPTests")]
+[assembly: AssemblyTitle("AdjustWPTest")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("AdjustWPTests")]
+[assembly: AssemblyProduct("AdjustWPTest")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -21,7 +21,7 @@ using System.Resources;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a807e7e2-45eb-4197-af8c-45f8e814dcea")]
+[assembly: Guid("9f8994e5-1e3f-4c47-a1a0-dd408f3781c5")]
 
 // Version information for an assembly consists of the following four values:
 //

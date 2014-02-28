@@ -95,7 +95,12 @@ namespace AdjustSdk
                 Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
         }
 
-        public async Task Sleep(int milliseconds)
+        public void Sleep(int milliseconds)
+        {
+            SleepAsync(milliseconds).Wait();
+        }
+
+        private async Task SleepAsync(int milliseconds)
         {
             await Task.Delay(milliseconds);
         }
@@ -114,7 +119,7 @@ namespace AdjustSdk
         {
             PackageId package = getPackage();
             PackageVersion pv = package.Version;
-            string version = string.Format("{0}.{1}", pv.Major, pv.Minor);
+            string version = Util.f("{0}.{1}", pv.Major, pv.Minor);
             string sanitized = sanitizeString(version);
             return sanitized;
         }

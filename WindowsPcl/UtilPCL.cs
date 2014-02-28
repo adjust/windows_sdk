@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PCLStorage;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -58,6 +59,11 @@ namespace AdjustSdk.Pcl
                 //Logger.Error("Error deleting {0} file", filename);
                 return false;
             }
+        }
+
+        public static string f(string message, params object[] parameters)
+        {
+            return String.Format(CultureInfo.InvariantCulture, message, parameters);
         }
 
         internal static bool IsFileNotFound(this Exception ex)
@@ -157,9 +163,9 @@ namespace AdjustSdk.Pcl
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
-                return String.Format("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.f("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
             else
-                return String.Format("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.f("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -185,7 +191,7 @@ namespace AdjustSdk.Pcl
             if (input == null || !input.Contains(" "))
                 return input;
 
-            return string.Format("'{0}'", input);
+            return Util.f("'{0}'", input);
         }
 
         #region Serialization

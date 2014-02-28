@@ -118,18 +118,18 @@ namespace AdjustSdk.Pcl
 
         private string EventSuffix()
         {
-            return String.Format(" '{0}'", EventToken);
+            return Util.f(" '{0}'", EventToken);
         }
 
         private string RevenueSuffx()
         {
             if (EventToken != null)
             {
-                return String.Format(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
+                return Util.f(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
             }
             else
             {
-                return String.Format(" ({0:0.0} cent)", AmountInCents);
+                return Util.f(" ({0:0.0} cent)", AmountInCents);
             }
         }
 
@@ -166,7 +166,7 @@ namespace AdjustSdk.Pcl
             var timeZone = value.Value.ToString("zzz");
             var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.Value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = String.Format("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
             activityPackage.Parameters.Add(key, sDateTime);
         }
 

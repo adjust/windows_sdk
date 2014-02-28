@@ -12,7 +12,7 @@ using System.Xml.Linq;
 
 namespace AdjustSdk
 {
-    internal class UtilWP : DeviceUtil
+    public class UtilWP : DeviceUtil
     {
         public string ClientSdk { get { return "wphone3.0.0"; } }
 
@@ -70,6 +70,11 @@ namespace AdjustSdk
             Deployment.Current.Dispatcher.BeginInvoke(() => responseDelegate(responseData));
         }
 
+        public void Sleep(int milliseconds)
+        {
+            System.Threading.Thread.Sleep(milliseconds);
+        }
+
         #region User Agent
 
         private static string getAppName()
@@ -86,7 +91,7 @@ namespace AdjustSdk
             string[] splits = version.Split('.');
             if (splits.Length >= 2)
             {
-                version = string.Format("{0}.{1}", splits[0], splits[1]);
+                version = Util.f("{0}.{1}", splits[0], splits[1]);
             }
 
             string sanitized = sanitizeString(version);
@@ -140,7 +145,7 @@ namespace AdjustSdk
         private static string getOsVersion()
         {
             Version v = System.Environment.OSVersion.Version;
-            string version = string.Format("{0}.{1}", v.Major, v.Minor);
+            string version = Util.f("{0}.{1}", v.Major, v.Minor);
             string sanitized = sanitizeString(version);
             return sanitized;
         }

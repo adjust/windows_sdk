@@ -1,6 +1,6 @@
-﻿using AdjustSdk.Tests.WP.Resources;
+﻿using AdjustWPTest.Resources;
 
-namespace AdjustSdk.Tests.WP
+namespace AdjustWPTest
 {
     /// <summary>
     /// Provides access to string resources.

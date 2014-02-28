@@ -1,11 +1,11 @@
-﻿using AdjustSdk.Pcl;
+﻿using AdjustSdk;
+using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace AdjustSdk.Pcl.Test
+namespace AdjustTest.Pcl
 {
     public class MockLogger : ILogger
     {
@@ -110,12 +110,12 @@ namespace AdjustSdk.Pcl.Test
 
         private void LogMessage(string message, int logLevelInt, string logLevelString, object[] parameters)
         {
-            var formattedMessage = String.Format(message, parameters);
+            var formattedMessage = Util.f(message, parameters);
 
             // write to Debug by new line '\n'
             foreach (string line in formattedMessage.Split(new char[] { '\n' }))
             {
-                var formattedLine = String.Format("\t[{0}]{1} {2}", LogTag, logLevelString, line);
+                var formattedLine = Util.f("\t[{0}]{1} {2}", LogTag, logLevelString, line);
 
                 System.Diagnostics.Debug.WriteLine(formattedLine);
                 LogBuffer.AppendLine(formattedLine);

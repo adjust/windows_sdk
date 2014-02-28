@@ -1,5 +1,6 @@
 ﻿using AdjustSdk;
 using System;
+using System.Globalization;
 
 namespace AdjustSdk.Pcl
 {
@@ -56,7 +57,7 @@ namespace AdjustSdk.Pcl
 
         private void LogMessage(string message, string logLevelString, object[] parameters)
         {
-            string formattedMessage = String.Format(message, parameters);
+            string formattedMessage = Util.f(message, parameters);
             // write to Debug by new line '\n'
             foreach (string formattedLine in formattedMessage.Split(new char[] { '\n' }))
             {

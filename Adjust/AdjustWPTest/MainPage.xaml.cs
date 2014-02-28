@@ -1,19 +1,16 @@
-﻿using Microsoft.Phone.Controls;
+﻿using AdjustWPTest.Resources;
+using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
-using Microsoft.VisualStudio.TestPlatform.Core;
-using Microsoft.VisualStudio.TestPlatform.TestExecutor;
+using Microsoft.Phone.Testing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
-using vstest_executionengine_platformbridge;
 
-namespace AdjustWPTests
+namespace AdjustWPTest
 {
     public partial class MainPage : PhoneApplicationPage
     {
@@ -22,8 +19,26 @@ namespace AdjustWPTests
         {
             InitializeComponent();
 
-            var wrapper = new TestExecutorServiceWrapper();
-            new Thread(new ServiceMain((param0, param1) => wrapper.SendMessage((ContractName)param0, param1)).Run).Start();
+            this.Content = UnitTestSystem.CreateTestPage();
+
+            // Sample code to localize the ApplicationBar
+            //BuildLocalizedApplicationBar();
         }
+
+        // Sample code for building a localized ApplicationBar
+        //private void BuildLocalizedApplicationBar()
+        //{
+        //    // Set the page's ApplicationBar to a new instance of ApplicationBar.
+        //    ApplicationBar = new ApplicationBar();
+
+        //    // Create a new button and set the text value to the localized string from AppResources.
+        //    ApplicationBarIconButton appBarButton = new ApplicationBarIconButton(new Uri("/Assets/AppBar/appbar.add.rest.png", UriKind.Relative));
+        //    appBarButton.Text = AppResources.AppBarButtonText;
+        //    ApplicationBar.Buttons.Add(appBarButton);
+
+        //    // Create a new menu item with the localized string from AppResources.
+        //    ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
+        //    ApplicationBar.MenuItems.Add(appBarMenuItem);
+        //}
     }
 }

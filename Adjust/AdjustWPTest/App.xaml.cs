@@ -1,14 +1,14 @@
-﻿using AdjustSdk.Tests.WP.Resources;
-using Microsoft.Phone.Controls;
-using Microsoft.Phone.Shell;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Resources;
 using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Navigation;
+using Microsoft.Phone.Controls;
+using Microsoft.Phone.Shell;
+using AdjustWPTest.Resources;
 
-namespace AdjustWPTests
+namespace AdjustWPTest
 {
     public partial class App : Application
     {
@@ -54,6 +54,7 @@ namespace AdjustWPTests
                 // and consume battery power when the user is not using the phone.
                 PhoneApplicationService.Current.UserIdleDetectionMode = IdleDetectionMode.Disabled;
             }
+
         }
 
         // Code to execute when the application is launching (eg, from Start)
@@ -161,7 +162,7 @@ namespace AdjustWPTests
             }
         }
 
-        #endregion Phone application initialization
+        #endregion
 
         // Initialize the app's font and flow direction as defined in its localized resource strings.
         //

@@ -1,12 +1,9 @@
-﻿using AdjustSdk.Pcl;
-using AdjustSdk.Pcl.Test;
+﻿using AdjustSdk;
+using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace AdjustSdk.Test.Pcl
+namespace AdjustTest.Pcl
 {
     public class MockActivityHandler : IActivityHandler
     {
