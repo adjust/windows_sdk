@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace AdjustSdk
@@ -49,11 +50,17 @@ namespace AdjustSdk
 
         public void SetResponseData(string responseString)
         {
-            var responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+            Dictionary<string, string> responseDic = null;
+            try
+            {
+                responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
+            }
+            catch (Exception)
+            { }
 
             if (responseDic == null)
             {
-                Error = string.Format("Failed to parse json response: {0}", responseString);
+                Error = Util.f("Failed to parse json response: {0}", responseString);
                 return;
             }
 
@@ -72,7 +79,7 @@ namespace AdjustSdk
 
         public override string ToString()
         {
-            return string.Format("[kind: {0} success:{1} willRetry:{2} error:{3} trackerToken:{4} trackerName:{5}]",
+            return Util.f("[kind: {0} success:{1} willRetry:{2} error:{3} trackerToken:{4} trackerName:{5}]",
                 ActivityKindString,
                 Success,
                 WillRetry,

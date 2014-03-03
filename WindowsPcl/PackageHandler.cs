@@ -6,70 +6,72 @@ using System.Threading;
 
 namespace AdjustSdk.Pcl
 {
-    internal class PackageHandler
+    public class PackageHandler : IPackageHandler
     {
         private const string PackageQueueFilename = "AdjustIOPackageQueue";
 
         private ActionQueue InternalQueue;
         private List<ActivityPackage> PackageQueue;
-        private RequestHandler RequestHandler;
-        private ActivityHandler ActivityHandler;
+        private IRequestHandler RequestHandler;
+        private IActivityHandler ActivityHandler;
+        private ILogger Logger;
 
         private ManualResetEvent InternalWaitHandle;
 
-        internal bool IsPaused;
+        private bool IsPaused;
 
-        internal PackageHandler(ActivityHandler activityHandler)
+        public PackageHandler(IActivityHandler activityHandler)
         {
             InternalQueue = new ActionQueue("adjust.PackageQueue");
             PackageQueue = new List<ActivityPackage>();
             IsPaused = true;
+            Logger = AdjustFactory.Logger;
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
             InternalQueue.Enqueue(() => InitInternal(activityHandler));
         }
 
-        internal void AddPackage(ActivityPackage activityPackage)
+        public void AddPackage(ActivityPackage activityPackage)
         {
             InternalQueue.Enqueue(() => AddInternal(activityPackage));
         }
 
-        internal void SendFirstPackage()
+        public void SendFirstPackage()
         {
             InternalQueue.Enqueue(SendFirstInternal);
         }
 
-        internal void SendNextPackage()
+        public void SendNextPackage()
         {
             InternalQueue.Enqueue(SendNextInternal);
         }
 
-        internal void CloseFirstPackage()
+        public void CloseFirstPackage()
         {
             InternalWaitHandle.Set(); // open the door (signals the wait handle)
         }
 
-        internal void PauseSending()
+        public void PauseSending()
         {
             IsPaused = true;
         }
 
-        internal void ResumeSending()
+        public void ResumeSending()
         {
             IsPaused = false;
         }
 
-        internal void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
+        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
         {
             responseData.ActivityKind = activityPackage.ActivityKind;
             ActivityHandler.FinishTrackingWithResponse(responseData);
         }
 
-        private void InitInternal(ActivityHandler activityHandler)
+        private void InitInternal(IActivityHandler activityHandler)
         {
             ActivityHandler = activityHandler;
-            RequestHandler = new RequestHandler(this);
+            RequestHandler = AdjustFactory.GetRequestHandler(this);
 
             ReadPackageQueue();
         }
@@ -124,15 +126,18 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueue()
         {
-            var sucessMessage = String.Format("Package handler wrote {0} packages", PackageQueue.Count);
+            var sucessMessage = Util.f("Package handler wrote {0} packages", PackageQueue.Count);
             Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue, sucessMessage).Wait();
         }
 
         private void ReadPackageQueue()
         {
+            Func<List<ActivityPackage>, string> successMessage = (queue) => Util.f("Package handler read {0} packages", queue.Count);
+
             PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
-                ActivityPackage.DeserializeListFromStream, //deserialize function from Stream to List of ActivityPackage
-                () => new List<ActivityPackage>()) //default value in case of error
+                ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
+                () => new List<ActivityPackage>(), // default value in case of error
+                successMessage) // message generated for the queue, if it was succesfully read
                 .Result;
         }
     }

@@ -7,39 +7,38 @@ using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    internal class ActivityPackage
+    public class ActivityPackage
     {
         // data
-        internal string Path { get; set; }
+        public string Path { get; set; }
 
-        internal string UserAgent { get; set; }
+        public string UserAgent { get; set; }
 
-        internal string ClientSdk { get; set; }
+        public string ClientSdk { get; set; }
 
-        internal Dictionary<string, string> Parameters { get; set; }
+        public Dictionary<string, string> Parameters { get; set; }
 
         // logs
-        internal ActivityKind ActivityKind { get; set; }
+        public ActivityKind ActivityKind { get; set; }
 
-        internal string Suffix { get; set; }
+        public string Suffix { get; set; }
 
-        internal string SuccessMessage()
+        public string SuccessMessage()
         {
-            return String.Format("Tracked {0}{1}", ActivityKind, Suffix);
+            return Util.f("Tracked {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
-        internal string FailureMessage()
+        public string FailureMessage()
         {
-            return String.Format("Failed to track {0}{1}", ActivityKind, Suffix);
+            return Util.f("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public override string ToString()
         {
-            return String.Format("{0}{1} {2}",
-                ActivityKind, Suffix, Path);
+            return Util.f("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
-        internal string ExtendedString()
+        public string ExtendedString()
         {
             var stringBuilder = new StringBuilder();
 

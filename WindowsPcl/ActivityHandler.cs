@@ -5,22 +5,23 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    public class ActivityHandler
+    public class ActivityHandler : IActivityHandler
     {
         public AdjustApi.Environment Environment { get; private set; }
 
         public bool IsBufferedEventsEnabled { get; private set; }
 
         private const string ActivityStateFileName = "AdjustIOActivityState";
-        private static readonly TimeSpan SessionInterval = new TimeSpan(0, 30, 0); // 30 minutes
-        private static readonly TimeSpan SubSessionInterval = new TimeSpan(0, 0, 1); // 1 second
-        private static readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
+        private TimeSpan SessionInterval;
+        private TimeSpan SubsessionInterval;
+        private readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
 
-        private PackageHandler PackageHandler;
+        private IPackageHandler PackageHandler;
         private ActivityState ActivityState;
         private TimerPclNet45 TimeKeeper;
         private ActionQueue InternalQueue;
         private Action<ResponseData> ResponseDelegate;
+        private ILogger Logger;
 
         private Action<Action<ResponseData>, ResponseData> ResponseDelegateAction;
 
@@ -32,53 +33,57 @@ namespace AdjustSdk.Pcl
         private string UserAgent;
         private string ClientSdk;
 
-        internal ActivityHandler(string appToken, DeviceUtil deviceUtil)
+        public ActivityHandler(string appToken, DeviceUtil deviceUtil)
         {
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
+            Logger = AdjustFactory.Logger;
+
+            SessionInterval = AdjustFactory.GetSessionInterval();
+            SubsessionInterval = AdjustFactory.GetSubsessionInterval();
 
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(appToken, deviceUtil));
         }
 
-        internal void SetEnvironment(AdjustApi.Environment enviornment)
+        public void SetEnvironment(AdjustApi.Environment enviornment)
         {
             Environment = enviornment;
         }
 
-        internal void SetBufferedEvents(bool enabledEventBuffering)
+        public void SetBufferedEvents(bool enabledEventBuffering)
         {
             IsBufferedEventsEnabled = enabledEventBuffering;
         }
 
-        internal void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
         {
             ResponseDelegate = responseDelegate;
         }
 
-        internal void TrackSubsessionStart()
+        public void TrackSubsessionStart()
         {
             InternalQueue.Enqueue(StartInternal);
         }
 
-        internal void TrackSubsessionEnd()
+        public void TrackSubsessionEnd()
         {
             InternalQueue.Enqueue(EndInternal);
         }
 
-        internal void TrackEvent(string eventToken,
+        public void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => EventInternal(eventToken, callbackParameters));
         }
 
-        internal void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
+        public void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
         {
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
-        internal void FinishTrackingWithResponse(ResponseData responseData)
+        public void FinishTrackingWithResponse(ResponseData responseData)
         {
             if (ResponseDelegate != null)
                 ResponseDelegateAction(ResponseDelegate, responseData);
@@ -97,7 +102,7 @@ namespace AdjustSdk.Pcl
             HardwareId = deviceUtil.GetHardwareId();
             NetworkAdapterId = deviceUtil.GetNetworkAdapterId();
 
-            PackageHandler = new PackageHandler(this);
+            PackageHandler = AdjustFactory.GetPackageHandler(this);
             ResponseDelegateAction = deviceUtil.RunResponseDelegate;
 
             ReadActivityState();
@@ -107,14 +112,14 @@ namespace AdjustSdk.Pcl
 
         private void StartInternal()
         {
+            if (!CheckAppToken(AppToken)) return;
+
             PackageHandler.ResumeSending();
             StartTimer();
 
             var now = DateTime.Now;
 
-            Logger.Verbose("Now time ({0})", now);
-
-            // if firsts Session
+            // very firsts Session
             if (ActivityState == null)
             {
                 // create fresh activity state
@@ -159,7 +164,7 @@ namespace AdjustSdk.Pcl
             }
 
             // new subsession
-            if (lastInterval > SubSessionInterval)
+            if (lastInterval > SubsessionInterval)
             {
                 ActivityState.SubSessionCount++;
                 ActivityState.SessionLenght += lastInterval;
@@ -259,15 +264,19 @@ namespace AdjustSdk.Pcl
 
         private void WriteActivityState()
         {
-            var sucessMessage = String.Format("Wrote activity state: {0}", ActivityState);
+            var sucessMessage = Util.f("Wrote activity state: {0}", ActivityState);
             Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState, sucessMessage).Wait();
         }
 
         private void ReadActivityState()
         {
+            Func<ActivityState, string> successMessage = (activityState) =>
+                Util.f("Read activity state:{0} uuid {1}", activityState, ActivityState.Uuid);
+
             ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-                () => null) //default value in case of error
+                () => null, //default value in case of error
+                successMessage) // message generated for the activity state, if it was succesfully read
                 .Result;
         }
 
@@ -295,7 +304,7 @@ namespace AdjustSdk.Pcl
             ActivityState.TimeSpent += lastInterval;
             ActivityState.LastActivity = now;
 
-            return lastInterval > SubSessionInterval;
+            return lastInterval > SubsessionInterval;
         }
 
         private void TransferSessionPackage()
@@ -411,7 +420,7 @@ namespace AdjustSdk.Pcl
         {
             if (amount < 0.0)
             {
-                Logger.Error("Invalid amount {0:.0}", amount);
+                Logger.Error("Invalid amount {0:0.0}", amount);
                 return false;
             }
             return true;

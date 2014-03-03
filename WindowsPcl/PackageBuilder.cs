@@ -6,52 +6,52 @@ using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    internal class PackageBuilder
+    public class PackageBuilder
     {
         // possible Ids
-        internal string DeviceUniqueId { get; set; }
+        public string DeviceUniqueId { get; set; }
 
-        internal string HardwareId { get; set; }
+        public string HardwareId { get; set; }
 
-        internal string NetworkAdapterId { get; set; }
+        public string NetworkAdapterId { get; set; }
 
         // general
-        internal string AppToken { get; set; }
+        public string AppToken { get; set; }
 
-        internal AdjustApi.Environment Environment { get; set; }
+        public AdjustApi.Environment Environment { get; set; }
 
-        internal string UserAgent { get; set; }
+        public string UserAgent { get; set; }
 
-        internal string ClientSdk { get; set; }
+        public string ClientSdk { get; set; }
 
-        internal Guid Uuid { get; set; }
+        public Guid Uuid { get; set; }
 
         // session
-        internal int SessionCount { get; set; }
+        public int SessionCount { get; set; }
 
-        internal int SubSessionCount { get; set; }
+        public int SubSessionCount { get; set; }
 
-        internal DateTime? CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
-        internal TimeSpan? SessionLength { get; set; }
+        public TimeSpan? SessionLength { get; set; }
 
-        internal TimeSpan? TimeSpent { get; set; }
+        public TimeSpan? TimeSpent { get; set; }
 
-        internal TimeSpan? LastInterval { get; set; }
+        public TimeSpan? LastInterval { get; set; }
 
         // events
-        internal int EventCount { get; set; }
+        public int EventCount { get; set; }
 
-        internal string EventToken { get; set; }
+        public string EventToken { get; set; }
 
-        internal Dictionary<string, string> CallbackParameters { get; set; }
+        public Dictionary<string, string> CallbackParameters { get; set; }
 
-        internal double AmountInCents { get; set; }
+        public double AmountInCents { get; set; }
 
         // defaults
         private ActivityPackage activityPackage { get; set; }
 
-        internal PackageBuilder()
+        public PackageBuilder()
         {
             activityPackage = new ActivityPackage
             {
@@ -79,7 +79,7 @@ namespace AdjustSdk.Pcl
             SaveParameter("time_spent", TimeSpent);
         }
 
-        internal ActivityPackage BuildSessionPackage()
+        public ActivityPackage BuildSessionPackage()
         {
             FillDefaults();
             SaveParameter("last_interval", LastInterval);
@@ -91,7 +91,7 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
 
-        internal ActivityPackage BuildEventPackage()
+        public ActivityPackage BuildEventPackage()
         {
             FillDefaults();
             InjectEventParameters();
@@ -103,7 +103,7 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
 
-        internal ActivityPackage BuildRevenuePackage()
+        public ActivityPackage BuildRevenuePackage()
         {
             FillDefaults();
             SaveParameter("amount", AmountToString());
@@ -118,18 +118,18 @@ namespace AdjustSdk.Pcl
 
         private string EventSuffix()
         {
-            return String.Format(" '{0}'", EventToken);
+            return Util.f(" '{0}'", EventToken);
         }
 
         private string RevenueSuffx()
         {
             if (EventToken != null)
             {
-                return String.Format(" ({0:.0} cent, '{1}')", AmountInCents, EventToken);
+                return Util.f(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
             }
             else
             {
-                return String.Format(" ({0:.0} cent)", AmountInCents);
+                return Util.f(" ({0:0.0} cent)", AmountInCents);
             }
         }
 
@@ -142,7 +142,7 @@ namespace AdjustSdk.Pcl
 
         private string AmountToString()
         {
-            int amountInMillis = (int)Math.Round(AmountInCents * 10);
+            int amountInMillis = (int)Math.Round(AmountInCents * 10, MidpointRounding.AwayFromZero);
             AmountInCents = amountInMillis / 10.0; // now rounded to one decimal point
             var amountString = amountInMillis.ToString();
             return amountString;
@@ -166,7 +166,7 @@ namespace AdjustSdk.Pcl
             var timeZone = value.Value.ToString("zzz");
             var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.Value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = String.Format("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
             activityPackage.Parameters.Add(key, sDateTime);
         }
 

@@ -1,60 +1,63 @@
 ﻿using AdjustSdk;
 using System;
+using System.Globalization;
 
 namespace AdjustSdk.Pcl
 {
-    public static class Logger
+    public class Logger : ILogger
     {
-        public static string LogTag { get; set; }
+        private const string LogTag = "Adjust";
 
-        public static LogLevel LogLevel { get; set; }
+        public LogLevel LogLevel { private get; set; }
 
-        static Logger()
+        internal Logger()
         {
-            LogTag = "Adjust";
             LogLevel = LogLevel.Info;
         }
 
-        public static void Verbose(string message, params object[] parameters)
+        public void Verbose(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Verbose, "v", message, parameters);
+            LoggingLevel(LogLevel.Verbose, message, parameters);
         }
 
-        public static void Debug(string message, params object[] parameters)
+        public void Debug(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Debug, "d", message, parameters);
+            LoggingLevel(LogLevel.Debug, message, parameters);
         }
 
-        public static void Info(string message, params object[] parameters)
+        public void Info(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Info, "i", message, parameters);
+            LoggingLevel(LogLevel.Info, message, parameters);
         }
 
-        public static void Warn(string message, params object[] parameters)
+        public void Warn(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Warn, "w", message, parameters);
+            LoggingLevel(LogLevel.Warn, message, parameters);
         }
 
-        public static void Error(string message, params object[] parameters)
+        public void Error(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Error, "e", message, parameters);
+            LoggingLevel(LogLevel.Error, message, parameters);
         }
 
-        public static void Assert(string message, params object[] parameters)
+        public void Assert(string message, params object[] parameters)
         {
-            LoggingLevel(LogLevel.Assert, "a", message, parameters);
+            LoggingLevel(LogLevel.Assert, message, parameters);
         }
 
-        private static void LoggingLevel(LogLevel logLevel, string logLevelString, string message, object[] parameters)
+        private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
         {
-            if (Logger.LogLevel > logLevel)
+            if (LogLevel > logLevel)
                 return;
+
+            var logLevelString = logLevel.ToString().Substring(0, 1).ToLower();
+
             LogMessage(message, logLevelString, parameters);
         }
 
-        private static void LogMessage(string message, string logLevelString, object[] parameters)
+        private void LogMessage(string message, string logLevelString, object[] parameters)
         {
-            string formattedMessage = String.Format(message, parameters);
+            string formattedMessage = Util.f(message, parameters);
             // write to Debug by new line '\n'
             foreach (string formattedLine in formattedMessage.Split(new char[] { '\n' }))
             {

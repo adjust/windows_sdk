@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using PCLStorage;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    internal static class Util
+    public static class Util
     {
         internal const string BaseUrl = "https://app.adjust.io";
 
@@ -29,7 +30,7 @@ namespace AdjustSdk.Pcl
             return stringBuilder.ToString();
         }
 
-        internal static void DeleteFile(string filename)
+        public static bool DeleteFile(string filename)
         {
             try
             {
@@ -38,21 +39,31 @@ namespace AdjustSdk.Pcl
                 if (activityStateFile != null)
                 {
                     activityStateFile.DeleteAsync().Wait();
-                    Logger.Debug("File {0} deleted", filename);
+
+                    //Logger.Debug("File {0} deleted", filename);
+                    return true;
                 }
                 else
                 {
-                    Logger.Debug("File {0} doesn't exist to delete", filename);
+                    //Logger.Debug("File {0} doesn't exist to delete", filename);
+                    return false;
                 }
             }
             catch (PCLStorage.Exceptions.FileNotFoundException)
             {
-                Logger.Debug("File {0} doesn't exist to delete", filename);
+                //Logger.Debug("File {0} doesn't exist to delete", filename);
+                return false;
             }
             catch (Exception)
             {
-                Logger.Error("Error deleting {0} file", filename);
+                //Logger.Error("Error deleting {0} file", filename);
+                return false;
             }
+        }
+
+        public static string f(string message, params object[] parameters)
+        {
+            return String.Format(CultureInfo.InvariantCulture, message, parameters);
         }
 
         internal static bool IsFileNotFound(this Exception ex)
@@ -87,9 +98,13 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName, Func<Stream, T> ObjectReader, Func<T> defaultReturn)
+        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
+            Func<Stream, T> ObjectReader,
+            Func<T> defaultReturn,
+            Func<T, string> successMessage)
             where T : class
         {
+            var logger = AdjustFactory.Logger;
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -106,7 +121,7 @@ namespace AdjustSdk.Pcl
                 {
                     output = ObjectReader(stream);
                 }
-                Logger.Debug("Read from file {0}", fileName);
+                logger.Debug(successMessage(output));
 
                 // successful read
                 return output;
@@ -114,9 +129,9 @@ namespace AdjustSdk.Pcl
             catch (Exception ex)
             {
                 if (ex.IsFileNotFound())
-                    Logger.Error("Failed to read file {0} (not found)", fileName);
+                    logger.Error("Failed to read file {0} (not found)", fileName);
                 else
-                    Logger.Error("Failed to read file {0} ({1})", fileName, ex.Message);
+                    logger.Error("Failed to read file {0} ({1})", fileName, ex.Message);
             }
 
             // fresh start
@@ -126,6 +141,7 @@ namespace AdjustSdk.Pcl
         internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input, string sucessMessage)
             where T : class
         {
+            var logger = AdjustFactory.Logger;
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -136,20 +152,20 @@ namespace AdjustSdk.Pcl
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);
                 }
-                Logger.Debug("{0}", sucessMessage);
+                logger.Debug("{0}", sucessMessage);
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
+                logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
             }
         }
 
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
-                return String.Format("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.f("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
             else
-                return String.Format("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.f("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -175,7 +191,7 @@ namespace AdjustSdk.Pcl
             if (input == null || !input.Contains(" "))
                 return input;
 
-            return string.Format("'{0}'", input);
+            return Util.f("'{0}'", input);
         }
 
         #region Serialization
