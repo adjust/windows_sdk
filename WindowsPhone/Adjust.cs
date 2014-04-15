@@ -157,6 +157,24 @@ namespace AdjustSdk
             AdjustApi.SetResponseDelegate(responseDelegate);
         }
 
+        /// <summary>
+        /// Enable or disable the adjust SDK
+        /// </summary>
+        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        public static void SetEnabled(bool enabled)
+        {
+            AdjustApi.SetEnabled(enabled);
+        }
+
+        /// <summary>
+        /// Check if the SDK is enabled or disabled
+        /// </summary>
+        /// <returns>true if the SDK is enabled, false otherwise</returns>
+        public static bool IsEnabled()
+        {
+            return AdjustApi.IsEnabled();
+        }
+
         #endregion AdjustApi
     }
 }

@@ -10,6 +10,7 @@ namespace AdjustSdk.Pcl
         public AdjustApi.Environment Environment { get; private set; }
 
         public bool IsBufferedEventsEnabled { get; private set; }
+        private bool Enabled { get; set; }
 
         private const string ActivityStateFileName = "AdjustIOActivityState";
         private TimeSpan SessionInterval;
@@ -38,6 +39,7 @@ namespace AdjustSdk.Pcl
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
+            Enabled = true;
             Logger = AdjustFactory.Logger;
 
             SessionInterval = AdjustFactory.GetSessionInterval();
@@ -89,6 +91,35 @@ namespace AdjustSdk.Pcl
                 ResponseDelegateAction(ResponseDelegate, responseData);
         }
 
+        public void SetEnabled(bool enabled)
+        {
+            Enabled = enabled;
+            if (CheckActivityState(ActivityState))
+            {
+                ActivityState.IsEnabled = enabled;
+            }
+            if (enabled)
+            {
+                TrackSubsessionStart();
+            }
+            else
+            {
+                TrackSubsessionEnd();
+            }
+        }
+
+        public bool IsEnabled()
+        {
+            if (CheckActivityState(ActivityState))
+            {
+                return ActivityState.IsEnabled;
+            }
+            else
+            {
+                return Enabled;
+            }
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
@@ -114,6 +145,12 @@ namespace AdjustSdk.Pcl
         {
             if (!CheckAppToken(AppToken)) return;
 
+            if (ActivityState != null
+                && !ActivityState.IsEnabled)
+            {
+                return;
+            }
+
             PackageHandler.ResumeSending();
             StartTimer();
 
@@ -130,6 +167,7 @@ namespace AdjustSdk.Pcl
                 TransferSessionPackage();
 
                 ActivityState.ResetSessionAttributes(now);
+                ActivityState.IsEnabled = Enabled;
                 WriteActivityState();
 
                 Logger.Info("First session");
@@ -183,7 +221,7 @@ namespace AdjustSdk.Pcl
 
             PackageHandler.PauseSending();
             StopTimer();
-            UpdateActivityState();
+            UpdateActivityState(DateTime.Now);
             WriteActivityState();
         }
 
@@ -194,6 +232,7 @@ namespace AdjustSdk.Pcl
             if (!CheckActivityState(ActivityState)) return;
             if (!CheckEventToken(eventToken)) return;
             if (!CheckEventTokenLenght(eventToken)) return;
+            if (!ActivityState.IsEnabled) return;
 
             var packageBuilder = GetDefaultPackageBuilder();
 
@@ -202,7 +241,7 @@ namespace AdjustSdk.Pcl
 
             var now = DateTime.Now;
 
-            UpdateActivityState();
+            UpdateActivityState(now);
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++;
 
@@ -230,6 +269,7 @@ namespace AdjustSdk.Pcl
             if (!CheckActivityState(ActivityState)) return;
             if (!CheckAmount(amountInCents)) return;
             if (!CheckEventTokenLenght(eventToken)) return;
+            if (!ActivityState.IsEnabled) return;
 
             var packageBuilder = GetDefaultPackageBuilder();
 
@@ -238,7 +278,7 @@ namespace AdjustSdk.Pcl
             packageBuilder.CallbackParameters = callbackParameters;
 
             var now = DateTime.Now;
-            UpdateActivityState();
+            UpdateActivityState(now);
 
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++;
@@ -281,12 +321,11 @@ namespace AdjustSdk.Pcl
         }
 
         // return whether or not activity state should be written
-        private bool UpdateActivityState()
+        private bool UpdateActivityState(DateTime now)
         {
             if (!CheckActivityState(ActivityState))
                 return false;
 
-            var now = DateTime.Now;
             var lastInterval = now - ActivityState.LastActivity.Value;
 
             if (lastInterval.Ticks < 0)
@@ -357,8 +396,13 @@ namespace AdjustSdk.Pcl
 
         private void TimerFired()
         {
+            if (ActivityState != null
+                && !ActivityState.IsEnabled)
+            {
+                return;
+            }
             PackageHandler.SendFirstPackage();
-            if (UpdateActivityState())
+            if (UpdateActivityState(DateTime.Now))
                 WriteActivityState();
         }
 

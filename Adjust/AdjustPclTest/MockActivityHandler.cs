@@ -72,5 +72,16 @@ namespace AdjustTest.Pcl
         {
             MockLogger.Test("{0} TrackSubsessionStart", prefix);
         }
+
+        public void SetEnabled(bool enabled)
+        {
+            MockLogger.Test("{0} SetEnabled, {1}", prefix, enabled);
+        }
+
+        public bool IsEnabled()
+        {
+            MockLogger.Test("{0} IsEnabled", prefix);
+            return true;
+        }
     }
 }

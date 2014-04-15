@@ -228,6 +228,21 @@ namespace AdjustSdk.Pcl
                 return new DateTime(ticks);
         }
 
+        internal static T TryRead<T>(Func<T> readStream, Func<T> defaultValue)
+        {
+            T result;
+            try
+            {
+                result = readStream();
+            }
+            catch (EndOfStreamException)
+            {
+                result = defaultValue();
+            }
+
+            return result;
+        }
+
         #endregion Serialization
     }
 }

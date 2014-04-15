@@ -23,5 +23,9 @@ namespace AdjustSdk.Pcl
         void TrackSubsessionEnd();
 
         void TrackSubsessionStart();
+
+        void SetEnabled(bool enabled);
+
+        bool IsEnabled();
     }
 }
