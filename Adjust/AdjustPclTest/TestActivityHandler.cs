@@ -27,6 +27,7 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetPackageHandler(null);
             AdjustFactory.SetSessionInterval(null);
             AdjustFactory.SetSubsessionInterval(null);
+            AdjustFactory.SetTimerInterval(null);
             AdjustFactory.Logger = null;
         }
 
@@ -437,6 +438,103 @@ namespace AdjustTest.Pcl
 
             // check invalid event token
             Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Malformed Event Token '12345'"),
+                MockLogger.ToString());
+        }
+
+        public void TestDisable()
+        {
+            // starting from a clean slate
+            MockLogger.Test("Was the activity state file deleted? {0}", Util.DeleteFile("AdjustIOActivityState"));
+
+            // set the timer for a shorter time for testing
+            AdjustFactory.SetTimerInterval(new TimeSpan(0, 0, 0, 0, 700));
+
+            // create Activity handler and start first session
+            var activityHandler = new ActivityHandler("qwerty123456", DeviceUtil);
+
+            // verify the default value, when not started
+            Assert.IsTrue(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            activityHandler.SetEnabled(false);
+
+            // verify the default value, when not started
+            Assert.IsFalse(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // start the first session
+            activityHandler.TrackEvent("123456", null);
+            activityHandler.TrackRevenue(0.1, null, null);
+            activityHandler.TrackSubsessionEnd();
+            activityHandler.TrackSubsessionStart();
+
+            DeviceUtil.Sleep(1000);
+
+            // verify the changed value after the activity handler is started
+            Assert.IsFalse(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // making sure the first session was sent
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Info, "First session"),
+                MockLogger.ToString());
+
+            // delete the first session package from the log
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // making sure the timer fired did not call the package handler
+            Assert.IsFalse(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // test if the event was not triggered
+            Assert.IsFalse(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1"),
+                MockLogger.ToString());
+
+            // test if the revenue was not triggered
+            Assert.IsFalse(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1 (revenue)"),
+                MockLogger.ToString());
+
+            // verify that the application was paused
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler PauseSending"),
+                MockLogger.ToString());
+
+            // verify that it was not resumed
+            Assert.IsFalse(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
+                MockLogger.ToString());
+
+            // enable again
+            activityHandler.SetEnabled(true);
+            DeviceUtil.Sleep(1000);
+
+            // verify that the timer was able to resume sending
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
+                MockLogger.ToString());
+
+            activityHandler.TrackEvent("123456", null);
+            activityHandler.TrackRevenue(0.1, null, null);
+            activityHandler.TrackSubsessionEnd();
+            activityHandler.TrackSubsessionStart();
+
+            DeviceUtil.Sleep(1000);
+
+            // verify the changed value, when the activity state is started
+            Assert.IsTrue(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // test that the event was triggered
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1"),
+                MockLogger.ToString());
+
+            // test that the revenue was triggered
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 2 (revenue)"),
+                MockLogger.ToString());
+
+            // verify that the application was paused
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler PauseSending"),
+                MockLogger.ToString());
+
+            // verify that it was also resumed
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
                 MockLogger.ToString());
         }
 

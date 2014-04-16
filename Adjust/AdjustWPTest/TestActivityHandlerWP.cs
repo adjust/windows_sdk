@@ -44,5 +44,8 @@ namespace AdjustWPTest
 
         [TestMethod]
         public void TestChecksWP() { TestActivityHandler.TestChecks(); }
+
+        [TestMethod]
+        public void TestDisable() { TestActivityHandler.TestDisable(); }
     }
 }

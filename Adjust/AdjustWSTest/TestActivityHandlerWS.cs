@@ -35,5 +35,8 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestChecksWS() { TestActivityHandler.TestChecks(); }
+
+        [TestMethod]
+        public void TestDisable() { TestActivityHandler.TestDisable(); }
     }
 }

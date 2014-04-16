@@ -15,7 +15,7 @@ namespace AdjustSdk.Pcl
         private const string ActivityStateFileName = "AdjustIOActivityState";
         private TimeSpan SessionInterval;
         private TimeSpan SubsessionInterval;
-        private readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
+        private readonly TimeSpan TimerInterval = AdjustFactory.GetTimerInterval();
 
         private IPackageHandler PackageHandler;
         private ActivityState ActivityState;
