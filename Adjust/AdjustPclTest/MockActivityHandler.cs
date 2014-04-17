@@ -83,5 +83,10 @@ namespace AdjustTest.Pcl
             MockLogger.Test("{0} IsEnabled", prefix);
             return true;
         }
+
+        public void ReadOpenUrl(Uri url)
+        {
+            MockLogger.Test("{0} ReadOpenUrl, {1}", prefix, url);
+        }
     }
 }

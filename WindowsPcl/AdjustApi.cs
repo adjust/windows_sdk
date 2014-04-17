@@ -143,5 +143,16 @@ namespace AdjustSdk.Pcl
 
             return ActivityHandler.IsEnabled();
         }
+
+        public static void AppWillOpenUrl(Uri url)
+        {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Can only open url after 'AppDidLaunch'!");
+                return;
+            }
+
+            ActivityHandler.ReadOpenUrl(url);
+        }
     }
 }

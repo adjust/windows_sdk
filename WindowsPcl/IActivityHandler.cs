@@ -27,5 +27,7 @@ namespace AdjustSdk.Pcl
         void SetEnabled(bool enabled);
 
         bool IsEnabled();
+
+        void ReadOpenUrl(Uri url);
     }
 }

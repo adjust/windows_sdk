@@ -13,6 +13,7 @@ namespace AdjustSdk.Pcl
         private bool Enabled { get; set; }
 
         private const string ActivityStateFileName = "AdjustIOActivityState";
+        private const string AdjustPrefix = "adjust_";
         private TimeSpan SessionInterval;
         private TimeSpan SubsessionInterval;
         private readonly TimeSpan TimerInterval = AdjustFactory.GetTimerInterval();
@@ -118,6 +119,11 @@ namespace AdjustSdk.Pcl
             {
                 return Enabled;
             }
+        }
+
+        public void ReadOpenUrl(Uri url)
+        {
+            InternalQueue.Enqueue(() => ReadOpenUrlInternal(url));
         }
 
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
@@ -300,6 +306,54 @@ namespace AdjustSdk.Pcl
 
             WriteActivityState();
             Logger.Debug("Event {0} (revenue)", ActivityState.EventCount);
+        }
+
+        private void ReadOpenUrlInternal(Uri url)
+        {
+            if (url == null) return;
+
+            var sUrl = Uri.UnescapeDataString(url.ToString());
+
+            var queryStringIdx = sUrl.IndexOf("?");
+            // check if '?' exists and it's not the last char
+            if (queryStringIdx == -1 || queryStringIdx + 1 == sUrl.Length) return;
+
+            var queryString = sUrl.Substring(queryStringIdx + 1);
+
+            // remove any possible fragments
+            var fragmentIdx = sUrl.LastIndexOf("#");
+            if (fragmentIdx != -1)
+            {
+                queryString = queryString.Substring(0, fragmentIdx);
+            }
+
+            var queryPairs = queryString.Split('&');
+            var adjustDeepLinks = new Dictionary<string, string>(queryPairs.Length);
+            foreach (var pair in queryPairs)
+            {
+                var pairComponents = pair.Split('=');
+                if (pairComponents.Length != 2) continue;
+
+                var key = pairComponents[0];
+                if (!key.StartsWith(AdjustPrefix)) continue;
+
+                var value = pairComponents[1];
+                if (value.Length == 0) continue;
+
+                var keyWOutPrefix = key.Substring(AdjustPrefix.Length);
+                if (keyWOutPrefix.Length == 0) continue;
+
+                adjustDeepLinks.Add(keyWOutPrefix, value);
+            }
+
+            if (adjustDeepLinks.Count == 0) return;
+
+            var packageBuilder = GetDefaultPackageBuilder();
+            packageBuilder.DeepLinksParameters = adjustDeepLinks;
+
+            var reattributionPackage = packageBuilder.BuildReattributionPackage();
+            PackageHandler.AddPackage(reattributionPackage);
+            PackageHandler.SendFirstPackage();
         }
 
         private void WriteActivityState()

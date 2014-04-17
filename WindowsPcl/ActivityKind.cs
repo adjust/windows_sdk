@@ -6,6 +6,7 @@
         Session,
         Event,
         Revenue,
+        Reattribution,
     }
 
     public static class ActivityKindUtil
@@ -17,6 +18,8 @@
             else if (activityKindString == "event")
                 return ActivityKind.Event;
             else if (activityKindString == "revenue")
+                return ActivityKind.Revenue;
+            else if (activityKindString == "reattribution")
                 return ActivityKind.Revenue;
             else
                 return ActivityKind.Unkown;

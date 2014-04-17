@@ -175,6 +175,16 @@ namespace AdjustSdk
             return AdjustApi.IsEnabled();
         }
 
+        /// <summary>
+        /// Read the URL that opened the application to search for
+        /// an adjust deep link
+        /// </summary>
+        /// <param name="url">The url that open the application</param>
+        public static void AppWillOpenUrl(Uri url)
+        {
+            AdjustApi.AppWillOpenUrl(url);
+        }
+
         #endregion AdjustApi
     }
 }
