@@ -110,7 +110,7 @@ namespace AdjustSdk.Pcl
             FillDefaults();
             SaveParameterJson("deeplink_parameters", DeepLinksParameters);
 
-            activityPackage.Path = @"/reattribution";
+            activityPackage.Path = @"/reattribute";
             activityPackage.ActivityKind = ActivityKind.Reattribution;
             activityPackage.Suffix = "";
 

@@ -20,7 +20,7 @@
             else if (activityKindString == "revenue")
                 return ActivityKind.Revenue;
             else if (activityKindString == "reattribution")
-                return ActivityKind.Revenue;
+                return ActivityKind.Reattribution;
             else
                 return ActivityKind.Unkown;
         }

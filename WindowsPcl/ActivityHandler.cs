@@ -1,4 +1,5 @@
 ﻿using AdjustSdk;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -321,7 +322,7 @@ namespace AdjustSdk.Pcl
             var queryString = sUrl.Substring(queryStringIdx + 1);
 
             // remove any possible fragments
-            var fragmentIdx = sUrl.LastIndexOf("#");
+            var fragmentIdx = queryString.LastIndexOf("#");
             if (fragmentIdx != -1)
             {
                 queryString = queryString.Substring(0, fragmentIdx);
@@ -354,6 +355,8 @@ namespace AdjustSdk.Pcl
             var reattributionPackage = packageBuilder.BuildReattributionPackage();
             PackageHandler.AddPackage(reattributionPackage);
             PackageHandler.SendFirstPackage();
+
+            Logger.Debug("Reattribution {0}", reattributionPackage.Parameters["deeplink_parameters"]);
         }
 
         private void WriteActivityState()
