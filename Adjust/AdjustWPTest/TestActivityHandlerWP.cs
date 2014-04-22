@@ -47,5 +47,8 @@ namespace AdjustWPTest
 
         [TestMethod]
         public void TestDisable() { TestActivityHandler.TestDisable(); }
+
+        [TestMethod]
+        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
     }
 }

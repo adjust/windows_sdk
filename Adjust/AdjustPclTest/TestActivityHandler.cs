@@ -538,6 +538,83 @@ namespace AdjustTest.Pcl
                 MockLogger.ToString());
         }
 
+        public void TestOpenUrl()
+        {
+            // starting from a clean slate
+            MockLogger.Test("Was the activity state file deleted? {0}", Util.DeleteFile("AdjustIOActivityState"));
+
+            // create Activity handler and start first session
+            var activityHandler = new ActivityHandler("qwerty123456", DeviceUtil);
+
+            var normal = new Uri("AdjustTests://example.com/path/inApp?adjust_foo=bar&other=stuff&adjust_key=value#fragment");
+            var emptyQueryString = new Uri("AdjustTests://");
+            Uri nullUri = null;
+            var single = new Uri("AdjustTests://example.com/path/inApp?adjust_foo");
+            var prefix = new Uri("AdjustTests://example.com/path/inApp?adjust_=bar");
+            var incomplete = new Uri("AdjustTests://example.com/path/inApp?adjust_foo=");
+
+            activityHandler.ReadOpenUrl(normal);
+            activityHandler.ReadOpenUrl(emptyQueryString);
+            activityHandler.ReadOpenUrl(nullUri);
+            activityHandler.ReadOpenUrl(single);
+            activityHandler.ReadOpenUrl(prefix);
+            activityHandler.ReadOpenUrl(incomplete);
+
+            DeviceUtil.Sleep(2000);
+
+            // check that all supposed packages were sent
+            // 1 session + 1 reattributions
+            Assert.AreEqual(2, MockPackageHandler.PackageQueue.Count);
+
+            // check that the normal url was parsed and sent
+            var reattributionPackage = MockPackageHandler.PackageQueue[1];
+
+            // testing the activity kind is the correct one
+            var activityKind = reattributionPackage.ActivityKind;
+            Assert.AreEqual(ActivityKind.Reattribution, activityKind,
+                reattributionPackage.ExtendedString());
+
+            // testing the conversion from activity kind to string
+            var activityKindString = ActivityKindUtil.ToString(activityKind);
+            Assert.AreEqual("reattribution", activityKindString,
+                reattributionPackage.ExtendedString());
+
+            // testing the conversion from string to activity kind
+            activityKind = ActivityKindUtil.FromString(activityKindString);
+            Assert.AreEqual(ActivityKind.Reattribution, activityKind,
+                reattributionPackage.ExtendedString());
+
+            // package type should be reattribute
+            Assert.AreEqual(@"/reattribute", reattributionPackage.Path,
+                reattributionPackage.ExtendedString());
+
+            // suffix should be empty
+            Assert.AreEqual("", reattributionPackage.Suffix,
+                reattributionPackage.ExtendedString());
+
+            var parameters = reattributionPackage.Parameters;
+
+            string attributesString;
+            parameters.TryGetValue("deeplink_parameters", out attributesString);
+
+            // check that deep link parameters contains the base64 with the 2 keys
+            Assert.AreEqual("{\"foo\":\"bar\",\"key\":\"value\"}", attributesString);
+
+            // check that added and set both session and reattribution package
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler AddPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler AddPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // check that sent the reattribution package
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Reattribution {\"foo\":\"bar\",\"key\":\"value\"}"),
+                MockLogger.ToString());
+        }
+
         private bool IsParameterEqual(int expected, Dictionary<string, string> parameter, string key)
         {
             string value;
