@@ -27,6 +27,7 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetPackageHandler(null);
             AdjustFactory.SetSessionInterval(null);
             AdjustFactory.SetSubsessionInterval(null);
+            AdjustFactory.SetTimerInterval(null);
             AdjustFactory.Logger = null;
         }
 
@@ -437,6 +438,180 @@ namespace AdjustTest.Pcl
 
             // check invalid event token
             Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Error, "Malformed Event Token '12345'"),
+                MockLogger.ToString());
+        }
+
+        public void TestDisable()
+        {
+            // starting from a clean slate
+            MockLogger.Test("Was the activity state file deleted? {0}", Util.DeleteFile("AdjustIOActivityState"));
+
+            // set the timer for a shorter time for testing
+            AdjustFactory.SetTimerInterval(new TimeSpan(0, 0, 0, 0, 700));
+
+            // create Activity handler and start first session
+            var activityHandler = new ActivityHandler("qwerty123456", DeviceUtil);
+
+            // verify the default value, when not started
+            Assert.IsTrue(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            activityHandler.SetEnabled(false);
+
+            // verify the default value, when not started
+            Assert.IsFalse(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // start the first session
+            activityHandler.TrackEvent("123456", null);
+            activityHandler.TrackRevenue(0.1, null, null);
+            activityHandler.TrackSubsessionEnd();
+            activityHandler.TrackSubsessionStart();
+
+            DeviceUtil.Sleep(1000);
+
+            // verify the changed value after the activity handler is started
+            Assert.IsFalse(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // making sure the first session was sent
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Info, "First session"),
+                MockLogger.ToString());
+
+            // delete the first session package from the log
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // making sure the timer fired did not call the package handler
+            Assert.IsFalse(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // test if the event was not triggered
+            Assert.IsFalse(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1"),
+                MockLogger.ToString());
+
+            // test if the revenue was not triggered
+            Assert.IsFalse(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1 (revenue)"),
+                MockLogger.ToString());
+
+            // verify that the application was paused
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler PauseSending"),
+                MockLogger.ToString());
+
+            // verify that it was not resumed
+            Assert.IsFalse(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
+                MockLogger.ToString());
+
+            // enable again
+            activityHandler.SetEnabled(true);
+            DeviceUtil.Sleep(1000);
+
+            // verify that the timer was able to resume sending
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
+                MockLogger.ToString());
+
+            activityHandler.TrackEvent("123456", null);
+            activityHandler.TrackRevenue(0.1, null, null);
+            activityHandler.TrackSubsessionEnd();
+            activityHandler.TrackSubsessionStart();
+
+            DeviceUtil.Sleep(1000);
+
+            // verify the changed value, when the activity state is started
+            Assert.IsTrue(activityHandler.IsEnabled(),
+                MockLogger.ToString());
+
+            // test that the event was triggered
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 1"),
+                MockLogger.ToString());
+
+            // test that the revenue was triggered
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Event 2 (revenue)"),
+                MockLogger.ToString());
+
+            // verify that the application was paused
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler PauseSending"),
+                MockLogger.ToString());
+
+            // verify that it was also resumed
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler ResumeSending"),
+                MockLogger.ToString());
+        }
+
+        public void TestOpenUrl()
+        {
+            // starting from a clean slate
+            MockLogger.Test("Was the activity state file deleted? {0}", Util.DeleteFile("AdjustIOActivityState"));
+
+            // create Activity handler and start first session
+            var activityHandler = new ActivityHandler("qwerty123456", DeviceUtil);
+
+            var normal = new Uri("AdjustTests://example.com/path/inApp?adjust_foo=bar&other=stuff&adjust_key=value#fragment");
+            var emptyQueryString = new Uri("AdjustTests://");
+            Uri nullUri = null;
+            var single = new Uri("AdjustTests://example.com/path/inApp?adjust_foo");
+            var prefix = new Uri("AdjustTests://example.com/path/inApp?adjust_=bar");
+            var incomplete = new Uri("AdjustTests://example.com/path/inApp?adjust_foo=");
+
+            activityHandler.ReadOpenUrl(normal);
+            activityHandler.ReadOpenUrl(emptyQueryString);
+            activityHandler.ReadOpenUrl(nullUri);
+            activityHandler.ReadOpenUrl(single);
+            activityHandler.ReadOpenUrl(prefix);
+            activityHandler.ReadOpenUrl(incomplete);
+
+            DeviceUtil.Sleep(2000);
+
+            // check that all supposed packages were sent
+            // 1 session + 1 reattributions
+            Assert.AreEqual(2, MockPackageHandler.PackageQueue.Count);
+
+            // check that the normal url was parsed and sent
+            var reattributionPackage = MockPackageHandler.PackageQueue[1];
+
+            // testing the activity kind is the correct one
+            var activityKind = reattributionPackage.ActivityKind;
+            Assert.AreEqual(ActivityKind.Reattribution, activityKind,
+                reattributionPackage.ExtendedString());
+
+            // testing the conversion from activity kind to string
+            var activityKindString = ActivityKindUtil.ToString(activityKind);
+            Assert.AreEqual("reattribution", activityKindString,
+                reattributionPackage.ExtendedString());
+
+            // testing the conversion from string to activity kind
+            activityKind = ActivityKindUtil.FromString(activityKindString);
+            Assert.AreEqual(ActivityKind.Reattribution, activityKind,
+                reattributionPackage.ExtendedString());
+
+            // package type should be reattribute
+            Assert.AreEqual(@"/reattribute", reattributionPackage.Path,
+                reattributionPackage.ExtendedString());
+
+            // suffix should be empty
+            Assert.AreEqual("", reattributionPackage.Suffix,
+                reattributionPackage.ExtendedString());
+
+            var parameters = reattributionPackage.Parameters;
+
+            string attributesString;
+            parameters.TryGetValue("deeplink_parameters", out attributesString);
+
+            // check that deep link parameters contains the base64 with the 2 keys
+            Assert.AreEqual("{\"foo\":\"bar\",\"key\":\"value\"}", attributesString);
+
+            // check that added and set both session and reattribution package
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler AddPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler AddPackage"),
+                MockLogger.ToString());
+            Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler SendFirstPackage"),
+                MockLogger.ToString());
+
+            // check that sent the reattribution package
+            Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Reattribution {\"foo\":\"bar\",\"key\":\"value\"}"),
                 MockLogger.ToString());
         }
 

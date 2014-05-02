@@ -312,6 +312,53 @@ event buffering by adding the following line after calling
 Adjust.SetEventBufferingEnabled(enabledEventBuffering: true);
 ```
 
+### 10. Handle deep linking
+
+You can also set up the adjust SDK to read deep links that come to your app,
+also known as URI associations in Windows Phone and URI activation in Windows Store. 
+We will only read the data that is injected by adjust tracker URLs. 
+This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
+
+#### Windows Phone
+
+In the `MapUri` method of the `UriMapperBase` class created to handle the deep links,
+call the `AppWillOpenUrl` method.
+
+```cs
+using AdjustSdk;
+
+public class AssociationUriMapper : UriMapperBase
+{
+    public override Uri MapUri(Uri uri)
+    {
+        Adjust.AppWillOpenUrl(uri);
+        //...
+    }
+}
+```
+
+#### Windows Store
+```cs
+using AdjustSdk;
+
+public partial class App : Application
+{
+    protected override void OnActivated(IActivatedEventArgs args)
+    {
+        if (args.Kind == ActivationKind.Protocol)
+        {
+            var eventArgs = args as ProtocolActivatedEventArgs;
+
+            if (eventArgs != null)
+            {
+                Adjust.AppWillOpenUrl(eventArgs.Uri);
+            }
+        }
+        //...
+    }
+}
+```
+
 [adjust.com]: http://www.adjust.com
 [dashboard]: http://www.adjust.com
 [nuget]: http://nuget.org/packages/Adjust

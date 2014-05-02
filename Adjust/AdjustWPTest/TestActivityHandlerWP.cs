@@ -31,7 +31,7 @@ namespace AdjustWPTest
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWP() { TestActivityHandler.TestFirstSession("wphone3.0.0"); }
+        public void TestFirstSessionWP() { TestActivityHandler.TestFirstSession("wphone3.3.0"); }
 
         [TestMethod]
         public void TestSessionsWP() { TestActivityHandler.TestSessions(); }
@@ -44,5 +44,11 @@ namespace AdjustWPTest
 
         [TestMethod]
         public void TestChecksWP() { TestActivityHandler.TestChecks(); }
+
+        [TestMethod]
+        public void TestDisable() { TestActivityHandler.TestDisable(); }
+
+        [TestMethod]
+        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
     }
 }

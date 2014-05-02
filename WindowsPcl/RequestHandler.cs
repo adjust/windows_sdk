@@ -74,6 +74,9 @@ namespace AdjustSdk.Pcl
 
                 var url = Util.BaseUrl + activityPackage.Path;
 
+                var sNow = Util.DateFormat(DateTime.Now);
+                activityPackage.Parameters["sent_at"] = sNow;
+
                 var parameters = new FormUrlEncodedContent(activityPackage.Parameters);
 
                 return httpClient.PostAsync(url, parameters).Result;

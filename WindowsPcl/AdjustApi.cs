@@ -26,17 +26,32 @@ namespace AdjustSdk.Pcl
 
         public static void AppDidActivate()
         {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'AppDidActivate' after 'AppDidLaunch'!");
+                return;
+            }
             ActivityHandler.TrackSubsessionStart();
         }
 
         public static void AppDidDeactivate()
         {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'AppDidDeactivate' after 'AppDidLaunch'!");
+                return;
+            }
             ActivityHandler.TrackSubsessionEnd();
         }
 
         public static void TrackEvent(string eventToken,
             Dictionary<string, string> callbackParameters = null)
         {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'TrackEvent' after 'AppDidLaunch'!");
+                return;
+            }
             ActivityHandler.TrackEvent(eventToken, callbackParameters);
         }
 
@@ -44,6 +59,11 @@ namespace AdjustSdk.Pcl
             string eventToken = null,
             Dictionary<string, string> callbackParameters = null)
         {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'TrackRevenue' after 'AppDidLaunch'!");
+                return;
+            }
             ActivityHandler.TrackRevenue(amountInCents, eventToken, callbackParameters);
         }
 
@@ -100,6 +120,39 @@ namespace AdjustSdk.Pcl
             }
 
             ActivityHandler.SetResponseDelegate(responseDelegate);
+        }
+
+        public static void SetEnabled(bool enabled)
+        {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'SetEnabled' after 'AppDidLaunch'!");
+                return;
+            }
+
+            ActivityHandler.SetEnabled(enabled);
+        }
+
+        public static bool IsEnabled()
+        {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Please call 'IsEnabled' after 'AppDidLaunch'!");
+                return false;
+            }
+
+            return ActivityHandler.IsEnabled();
+        }
+
+        public static void AppWillOpenUrl(Uri url)
+        {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Can only open url after 'AppDidLaunch'!");
+                return;
+            }
+
+            ActivityHandler.ReadOpenUrl(url);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AdjustSdk;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,11 +11,13 @@ namespace AdjustSdk.Pcl
         public AdjustApi.Environment Environment { get; private set; }
 
         public bool IsBufferedEventsEnabled { get; private set; }
+        private bool Enabled { get; set; }
 
         private const string ActivityStateFileName = "AdjustIOActivityState";
+        private const string AdjustPrefix = "adjust_";
         private TimeSpan SessionInterval;
         private TimeSpan SubsessionInterval;
-        private readonly TimeSpan TimerInterval = new TimeSpan(0, 1, 0); // 1 minute
+        private readonly TimeSpan TimerInterval = AdjustFactory.GetTimerInterval();
 
         private IPackageHandler PackageHandler;
         private ActivityState ActivityState;
@@ -38,6 +41,7 @@ namespace AdjustSdk.Pcl
             // default values
             Environment = AdjustApi.Environment.Unknown;
             IsBufferedEventsEnabled = false;
+            Enabled = true;
             Logger = AdjustFactory.Logger;
 
             SessionInterval = AdjustFactory.GetSessionInterval();
@@ -89,6 +93,40 @@ namespace AdjustSdk.Pcl
                 ResponseDelegateAction(ResponseDelegate, responseData);
         }
 
+        public void SetEnabled(bool enabled)
+        {
+            Enabled = enabled;
+            if (CheckActivityState(ActivityState))
+            {
+                ActivityState.IsEnabled = enabled;
+            }
+            if (enabled)
+            {
+                TrackSubsessionStart();
+            }
+            else
+            {
+                TrackSubsessionEnd();
+            }
+        }
+
+        public bool IsEnabled()
+        {
+            if (CheckActivityState(ActivityState))
+            {
+                return ActivityState.IsEnabled;
+            }
+            else
+            {
+                return Enabled;
+            }
+        }
+
+        public void ReadOpenUrl(Uri url)
+        {
+            InternalQueue.Enqueue(() => ReadOpenUrlInternal(url));
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
@@ -114,6 +152,12 @@ namespace AdjustSdk.Pcl
         {
             if (!CheckAppToken(AppToken)) return;
 
+            if (ActivityState != null
+                && !ActivityState.IsEnabled)
+            {
+                return;
+            }
+
             PackageHandler.ResumeSending();
             StartTimer();
 
@@ -130,6 +174,7 @@ namespace AdjustSdk.Pcl
                 TransferSessionPackage();
 
                 ActivityState.ResetSessionAttributes(now);
+                ActivityState.IsEnabled = Enabled;
                 WriteActivityState();
 
                 Logger.Info("First session");
@@ -183,7 +228,7 @@ namespace AdjustSdk.Pcl
 
             PackageHandler.PauseSending();
             StopTimer();
-            UpdateActivityState();
+            UpdateActivityState(DateTime.Now);
             WriteActivityState();
         }
 
@@ -194,6 +239,7 @@ namespace AdjustSdk.Pcl
             if (!CheckActivityState(ActivityState)) return;
             if (!CheckEventToken(eventToken)) return;
             if (!CheckEventTokenLenght(eventToken)) return;
+            if (!ActivityState.IsEnabled) return;
 
             var packageBuilder = GetDefaultPackageBuilder();
 
@@ -202,7 +248,7 @@ namespace AdjustSdk.Pcl
 
             var now = DateTime.Now;
 
-            UpdateActivityState();
+            UpdateActivityState(now);
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++;
 
@@ -230,6 +276,7 @@ namespace AdjustSdk.Pcl
             if (!CheckActivityState(ActivityState)) return;
             if (!CheckAmount(amountInCents)) return;
             if (!CheckEventTokenLenght(eventToken)) return;
+            if (!ActivityState.IsEnabled) return;
 
             var packageBuilder = GetDefaultPackageBuilder();
 
@@ -238,7 +285,7 @@ namespace AdjustSdk.Pcl
             packageBuilder.CallbackParameters = callbackParameters;
 
             var now = DateTime.Now;
-            UpdateActivityState();
+            UpdateActivityState(now);
 
             ActivityState.CreatedAt = now;
             ActivityState.EventCount++;
@@ -262,6 +309,56 @@ namespace AdjustSdk.Pcl
             Logger.Debug("Event {0} (revenue)", ActivityState.EventCount);
         }
 
+        private void ReadOpenUrlInternal(Uri url)
+        {
+            if (url == null) return;
+
+            var sUrl = Uri.UnescapeDataString(url.ToString());
+
+            var queryStringIdx = sUrl.IndexOf("?");
+            // check if '?' exists and it's not the last char
+            if (queryStringIdx == -1 || queryStringIdx + 1 == sUrl.Length) return;
+
+            var queryString = sUrl.Substring(queryStringIdx + 1);
+
+            // remove any possible fragments
+            var fragmentIdx = queryString.LastIndexOf("#");
+            if (fragmentIdx != -1)
+            {
+                queryString = queryString.Substring(0, fragmentIdx);
+            }
+
+            var queryPairs = queryString.Split('&');
+            var adjustDeepLinks = new Dictionary<string, string>(queryPairs.Length);
+            foreach (var pair in queryPairs)
+            {
+                var pairComponents = pair.Split('=');
+                if (pairComponents.Length != 2) continue;
+
+                var key = pairComponents[0];
+                if (!key.StartsWith(AdjustPrefix)) continue;
+
+                var value = pairComponents[1];
+                if (value.Length == 0) continue;
+
+                var keyWOutPrefix = key.Substring(AdjustPrefix.Length);
+                if (keyWOutPrefix.Length == 0) continue;
+
+                adjustDeepLinks.Add(keyWOutPrefix, value);
+            }
+
+            if (adjustDeepLinks.Count == 0) return;
+
+            var packageBuilder = GetDefaultPackageBuilder();
+            packageBuilder.DeepLinksParameters = adjustDeepLinks;
+
+            var reattributionPackage = packageBuilder.BuildReattributionPackage();
+            PackageHandler.AddPackage(reattributionPackage);
+            PackageHandler.SendFirstPackage();
+
+            Logger.Debug("Reattribution {0}", reattributionPackage.Parameters["deeplink_parameters"]);
+        }
+
         private void WriteActivityState()
         {
             var sucessMessage = Util.f("Wrote activity state: {0}", ActivityState);
@@ -281,12 +378,11 @@ namespace AdjustSdk.Pcl
         }
 
         // return whether or not activity state should be written
-        private bool UpdateActivityState()
+        private bool UpdateActivityState(DateTime now)
         {
             if (!CheckActivityState(ActivityState))
                 return false;
 
-            var now = DateTime.Now;
             var lastInterval = now - ActivityState.LastActivity.Value;
 
             if (lastInterval.Ticks < 0)
@@ -357,8 +453,13 @@ namespace AdjustSdk.Pcl
 
         private void TimerFired()
         {
+            if (ActivityState != null
+                && !ActivityState.IsEnabled)
+            {
+                return;
+            }
             PackageHandler.SendFirstPackage();
-            if (UpdateActivityState())
+            if (UpdateActivityState(DateTime.Now))
                 WriteActivityState();
         }
 

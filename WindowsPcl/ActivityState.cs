@@ -7,23 +7,19 @@ namespace AdjustSdk.Pcl
     {
         // global counters
         internal int EventCount { get; set; }
-
         internal int SessionCount { get; set; }
 
         // session atributes
         internal int SubSessionCount { get; set; }
-
         internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
-
         internal TimeSpan? TimeSpent { get; set; }
-
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
-
         internal DateTime? CreatedAt { get; set; }
-
         internal TimeSpan? LastInterval { get; set; }
 
+        // persistent data
         internal Guid Uuid { get; set; }
+        internal bool IsEnabled { get; set; }
 
         internal ActivityState()
         {
@@ -36,6 +32,7 @@ namespace AdjustSdk.Pcl
             CreatedAt = null;
             LastInterval = null;
             Uuid = Guid.NewGuid();
+            IsEnabled = true;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -88,6 +85,7 @@ namespace AdjustSdk.Pcl
             writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
             writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
             writer.Write(activity.Uuid.ToString());
+            writer.Write(activity.IsEnabled);
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -107,14 +105,9 @@ namespace AdjustSdk.Pcl
             activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
 
             // create Uuid for migrating devices
-            try
-            {
-                activity.Uuid = Guid.Parse(reader.ReadString());
-            }
-            catch (EndOfStreamException)
-            {
-                activity.Uuid = Guid.NewGuid();
-            }
+            activity.Uuid = Util.TryRead(() => Guid.Parse(reader.ReadString()), () => Guid.NewGuid());
+            // default value of IsEnabled for migrating devices
+            activity.IsEnabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
 
             return activity;
         }

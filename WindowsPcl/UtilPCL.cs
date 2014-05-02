@@ -194,6 +194,16 @@ namespace AdjustSdk.Pcl
             return Util.f("'{0}'", input);
         }
 
+        internal static string DateFormat(DateTime value)
+        {
+            var timeZone = value.ToString("zzz");
+            var rfc822TimeZone = timeZone.Remove(3, 1);
+            var sDTwOutTimeZone = value.ToString("yyyy-MM-ddTHH:mm:ss");
+            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+
+            return sDateTime;
+        }
+
         #region Serialization
 
         internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
@@ -226,6 +236,21 @@ namespace AdjustSdk.Pcl
                 return null;
             else
                 return new DateTime(ticks);
+        }
+
+        internal static T TryRead<T>(Func<T> readStream, Func<T> defaultValue)
+        {
+            T result;
+            try
+            {
+                result = readStream();
+            }
+            catch (EndOfStreamException)
+            {
+                result = defaultValue();
+            }
+
+            return result;
         }
 
         #endregion Serialization

@@ -10,43 +10,32 @@ namespace AdjustSdk.Pcl
     {
         // possible Ids
         public string DeviceUniqueId { get; set; }
-
         public string HardwareId { get; set; }
-
         public string NetworkAdapterId { get; set; }
 
         // general
         public string AppToken { get; set; }
-
         public AdjustApi.Environment Environment { get; set; }
-
         public string UserAgent { get; set; }
-
         public string ClientSdk { get; set; }
-
         public Guid Uuid { get; set; }
 
         // session
         public int SessionCount { get; set; }
-
         public int SubSessionCount { get; set; }
-
         public DateTime? CreatedAt { get; set; }
-
         public TimeSpan? SessionLength { get; set; }
-
         public TimeSpan? TimeSpent { get; set; }
-
         public TimeSpan? LastInterval { get; set; }
 
         // events
         public int EventCount { get; set; }
-
         public string EventToken { get; set; }
-
         public Dictionary<string, string> CallbackParameters { get; set; }
-
         public double AmountInCents { get; set; }
+
+        // reattributions
+        public Dictionary<string, string> DeepLinksParameters { get; set; }
 
         // defaults
         private ActivityPackage activityPackage { get; set; }
@@ -116,6 +105,18 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
 
+        public ActivityPackage BuildReattributionPackage()
+        {
+            FillDefaults();
+            SaveParameterJson("deeplink_parameters", DeepLinksParameters);
+
+            activityPackage.Path = @"/reattribute";
+            activityPackage.ActivityKind = ActivityKind.Reattribution;
+            activityPackage.Suffix = "";
+
+            return activityPackage;
+        }
+
         private string EventSuffix()
         {
             return Util.f(" '{0}'", EventToken);
@@ -137,7 +138,7 @@ namespace AdjustSdk.Pcl
         {
             SaveParameter("event_count", EventCount);
             SaveParameter("event_token", EventToken);
-            SaveParameter("params", CallbackParameters);
+            SaveParameterBase64("params", CallbackParameters);
         }
 
         private string AmountToString()
@@ -163,10 +164,8 @@ namespace AdjustSdk.Pcl
             if (!value.HasValue || value.Value.Ticks < 0)
                 return;
 
-            var timeZone = value.Value.ToString("zzz");
-            var rfc822TimeZone = timeZone.Remove(3, 1);
-            var sDTwOutTimeZone = value.Value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = Util.DateFormat(value.Value);
+
             activityPackage.Parameters.Add(key, sDateTime);
         }
 
@@ -193,7 +192,7 @@ namespace AdjustSdk.Pcl
             SaveParameter(key, (int)roundedSeconds);
         }
 
-        private void SaveParameter(string key, Dictionary<string, string> value)
+        private void SaveParameterBase64(string key, Dictionary<string, string> value)
         {
             if (value == null)
                 return;
@@ -203,6 +202,16 @@ namespace AdjustSdk.Pcl
             string encoded = Convert.ToBase64String(bytes);
 
             activityPackage.Parameters.Add(key, encoded);
+        }
+
+        private void SaveParameterJson(string key, Dictionary<string, string> value)
+        {
+            if (value == null)
+                return;
+
+            string json = JsonConvert.SerializeObject(value);
+
+            activityPackage.Parameters.Add(key, json);
         }
 
         #endregion SaveParameter

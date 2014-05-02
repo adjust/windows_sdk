@@ -1,4 +1,4 @@
-## Migrate your adjust SDK for Windows to v3.0.0 from v2.1.0
+## Migrate your adjust SDK for Windows to v3.3.0 from v2.1.0
 
 We renamed the main class `AdjustIo` to `Adjust`. Follow these steps to update
 all adjust SDK calls.

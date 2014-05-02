@@ -89,12 +89,13 @@ namespace AdjustTest.Pcl
                 var logMessage = logList[i];
                 if (logMessage.StartsWith(beginsWith))
                 {
-                    Test("{0} found", logMessage);
+                    Test("found {0} ", logMessage);
                     logList.RemoveRange(0, i + 1);
                     return true;
                 }
             }
 
+            Test("{0} does not contain {1} ", string.Join(",", logList), beginsWith);
             return false;
         }
 

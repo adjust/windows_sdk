@@ -173,6 +173,34 @@ namespace AdjustSdk
             AdjustApi.SetResponseDelegate(responseDelegate);
         }
 
+        /// <summary>
+        /// Enable or disable the adjust SDK
+        /// </summary>
+        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        public static void SetEnabled(bool enabled)
+        {
+            AdjustApi.SetEnabled(enabled);
+        }
+
+        /// <summary>
+        /// Check if the SDK is enabled or disabled
+        /// </summary>
+        /// <returns>true if the SDK is enabled, false otherwise</returns>
+        public static bool IsEnabled()
+        {
+            return AdjustApi.IsEnabled();
+        }
+
+        /// <summary>
+        /// Read the URL that opened the application to search for
+        /// an adjust deep link
+        /// </summary>
+        /// <param name="url">The url that open the application</param>
+        public static void AppWillOpenUrl(Uri url)
+        {
+            AdjustApi.AppWillOpenUrl(url);
+        }
+
         #endregion AdjustApi
     }
 }

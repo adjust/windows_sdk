@@ -22,7 +22,7 @@ namespace AdjustTest.WS
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.0.0"); }
+        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.3.0"); }
 
         [TestMethod]
         public void TestSessionsWS() { TestActivityHandler.TestSessions(); }
@@ -35,5 +35,11 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestChecksWS() { TestActivityHandler.TestChecks(); }
+
+        [TestMethod]
+        public void TestDisable() { TestActivityHandler.TestDisable(); }
+
+        [TestMethod]
+        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
     }
 }

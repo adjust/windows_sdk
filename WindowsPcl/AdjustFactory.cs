@@ -9,89 +9,103 @@ namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
-        private static ILogger InternalLogger;
-        private static IPackageHandler InternalPackageHandler;
-        private static IRequestHandler InternalRequestHandler;
-        private static HttpMessageHandler InternalHttpMessageHandler;
-        private static TimeSpan? InternalSessionInterval;
-        private static TimeSpan? InternalSubsessionInterval;
+        private static ILogger InjectedLogger;
+        private static IPackageHandler InjectedPackageHandler;
+        private static IRequestHandler InjectedRequestHandler;
+        private static HttpMessageHandler InjectedHttpMessageHandler;
+        private static TimeSpan? InjectedSessionInterval;
+        private static TimeSpan? InjectedSubsessionInterval;
+        private static TimeSpan? InjectedTimerInterval;
 
         public static ILogger Logger
         {
             get
             {
                 // same instance of logger for all calls
-                if (InternalLogger == null)
-                    InternalLogger = new Logger();
-                return InternalLogger;
+                if (InjectedLogger == null)
+                    InjectedLogger = new Logger();
+                return InjectedLogger;
             }
 
-            set { InternalLogger = value; }
+            set { InjectedLogger = value; }
         }
 
         public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler)
         {
-            if (InternalPackageHandler == null)
+            if (InjectedPackageHandler == null)
                 return new PackageHandler(activityHandler);
             else
-                return InternalPackageHandler;
+                return InjectedPackageHandler;
         }
 
         public static IRequestHandler GetRequestHandler(IPackageHandler packageHandler)
         {
-            if (InternalRequestHandler == null)
+            if (InjectedRequestHandler == null)
                 return new RequestHandler(packageHandler);
             else
-                return InternalRequestHandler;
+                return InjectedRequestHandler;
         }
 
         public static HttpMessageHandler GetHttpMessageHandler()
         {
-            if (InternalHttpMessageHandler == null)
+            if (InjectedHttpMessageHandler == null)
                 return new HttpClientHandler();
             else
-                return InternalHttpMessageHandler;
+                return InjectedHttpMessageHandler;
         }
 
         public static TimeSpan GetSessionInterval()
         {
-            if (!InternalSessionInterval.HasValue)
+            if (!InjectedSessionInterval.HasValue)
                 return new TimeSpan(0, 30, 0); // 30 minutes
             else
-                return InternalSessionInterval.Value;
+                return InjectedSessionInterval.Value;
         }
 
         public static TimeSpan GetSubsessionInterval()
         {
-            if (!InternalSubsessionInterval.HasValue)
+            if (!InjectedSubsessionInterval.HasValue)
                 return new TimeSpan(0, 0, 1); // 1 second
             else
-                return InternalSubsessionInterval.Value;
+                return InjectedSubsessionInterval.Value;
+        }
+
+        public static TimeSpan GetTimerInterval()
+        {
+            if (!InjectedTimerInterval.HasValue)
+                return new TimeSpan(0, 1, 0); // 1 minute
+            else
+                return InjectedTimerInterval.Value;
         }
 
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
-            InternalPackageHandler = packageHandler;
+            InjectedPackageHandler = packageHandler;
         }
 
         public static void SetRequestHandler(IRequestHandler requestHandler)
         {
-            InternalRequestHandler = requestHandler;
+            InjectedRequestHandler = requestHandler;
         }
 
         public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
-            InternalHttpMessageHandler = httpMessageHandler;
+            InjectedHttpMessageHandler = httpMessageHandler;
         }
 
         public static void SetSessionInterval(TimeSpan? sessionInterval)
         {
-            InternalSessionInterval = sessionInterval;
+            InjectedSessionInterval = sessionInterval;
         }
 
         public static void SetSubsessionInterval(TimeSpan? subsessionInterval)
         {
-            InternalSubsessionInterval = subsessionInterval;
+            InjectedSubsessionInterval = subsessionInterval;
+        }
+
+        public static void SetTimerInterval(TimeSpan? timerInterval)
+        {
+            InjectedTimerInterval = timerInterval;
         }
     }
 }
