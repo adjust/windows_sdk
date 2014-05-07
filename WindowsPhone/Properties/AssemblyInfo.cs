@@ -2,7 +2,7 @@
 using System.Resources;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyVersion("3.3")]
+[assembly: AssemblyVersion("3.3.1")]
 [assembly: AssemblyTitle("Adjust")]
 [assembly: AssemblyDescription("Windows SDK of Adjust http://www.adjust.com")]
 [assembly: AssemblyConfiguration("")]
