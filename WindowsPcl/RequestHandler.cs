@@ -66,19 +66,19 @@ namespace AdjustSdk.Pcl
 
         private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
         {
-            using (var httpClient = new HttpClient(HttpMessageHandler))
+            var httpClient = new HttpClient(HttpMessageHandler);
+
+            httpClient.Timeout = Timeout;
+            httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
+            httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
+
+            var url = Util.BaseUrl + activityPackage.Path;
+
+            var sNow = Util.DateFormat(DateTime.Now);
+            activityPackage.Parameters["sent_at"] = sNow;
+
+            using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
             {
-                httpClient.Timeout = Timeout;
-                httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
-                httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
-
-                var url = Util.BaseUrl + activityPackage.Path;
-
-                var sNow = Util.DateFormat(DateTime.Now);
-                activityPackage.Parameters["sent_at"] = sNow;
-
-                var parameters = new FormUrlEncodedContent(activityPackage.Parameters);
-
                 return httpClient.PostAsync(url, parameters).Result;
             }
         }
