@@ -2,6 +2,7 @@
 using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -66,7 +67,36 @@ namespace AdjustSdk
         public static void AppDidLaunch(string appToken)
         {
             AdjustApi.AppDidLaunch(appToken, Util);
-            Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
+            try
+            {
+                Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
+            }
+            catch (Exception)
+            {
+                AdjustFactory.Logger.Debug("Not possible to detect automatically if the app goes to the background");
+            }
+        }
+
+        /// <summary>
+        ///  Tell Adjust that the application is activated (brought to foreground).
+        ///
+        ///  This is used to keep track of the current session state.
+        ///  This should only be used if the VisibilityChanged mechanism doesn't work
+        /// </summary>
+        public static void AppDidActivate()
+        {
+            AdjustApi.AppDidActivate();
+        }
+
+        /// <summary>
+        ///  Tell Adjust that the application is deactivated (sent to background).
+        ///
+        ///  This is used to calculate session attributes like session length and subsession count.
+        ///  This should only be used if the VisibilityChanged mechanism doesn't work
+        /// </summary>
+        public static void AppDidDeactivate()
+        {
+            AdjustApi.AppDidDeactivate();
         }
 
         /// <summary>
