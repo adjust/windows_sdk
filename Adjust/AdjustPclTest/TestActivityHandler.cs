@@ -82,6 +82,9 @@ namespace AdjustTest.Pcl
             Assert.AreEqual(clientSdk, firstSessionPackage.ClientSdk,
                 firstSessionPackage.ExtendedString());
 
+            // check the server url
+            Assert.AreEqual("https://app.adjust.io", Util.BaseUrl);
+
             // the activity kind shoud be session
             Assert.AreEqual("session", ActivityKindUtil.ToString(firstSessionPackage.ActivityKind),
                 firstSessionPackage.ExtendedString());

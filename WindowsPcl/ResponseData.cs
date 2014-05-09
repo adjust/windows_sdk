@@ -87,5 +87,32 @@ namespace AdjustSdk
                 TrackerToken,
                 TrackerName.Quote());
         }
+
+        public Dictionary<string, string> ToDic()
+        {
+            var responseDataDic = new Dictionary<string, string>(6)
+            {
+                { "activityKind", ActivityKindString },
+                { "success", (Success? "true" : "false")},
+                { "willRetry", (WillRetry? "true" : "false")}
+            };
+
+            if (!string.IsNullOrEmpty(Error))
+            {
+                responseDataDic.Add("error", Error);
+            }
+
+            if (!string.IsNullOrEmpty(TrackerToken))
+            {
+                responseDataDic.Add("trackerToken", TrackerToken);
+            }
+
+            if (!string.IsNullOrEmpty(TrackerName))
+            {
+                responseDataDic.Add("trackerName", TrackerName);
+            }
+
+            return responseDataDic;
+        }
     }
 }

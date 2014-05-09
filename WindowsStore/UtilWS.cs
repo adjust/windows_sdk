@@ -31,7 +31,7 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wstore3.3.0"; } }
+        public string ClientSdk { get { return "wstore3.3.1"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -90,9 +90,10 @@ namespace AdjustSdk
 
         public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
         {
-            // TODO fallback to threadpool if null?
             if (Dispatcher != null)
                 Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
+            else
+                Windows.System.Threading.ThreadPool.RunAsync(handler => responseDelegate(responseData));
         }
 
         public void Sleep(int milliseconds)

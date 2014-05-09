@@ -13,7 +13,7 @@ namespace AdjustSdk.Pcl
 {
     public static class Util
     {
-        internal const string BaseUrl = "https://app.adjust.io";
+        public const string BaseUrl = "https://app.adjust.io";
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
