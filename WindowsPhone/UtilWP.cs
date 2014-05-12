@@ -14,7 +14,7 @@ namespace AdjustSdk
 {
     public class UtilWP : DeviceUtil
     {
-        public string ClientSdk { get { return "wphone3.3.1"; } }
+        public string ClientSdk { get { return "wphone3.3.2"; } }
 
         public string GetMd5Hash(string input)
         {
