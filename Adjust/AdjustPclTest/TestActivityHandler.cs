@@ -38,6 +38,7 @@ namespace AdjustTest.Pcl
 
             // create Activity handler and start first session
             var activityHandler = new ActivityHandler("123456789012", DeviceUtil);
+            activityHandler.SetSdkPrefix("SdkWrapperX.Y.Z");
 
             // it's necessary to sleep the activity for a while after each handler call
             // to let the internal queue act
@@ -79,7 +80,7 @@ namespace AdjustTest.Pcl
             var firstSessionPackage = MockPackageHandler.PackageQueue[0];
 
             // check the Sdk verion being tested
-            Assert.AreEqual(clientSdk, firstSessionPackage.ClientSdk,
+            Assert.AreEqual("SdkWrapperX.Y.Z@" + clientSdk, firstSessionPackage.ClientSdk,
                 firstSessionPackage.ExtendedString());
 
             // check the server url

@@ -29,5 +29,7 @@ namespace AdjustSdk.Pcl
         bool IsEnabled();
 
         void ReadOpenUrl(Uri url);
+
+        void SetSdkPrefix(string sdkPrefix);
     }
 }

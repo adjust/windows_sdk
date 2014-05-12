@@ -88,5 +88,10 @@ namespace AdjustTest.Pcl
         {
             MockLogger.Test("{0} ReadOpenUrl, {1}", prefix, url);
         }
+
+        public void SetSdkPrefix(string sdkPrefix)
+        {
+            MockLogger.Test("{0} SetSdkPrefix, {1}", prefix, sdkPrefix);
+        }
     }
 }
