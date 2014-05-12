@@ -185,6 +185,15 @@ namespace AdjustSdk
             AdjustApi.AppWillOpenUrl(url);
         }
 
+        /// <summary>
+        /// Special method used by SDK wrappers
+        /// </summary>
+        /// <param name="sdkPrefix">The SDK prefix to be added</param>
+        public static void SetSdkPrefix(string sdkPrefix)
+        {
+            AdjustApi.SetSdkPrefix(sdkPrefix);
+        }
+
         #endregion AdjustApi
     }
 }

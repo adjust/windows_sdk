@@ -154,5 +154,16 @@ namespace AdjustSdk.Pcl
 
             ActivityHandler.ReadOpenUrl(url);
         }
+
+        public static void SetSdkPrefix(string sdkPrefix)
+        {
+            if (ActivityHandler == null)
+            {
+                Logger.Error("Can only set SDK prefix after 'AppDidLaunch'!");
+                return;
+            }
+
+            ActivityHandler.SetSdkPrefix(sdkPrefix);
+        }
     }
 }

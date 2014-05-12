@@ -43,6 +43,7 @@ namespace AdjustSdk.Pcl
             IsBufferedEventsEnabled = false;
             Enabled = true;
             Logger = AdjustFactory.Logger;
+            ClientSdk = deviceUtil.ClientSdk;
 
             SessionInterval = AdjustFactory.GetSessionInterval();
             SubsessionInterval = AdjustFactory.GetSubsessionInterval();
@@ -127,13 +128,17 @@ namespace AdjustSdk.Pcl
             InternalQueue.Enqueue(() => ReadOpenUrlInternal(url));
         }
 
+        public void SetSdkPrefix(string sdkPrefix)
+        {
+            ClientSdk = Util.f("{0}@{1}", sdkPrefix, ClientSdk);
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
             if (!CheckAppTokenLength(appToken)) return;
 
             AppToken = appToken;
-            ClientSdk = deviceUtil.ClientSdk;
             UserAgent = deviceUtil.GetUserAgent();
 
             DeviceUniqueId = deviceUtil.GetDeviceUniqueId();
