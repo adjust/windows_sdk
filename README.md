@@ -1,6 +1,6 @@
 ## Summary
 
-This is the Windows SDK of adjust.io™. You can read more about adjust.io™ at [adjust.io](http://adjust.io).
+This is the Windows SDK of adjust™. You can read more about adjust™ at [adjust.com](http://adjust.com).
 
 ## Basic Installation
 
