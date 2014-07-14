@@ -112,7 +112,7 @@ namespace AdjustSdk
         {
             PackageId package = getPackage();
             string packageName = package.Name;
-            string sanitized = sanitizeString(packageName);
+            string sanitized = Util.SanitizeUserAgent(packageName);
             return sanitized;
         }
 
@@ -121,7 +121,7 @@ namespace AdjustSdk
             PackageId package = getPackage();
             PackageVersion pv = package.Version;
             string version = Util.f("{0}.{1}", pv.Major, pv.Minor);
-            string sanitized = sanitizeString(version);
+            string sanitized = Util.SanitizeUserAgent(version);
             return sanitized;
         }
 
@@ -129,7 +129,7 @@ namespace AdjustSdk
         {
             PackageId package = getPackage();
             string publisher = package.Publisher;
-            string sanitized = sanitizeString(publisher);
+            string sanitized = Util.SanitizeUserAgent(publisher);
             return sanitized;
         }
 
@@ -147,13 +147,13 @@ namespace AdjustSdk
         private string getDeviceName()
         {
             var deviceModel = SystemInfoEstimate.GetDeviceModelAsync().Result;
-            return sanitizeString(deviceModel);
+            return Util.SanitizeUserAgent(deviceModel);
         }
 
         private string getDeviceManufacturer()
         {
             var deviceManufacturer = SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
-            return sanitizeString(deviceManufacturer);
+            return Util.SanitizeUserAgent(deviceManufacturer);
         }
 
         private string getArchitecture()
@@ -190,7 +190,7 @@ namespace AdjustSdk
             }
 
             string language = cultureName.Substring(0, 2);
-            string sanitized = sanitizeString(language, "zz");
+            string sanitized = Util.SanitizeUserAgent(language, "zz");
             return sanitized;
         }
 
@@ -206,7 +206,7 @@ namespace AdjustSdk
 
             string substring = cultureName.Substring(length - 2, 2);
             string country = substring.ToLower();
-            string sanitized = sanitizeString(country, "zz");
+            string sanitized = Util.SanitizeUserAgent(country, "zz");
             return sanitized;
         }
 
@@ -221,7 +221,7 @@ namespace AdjustSdk
         {
             PackageId package = getPackage();
             string packageName = package.FamilyName;
-            string sanitized = sanitizeString(packageName);
+            string sanitized = Util.SanitizeUserAgent(packageName);
             return sanitized;
         }
 
@@ -229,7 +229,7 @@ namespace AdjustSdk
         {
             PackageId package = getPackage();
             string fullName = package.FullName;
-            string sanitized = sanitizeString(fullName);
+            string sanitized = Util.SanitizeUserAgent(fullName);
             return sanitized;
         }
 
@@ -240,26 +240,8 @@ namespace AdjustSdk
             element = element.Element(XName.Get("Properties", namespaceName));
             element = element.Element(XName.Get("DisplayName", namespaceName));
             string displayName = element.Value;
-            string sanitized = sanitizeString(displayName);
+            string sanitized = Util.SanitizeUserAgent(displayName);
             return sanitized;
-        }
-
-        private string sanitizeString(string s, string defaultString = "unknown")
-        {
-            if (s == null)
-            {
-                return defaultString;
-            }
-
-            s = s.Replace('=', '_');
-            s = s.Replace(',', '.');
-            string result = Regex.Replace(s, @"\s+", "");
-            if (result.Length == 0)
-            {
-                return defaultString;
-            }
-
-            return result;
         }
 
         #endregion User Agent
