@@ -121,6 +121,21 @@ namespace AdjustTest.Pcl
                 firstSessionPackage.ExtendedString());
         }
 
+        public void TestUserAgent()
+        {
+            var delimiters = "\"(),/:;<=>?@[]{} \t\f\r\n\v\"(),/:;<=>?@[]{} \t\f\r\n\v";
+            string nullString = null;
+            var emptyString = "\"()/<>?@[]{} \t\f\r\n\v\"()/<>?@[]{} \t\f\r\n\v";
+
+            var sanatizedDelimeters = Util.SanitizeUserAgent(delimiters);
+            var sanatizedNullString = Util.SanitizeUserAgent(nullString);
+            var sanatizedEmptyString = Util.SanitizeUserAgent(emptyString, "emptyString");
+
+            Assert.AreEqual("..._..._", sanatizedDelimeters);
+            Assert.AreEqual("unknown", sanatizedNullString);
+            Assert.AreEqual("emptyString", sanatizedEmptyString);
+        }
+
         public void TestSessions()
         {
             // deleting the activity state file to simulate a first session

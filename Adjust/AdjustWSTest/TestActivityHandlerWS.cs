@@ -41,5 +41,8 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
+
+        [TestMethod]
+        public void TestUserAgent() { TestActivityHandler.TestUserAgent(); }
     }
 }
