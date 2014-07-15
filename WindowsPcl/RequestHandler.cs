@@ -86,12 +86,14 @@ namespace AdjustSdk.Pcl
         private ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
+            Dictionary<string, string> jsonDict = null;
 
             using (var content = httpResponseMessage.Content)
             {
                 var responseString = content.ReadAsStringAsync().Result;
+                jsonDict = Util.BuildJsonDict(responseString);
 
-                responseData.SetResponseData(responseString);
+                responseData.SetResponseData(jsonDict, responseString);
 
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
@@ -109,7 +111,6 @@ namespace AdjustSdk.Pcl
                 }
                 else
                 {
-                    responseData.SetResponseData(responseString);
                     responseData.WillRetry = true;
 
                     Logger.Error("{0}. ({1}). Will retry later.",
@@ -124,14 +125,17 @@ namespace AdjustSdk.Pcl
         private ResponseData ProcessException(WebException webException, ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
+            Dictionary<string, string> jsonDict = null;
+
 
             using (var response = webException.Response as HttpWebResponse)
             using (var streamResponse = response.GetResponseStream())
             using (var streamReader = new StreamReader(streamResponse))
             {
                 var responseString = streamReader.ReadToEnd();
+                jsonDict = Util.BuildJsonDict(responseString);
 
-                responseData.SetResponseData(responseString);
+                responseData.SetResponseData(jsonDict, responseString);
                 responseData.WillRetry = true;
 
                 Logger.Error("{0}. ({1}, {2}). Will retry later.",

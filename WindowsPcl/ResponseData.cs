@@ -60,29 +60,21 @@ namespace AdjustSdk
 
         #region internal
 
-        public void SetResponseData(string responseString)
+        public void SetResponseData(Dictionary<string,string> jsonDict, string jsonString)
         {
-            Dictionary<string, string> responseDic = null;
-            try
+            if (jsonDict == null)
             {
-                responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
-            }
-            catch (Exception)
-            { }
-
-            if (responseDic == null)
-            {
-                Error = Util.f("Failed to parse json response: {0}", responseString);
+                Error = Util.f("Failed to parse json response: {0}", jsonString);
                 return;
             }
 
-            responseDic.TryGetValue("error", out Error);
-            responseDic.TryGetValue("tracker_token", out TrackerToken);
-            responseDic.TryGetValue("tracker_name", out TrackerName);
-            responseDic.TryGetValue("network", out Network);
-            responseDic.TryGetValue("campaign", out Campaign);
-            responseDic.TryGetValue("adgroup", out AdGroup);
-            responseDic.TryGetValue("creative", out Creative);
+            jsonDict.TryGetValue("error", out Error);
+            jsonDict.TryGetValue("tracker_token", out TrackerToken);
+            jsonDict.TryGetValue("tracker_name", out TrackerName);
+            jsonDict.TryGetValue("network", out Network);
+            jsonDict.TryGetValue("campaign", out Campaign);
+            jsonDict.TryGetValue("adgroup", out AdGroup);
+            jsonDict.TryGetValue("creative", out Creative);
         }
 
         public void SetResponseError(string errorString)

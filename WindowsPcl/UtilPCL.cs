@@ -280,5 +280,18 @@ namespace AdjustSdk.Pcl
 
             return value;
         }
+
+        internal static Dictionary<string, string> BuildJsonDict(string jsonString)
+        {
+            Dictionary<string, string> jsonDic = null;
+            try
+            {
+                jsonDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString);
+            }
+            catch (Exception)
+            { }
+
+            return jsonDic;
+        }
     }
 }
