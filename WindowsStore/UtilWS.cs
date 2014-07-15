@@ -90,10 +90,7 @@ namespace AdjustSdk
 
         public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
         {
-            if (Dispatcher != null)
-                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => responseDelegate(responseData));
-            else
-                Windows.System.Threading.ThreadPool.RunAsync(handler => responseDelegate(responseData));
+            runInForeground(() => responseDelegate(responseData));
         }
 
         public void Sleep(int milliseconds)
@@ -245,5 +242,19 @@ namespace AdjustSdk
         }
 
         #endregion User Agent
+
+
+        public void LauchDeepLink(Uri deepLinkUri)
+        {
+            runInForeground(() => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
+        }
+
+        private void runInForeground(Action actionToRun)
+        {
+            if (Dispatcher != null)
+                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => actionToRun());
+            else
+                Windows.System.Threading.ThreadPool.RunAsync(handler => actionToRun());
+        }
     }
 }

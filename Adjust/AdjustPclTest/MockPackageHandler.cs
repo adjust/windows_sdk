@@ -32,7 +32,7 @@ namespace AdjustTest.Pcl
             MockLogger.Test("{0} CloseFirstPackage", prefix);
         }
 
-        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
+        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData, Dictionary<string, string> jsonDict)
         {
             MockLogger.Test("{0} FinishedTrackingActivity", prefix);
 

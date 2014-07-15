@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AdjustSdk.Pcl
 {
@@ -8,7 +9,7 @@ namespace AdjustSdk.Pcl
 
         void CloseFirstPackage();
 
-        void FinishedTrackingActivity(ActivityPackage activityPackage, AdjustSdk.ResponseData responseData);
+        void FinishedTrackingActivity(ActivityPackage activityPackage, AdjustSdk.ResponseData responseData, Dictionary<string, string> jsonDict);
 
         void PauseSending();
 

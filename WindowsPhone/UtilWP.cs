@@ -187,5 +187,11 @@ namespace AdjustSdk
         }
 
         #endregion User Agent
+
+
+        public void LauchDeepLink(Uri deepLinkUri)
+        {
+            Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+        }
     }
 }
