@@ -6,7 +6,7 @@ namespace AdjustSdk.Pcl
     {
         AdjustApi.Environment Environment { get; }
 
-        void FinishTrackingWithResponse(AdjustSdk.ResponseData responseData);
+        void FinishTrackingWithResponse(AdjustSdk.ResponseData responseData, string deepLink);
 
         bool IsBufferedEventsEnabled { get; }
 

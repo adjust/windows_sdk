@@ -27,6 +27,7 @@ namespace AdjustSdk.Pcl
         private ILogger Logger;
 
         private Action<Action<ResponseData>, ResponseData> ResponseDelegateAction;
+        private Action<Uri> LauchDeepLinkAction;
 
         private string DeviceUniqueId;
         private string HardwareId;
@@ -88,10 +89,10 @@ namespace AdjustSdk.Pcl
             InternalQueue.Enqueue(() => RevenueInternal(amountInCents, eventToken, callbackParameters));
         }
 
-        public void FinishTrackingWithResponse(ResponseData responseData)
+        public void FinishTrackingWithResponse(ResponseData responseData, string deepLink)
         {
-            if (ResponseDelegate != null)
-                ResponseDelegateAction(ResponseDelegate, responseData);
+            runDelegate(responseData);
+            launchDeepLink(deepLink);
         }
 
         public void SetEnabled(bool enabled)
@@ -147,6 +148,7 @@ namespace AdjustSdk.Pcl
 
             PackageHandler = AdjustFactory.GetPackageHandler(this);
             ResponseDelegateAction = deviceUtil.RunResponseDelegate;
+            LauchDeepLinkAction = deviceUtil.LauchDeepLink;
 
             ReadActivityState();
 
@@ -433,6 +435,30 @@ namespace AdjustSdk.Pcl
                 Environment = Environment,
             };
             return packageBuilder;
+        }
+
+        private void runDelegate(ResponseData responseData)
+        {
+            if (ResponseDelegate == null) return;
+            if (ResponseDelegateAction == null) return;
+            if (responseData == null) return;
+
+            ResponseDelegateAction(ResponseDelegate, responseData);
+        }
+
+        private void launchDeepLink(string deepLink)
+        {
+            if (string.IsNullOrEmpty(deepLink)) return;
+            if (LauchDeepLinkAction == null) return;
+
+            if (!Uri.IsWellFormedUriString(deepLink, UriKind.Absolute))
+            {
+                Logger.Error("Malformed deeplink '{0}'", deepLink);
+                return;
+            }
+
+            var deepLinkUri = new Uri(deepLink);
+            LauchDeepLinkAction(deepLinkUri);
         }
 
         #region Timer

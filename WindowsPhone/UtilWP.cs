@@ -14,7 +14,7 @@ namespace AdjustSdk
 {
     public class UtilWP : DeviceUtil
     {
-        public string ClientSdk { get { return "wphone3.3.2"; } }
+        public string ClientSdk { get { return "wphone3.4.0"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -80,7 +80,7 @@ namespace AdjustSdk
         private static string getAppName()
         {
             string title = getManifest().Root.Element("App").Attribute("Title").Value;
-            string sanitized = sanitizeString(title);
+            string sanitized = Util.SanitizeUserAgent(title);
             return sanitized;
         }
 
@@ -94,21 +94,21 @@ namespace AdjustSdk
                 version = Util.f("{0}.{1}", splits[0], splits[1]);
             }
 
-            string sanitized = sanitizeString(version);
+            string sanitized = Util.SanitizeUserAgent(version);
             return sanitized;
         }
 
         private static string getAppAuthor()
         {
             string author = getManifest().Root.Element("App").Attribute("Author").Value;
-            string sanitized = sanitizeString(author);
+            string sanitized = Util.SanitizeUserAgent(author);
             return sanitized;
         }
 
         private static string getAppPublisher()
         {
             string publisher = getManifest().Root.Element("App").Attribute("Publisher").Value;
-            string sanitized = sanitizeString(publisher);
+            string sanitized = Util.SanitizeUserAgent(publisher);
             return sanitized;
         }
 
@@ -126,14 +126,14 @@ namespace AdjustSdk
         private static string getDeviceName()
         {
             string deviceName = DeviceStatus.DeviceName;
-            string sanitized = sanitizeString(deviceName);
+            string sanitized = Util.SanitizeUserAgent(deviceName);
             return sanitized;
         }
 
         private static string getDeviceManufacturer()
         {
             string manufacturer = DeviceStatus.DeviceManufacturer;
-            string sanitized = sanitizeString(manufacturer);
+            string sanitized = Util.SanitizeUserAgent(manufacturer);
             return sanitized;
         }
 
@@ -146,7 +146,7 @@ namespace AdjustSdk
         {
             Version v = System.Environment.OSVersion.Version;
             string version = Util.f("{0}.{1}", v.Major, v.Minor);
-            string sanitized = sanitizeString(version);
+            string sanitized = Util.SanitizeUserAgent(version);
             return sanitized;
         }
 
@@ -160,7 +160,7 @@ namespace AdjustSdk
             }
 
             string language = cultureName.Substring(0, 2);
-            string sanitized = sanitizeString(language, "zz");
+            string sanitized = Util.SanitizeUserAgent(language, "zz");
             return sanitized;
         }
 
@@ -176,7 +176,7 @@ namespace AdjustSdk
 
             string substring = cultureName.Substring(length - 2, 2);
             string country = substring.ToLower();
-            string sanitized = sanitizeString(country, "zz");
+            string sanitized = Util.SanitizeUserAgent(country, "zz");
             return sanitized;
         }
 
@@ -186,23 +186,12 @@ namespace AdjustSdk
             return manifest;
         }
 
-        private static string sanitizeString(string s, string defaultString = "unknown")
-        {
-            if (s == null)
-            {
-                return defaultString;
-            }
-
-            s = s.Replace('=', '_');
-            string result = Regex.Replace(s, @"\s+", "");
-            if (result.Length == 0)
-            {
-                return defaultString;
-            }
-
-            return result;
-        }
-
         #endregion User Agent
+
+
+        public void LauchDeepLink(Uri deepLinkUri)
+        {
+            Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+        }
     }
 }

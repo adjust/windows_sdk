@@ -62,10 +62,17 @@ namespace AdjustSdk.Pcl
             IsPaused = false;
         }
 
-        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData)
+        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData, Dictionary<string, string> jsonDict)
         {
             responseData.ActivityKind = activityPackage.ActivityKind;
-            ActivityHandler.FinishTrackingWithResponse(responseData);
+
+            string deepLink = null;
+            if (jsonDict != null)
+            {
+                jsonDict.TryGetValue("deeplink", out deepLink);
+            }
+
+            ActivityHandler.FinishTrackingWithResponse(responseData, deepLink);
         }
 
         private void InitInternal(IActivityHandler activityHandler)

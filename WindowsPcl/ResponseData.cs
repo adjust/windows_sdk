@@ -40,6 +40,18 @@ namespace AdjustSdk
         // tracker name of current device
         public string TrackerName;
 
+        // tracker network
+        public string Network;
+
+        // tracker campaign
+        public string Campaign;
+
+        // tracker adgroup
+        public string AdGroup;
+
+        // tracker creative
+        public string Creative;
+
         #endregion Set by server
 
         // returns human readable version of activityKind
@@ -48,25 +60,21 @@ namespace AdjustSdk
 
         #region internal
 
-        public void SetResponseData(string responseString)
+        public void SetResponseData(Dictionary<string,string> jsonDict, string jsonString)
         {
-            Dictionary<string, string> responseDic = null;
-            try
+            if (jsonDict == null)
             {
-                responseDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseString);
-            }
-            catch (Exception)
-            { }
-
-            if (responseDic == null)
-            {
-                Error = Util.f("Failed to parse json response: {0}", responseString);
+                Error = Util.f("Failed to parse json response: {0}", jsonString);
                 return;
             }
 
-            responseDic.TryGetValue("error", out Error);
-            responseDic.TryGetValue("tracker_token", out TrackerToken);
-            responseDic.TryGetValue("tracker_name", out TrackerName);
+            jsonDict.TryGetValue("error", out Error);
+            jsonDict.TryGetValue("tracker_token", out TrackerToken);
+            jsonDict.TryGetValue("tracker_name", out TrackerName);
+            jsonDict.TryGetValue("network", out Network);
+            jsonDict.TryGetValue("campaign", out Campaign);
+            jsonDict.TryGetValue("adgroup", out AdGroup);
+            jsonDict.TryGetValue("creative", out Creative);
         }
 
         public void SetResponseError(string errorString)
@@ -79,13 +87,17 @@ namespace AdjustSdk
 
         public override string ToString()
         {
-            return Util.f("[kind: {0} success:{1} willRetry:{2} error:{3} trackerToken:{4} trackerName:{5}]",
+            return Util.f("[kind: {0} success:{1} willRetry:{2} error:{3} trackerToken:{4} trackerName:{5} network:{6} campaign:{7} adgroup:{8} creative:{9}]",
                 ActivityKindString,
                 Success,
                 WillRetry,
                 Error.Quote(),
                 TrackerToken,
-                TrackerName.Quote());
+                TrackerName.Quote(),
+                Network.Quote(),
+                Campaign.Quote(),
+                AdGroup.Quote(),
+                Creative.Quote());
         }
 
         public Dictionary<string, string> ToDic()
@@ -97,22 +109,23 @@ namespace AdjustSdk
                 { "willRetry", (WillRetry? "true" : "false")}
             };
 
-            if (!string.IsNullOrEmpty(Error))
-            {
-                responseDataDic.Add("error", Error);
-            }
-
-            if (!string.IsNullOrEmpty(TrackerToken))
-            {
-                responseDataDic.Add("trackerToken", TrackerToken);
-            }
-
-            if (!string.IsNullOrEmpty(TrackerName))
-            {
-                responseDataDic.Add("trackerName", TrackerName);
-            }
+            addToDic(responseDataDic, "error", Error);
+            addToDic(responseDataDic, "trackerToken", TrackerToken);
+            addToDic(responseDataDic, "trackerName", TrackerName);
+            addToDic(responseDataDic, "network", Network);
+            addToDic(responseDataDic, "campaign", Campaign);
+            addToDic(responseDataDic, "adgroup", AdGroup);
+            addToDic(responseDataDic, "creative", Creative);
 
             return responseDataDic;
+        }
+
+        private void addToDic(Dictionary<string, string> dic, string key, string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                dic.Add(key, value);
+            }
         }
     }
 }

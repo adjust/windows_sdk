@@ -22,6 +22,7 @@ namespace AdjustSdk.Pcl
         {
             internal ActivityPackage ActivtyPackage;
             internal ResponseData ResponseData;
+            internal Dictionary<string, string> JsonDict;
         }
 
         public RequestHandler(IPackageHandler packageHandler)
@@ -46,22 +47,19 @@ namespace AdjustSdk.Pcl
 
         private SendResponse SendInternal(ActivityPackage activityPackage)
         {
-            ResponseData responseData;
+            SendResponse sendResponse;
             try
             {
                 using (var httpResponseMessage = ExecuteRequest(activityPackage))
                 {
-                    responseData = ProcessResponse(httpResponseMessage, activityPackage);
+                    sendResponse = ProcessResponse(httpResponseMessage, activityPackage);
                 }
             }
-            catch (WebException we) { responseData = ProcessException(we, activityPackage); }
-            catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }
+            catch (WebException we) { sendResponse = ProcessException(we, activityPackage); }
+            catch (Exception ex) { sendResponse = ProcessException(ex, activityPackage); }
 
-            return new SendResponse
-            {
-                ActivtyPackage = activityPackage,
-                ResponseData = responseData
-            };
+            sendResponse.ActivtyPackage = activityPackage;
+            return sendResponse;
         }
 
         private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
@@ -83,15 +81,17 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
+        private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
+            Dictionary<string, string> jsonDict = null;
 
             using (var content = httpResponseMessage.Content)
             {
                 var responseString = content.ReadAsStringAsync().Result;
+                jsonDict = Util.BuildJsonDict(responseString);
 
-                responseData.SetResponseData(responseString);
+                responseData.SetResponseData(jsonDict, responseString);
 
                 if (httpResponseMessage.IsSuccessStatusCode)
                 {
@@ -109,7 +109,6 @@ namespace AdjustSdk.Pcl
                 }
                 else
                 {
-                    responseData.SetResponseData(responseString);
                     responseData.WillRetry = true;
 
                     Logger.Error("{0}. ({1}). Will retry later.",
@@ -118,20 +117,27 @@ namespace AdjustSdk.Pcl
                 }
             }
 
-            return responseData;
+            return new SendResponse
+            {
+                ResponseData = responseData,
+                JsonDict = jsonDict
+            };
         }
 
-        private ResponseData ProcessException(WebException webException, ActivityPackage activityPackage)
+        private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
+            Dictionary<string, string> jsonDict = null;
+
 
             using (var response = webException.Response as HttpWebResponse)
             using (var streamResponse = response.GetResponseStream())
             using (var streamReader = new StreamReader(streamResponse))
             {
                 var responseString = streamReader.ReadToEnd();
+                jsonDict = Util.BuildJsonDict(responseString);
 
-                responseData.SetResponseData(responseString);
+                responseData.SetResponseData(jsonDict, responseString);
                 responseData.WillRetry = true;
 
                 Logger.Error("{0}. ({1}, {2}). Will retry later.",
@@ -140,10 +146,14 @@ namespace AdjustSdk.Pcl
                     (int)response.StatusCode);
             }
 
-            return responseData;
+            return new SendResponse
+            {
+                ResponseData = responseData,
+                JsonDict = jsonDict,
+            };
         }
 
-        private ResponseData ProcessException(Exception exception, ActivityPackage activityPackage)
+        private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
         {
             ResponseData responseData = new ResponseData();
 
@@ -152,7 +162,10 @@ namespace AdjustSdk.Pcl
 
             Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
 
-            return responseData;
+            return new SendResponse
+            {
+                ResponseData = responseData,
+            };
         }
 
         private void PackageSent(Task<SendResponse> SendTask)
@@ -167,7 +180,8 @@ namespace AdjustSdk.Pcl
             if (successRunning)
                 PackageHandler.FinishedTrackingActivity(
                     activityPackage: SendTask.Result.ActivtyPackage,
-                    responseData: SendTask.Result.ResponseData);
+                    responseData: SendTask.Result.ResponseData,
+                    jsonDict: SendTask.Result.JsonDict);
 
             if (successRunning && !SendTask.Result.ResponseData.WillRetry)
                 PackageHandler.SendNextPackage();

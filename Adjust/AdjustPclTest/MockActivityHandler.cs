@@ -24,7 +24,7 @@ namespace AdjustTest.Pcl
             MockLogger = mockLogger;
         }
 
-        public void FinishTrackingWithResponse(ResponseData responseData)
+        public void FinishTrackingWithResponse(ResponseData responseData, string deepLink)
         {
             MockLogger.Test("{0} FinishTrackingWithResponse", prefix);
         }

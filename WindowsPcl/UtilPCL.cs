@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
@@ -254,5 +255,43 @@ namespace AdjustSdk.Pcl
         }
 
         #endregion Serialization
+
+        public static string SanitizeUserAgent(string value, string defaultString = "unknown")
+        {
+            if (value == null)
+            {
+                return defaultString;
+            }
+
+            var charsToRemove = @"[][\()/""<>?@{}]|\s";
+
+            value = Regex.Replace(value, charsToRemove, "");
+
+            var charsToReplaceWithDot = @"[,:;]";
+
+            value = Regex.Replace(value, charsToReplaceWithDot, ".");
+
+            value = value.Replace("=", "_");
+
+            if (value.Length == 0)
+            {
+                return defaultString;
+            }
+
+            return value;
+        }
+
+        internal static Dictionary<string, string> BuildJsonDict(string jsonString)
+        {
+            Dictionary<string, string> jsonDic = null;
+            try
+            {
+                jsonDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString);
+            }
+            catch (Exception)
+            { }
+
+            return jsonDic;
+        }
     }
 }

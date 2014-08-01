@@ -1,6 +1,6 @@
 ## Summary
 
-This is the Windows SDK of adjust.io™. You can read more about adjust.io™ at [adjust.io](http://adjust.io).
+This is the Windows SDK of adjust™. You can read more about adjust™ at [adjust.com](http://adjust.com).
 
 ## Basic Installation
 
@@ -220,6 +220,8 @@ be notified about the success of that operation and receive additional
 information about the current install. Follow these steps to implement a
 delegate to this event.
 
+Please make sure to consider [applicable attribution data policies.][attribution-data]
+
 1. Add the `using AdjustSdk` import and create a method with the signature of
 the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
 class.
@@ -368,6 +370,7 @@ public partial class App : Application
 [wp_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/04_wp_app_integration.png
 [ws_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/05_ws_app_integration.png
 [run_app]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/06_run_app.png
+[attribution_data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
 
 ## License
 

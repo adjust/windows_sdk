@@ -21,5 +21,7 @@ namespace AdjustSdk.Pcl
         void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData);
 
         void Sleep(int milliseconds);
+
+        void LauchDeepLink(Uri deepLinkUri);
     }
 }
