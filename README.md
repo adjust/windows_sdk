@@ -241,6 +241,7 @@ one of these values:
 Session
 Event
 Revenue
+Reattribution
 ```
 
 - `string ActivityKindString` human readable version of the activity kind.
@@ -250,6 +251,7 @@ Possible values:
 session
 event
 revenue
+reattribution
 ```
 
 - `bool Success` indicates whether or not the tracking attempt was
@@ -261,7 +263,14 @@ revenue
   request failed or response could not be parsed.
 - `string TrackerName` the tracker name of the current install. Is `null` if
   request failed or response could not be parsed.
-
+- `string Network` the network grouping level of the current install. Is `null` if
+  request failed, unavailable, or response could not be parsed.
+- `string Campaign` the campaign grouping level of the current install. Is `null` if
+  request failed, unavailable or response could not be parsed.
+- `string Adgroup` the ad group grouping level of the current install. Is `null` if
+  request failed, unavailable or response could not be parsed.
+- `string Creative` the creative grouping level of the current install. Is `null` if
+  request failed, unavailable or response could not be parsed.
 
 #### Windows Phone
 ```cs
