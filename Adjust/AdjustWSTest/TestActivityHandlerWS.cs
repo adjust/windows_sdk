@@ -22,7 +22,7 @@ namespace AdjustTest.WS
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.4.0"); }
+        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.4.2"); }
 
         [TestMethod]
         public void TestSessionsWS() { TestActivityHandler.TestSessions(); }

@@ -33,7 +33,7 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wphone813.4.0"; } }
+        public string ClientSdk { get { return "wphone813.4.2"; } }
 
         public string GetMd5Hash(string input)
         {

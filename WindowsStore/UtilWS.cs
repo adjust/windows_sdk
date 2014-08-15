@@ -31,7 +31,7 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wstore3.4.0"; } }
+        public string ClientSdk { get { return "wstore3.4.2"; } }
 
         public string GetMd5Hash(string input)
         {
