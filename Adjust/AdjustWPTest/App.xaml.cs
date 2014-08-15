@@ -6,9 +6,9 @@ using System.Windows.Markup;
 using System.Windows.Navigation;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
-using AdjustWPTest.Resources;
+using AdjustTest.WP.Resources;
 
-namespace AdjustWPTest
+namespace AdjustTest.WP
 {
     public partial class App : Application
     {

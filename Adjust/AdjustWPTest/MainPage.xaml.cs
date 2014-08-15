@@ -1,4 +1,4 @@
-﻿using AdjustWPTest.Resources;
+﻿using AdjustTest.WP.Resources;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Shell;
 using Microsoft.Phone.Testing;
@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
 
-namespace AdjustWPTest
+namespace AdjustTest.WP
 {
     public partial class MainPage : PhoneApplicationPage
     {

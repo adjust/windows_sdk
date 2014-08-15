@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AdjustWPTest
+namespace AdjustTest.WP
 {
     [TestClass]
     public class TestRequestHandlerWP
@@ -23,7 +23,7 @@ namespace AdjustWPTest
         [TestInitialize]
         public void SetUp()
         {
-            TestRequestHandler = new TestRequestHandler(new UtilWP(), new AssertTestTools());
+            TestRequestHandler = new TestRequestHandler(new UtilWP(), new AssertTestWP());
             TestRequestHandler.SetUp();
         }
 

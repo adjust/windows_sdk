@@ -1,9 +1,9 @@
 ﻿using AdjustTest.Pcl;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 
-namespace AdjustWPTest
+namespace AdjustTest.WS
 {
-    public class AssertTestTools : IAssert
+    public class AssertTestWS : IAssert
     {
         public void IsTrue(bool condition, string message)
         {

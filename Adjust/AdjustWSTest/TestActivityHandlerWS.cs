@@ -12,7 +12,7 @@ namespace AdjustTest.WS
         [ClassInitialize]
         public static void InitializeTestActivityHandlerWS(TestContext testContext)
         {
-            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestPlatform());
+            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestWS());
         }
 
         [TestInitialize]

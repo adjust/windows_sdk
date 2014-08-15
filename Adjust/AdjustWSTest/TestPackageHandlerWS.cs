@@ -13,7 +13,7 @@ namespace AdjustTest.WS
         [ClassInitialize]
         public static void InitializeTestPackageHandlerWS(TestContext testContext)
         {
-            TestPackageHandler = new TestPackageHandler(new UtilWS(), new AssertTestPlatform());
+            TestPackageHandler = new TestPackageHandler(new UtilWS(), new AssertTestWS());
         }
 
         [TestInitialize]
