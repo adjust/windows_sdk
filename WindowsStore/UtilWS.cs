@@ -137,6 +137,7 @@ namespace AdjustSdk
             {
                 case "Computer.Lunchbox": return "pc";
                 case "Computer.Tablet": return "tablet";
+                case "Computer.Portable": return "phone";
                 default: return "unknown";
             }
         }
