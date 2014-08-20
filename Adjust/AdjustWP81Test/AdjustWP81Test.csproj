@@ -130,6 +130,10 @@
       <Project>{1057a921-4bc8-4ca0-b970-e657a34aa6c3}</Project>
       <Name>AdjustWP81</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\WindowsUap\WindowsUap.csproj">
+      <Project>{4aa3181e-fbd4-4d11-ac6c-abcd52c6516a}</Project>
+      <Name>WindowsUap</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AdjustPclTest\AdjustTestPcl.csproj">
       <Project>{1c45afc4-db01-4d8e-95c6-9ec258e55c65}</Project>
       <Name>AdjustTestPcl</Name>

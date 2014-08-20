@@ -64,9 +64,11 @@
         <file src="..\WindowsStore\bin\Debug\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
         <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
 		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Debug\WindowsUap.dll" target="lib\netcore45\WindowsUap.dll" />
 		
         <file src="..\WindowsPhone81\bin\Debug\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
         <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
 		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Debug\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
     </files>
 </package>

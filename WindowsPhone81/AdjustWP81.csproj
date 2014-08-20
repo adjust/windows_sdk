@@ -86,11 +86,14 @@
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
       <Name>WindowsPcl</Name>
     </ProjectReference>
+    <ProjectReference Include="..\WindowsUap\WindowsUap.csproj">
+      <Project>{4aa3181e-fbd4-4d11-ac6c-abcd52c6516a}</Project>
+      <Name>WindowsUap</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Adjust.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SystemInfoEstimate.cs" />
     <Compile Include="UtilWP81.cs" />
   </ItemGroup>
   <ItemGroup>
