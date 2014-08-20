@@ -37,12 +37,12 @@ namespace AdjustTest.WS
         public void TestChecksWS() { TestActivityHandler.TestChecks(); }
 
         [TestMethod]
-        public void TestDisable() { TestActivityHandler.TestDisable(); }
+        public void TestDisableWS() { TestActivityHandler.TestDisable(); }
 
         [TestMethod]
-        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
+        public void TestOpenUrlWS() { TestActivityHandler.TestOpenUrl(); }
 
         [TestMethod]
-        public void TestUserAgent() { TestActivityHandler.TestUserAgent(); }
+        public void TestUserAgentWS() { TestActivityHandler.TestUserAgent(); }
     }
 }

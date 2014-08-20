@@ -22,12 +22,12 @@ namespace AdjustTest.WP81
         public void TearDown() { TestPackageHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstPackageWS() { TestPackageHandler.TestFirstPackage(); }
+        public void TestFirstPackageWP81() { TestPackageHandler.TestFirstPackage(); }
 
         [TestMethod]
-        public void TestPauseWS() { TestPackageHandler.TestPause(); }
+        public void TestPauseWP81() { TestPackageHandler.TestPause(); }
 
         [TestMethod]
-        public void TestMultiplePackages() { TestPackageHandler.TestMultiplePackages(); }
+        public void TestMultiplePackagesWP81() { TestPackageHandler.TestMultiplePackages(); }
     }
 }

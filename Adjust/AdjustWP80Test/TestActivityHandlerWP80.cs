@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace AdjustTest.WP
 {
     [TestClass]
-    public class TestActivityHandlerWP
+    public class TestActivityHandlerWP80
     {
         private static TestActivityHandler TestActivityHandler;
 
@@ -23,7 +23,7 @@ namespace AdjustTest.WP
         [TestInitialize]
         public void SetUp()
         {
-            TestActivityHandler = new TestActivityHandler(new UtilWP(), new AssertTestWP());
+            TestActivityHandler = new TestActivityHandler(new UtilWP80(), new AssertTestWP80());
             TestActivityHandler.SetUp();
         }
 
@@ -31,27 +31,27 @@ namespace AdjustTest.WP
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWP() { TestActivityHandler.TestFirstSession("wphone3.4.2"); }
+        public void TestFirstSessionWP80() { TestActivityHandler.TestFirstSession("wphone80-3.4.2"); }
 
         [TestMethod]
-        public void TestSessionsWP() { TestActivityHandler.TestSessions(); }
+        public void TestSessionsWP80() { TestActivityHandler.TestSessions(); }
 
         [TestMethod]
-        public void TestEventsBufferedWP() { TestActivityHandler.TestEventsBuffered(); }
+        public void TestEventsBufferedWP80() { TestActivityHandler.TestEventsBuffered(); }
 
         [TestMethod]
-        public void TestEventsNotBufferedWP() { TestActivityHandler.TestEventsNotBuffered(); }
+        public void TestEventsNotBufferedWP80() { TestActivityHandler.TestEventsNotBuffered(); }
 
         [TestMethod]
-        public void TestChecksWP() { TestActivityHandler.TestChecks(); }
+        public void TestChecksWP80() { TestActivityHandler.TestChecks(); }
 
         [TestMethod]
-        public void TestDisable() { TestActivityHandler.TestDisable(); }
+        public void TestDisableWP80() { TestActivityHandler.TestDisable(); }
 
         [TestMethod]
-        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
+        public void TestOpenUrlWP80() { TestActivityHandler.TestOpenUrl(); }
 
         [TestMethod]
-        public void TestUserAgent() { TestActivityHandler.TestUserAgent(); }
+        public void TestUserAgentWP80() { TestActivityHandler.TestUserAgent(); }
     }
 }

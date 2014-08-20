@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 namespace AdjustTest.WP81
 {
     [TestClass]
-    public class TestActivityHandlerWP
+    public class TestActivityHandlerWP81
     {
         private static TestActivityHandler TestActivityHandler;
 
@@ -22,27 +22,27 @@ namespace AdjustTest.WP81
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wphone813.4.2"); }
+        public void TestFirstSessionWP81() { TestActivityHandler.TestFirstSession("wphone81-3.4.2"); }
 
         [TestMethod]
-        public void TestSessionsWS() { TestActivityHandler.TestSessions(); }
+        public void TestSessionsWP81() { TestActivityHandler.TestSessions(); }
 
         [TestMethod]
-        public void TestEventsBufferedWS() { TestActivityHandler.TestEventsBuffered(); }
+        public void TestEventsBufferedWP81() { TestActivityHandler.TestEventsBuffered(); }
 
         [TestMethod]
-        public void TestEventsNotBufferedWS() { TestActivityHandler.TestEventsNotBuffered(); }
+        public void TestEventsNotBufferedWP81() { TestActivityHandler.TestEventsNotBuffered(); }
 
         [TestMethod]
-        public void TestChecksWS() { TestActivityHandler.TestChecks(); }
+        public void TestChecksWP81() { TestActivityHandler.TestChecks(); }
 
         [TestMethod]
-        public void TestDisable() { TestActivityHandler.TestDisable(); }
+        public void TestDisableWP81() { TestActivityHandler.TestDisable(); }
 
         [TestMethod]
-        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
+        public void TestOpenUrlWP81() { TestActivityHandler.TestOpenUrl(); }
 
         [TestMethod]
-        public void TestUserAgent() { TestActivityHandler.TestUserAgent(); }
+        public void TestUserAgentWP81() { TestActivityHandler.TestUserAgent(); }
     }
 }

@@ -33,7 +33,7 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wphone813.4.2"; } }
+        public string ClientSdk { get { return "wphone81-3.4.2"; } }
 
         public string GetMd5Hash(string input)
         {
@@ -181,12 +181,12 @@ namespace AdjustSdk
             }
         }
 
-        private static string getOsName()
+        private string getOsName()
         {
             return "windows-phone";
         }
 
-        private static string getOsVersion()
+        private string getOsVersion()
         {
             return SystemInfoEstimate.GetWindowsVersionAsync().Result;
         }

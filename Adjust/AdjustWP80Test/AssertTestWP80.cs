@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdjustTest.WP
 {
-    public class AssertTestWP : IAssert
+    public class AssertTestWP80 : IAssert
     {
         public void IsTrue(bool condition, string message)
         {

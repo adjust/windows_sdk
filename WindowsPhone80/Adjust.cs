@@ -11,7 +11,7 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static DeviceUtil Util = new UtilWP();
+        private static DeviceUtil Util = new UtilWP80();
 
         #region AdjustApi
 

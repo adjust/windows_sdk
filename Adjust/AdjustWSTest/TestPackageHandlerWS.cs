@@ -29,6 +29,6 @@ namespace AdjustTest.WS
         public void TestPauseWS() { TestPackageHandler.TestPause(); }
 
         [TestMethod]
-        public void TestMultiplePackages() { TestPackageHandler.TestMultiplePackages(); }
+        public void TestMultiplePackagesWS() { TestPackageHandler.TestMultiplePackages(); }
     }
 }

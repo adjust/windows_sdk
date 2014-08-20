@@ -164,6 +164,14 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Bcl.Async.1.0.168\lib\win8\Microsoft.Threading.Tasks.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="PCLStorage, Version=0.9.6.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLStorage.0.9.6\lib\portable-win8+wpa81\PCLStorage.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLStorage.Abstractions, Version=0.9.6.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLStorage.0.9.6\lib\portable-win8+wpa81\PCLStorage.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Net.Http.Extensions">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.22\lib\win8\System.Net.Http.Extensions.dll</HintPath>
     </Reference>

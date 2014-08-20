@@ -42,7 +42,7 @@
         </dependencies>
 		<references>
 			<group targetFramework="WindowsPhone8.0">
-				<reference file="AdjustWP.dll" />
+				<reference file="AdjustWP80.dll" />
 				<reference file="WindowsPcl.dll" />
 			</group>
 			<group targetFramework=".NETCore4.5">
@@ -57,7 +57,7 @@
 		<tags>Adjust</tags>
     </metadata>
     <files>
-        <file src="..\WindowsPhone\bin\Debug\AdjustWP.dll" target="lib\wp8\AdjustWP.dll" />
+        <file src="..\WindowsPhone80\bin\Debug\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
         <file src="..\WindowsPCL\bin\Debug\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
 		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
 		

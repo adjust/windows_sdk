@@ -12,9 +12,9 @@ using System.Xml.Linq;
 
 namespace AdjustSdk
 {
-    public class UtilWP : DeviceUtil
+    public class UtilWP80 : DeviceUtil
     {
-        public string ClientSdk { get { return "wphone3.4.2"; } }
+        public string ClientSdk { get { return "wphone80-3.4.2"; } }
 
         public string GetMd5Hash(string input)
         {

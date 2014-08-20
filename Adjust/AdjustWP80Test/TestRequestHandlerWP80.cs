@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace AdjustTest.WP
 {
     [TestClass]
-    public class TestRequestHandlerWP
+    public class TestRequestHandlerWP80
     {
         private static TestRequestHandler TestRequestHandler;
 
@@ -23,7 +23,7 @@ namespace AdjustTest.WP
         [TestInitialize]
         public void SetUp()
         {
-            TestRequestHandler = new TestRequestHandler(new UtilWP(), new AssertTestWP());
+            TestRequestHandler = new TestRequestHandler(new UtilWP80(), new AssertTestWP80());
             TestRequestHandler.SetUp();
         }
 
@@ -31,9 +31,9 @@ namespace AdjustTest.WP
         public void TearDown() { TestRequestHandler.TearDown(); }
 
         [TestMethod]
-        public void TestSendFirstPackageWS() { TestRequestHandler.TestSendFirstPackage(); }
+        public void TestSendFirstPackageWP80() { TestRequestHandler.TestSendFirstPackage(); }
 
         [TestMethod]
-        public void TestErrorSendPackageWS() { TestRequestHandler.TestErrorSendPackage(); }
+        public void TestErrorSendPackageWP80() { TestRequestHandler.TestErrorSendPackage(); }
     }
 }

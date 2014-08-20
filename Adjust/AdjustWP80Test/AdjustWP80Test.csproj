@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AdjustTest.WP</RootNamespace>
-    <AssemblyName>AdjustWPTest</AssemblyName>
+    <AssemblyName>AdjustWP80Test</AssemblyName>
     <TargetFrameworkIdentifier>WindowsPhone</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v8.0</TargetFrameworkVersion>
     <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
@@ -19,7 +19,7 @@
     </SupportedCultures>
     <XapOutputs>true</XapOutputs>
     <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
-    <XapFilename>AdjustWPTest_$(Configuration)_$(Platform).xap</XapFilename>
+    <XapFilename>AdjustWP80Test_Debug_x86.xap</XapFilename>
     <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
     <SilverlightAppEntry>AdjustWPTest.App</SilverlightAppEntry>
     <ValidateXaml>true</ValidateXaml>
@@ -95,7 +95,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AssertTestWP.cs" />
+    <Compile Include="AssertTestWP80.cs" />
     <Compile Include="LocalizedStrings.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -106,9 +106,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>AppResources.resx</DependentUpon>
     </Compile>
-    <Compile Include="TestActivityHandlerWP.cs" />
-    <Compile Include="TestPackageHandlerWP.cs" />
-    <Compile Include="TestRequestHandlerWP.cs" />
+    <Compile Include="TestActivityHandlerWP80.cs" />
+    <Compile Include="TestPackageHandlerWP80.cs" />
+    <Compile Include="TestRequestHandlerWP80.cs" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -185,6 +185,14 @@
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTesting.Phone">
       <HintPath>..\packages\WPToolkitTestFx.4.2012.11.14\lib\wp8\Microsoft.VisualStudio.QualityTools.UnitTesting.Phone.dll</HintPath>
     </Reference>
+    <Reference Include="PCLStorage, Version=0.9.6.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLStorage.0.9.6\lib\wp8\PCLStorage.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLStorage.Abstractions, Version=0.9.6.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLStorage.0.9.6\lib\wp8\PCLStorage.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.22\lib\sl4-windowsphone71\System.Net.Http.dll</HintPath>
     </Reference>
@@ -200,9 +208,9 @@
       <Project>{1037B76A-1170-414D-AFAE-4C4621E78007}</Project>
       <Name>WindowsPcl</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\WindowsPhone\AdjustWP.csproj">
-      <Project>{147466FE-FAF6-455A-8CA0-6819D0E7D82D}</Project>
-      <Name>AdjustWP</Name>
+    <ProjectReference Include="..\..\WindowsPhone80\AdjustWP80.csproj">
+      <Project>{147466fe-faf6-455a-8ca0-6819d0e7d82d}</Project>
+      <Name>AdjustWP80</Name>
     </ProjectReference>
     <ProjectReference Include="..\AdjustPclTest\AdjustTestPcl.csproj">
       <Project>{1C45AFC4-DB01-4D8E-95C6-9EC258E55C65}</Project>
