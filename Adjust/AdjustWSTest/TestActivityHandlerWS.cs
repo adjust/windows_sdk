@@ -12,7 +12,7 @@ namespace AdjustTest.WS
         [ClassInitialize]
         public static void InitializeTestActivityHandlerWS(TestContext testContext)
         {
-            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestPlatform());
+            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestWS());
         }
 
         [TestInitialize]
@@ -22,7 +22,7 @@ namespace AdjustTest.WS
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.4.0"); }
+        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.4.2"); }
 
         [TestMethod]
         public void TestSessionsWS() { TestActivityHandler.TestSessions(); }
@@ -37,12 +37,12 @@ namespace AdjustTest.WS
         public void TestChecksWS() { TestActivityHandler.TestChecks(); }
 
         [TestMethod]
-        public void TestDisable() { TestActivityHandler.TestDisable(); }
+        public void TestDisableWS() { TestActivityHandler.TestDisable(); }
 
         [TestMethod]
-        public void TestOpenUrl() { TestActivityHandler.TestOpenUrl(); }
+        public void TestOpenUrlWS() { TestActivityHandler.TestOpenUrl(); }
 
         [TestMethod]
-        public void TestUserAgent() { TestActivityHandler.TestUserAgent(); }
+        public void TestUserAgentWS() { TestActivityHandler.TestUserAgent(); }
     }
 }

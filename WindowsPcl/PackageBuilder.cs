@@ -56,9 +56,9 @@ namespace AdjustSdk.Pcl
             // general
             SaveParameter("created_at", CreatedAt);
             SaveParameter("app_token", AppToken);
-            SaveParameter("wp_udid", DeviceUniqueId);
-            SaveParameter("ws_hwid", HardwareId);
-            SaveParameter("ws_naid", NetworkAdapterId);
+            SaveParameter("win_udid", DeviceUniqueId);
+            SaveParameter("win_hwid", HardwareId);
+            SaveParameter("win_naid", NetworkAdapterId);
             SaveParameter("win_uuid", Uuid.ToString());
             SaveParameter("environment", Environment.ToString().ToLower());
             // session related (used for events as well)

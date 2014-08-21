@@ -13,7 +13,7 @@ namespace AdjustTest.WS
         [ClassInitialize]
         public static void InitializeTestRequestHandlerWS(TestContext testContext)
         {
-            TestRequestHandler = new TestRequestHandler(new UtilWS(), new AssertTestPlatform());
+            TestRequestHandler = new TestRequestHandler(new UtilWS(), new AssertTestWS());
         }
 
         [TestInitialize]
