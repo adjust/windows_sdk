@@ -379,7 +379,7 @@ public partial class App : Application
 [wp_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/04_wp_app_integration.png
 [ws_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/05_ws_app_integration.png
 [run_app]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/06_run_app.png
-[attribution_data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
+[attribution-data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
 
 ## License
 
