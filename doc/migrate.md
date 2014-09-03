@@ -1,4 +1,13 @@
-## Migrate your adjust SDK for Windows to v3.3.0 from v2.1.0
+## Migrate your adjust SDK for Windows to 3.5.0
+
+Add the following line to see log messages in the output. The messages will only be visible
+when your app is built with the `Debug` configuration.
+
+```cs
+Adjust.SetLogDelegate(msg => System.Diagnostics.Debug.WriteLine(msg));
+```
+
+## Additional steps if you come from v2.1.0
 
 We renamed the main class `AdjustIo` to `Adjust`. Follow these steps to update
 all adjust SDK calls.
