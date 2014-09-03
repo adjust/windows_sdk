@@ -2,11 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>3.4.2</version>
+        <version>3.5.0</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
         <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
+		<releaseNotes>If your upgrading to 3.5.0+ please follow the instructions at https://github.com/adjust/windows_sdk/blob/master/doc/migrate.md</releaseNotes>
 		<summary>This is the Windows SDK of Adjust.</summary>
 		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
 		<iconUrl>https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/gravatar.gif</iconUrl>
