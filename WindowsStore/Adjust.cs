@@ -240,6 +240,15 @@ namespace AdjustSdk
             AdjustApi.SetSdkPrefix(sdkPrefix);
         }
 
+        /// <summary>
+        /// Delegate method to get the log messages of the adjust SDK
+        /// </summary>
+        /// <param name="logDelegate"></param>
+        public static void SetLogDelegate(Action<String> logDelegate)
+        {
+            AdjustApi.SetLogDelegate(logDelegate);
+        }
+
         #endregion AdjustApi
     }
 }
