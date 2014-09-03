@@ -134,6 +134,11 @@ namespace AdjustSdk.Pcl
             ClientSdk = Util.f("{0}@{1}", sdkPrefix, ClientSdk);
         }
 
+        public void SetLogDelegate(Action<String> logDelegate)
+        {
+            Logger.LogDelegate = logDelegate;
+        }
+
         private void InitInternal(string appToken, DeviceUtil deviceUtil)
         {
             if (!CheckAppToken(appToken)) return;
