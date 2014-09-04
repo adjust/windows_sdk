@@ -22,7 +22,7 @@ namespace AdjustTest.WP81
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWP81() { TestActivityHandler.TestFirstSession("wphone81-3.4.2"); }
+        public void TestFirstSessionWP81() { TestActivityHandler.TestFirstSession("wphone81-3.5.0"); }
 
         [TestMethod]
         public void TestSessionsWP81() { TestActivityHandler.TestSessions(); }

@@ -6,6 +6,8 @@ namespace AdjustSdk.Pcl
     {
         AdjustSdk.LogLevel LogLevel { set; }
 
+        Action<String> LogDelegate { set; }
+
         void Verbose(string message, params object[] parameters);
 
         void Debug(string message, params object[] parameters);

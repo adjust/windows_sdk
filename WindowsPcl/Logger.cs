@@ -9,10 +9,12 @@ namespace AdjustSdk.Pcl
         private const string LogTag = "Adjust";
 
         public LogLevel LogLevel { private get; set; }
+        public Action<String> LogDelegate { private get; set; }
 
         internal Logger()
         {
             LogLevel = LogLevel.Info;
+            LogDelegate = null;
         }
 
         public void Verbose(string message, params object[] parameters)
@@ -50,6 +52,9 @@ namespace AdjustSdk.Pcl
             if (LogLevel > logLevel)
                 return;
 
+            if (LogDelegate == null)
+                return;
+
             var logLevelString = logLevel.ToString().Substring(0, 1).ToLower();
 
             LogMessage(message, logLevelString, parameters);
@@ -61,7 +66,8 @@ namespace AdjustSdk.Pcl
             // write to Debug by new line '\n'
             foreach (string formattedLine in formattedMessage.Split(new char[] { '\n' }))
             {
-                System.Diagnostics.Debug.WriteLine("\t[{0}]{1} {2}", LogTag, logLevelString, formattedLine);
+                var logMessage = String.Format("\t[{0}]{1} {2}", LogTag, logLevelString, formattedLine); 
+                LogDelegate(logMessage);
             }
         }
     }

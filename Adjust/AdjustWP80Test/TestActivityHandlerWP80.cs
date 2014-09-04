@@ -31,7 +31,7 @@ namespace AdjustTest.WP
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWP80() { TestActivityHandler.TestFirstSession("wphone80-3.4.2"); }
+        public void TestFirstSessionWP80() { TestActivityHandler.TestFirstSession("wphone80-3.5.0"); }
 
         [TestMethod]
         public void TestSessionsWP80() { TestActivityHandler.TestSessions(); }

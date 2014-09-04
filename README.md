@@ -116,6 +116,13 @@ Adjust.SetLogLevel(LogLevel.Error);   // disable warnings as well
 Adjust.SetLogLevel(LogLevel.Assert);  // disable errors as well
 ```
 
+Add the following line to see log messages in the output. The messages will only be visible
+when your app is built with the `Debug` configuration.
+
+```cs
+Adjust.SetLogDelegate(msg => System.Diagnostics.Debug.WriteLine(msg));
+```
+
 Depending on whether or not you build your app for testing or for production,
 you must call the `SetEnvironment` method with one of these parameters:
 

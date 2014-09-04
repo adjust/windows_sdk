@@ -165,5 +165,10 @@ namespace AdjustSdk.Pcl
 
             ActivityHandler.SetSdkPrefix(sdkPrefix);
         }
+
+        public static void SetLogDelegate(Action<String> logDelegate)
+        {
+            Logger.LogDelegate = logDelegate;
+        }
     }
 }

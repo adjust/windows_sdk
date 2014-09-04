@@ -2,11 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>3.4.2</version>
+        <version>3.5.0</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
         <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
+		<releaseNotes>If your upgrading to 3.5.0+ please follow the instructions at https://github.com/adjust/windows_sdk/blob/master/doc/migrate.md</releaseNotes>
 		<summary>This is the Windows SDK of Adjust.</summary>
 		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
 		<iconUrl>https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/gravatar.gif</iconUrl>
@@ -57,18 +58,18 @@
 		<tags>Adjust</tags>
     </metadata>
     <files>
-        <file src="..\WindowsPhone80\bin\Debug\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
-        <file src="..\WindowsPCL\bin\Debug\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
+        <file src="..\WindowsPhone80\bin\Release\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
 		
-        <file src="..\WindowsStore\bin\Debug\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
-        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
-		<file src="..\WindowsUap\bin\Debug\WindowsUap.dll" target="lib\netcore45\WindowsUap.dll" />
+        <file src="..\WindowsStore\bin\Release\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\netcore45\WindowsUap.dll" />
 		
-        <file src="..\WindowsPhone81\bin\Debug\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
-        <file src="..\WindowsPCL\bin\Debug\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Debug\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
-		<file src="..\WindowsUap\bin\Debug\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
+        <file src="..\WindowsPhone81\bin\Release\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
     </files>
 </package>
