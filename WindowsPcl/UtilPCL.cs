@@ -272,6 +272,13 @@ namespace AdjustSdk.Pcl
             value = Regex.Replace(value, charsToReplaceWithDot, ".");
 
             value = value.Replace("=", "_");
+            value = value.Replace("ä", "ae");
+            value = value.Replace("ö", "oe");
+            value = value.Replace("ü", "ue");
+            value = value.Replace("Ä", "Ae");
+            value = value.Replace("Ö", "Oe");
+            value = value.Replace("Ü", "Ue");
+            value = value.Replace("ß", "ss");
 
             if (value.Length == 0)
             {

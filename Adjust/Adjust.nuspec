@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>3.5.0</version>
+        <version>3.5.1</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
