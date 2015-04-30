@@ -14,27 +14,24 @@ namespace AdjustSdk.Pcl
         private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
 
         private IPackageHandler PackageHandler;
-        private Action<ResponseData> ResponseDelegate;
-        private ILogger Logger;
+        private static ILogger Logger = AdjustFactory.Logger;
         private HttpMessageHandler HttpMessageHandler;
 
         private struct SendResponse
         {
-            internal ActivityPackage ActivtyPackage;
-            internal ResponseData ResponseData;
-            internal Dictionary<string, string> JsonDict;
+            internal bool WillRetry { get; set; }
+            internal Dictionary<string, string> JsonDict { get; set; }
         }
 
         public RequestHandler(IPackageHandler packageHandler)
         {
-            PackageHandler = packageHandler;
-            Logger = AdjustFactory.Logger;
+            Init(packageHandler);
             HttpMessageHandler = AdjustFactory.GetHttpMessageHandler();
         }
 
-        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        public void Init(IPackageHandler packageHandler)
         {
-            ResponseDelegate = responseDelegate;
+            PackageHandler = packageHandler;
         }
 
         public void SendPackage(ActivityPackage package)
@@ -43,6 +40,11 @@ namespace AdjustSdk.Pcl
                 // continuation used to prevent unhandled exceptions in SendInternal
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
                 .ContinueWith((sendResponse) => PackageSent(sendResponse));
+        }
+
+        public void SendClickPackage(ActivityPackage clickPackage)
+        {
+            Task.Factory.StartNew(() => SendInternal(clickPackage));
         }
 
         private SendResponse SendInternal(ActivityPackage activityPackage)
@@ -58,7 +60,6 @@ namespace AdjustSdk.Pcl
             catch (WebException we) { sendResponse = ProcessException(we, activityPackage); }
             catch (Exception ex) { sendResponse = ProcessException(ex, activityPackage); }
 
-            sendResponse.ActivtyPackage = activityPackage;
             return sendResponse;
         }
 
@@ -68,7 +69,6 @@ namespace AdjustSdk.Pcl
 
             httpClient.Timeout = Timeout;
             httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
-            httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
 
             var url = Util.BaseUrl + activityPackage.Path;
 
@@ -83,88 +83,69 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-            Dictionary<string, string> jsonDict = null;
+            var sendResponse = new SendResponse 
+            {
+                WillRetry = false
+            };
 
+            string sResponse = null;
             using (var content = httpResponseMessage.Content)
             {
-                var responseString = content.ReadAsStringAsync().Result;
-                jsonDict = Util.BuildJsonDict(responseString);
-
-                responseData.SetResponseData(jsonDict, responseString);
-
-                if (httpResponseMessage.IsSuccessStatusCode)
-                {
-                    responseData.Success = true;
-
-                    Logger.Info("{0}", activityPackage.SuccessMessage());
-                }
-                else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
-                    || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
-                {
-                    Logger.Error("{0}. ({1}, {2}).",
-                        activityPackage.FailureMessage(),
-                        responseString.TrimEnd('\r', '\n'),
-                        (int)httpResponseMessage.StatusCode);
-                }
-                else
-                {
-                    responseData.WillRetry = true;
-
-                    Logger.Error("{0}. ({1}). Will retry later.",
-                        activityPackage.FailureMessage(),
-                        (int)httpResponseMessage.StatusCode);
-                }
+                sResponse = content.ReadAsStringAsync().Result;
             }
 
-            return new SendResponse
+            sendResponse.JsonDict = Util.BuildJsonDict(sResponse, httpResponseMessage.IsSuccessStatusCode);
+
+            if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
+                || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
             {
-                ResponseData = responseData,
-                JsonDict = jsonDict
-            };
+                Logger.Error("{0}. ({1}).",
+                    activityPackage.FailureMessage(),
+                    (int)httpResponseMessage.StatusCode);
+            }
+            else if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                sendResponse.WillRetry = true;
+
+                Logger.Error("{0}. ({1}). Will retry later.",
+                    activityPackage.FailureMessage(),
+                    (int)httpResponseMessage.StatusCode);
+            }
+            
+
+            return sendResponse;
         }
 
         private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-            Dictionary<string, string> jsonDict = null;
-
-
+            
             using (var response = webException.Response as HttpWebResponse)
             using (var streamResponse = response.GetResponseStream())
             using (var streamReader = new StreamReader(streamResponse))
             {
-                var responseString = streamReader.ReadToEnd();
-                jsonDict = Util.BuildJsonDict(responseString);
+                var sResponse = streamReader.ReadToEnd();
 
-                responseData.SetResponseData(jsonDict, responseString);
-                responseData.WillRetry = true;
-
-                Logger.Error("{0}. ({1}, {2}). Will retry later.",
+                var sendResponse = new SendResponse
+                {
+                    WillRetry = true,
+                    JsonDict = Util.BuildJsonDict(sResponse, false)
+                };
+                
+                Logger.Error("{0}. ({1}). Will retry later.",
                     activityPackage.FailureMessage(),
-                    responseString.Trim(),
                     (int)response.StatusCode);
-            }
 
-            return new SendResponse
-            {
-                ResponseData = responseData,
-                JsonDict = jsonDict,
-            };
+                return sendResponse;
+            }
         }
 
         private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-
-            responseData.SetResponseError(exception.Message);
-            responseData.WillRetry = true;
-
             Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
 
             return new SendResponse
             {
-                ResponseData = responseData,
+                WillRetry = true,
             };
         }
 
@@ -178,12 +159,9 @@ namespace AdjustSdk.Pcl
                 && !SendTask.IsCanceled;
 
             if (successRunning)
-                PackageHandler.FinishedTrackingActivity(
-                    activityPackage: SendTask.Result.ActivtyPackage,
-                    responseData: SendTask.Result.ResponseData,
-                    jsonDict: SendTask.Result.JsonDict);
+                PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
 
-            if (successRunning && !SendTask.Result.ResponseData.WillRetry)
+            if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();

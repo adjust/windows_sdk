@@ -19,51 +19,24 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wphone81-3.5.1"; } }
-
-        public string GetMd5Hash(string input)
+        public DeviceInfo GetDeviceInfo()
         {
-            return UtilUap.GetMd5Hash(input);
-        }
-
-        public string GetDeviceUniqueId()
-        {
-            return null;
-        }
-
-        public string GetHardwareId()
-        {
-            return UtilUap.GetHardwareId();
-        }
-
-        public string GetNetworkAdapterId()
-        {
-            return UtilUap.GetNetworkAdapterId();
-        }
-
-        public string GetUserAgent()
-        {
-            var deviceInfo = new EasClientDeviceInformation();
-
-            var userAgent = String.Join(" ",
-                UtilUap.getAppDisplayName(),
-                UtilUap.getAppVersion(),
-                UtilUap.getAppPublisher(),
-                UtilUap.getDeviceType(deviceInfo),
-                UtilUap.getDeviceName(deviceInfo),
-                UtilUap.getDeviceManufacturer(deviceInfo),
-                UtilUap.getArchitecture(),
-                getOsName(),
-                UtilUap.getOsVersion(),
-                UtilUap.getLanguage(),
-                UtilUap.getCountry());
-
-            return userAgent;
-        }
-
-        public static string getOsName()
-        {
-            return "windows-phone";
+            return new DeviceInfo
+            {
+                ClientSdk = GetClientSdk(),
+                HardwareId = UtilUap.GetHardwareId(),
+                NetworkAdapterId = UtilUap.GetNetworkAdapterId(),
+                AppDisplayName = UtilUap.GetAppDisplayName(),
+                AppVersion = UtilUap.GetAppVersion(),
+                AppPublisher = UtilUap.GetAppPublisher(),
+                DeviceType = UtilUap.GetDeviceType(),
+                DeviceManufacturer = UtilUap.GetDeviceManufacturer(),
+                Architecture = UtilUap.GetArchitecture(),
+                OsName = GetOsName(),
+                OsVersion = UtilUap.GetOsVersion(),
+                Language = UtilUap.GetLanguage(),
+                Country = UtilUap.GetCountry(),
+            };
         }
 
         public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
@@ -76,9 +49,16 @@ namespace AdjustSdk
             UtilUap.SleepAsync(milliseconds).Wait();
         }
 
-        public void LauchDeepLink(Uri deepLinkUri)
+        public void LauchDeeplink(Uri deepLinkUri)
         {
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
+        }
+        
+        private string GetClientSdk() { return "wphone81-3.5.1"; }
+
+        private static string GetOsName()
+        {
+            return "windows-phone";
         }
     }
 }

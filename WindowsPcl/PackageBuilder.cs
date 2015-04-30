@@ -6,8 +6,16 @@ using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    public class PackageBuilder
+    internal class PackageBuilder
     {
+        private AdjustConfig AdjustConfig { get; set; }
+        private DeviceInfo DeviceInfo { get; set; }
+        private ActivityState ActivityState { get; set; }
+        private DateTime CreatedAt { get; set; }
+
+        public Dictionary<string, string> ExtraParameters { get; set; }
+
+        /*
         // possible Ids
         public string DeviceUniqueId { get; set; }
         public string HardwareId { get; set; }
@@ -39,181 +47,164 @@ namespace AdjustSdk.Pcl
 
         // defaults
         private ActivityPackage activityPackage { get; set; }
+        */ 
 
-        public PackageBuilder()
+        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
+            ActivityState activityState, DateTime createdAt)
         {
-            activityPackage = new ActivityPackage
-            {
-                Parameters = new Dictionary<string, string>()
-            };
+            AdjustConfig = adjustConfig;
+            DeviceInfo = deviceInfo;
+            ActivityState = activityState.Clone();
+            CreatedAt = createdAt;
         }
 
-        private void FillDefaults()
+        internal ActivityPackage BuildSessionPackage()
         {
-            activityPackage.UserAgent = this.UserAgent;
-            activityPackage.ClientSdk = this.ClientSdk;
+            var parameters = GetDefaultParameters();
+             
+            AddTimeSpan(parameters, "last_interval", ActivityState.LastInterval);
+            AddString(parameters, "default_tracker", AdjustConfig.DefaultTracker);
 
-            // general
-            SaveParameter("created_at", CreatedAt);
-            SaveParameter("app_token", AppToken);
-            SaveParameter("win_udid", DeviceUniqueId);
-            SaveParameter("win_hwid", HardwareId);
-            SaveParameter("win_naid", NetworkAdapterId);
-            SaveParameter("win_uuid", Uuid.ToString());
-            SaveParameter("environment", Environment.ToString().ToLower());
-            // session related (used for events as well)
-            SaveParameter("session_count", SessionCount);
-            SaveParameter("subsession_count", SubSessionCount);
-            SaveParameter("session_length", SessionLength);
-            SaveParameter("time_spent", TimeSpent);
+            return new ActivityPackage(ActivityKind.Session, DeviceInfo.ClientSdk, parameters);
         }
 
-        public ActivityPackage BuildSessionPackage()
+        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent)
         {
-            FillDefaults();
-            SaveParameter("last_interval", LastInterval);
+            var parameters = GetDefaultParameters();
 
-            activityPackage.Path = @"/startup";
-            activityPackage.ActivityKind = ActivityKind.Session;
-            activityPackage.Suffix = "";
+            AddInt(parameters, "event_count", ActivityState.EventCount);
+            AddString(parameters, "event_token", adjustEvent.EventToken);
+            AddDouble(parameters, "revenue", adjustEvent.Revenue);
+            AddString(parameters, "currency", adjustEvent.Currency);
+            AddDictionaryJson(parameters, "callback_params", adjustEvent.CallbackParameters);
+            AddDictionaryJson(parameters, "partner_params", adjustEvent.PartnerParameters);
 
-            return activityPackage;
+            return new ActivityPackage(ActivityKind.Event, DeviceInfo.ClientSdk, parameters);
         }
 
-        public ActivityPackage BuildEventPackage()
+        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime)
         {
-            FillDefaults();
-            InjectEventParameters();
+            var parameters = GetDefaultParameters();
 
-            activityPackage.Path = @"/event";
-            activityPackage.ActivityKind = ActivityKind.Event;
-            activityPackage.Suffix = this.EventSuffix();
+            AddString(parameters, "source", source);
+            AddDateTime(parameters, "click_time", clickTime);
+            AddDictionaryJson(parameters, "params", ExtraParameters);
 
-            return activityPackage;
+            return new ActivityPackage(ActivityKind.Click, DeviceInfo.ClientSdk, parameters);
         }
 
-        public ActivityPackage BuildRevenuePackage()
+        private Dictionary<string, string> GetDefaultParameters()
         {
-            FillDefaults();
-            SaveParameter("amount", AmountToString());
-            InjectEventParameters();
+            var parameters = new Dictionary<string, string>();
 
-            activityPackage.Path = @"/revenue";
-            activityPackage.ActivityKind = ActivityKind.Revenue;
-            activityPackage.Suffix = this.RevenueSuffx();
+            InjectDeviceInfo(parameters);
+            InjectConfig(parameters);
+            InjectActivityState(parameters);
+            AddDateTime(parameters, "created_at", CreatedAt);
 
-            return activityPackage;
+            return parameters;
         }
 
-        public ActivityPackage BuildReattributionPackage()
+        private void InjectDeviceInfo(Dictionary<string, string> parameters)
         {
-            FillDefaults();
-            SaveParameterJson("deeplink_parameters", DeepLinksParameters);
-
-            activityPackage.Path = @"/reattribute";
-            activityPackage.ActivityKind = ActivityKind.Reattribution;
-            activityPackage.Suffix = "";
-
-            return activityPackage;
+            AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
+            AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
+            AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
+            AddString(parameters, "app_display_name", DeviceInfo.AppDisplayName);
+            AddString(parameters, "app_name", DeviceInfo.AppName);
+            AddString(parameters, "app_version", DeviceInfo.AppVersion);
+            AddString(parameters, "app_publisher", DeviceInfo.AppPublisher);
+            AddString(parameters, "app_author", DeviceInfo.AppAuthor);
+            AddString(parameters, "device_type", DeviceInfo.DeviceType);
+            AddString(parameters, "device_name", DeviceInfo.DeviceName);
+            AddString(parameters, "device_manufacturer", DeviceInfo.DeviceManufacturer);
+            AddString(parameters, "architecture", DeviceInfo.Architecture);
+            AddString(parameters, "os_name", DeviceInfo.OsName);
+            AddString(parameters, "os_version", DeviceInfo.OsVersion);
+            AddString(parameters, "language", DeviceInfo.Language);
+            AddString(parameters, "country", DeviceInfo.Country);
         }
 
-        private string EventSuffix()
+        private void InjectConfig(Dictionary<string, string> parameters)
         {
-            return Util.f(" '{0}'", EventToken);
+            AddString(parameters, "app_token", AdjustConfig.AppToken);
+            AddString(parameters, "environment", AdjustConfig.Environment);
+            AddBool(parameters, "needs_attribution_data", AdjustConfig.HasDelegate);
         }
 
-        private string RevenueSuffx()
+        private void InjectActivityState(Dictionary<string, string> parameters)
         {
-            if (EventToken != null)
-            {
-                return Util.f(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
-            }
-            else
-            {
-                return Util.f(" ({0:0.0} cent)", AmountInCents);
-            }
+            AddInt(parameters, "session_count", ActivityState.SessionCount);
+            AddInt(parameters, "subsession_count", ActivityState.SubSessionCount);
+            AddTimeSpan(parameters, "session_length", ActivityState.SessionLenght);
+            AddTimeSpan(parameters, "time_spent", ActivityState.TimeSpent);
+            AddString(parameters, "win_uuid", ActivityState.Uuid.ToString());
         }
 
-        private void InjectEventParameters()
+
+        #region AddParameter
+
+        private void AddString(Dictionary<string, string> parameters, string key, string value)
         {
-            SaveParameter("event_count", EventCount);
-            SaveParameter("event_token", EventToken);
-            SaveParameterBase64("params", CallbackParameters);
+            if (String.IsNullOrEmpty(value)) { return; }
+
+            parameters.Add(key, value);
         }
 
-        private string AmountToString()
+        private void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
         {
-            int amountInMillis = (int)Math.Round(AmountInCents * 10, MidpointRounding.AwayFromZero);
-            AmountInCents = amountInMillis / 10.0; // now rounded to one decimal point
-            var amountString = amountInMillis.ToString();
-            return amountString;
-        }
-
-        #region SaveParameter
-
-        private void SaveParameter(string key, string value)
-        {
-            if (String.IsNullOrEmpty(value))
-                return;
-
-            activityPackage.Parameters.Add(key, value);
-        }
-
-        private void SaveParameter(string key, DateTime? value)
-        {
-            if (!value.HasValue || value.Value.Ticks < 0)
-                return;
+            if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
             var sDateTime = Util.DateFormat(value.Value);
 
-            activityPackage.Parameters.Add(key, sDateTime);
+            AddString(parameters, key, sDateTime);
         }
 
-        private void SaveParameter(string key, int value)
+        private void AddInt(Dictionary<string, string> parameters, string key, int? value)
         {
-            if (value < 0)
-                return;
+            if (!value.HasValue || value.Value < 0) { return; }
 
-            activityPackage.Parameters.Add(key, value.ToString());
+            var sInt = value.Value.ToString();
+            AddString(parameters, key, sInt);
         }
 
-        private void SaveParameter(string key, bool value)
+        private void AddBool(Dictionary<string, string> parameters, string key, bool? value)
         {
-            SaveParameter(key, Convert.ToInt32(value));
+            if (!value.HasValue) { return; }
+
+            var iBool = value.Value ? 1 : 0;
+
+            AddInt(parameters, key, iBool);
         }
 
-        private void SaveParameter(string key, TimeSpan? value)
+        private void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
         {
-            if (!value.HasValue || value.Value.Ticks < 0)
-                return;
+            if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
             double roundedSeconds = Math.Round(value.Value.TotalSeconds, 0, MidpointRounding.AwayFromZero);
 
-            SaveParameter(key, (int)roundedSeconds);
+            AddInt(parameters, key, (int)roundedSeconds);
+
         }
 
-        private void SaveParameterBase64(string key, Dictionary<string, string> value)
+        private void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
         {
-            if (value == null)
-                return;
-
-            string json = JsonConvert.SerializeObject(value);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            string encoded = Convert.ToBase64String(bytes);
-
-            activityPackage.Parameters.Add(key, encoded);
-        }
-
-        private void SaveParameterJson(string key, Dictionary<string, string> value)
-        {
-            if (value == null)
-                return;
+            if (value == null) { return; }
 
             string json = JsonConvert.SerializeObject(value);
 
-            activityPackage.Parameters.Add(key, json);
+            AddString(parameters, key, json);
         }
 
-        #endregion SaveParameter
+        private void AddDouble(Dictionary<string, string> parameters, string key, double? value)
+        {
+            if (value == null) { return; }
+
+            string sDouble = Util.f("{0:0.00000}", value);
+
+            AddString(parameters, key, sDouble);
+        }
+
+        #endregion AddParameter
     }
 }

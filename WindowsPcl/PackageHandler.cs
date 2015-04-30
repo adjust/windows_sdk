@@ -14,22 +14,23 @@ namespace AdjustSdk.Pcl
         private List<ActivityPackage> PackageQueue;
         private IRequestHandler RequestHandler;
         private IActivityHandler ActivityHandler;
-        private ILogger Logger;
+        private static ILogger Logger = AdjustFactory.Logger;
 
         private ManualResetEvent InternalWaitHandle;
 
         private bool IsPaused;
 
-        public PackageHandler(IActivityHandler activityHandler)
+        public PackageHandler(IActivityHandler activityHandler, bool startPaused)
         {
             InternalQueue = new ActionQueue("adjust.PackageQueue");
-            PackageQueue = new List<ActivityPackage>();
-            IsPaused = true;
-            Logger = AdjustFactory.Logger;
 
-            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
+            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused));
+        }
 
-            InternalQueue.Enqueue(() => InitInternal(activityHandler));
+        public void Init(IActivityHandler activityHandler, bool startPaused)
+        {
+            ActivityHandler = activityHandler;
+            IsPaused = startPaused;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
@@ -62,32 +63,35 @@ namespace AdjustSdk.Pcl
             IsPaused = false;
         }
 
-        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData, Dictionary<string, string> jsonDict)
+        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            responseData.ActivityKind = activityPackage.ActivityKind;
-
-            string deepLink = null;
-            if (jsonDict != null)
-            {
-                jsonDict.TryGetValue("deeplink", out deepLink);
-            }
-
-            ActivityHandler.FinishTrackingWithResponse(responseData, deepLink);
+            ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
-        private void InitInternal(IActivityHandler activityHandler)
+        public void SendClickPackage(ActivityPackage clickPackage)
         {
-            ActivityHandler = activityHandler;
-            RequestHandler = AdjustFactory.GetRequestHandler(this);
+            Logger.Debug("Sending click package ({0})", clickPackage);
+            Logger.Verbose("{0}", clickPackage.GetExtendedString());
+
+            RequestHandler.SendClickPackage(clickPackage);
+        }
+
+        private void InitInternal(IActivityHandler activityHandler, bool startPaused)
+        {
+            Init(activityHandler, startPaused);
 
             ReadPackageQueue();
+            
+            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
+
+            RequestHandler = AdjustFactory.GetRequestHandler(this);
         }
 
         private void AddInternal(ActivityPackage activityPackage)
         {
             PackageQueue.Add(activityPackage);
             Logger.Debug("Added package {0} ({1})", PackageQueue.Count, activityPackage);
-            Logger.Verbose("{0}", activityPackage.ExtendedString());
+            Logger.Verbose("{0}", activityPackage.GetExtendedString());
 
             WritePackageQueue();
         }
@@ -145,7 +149,7 @@ namespace AdjustSdk.Pcl
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
                 () => new List<ActivityPackage>(), // default value in case of error
                 successMessage) // message generated for the queue, if it was succesfully read
-                .Result;
+                .Result; // wait to finish
         }
     }
 }

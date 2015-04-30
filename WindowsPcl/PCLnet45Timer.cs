@@ -13,11 +13,13 @@ namespace AdjustSdk.Pcl
         private TimerPclNet40 TimeKeeper;
 
         private TimeSpan TimeInterval;
+        private TimeSpan TimeStart;
         private bool IsPaused;
 
-        internal TimerPclNet45(TimerPclNet40Callback timerCallback, object state, TimeSpan timeInterval)
+        internal TimerPclNet45(TimerPclNet40Callback timerCallback, object state, TimeSpan timeInterval, TimeSpan timeStart)
         {
             TimeInterval = timeInterval;
+            TimeStart = timeStart;
 
             // timer initially set as paused
             IsPaused = true;
@@ -30,7 +32,7 @@ namespace AdjustSdk.Pcl
         {
             if (!IsPaused) return;
 
-            TimeKeeper.Change(0, (int)TimeInterval.TotalMilliseconds);
+            TimeKeeper.Change((int)TimeStart.TotalMilliseconds, (int)TimeInterval.TotalMilliseconds);
 
             IsPaused = false;
         }

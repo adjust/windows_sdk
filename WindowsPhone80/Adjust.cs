@@ -11,35 +11,34 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static DeviceUtil Util = new UtilWP80();
+        private static readonly DeviceUtil DeviceUtil = new UtilWP80();
+        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
 
-        #region AdjustApi
+        private Adjust() { }
 
         /// <summary>
-        ///  Tell Adjust that the application did launch.
+        ///  Tell Adjust that the application was launched.
         ///
         ///  This is required to initialize Adjust. Call this in the Application_Launching
         ///  method of your System.Windows.Application class.
         /// </summary>
-        /// <param name="appToken">
-        ///   The App Token of your app. This unique identifier can
-        ///   be found it in your dashboard at http://adjust.com and should always
-        ///   be 12 characters long.
+        /// <param name="adjustConfig">
+        ///   The object that configures the adjust SDK. <seealso cref="AdjustConfig"/>
         /// </param>
-        public static void AppDidLaunch(string appToken)
+        public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
-            AdjustApi.AppDidLaunch(appToken, Util);
+            AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
         }
-
+        
         /// <summary>
         ///  Tell Adjust that the application is activated (brought to foreground).
         ///
         ///  This is used to keep track of the current session state.
         ///  Call this in the Application_Activated method of your System.Windows.Application class.
         /// </summary>
-        public static void AppDidActivate()
+        public static void ApplicationActivated()
         {
-            AdjustApi.AppDidActivate();
+            AdjustInstance.ApplicationActivated();
         }
 
         /// <summary>
@@ -48,33 +47,22 @@ namespace AdjustSdk
         ///  This is used to calculate session attributes like session length and subsession count.
         ///  Call this in the Application_Deactivated method of your System.Windows.Application class.
         /// </summary>
-        public static void AppDidDeactivate()
+        public static void ApplicationDeactivated()
         {
-            AdjustApi.AppDidDeactivate();
+            AdjustInstance.ApplicationDeactivated();
         }
 
         /// <summary>
         ///  Tell Adjust that a particular event has happened.
-        ///
-        ///  In your dashboard at http://adjust.com you can assign a callback URL to each
-        ///  event type. That URL will get called every time the event is triggered. On
-        ///  top of that you can pass a set of parameters to the following method that
-        ///  will be forwarded to these callbacks.
         /// </summary>
-        /// <param name="eventToken">
-        ///  The Event Token for this kind of event. They are created in the
-        ///  dashboard at http://adjust.com and should be six characters long.
+        /// <param name="adjustEvent">
+        ///  The object that configures the event. <seealso cref="AdjustEvent"/>
         /// </param>
-        /// <param name="callbackParameters">
-        ///  An optional dictionary containing the callback parameters.
-        ///  Provide key-value-pairs to be forwarded to your callbacks.
-        /// </param>
-        public static void TrackEvent(string eventToken,
-            Dictionary<string, string> callbackParameters = null)
+        public static void TrackEvent(AdjustEvent adjustEvent)
         {
-            AdjustApi.TrackEvent(eventToken, callbackParameters);
+            AdjustInstance.TrackEvent(adjustEvent);
         }
-
+        /*
         /// <summary>
         ///  Tell Adjust that a user generated some revenue.
         ///
@@ -156,14 +144,14 @@ namespace AdjustSdk
         {
             AdjustApi.SetResponseDelegate(responseDelegate);
         }
-
+        */
         /// <summary>
         /// Enable or disable the adjust SDK
         /// </summary>
         /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
         public static void SetEnabled(bool enabled)
         {
-            AdjustApi.SetEnabled(enabled);
+            AdjustInstance.SetEnabled(enabled);
         }
 
         /// <summary>
@@ -172,7 +160,7 @@ namespace AdjustSdk
         /// <returns>true if the SDK is enabled, false otherwise</returns>
         public static bool IsEnabled()
         {
-            return AdjustApi.IsEnabled();
+            return AdjustInstance.IsEnabled();
         }
 
         /// <summary>
@@ -180,11 +168,11 @@ namespace AdjustSdk
         /// an adjust deep link
         /// </summary>
         /// <param name="url">The url that open the application</param>
-        public static void AppWillOpenUrl(Uri url)
+        public static void AppWillOpenUrl(Uri uri)
         {
-            AdjustApi.AppWillOpenUrl(url);
+            AdjustInstance.AppWillOpenUrl(uri);
         }
-
+        /*
         /// <summary>
         /// Special method used by SDK wrappers
         /// </summary>
@@ -193,7 +181,7 @@ namespace AdjustSdk
         {
             AdjustApi.SetSdkPrefix(sdkPrefix);
         }
-
+        
         /// <summary>
         /// Delegate method to get the log messages of the adjust SDK
         /// </summary>
@@ -202,7 +190,6 @@ namespace AdjustSdk
         {
             AdjustApi.SetLogDelegate(logDelegate);
         }
-
-        #endregion AdjustApi
+         * */
     }
 }

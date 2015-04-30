@@ -6,22 +6,12 @@ namespace AdjustSdk.Pcl
 {
     public interface DeviceUtil
     {
-        string ClientSdk { get; }
+        DeviceInfo GetDeviceInfo();
 
-        string GetUserAgent();
-
-        string GetMd5Hash(string input);
-
-        string GetDeviceUniqueId();
-
-        string GetHardwareId();
-
-        string GetNetworkAdapterId();
-
-        void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData);
+        void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution);
 
         void Sleep(int milliseconds);
 
-        void LauchDeepLink(Uri deepLinkUri);
+        void LauchDeeplink(Uri deeplinkUri);
     }
 }

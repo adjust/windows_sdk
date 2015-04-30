@@ -4,8 +4,10 @@ namespace AdjustSdk.Pcl
 {
     public interface IRequestHandler
     {
+        void Init(IPackageHandler packageHandler);
+
         void SendPackage(ActivityPackage package);
 
-        void SetResponseDelegate(Action<AdjustSdk.ResponseData> responseDelegate);
+        void SendClickPackage(ActivityPackage clickPackage);
     }
 }

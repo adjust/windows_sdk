@@ -1,24 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace AdjustSdk.Pcl
 {
     public interface IActivityHandler
     {
-        AdjustApi.Environment Environment { get; }
+        void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil);
 
-        void FinishTrackingWithResponse(AdjustSdk.ResponseData responseData, string deepLink);
+        void FinishedTrackingActivity(Dictionary<string, string> jsonDict);
 
-        bool IsBufferedEventsEnabled { get; }
-
-        void SetBufferedEvents(bool enabledEventBuffering);
-
-        void SetEnvironment(AdjustApi.Environment enviornment);
-
-        void SetResponseDelegate(Action<AdjustSdk.ResponseData> responseDelegate);
-
-        void TrackEvent(string eventToken, System.Collections.Generic.Dictionary<string, string> callbackParameters);
-
-        void TrackRevenue(double amountInCents, string eventToken, System.Collections.Generic.Dictionary<string, string> callbackParameters);
+        void TrackEvent(AdjustEvent adjustEvent);
 
         void TrackSubsessionEnd();
 
@@ -28,8 +19,8 @@ namespace AdjustSdk.Pcl
 
         bool IsEnabled();
 
-        void ReadOpenUrl(Uri url);
+        void SetOfflineMode(bool offline);
 
-        void SetSdkPrefix(string sdkPrefix);
+        void OpenUrl(Uri uri);
     }
 }

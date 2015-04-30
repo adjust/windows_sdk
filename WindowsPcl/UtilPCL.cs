@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace AdjustSdk.Pcl
     public static class Util
     {
         public const string BaseUrl = "https://app.adjust.io";
+        private static ILogger Logger = AdjustFactory.Logger;
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -256,47 +258,39 @@ namespace AdjustSdk.Pcl
 
         #endregion Serialization
 
-        public static string SanitizeUserAgent(string value, string defaultString = "unknown")
+        internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
         {
-            if (value == null)
-            {
-                return defaultString;
-            }
+            // TODO test if jsonString is null
+            Logger.Verbose("Response: {0}", sResponse);
 
-            var charsToRemove = @"[][\()/""<>?@{}]|\s";
+            if (sResponse == null) { return null; }
 
-            value = Regex.Replace(value, charsToRemove, "");
-
-            var charsToReplaceWithDot = @"[,:;]";
-
-            value = Regex.Replace(value, charsToReplaceWithDot, ".");
-
-            value = value.Replace("=", "_");
-            value = value.Replace("ä", "ae");
-            value = value.Replace("ö", "oe");
-            value = value.Replace("ü", "ue");
-            value = value.Replace("Ä", "Ae");
-            value = value.Replace("Ö", "Oe");
-            value = value.Replace("Ü", "Ue");
-            value = value.Replace("ß", "ss");
-
-            if (value.Length == 0)
-            {
-                return defaultString;
-            }
-
-            return value;
-        }
-
-        internal static Dictionary<string, string> BuildJsonDict(string jsonString)
-        {
             Dictionary<string, string> jsonDic = null;
             try
             {
-                jsonDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString);
+                jsonDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(sResponse);
             }
-            catch (Exception)
-            { }
+            catch (Exception e)
+            {
+                Logger.Error("Failed to parse json response ({0})", e.Message);
+            }
+
+            if (jsonDic == null) { return null; }
+
+            string message;
+            if (!jsonDic.TryGetValue("message", out message))
+            {
+                message = "No message found";
+            }
+
+            if (IsSuccessStatusCode)
+            {
+                Logger.Info("{0}", message);
+            }
+            else
+            {
+                Logger.Error("{0}", message);
+            }
 
             return jsonDic;
         }

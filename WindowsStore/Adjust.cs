@@ -27,7 +27,8 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static DeviceUtil Util = new UtilWS();
+        private static readonly DeviceUtil DeviceUtil = new UtilWS();
+        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
 
         private static bool firstVisibilityChanged = true;
 
@@ -43,30 +44,26 @@ namespace AdjustSdk
             }
             if (args.Visible)
             {
-                AdjustApi.AppDidActivate();
+                AdjustInstance.ApplicationActivated();
             }
             else
             {
-                AdjustApi.AppDidDeactivate();
+                AdjustInstance.ApplicationDeactivated();
             }
         }
 
-        #region AdjustApi
-
         /// <summary>
-        ///  Tell Adjust that the application did launch.
+        ///  Tell Adjust that the application was launched.
         ///
-        ///  This is required to initialize Adjust. Call this in the OnLaunched
+        ///  This is required to initialize Adjust. Call this in the Application_Launching
         ///  method of your Windows.UI.Xaml.Application class.
         /// </summary>
-        /// <param name="appToken">
-        ///   The App Token of your app. This unique identifier can
-        ///   be found it in your dashboard at http://adjust.com and should always
-        ///   be 12 characters long.
+        /// <param name="adjustConfig">
+        ///   The object that configures the adjust SDK. <seealso cref="AdjustConfig"/>
         /// </param>
-        public static void AppDidLaunch(string appToken)
+        public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
-            AdjustApi.AppDidLaunch(appToken, Util);
+            AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
             try
             {
                 Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
@@ -75,17 +72,18 @@ namespace AdjustSdk
             {
                 AdjustFactory.Logger.Debug("Not possible to detect automatically if the app goes to the background");
             }
-        }
 
+        }
+        
         /// <summary>
         ///  Tell Adjust that the application is activated (brought to foreground).
         ///
         ///  This is used to keep track of the current session state.
         ///  This should only be used if the VisibilityChanged mechanism doesn't work
         /// </summary>
-        public static void AppDidActivate()
+        public static void ApplicationActivated()
         {
-            AdjustApi.AppDidActivate();
+            AdjustInstance.ApplicationActivated();
         }
 
         /// <summary>
@@ -94,11 +92,22 @@ namespace AdjustSdk
         ///  This is used to calculate session attributes like session length and subsession count.
         ///  This should only be used if the VisibilityChanged mechanism doesn't work
         /// </summary>
-        public static void AppDidDeactivate()
+        public static void ApplicationDeactivated()
         {
-            AdjustApi.AppDidDeactivate();
+            AdjustInstance.ApplicationDeactivated();
         }
-
+                
+        /// <summary>
+        ///  Tell Adjust that a particular event has happened.
+        /// </summary>
+        /// <param name="adjustEvent">
+        ///  The object that configures the event. <seealso cref="AdjustEvent"/>
+        /// </param>
+        public static void TrackEvent(AdjustEvent adjustEvent)
+        {
+            AdjustInstance.TrackEvent(adjustEvent);
+        }
+        /*
         /// <summary>
         ///  Tell Adjust that a particular event has happened.
         ///
@@ -202,14 +211,14 @@ namespace AdjustSdk
         {
             AdjustApi.SetResponseDelegate(responseDelegate);
         }
-
-        /// <summary>
+        */
+                /// <summary>
         /// Enable or disable the adjust SDK
         /// </summary>
         /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
         public static void SetEnabled(bool enabled)
         {
-            AdjustApi.SetEnabled(enabled);
+            AdjustInstance.SetEnabled(enabled);
         }
 
         /// <summary>
@@ -218,7 +227,7 @@ namespace AdjustSdk
         /// <returns>true if the SDK is enabled, false otherwise</returns>
         public static bool IsEnabled()
         {
-            return AdjustApi.IsEnabled();
+            return AdjustInstance.IsEnabled();
         }
 
         /// <summary>
@@ -226,11 +235,11 @@ namespace AdjustSdk
         /// an adjust deep link
         /// </summary>
         /// <param name="url">The url that open the application</param>
-        public static void AppWillOpenUrl(Uri url)
+        public static void AppWillOpenUrl(Uri uri)
         {
-            AdjustApi.AppWillOpenUrl(url);
+            AdjustInstance.AppWillOpenUrl(uri);
         }
-
+        /*
         /// <summary>
         /// Special method used by SDK wrappers
         /// </summary>
@@ -248,7 +257,6 @@ namespace AdjustSdk
         {
             AdjustApi.SetLogDelegate(logDelegate);
         }
-
-        #endregion AdjustApi
+        */
     }
 }

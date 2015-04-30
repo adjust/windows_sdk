@@ -36,11 +36,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ActivityKind.cs" />
-    <Compile Include="AdjustApi.cs" />
+    <Compile Include="Adjust.cs" />
     <Compile Include="ActivityHandler.cs" />
     <Compile Include="ActivityPackage.cs" />
     <Compile Include="ActivityState.cs" />
+    <Compile Include="AdjustAttribution.cs" />
+    <Compile Include="AdjustConfig.cs" />
+    <Compile Include="AdjustEvent.cs" />
     <Compile Include="AdjustFactory.cs" />
+    <Compile Include="AdjustInstance.cs" />
+    <Compile Include="DeviceInfo.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="IActivityHandler.cs" />
     <Compile Include="ILogger.cs" />
