@@ -21,7 +21,7 @@ namespace AdjustTest.WS
 
         [TestCleanup]
         public void TearDown() { TestPackageHandler.TearDown(); }
-
+        /*
         [TestMethod]
         public void TestFirstPackageWS() { TestPackageHandler.TestFirstPackage(); }
 
@@ -30,5 +30,6 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestMultiplePackagesWS() { TestPackageHandler.TestMultiplePackages(); }
+         * */
     }
 }

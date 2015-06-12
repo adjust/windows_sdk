@@ -19,6 +19,11 @@ namespace AdjustSdk.Uap
 {
     public class UtilUap
     {
+        public static string GetAdvertisingId()
+        {
+            return Windows.System.UserProfile.AdvertisingManager.AdvertisingId;
+        }
+
         public static string GetAppName()
         {
             PackageId package = GetPackage();

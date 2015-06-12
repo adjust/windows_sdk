@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using System.Collections.Generic;
+
 namespace AdjustSdk
 {
     public enum ActivityKind
@@ -8,6 +9,7 @@ namespace AdjustSdk
         Session,
         Event,
         Click,
+        Attribution,
     }
 
     public static class ActivityKindUtil
@@ -20,6 +22,8 @@ namespace AdjustSdk
                 return ActivityKind.Event;
             else if ("click".Equals(activityKindString))
                 return ActivityKind.Click;
+            else if ("attribution".Equals(activityKindString))
+                return ActivityKind.Attribution;
             else
                 return ActivityKind.Unkown;
         }
@@ -36,6 +40,7 @@ namespace AdjustSdk
                 case ActivityKind.Session: return "/session";
                 case ActivityKind.Event: return "/event";
                 case ActivityKind.Click: return "/sdk_click";
+                case ActivityKind.Attribution: return "/attribution";
                 default: return null;
             }
         }
@@ -50,11 +55,11 @@ namespace AdjustSdk
 
             if (!parameters.TryGetValue("revenue", out sRevenue))
             {
-                return Util.f(" '{0}'", eventToken);
+                return Util.f("'{0}'", eventToken);
             }
             else
             {
-                return Util.f(" ({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
+                return Util.f("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
             }
         }
     }

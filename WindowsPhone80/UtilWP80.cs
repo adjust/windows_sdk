@@ -14,11 +14,12 @@ namespace AdjustSdk
 {
     public class UtilWP80 : DeviceUtil
     {
-        public DeviceInfo DeviceInfo { get; private set; }
-
         public UtilWP80()
+        { }
+
+        public DeviceInfo GetDeviceInfo()
         {
-            DeviceInfo = new DeviceInfo
+            return new DeviceInfo
             {
                 ClientSdk = GetClientSdk(),
                 DeviceUniqueId = GetDeviceUniqueId(),
@@ -36,7 +37,8 @@ namespace AdjustSdk
             };
         }
 
-        void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
+
+        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
         {
             Deployment.Current.Dispatcher.BeginInvoke(() => attributionChanged(adjustAttribution));
         }

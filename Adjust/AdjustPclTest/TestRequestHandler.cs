@@ -24,13 +24,14 @@ namespace AdjustTest.Pcl
 
             MockPackageHandler = new MockPackageHandler(MockLogger);
             RequestHandler = new RequestHandler(MockPackageHandler);
-
+            /*
             var packageBuilder = new PackageBuilder()
             {
                 UserAgent = DeviceUtil.GetUserAgent(),
                 ClientSdk = DeviceUtil.ClientSdk,
             };
             SessionPackage = packageBuilder.BuildSessionPackage();
+             * */
         }
 
         public override void TearDown()
@@ -38,7 +39,7 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetHttpMessageHandler(null);
             AdjustFactory.Logger = null;
         }
-
+        /*
         public void TestSendFirstPackage()
         {
             // send a default session package
@@ -90,5 +91,6 @@ namespace AdjustTest.Pcl
             Assert.IsTrue(MockLogger.DeleteTestUntil("PackageHandler CloseFirstPackage"),
                 MockLogger.ToString());
         }
+         * */
     }
 }

@@ -1,63 +1,83 @@
 ﻿using System.Collections.Generic;
+
 namespace AdjustSdk.Pcl
 {
     public class AdjustEvent
     {
         internal string EventToken { get; private set; }
+
         internal double? Revenue { get; private set; }
+
         internal string Currency { get; private set; }
+
         internal Dictionary<string, string> CallbackParameters { get; private set; }
+
         internal Dictionary<string, string> PartnerParameters { get; private set; }
 
-        private static ILogger Logger = AdjustFactory.Logger;
+        private ILogger Logger { get; set; }
 
         public AdjustEvent(string eventToken)
         {
-            if (!checkEventToken(eventToken)) { return; }
+            Logger = AdjustFactory.Logger;
+
+            if (!CheckEventToken(eventToken)) { return; }
 
             EventToken = eventToken;
         }
 
-        public void setRevenue(double revenue, string currency)
+        public void SetRevenue(double revenue, string currency)
         {
-            if (!checkRevenue(revenue, currency)) { return; }
+            if (!CheckRevenue(revenue, currency)) { return; }
 
             Revenue = revenue;
             Currency = currency;
         }
 
-        public void addCallbackParameter(string key, string value)
+        public void AddCallbackParameter(string key, string value)
         {
-            if (!checkParameter(key, "key", "Callback")) { return; }
-            if (!checkParameter(value, "value", "Callback")) { return; }
+            if (!CheckParameter(key, "key", "Callback")) { return; }
+            if (!CheckParameter(value, "value", "Callback")) { return; }
 
             if (CallbackParameters == null)
             {
                 CallbackParameters = new Dictionary<string, string>();
             }
 
+            string previousValue;
+            if (CallbackParameters.TryGetValue(key, out previousValue))
+            {
+                Logger.Warn("key {0} was overwritten", key);
+                CallbackParameters.Remove(key);
+            }
             CallbackParameters.Add(key, value);
         }
 
-        public void addPartnerParameter(string key, string value)
+        public void AddPartnerParameter(string key, string value)
         {
-            if (!checkParameter(key, "key", "Partner")) { return; }
-            if (!checkParameter(value, "value", "Partner")) { return; }
+            if (!CheckParameter(key, "key", "Partner")) { return; }
+            if (!CheckParameter(value, "value", "Partner")) { return; }
 
             if (PartnerParameters == null)
             {
                 PartnerParameters = new Dictionary<string, string>();
             }
 
+            string previousValue;
+            if (PartnerParameters.TryGetValue(key, out previousValue))
+            {
+                Logger.Warn("key {0} was overwritten", key);
+                PartnerParameters.Remove(key);
+            }
+
             PartnerParameters.Add(key, value);
         }
 
-        public bool isValid()
+        public bool IsValid()
         {
             return EventToken != null;
         }
 
-        private bool checkEventToken(string eventToken)
+        private bool CheckEventToken(string eventToken)
         {
             if (string.IsNullOrEmpty(eventToken))
             {
@@ -74,7 +94,7 @@ namespace AdjustSdk.Pcl
             return true;
         }
 
-        private bool checkRevenue(double? revenue, string currency)
+        private bool CheckRevenue(double? revenue, string currency)
         {
             if (revenue != null)
             {
@@ -84,9 +104,15 @@ namespace AdjustSdk.Pcl
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(currency))
+                if (currency == null)
                 {
                     Logger.Error("Currency must be set with revenue");
+                    return false;
+                }
+
+                if (string.Empty.Equals(currency))
+                {
+                    Logger.Error("Currency is empty");
                     return false;
                 }
             }
@@ -99,7 +125,7 @@ namespace AdjustSdk.Pcl
             return true;
         }
 
-        private bool checkParameter(string attribute, string attributeType, string parameterName)
+        private bool CheckParameter(string attribute, string attributeType, string parameterName)
         {
             if (attribute == null)
             {

@@ -1,6 +1,4 @@
-﻿using AdjustSdk;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -10,12 +8,18 @@ namespace AdjustSdk.Pcl
     public class ActivityPackage
     {
         public ActivityKind ActivityKind { get; private set; }
+
         public string ClientSdk { get; private set; }
+
         public Dictionary<string, string> Parameters { get; private set; }
+
         public string Path { get; private set; }
+
         public string Suffix { get; private set; }
 
-        private ActivityPackage() { }
+        private ActivityPackage()
+        {
+        }
 
         public ActivityPackage(ActivityKind activityKind, string clientSdk, Dictionary<string, string> parameters)
         {
@@ -46,7 +50,8 @@ namespace AdjustSdk.Pcl
             if (Parameters != null)
             {
                 stringBuilder.AppendFormat("Parameters:");
-                foreach (var keyValuePair in Parameters)
+                var sortedParameters = new SortedDictionary<string,string>(Parameters);
+                foreach (var keyValuePair in sortedParameters)
                 {
                     stringBuilder.AppendFormat("\n\t\t{0} {1}", keyValuePair.Key.PadRight(16, ' '), keyValuePair.Value);
                 }
@@ -85,7 +90,7 @@ namespace AdjustSdk.Pcl
 
             activityPackage = new ActivityPackage();
             activityPackage.Path = reader.ReadString();
-            reader.ReadString(); //activityPackage.UserAgent 
+            reader.ReadString(); //activityPackage.UserAgent
             activityPackage.ClientSdk = reader.ReadString();
             activityPackage.ActivityKind = ActivityKindUtil.FromString(reader.ReadString());
             activityPackage.Suffix = reader.ReadString();

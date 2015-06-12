@@ -1,67 +1,39 @@
-﻿using AdjustSdk;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AdjustSdk.Pcl
 {
     internal class PackageBuilder
     {
         private AdjustConfig AdjustConfig { get; set; }
+
         private DeviceInfo DeviceInfo { get; set; }
+
         private ActivityState ActivityState { get; set; }
+
         private DateTime CreatedAt { get; set; }
 
         public Dictionary<string, string> ExtraParameters { get; set; }
 
-        /*
-        // possible Ids
-        public string DeviceUniqueId { get; set; }
-        public string HardwareId { get; set; }
-        public string NetworkAdapterId { get; set; }
-
-        // general
-        public string AppToken { get; set; }
-        public AdjustApi.Environment Environment { get; set; }
-        public string UserAgent { get; set; }
-        public string ClientSdk { get; set; }
-        public Guid Uuid { get; set; }
-
-        // session
-        public int SessionCount { get; set; }
-        public int SubSessionCount { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public TimeSpan? SessionLength { get; set; }
-        public TimeSpan? TimeSpent { get; set; }
-        public TimeSpan? LastInterval { get; set; }
-
-        // events
-        public int EventCount { get; set; }
-        public string EventToken { get; set; }
-        public Dictionary<string, string> CallbackParameters { get; set; }
-        public double AmountInCents { get; set; }
-
-        // reattributions
-        public Dictionary<string, string> DeepLinksParameters { get; set; }
-
-        // defaults
-        private ActivityPackage activityPackage { get; set; }
-        */ 
+        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
+            : this(adjustConfig, deviceInfo, createdAt)
+        {
+            ActivityState = activityState.Clone();
+        }
 
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
-            ActivityState activityState, DateTime createdAt)
+            DateTime createdAt)
         {
             AdjustConfig = adjustConfig;
             DeviceInfo = deviceInfo;
-            ActivityState = activityState.Clone();
             CreatedAt = createdAt;
         }
 
         internal ActivityPackage BuildSessionPackage()
         {
             var parameters = GetDefaultParameters();
-             
+
             AddTimeSpan(parameters, "last_interval", ActivityState.LastInterval);
             AddString(parameters, "default_tracker", AdjustConfig.DefaultTracker);
 
@@ -82,15 +54,41 @@ namespace AdjustSdk.Pcl
             return new ActivityPackage(ActivityKind.Event, DeviceInfo.ClientSdk, parameters);
         }
 
-        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime)
+        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime, AdjustAttribution attribution)
         {
-            var parameters = GetDefaultParameters();
+            var parameters = GetIdsParameters();
 
             AddString(parameters, "source", source);
             AddDateTime(parameters, "click_time", clickTime);
             AddDictionaryJson(parameters, "params", ExtraParameters);
 
+            if (attribution != null)
+            {
+                AddString(parameters, "tracker", attribution.TrackerName);
+                AddString(parameters, "campaign", attribution.Campaign);
+                AddString(parameters, "adgroup", attribution.Adgroup);
+                AddString(parameters, "creative", attribution.Creative);
+            }
+
             return new ActivityPackage(ActivityKind.Click, DeviceInfo.ClientSdk, parameters);
+        }
+
+        internal ActivityPackage BuildAttributionPackage()
+        {
+            var parameters = GetIdsParameters();
+
+            return new ActivityPackage(ActivityKind.Attribution, DeviceInfo.ClientSdk, parameters);
+        }
+
+        private Dictionary<string, string> GetIdsParameters()
+        {
+            var parameters = new Dictionary<string, string>();
+
+            InjectDeviceInfoIds(parameters);
+            InjectConfig(parameters);
+            InjectCreatedAt(parameters);
+
+            return parameters;
         }
 
         private Dictionary<string, string> GetDefaultParameters()
@@ -100,16 +98,27 @@ namespace AdjustSdk.Pcl
             InjectDeviceInfo(parameters);
             InjectConfig(parameters);
             InjectActivityState(parameters);
-            AddDateTime(parameters, "created_at", CreatedAt);
+            InjectCreatedAt(parameters);
 
             return parameters;
         }
 
-        private void InjectDeviceInfo(Dictionary<string, string> parameters)
+        private void InjectCreatedAt(Dictionary<string, string> parameters)
+        {
+            AddDateTime(parameters, "created_at", CreatedAt);
+        }
+
+        private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
         {
             AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
             AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
             AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
+        }
+
+        private void InjectDeviceInfo(Dictionary<string, string> parameters)
+        {
+            InjectDeviceInfoIds(parameters);
+
             AddString(parameters, "app_display_name", DeviceInfo.AppDisplayName);
             AddString(parameters, "app_name", DeviceInfo.AppName);
             AddString(parameters, "app_version", DeviceInfo.AppVersion);
@@ -123,6 +132,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "os_version", DeviceInfo.OsVersion);
             AddString(parameters, "language", DeviceInfo.Language);
             AddString(parameters, "country", DeviceInfo.Country);
+            AddString(parameters, "win_adid", DeviceInfo.AdvertisingId);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)
@@ -140,7 +150,6 @@ namespace AdjustSdk.Pcl
             AddTimeSpan(parameters, "time_spent", ActivityState.TimeSpent);
             AddString(parameters, "win_uuid", ActivityState.Uuid.ToString());
         }
-
 
         #region AddParameter
 
@@ -184,12 +193,12 @@ namespace AdjustSdk.Pcl
             double roundedSeconds = Math.Round(value.Value.TotalSeconds, 0, MidpointRounding.AwayFromZero);
 
             AddInt(parameters, key, (int)roundedSeconds);
-
         }
 
         private void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
         {
             if (value == null) { return; }
+            if (value.Count == 0) { return; }
 
             string json = JsonConvert.SerializeObject(value);
 

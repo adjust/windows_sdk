@@ -36,12 +36,13 @@ namespace AdjustSdk
                 OsVersion = UtilUap.GetOsVersion(),
                 Language = UtilUap.GetLanguage(),
                 Country = UtilUap.GetCountry(),
+                AdvertisingId = UtilUap.GetAdvertisingId(),
             };
         }
 
-        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
+        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
         {
-            UtilUap.runInForeground(Dispatcher, () => responseDelegate(responseData));
+            UtilUap.runInForeground(Dispatcher, () => attributionChanged(adjustAttribution));
         }
 
         public void Sleep(int milliseconds)

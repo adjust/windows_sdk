@@ -7,19 +7,28 @@ namespace AdjustSdk.Pcl
     {
         // global counters
         internal int EventCount { get; set; }
+
         internal int SessionCount { get; set; }
 
         // session atributes
         internal int SubSessionCount { get; set; }
+
         internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
+
         internal TimeSpan? TimeSpent { get; set; }
+
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
+
         internal DateTime? CreatedAt { get; set; }
+
         internal TimeSpan? LastInterval { get; set; }
 
         // persistent data
         internal Guid Uuid { get; set; }
+
         internal bool Enabled { get; set; }
+
+        internal bool AskingAttribution { get; set; }
 
         internal ActivityState()
         {
@@ -33,6 +42,7 @@ namespace AdjustSdk.Pcl
             LastInterval = null;
             Uuid = Guid.NewGuid();
             Enabled = true;
+            AskingAttribution = false;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -44,12 +54,12 @@ namespace AdjustSdk.Pcl
             CreatedAt = null;
             LastInterval = null;
         }
-        
+
         internal ActivityState Clone()
         {
             // TODO check if Timespans and Datetimes are altered by the original activity state
             return (ActivityState)this.MemberwiseClone();
-        } 
+        }
 
         public override string ToString()
         {
@@ -62,7 +72,7 @@ namespace AdjustSdk.Pcl
                 LastActivity.SecondsFormat()
             );
         }
-        
+
         #region Serialization
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -80,6 +90,7 @@ namespace AdjustSdk.Pcl
             writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
             writer.Write(activity.Uuid.ToString());
             writer.Write(activity.Enabled);
+            writer.Write(activity.AskingAttribution);
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -102,6 +113,8 @@ namespace AdjustSdk.Pcl
             activity.Uuid = Util.TryRead(() => Guid.Parse(reader.ReadString()), () => Guid.NewGuid());
             // default value of IsEnabled for migrating devices
             activity.Enabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
+            // default value for AskingAttribution for migrating devices
+            activity.AskingAttribution = Util.TryRead(() => reader.ReadBoolean(), () => false);
 
             return activity;
         }

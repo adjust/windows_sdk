@@ -1,14 +1,13 @@
-﻿using AdjustSdk;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
@@ -16,7 +15,7 @@ namespace AdjustSdk.Pcl
     public static class Util
     {
         public const string BaseUrl = "https://app.adjust.io";
-        private static ILogger Logger = AdjustFactory.Logger;
+        private static ILogger Logger { get { return AdjustFactory.Logger; } }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -104,10 +103,9 @@ namespace AdjustSdk.Pcl
         internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
             Func<Stream, T> ObjectReader,
             Func<T> defaultReturn,
-            Func<T, string> successMessage)
+            string objectName)
             where T : class
         {
-            var logger = AdjustFactory.Logger;
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -124,7 +122,7 @@ namespace AdjustSdk.Pcl
                 {
                     output = ObjectReader(stream);
                 }
-                logger.Debug(successMessage(output));
+                Logger.Debug("Read {0}: {1}", objectName, output);
 
                 // successful read
                 return output;
@@ -132,19 +130,22 @@ namespace AdjustSdk.Pcl
             catch (Exception ex)
             {
                 if (ex.IsFileNotFound())
-                    logger.Error("Failed to read file {0} (not found)", fileName);
+                {
+                    Logger.Verbose("{0} file not found", objectName);
+                }
                 else
-                    logger.Error("Failed to read file {0} ({1})", fileName, ex.Message);
+                {
+                    Logger.Error("Failed to read file {0} ({1})", objectName, ex.Message);
+                }
             }
 
             // fresh start
             return defaultReturn();
         }
 
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input, string sucessMessage)
+        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input, string objectName)
             where T : class
         {
-            var logger = AdjustFactory.Logger;
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -155,11 +156,11 @@ namespace AdjustSdk.Pcl
                     stream.Seek(0, SeekOrigin.Begin);
                     ObjectWriter(stream, input);
                 }
-                logger.Debug("{0}", sucessMessage);
+                Logger.Debug("Wrote {0}: {1}", objectName, input);
             }
             catch (Exception ex)
             {
-                logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
+                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
             }
         }
 
@@ -258,9 +259,31 @@ namespace AdjustSdk.Pcl
 
         #endregion Serialization
 
+        internal static Dictionary<string, string> ParseJsonResponse(HttpResponseMessage httpResponseMessage)
+        {
+            if (httpResponseMessage == null) { return null; }
+
+            using (var content = httpResponseMessage.Content)
+            {
+                var sResponse = content.ReadAsStringAsync().Result;
+                return BuildJsonDict(sResponse, httpResponseMessage.IsSuccessStatusCode);
+            }
+        }
+
+        internal static Dictionary<string, string> ParseJsonExceptionResponse(HttpWebResponse httpWebResponse)
+        {
+            if (httpWebResponse == null) { return null; }
+
+            using (var streamResponse = httpWebResponse.GetResponseStream())
+            using (var streamReader = new StreamReader(streamResponse))
+            {
+                var sResponse = streamReader.ReadToEnd();
+                return BuildJsonDict(sResponse, false);
+            }
+        }
+
         internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
         {
-            // TODO test if jsonString is null
             Logger.Verbose("Response: {0}", sResponse);
 
             if (sResponse == null) { return null; }
@@ -293,6 +316,16 @@ namespace AdjustSdk.Pcl
             }
 
             return jsonDic;
+        }
+
+        internal static HttpClient BuildHttpClient(string clientSdk)
+        {
+            var httpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
+
+            httpClient.Timeout = new TimeSpan(0, 1, 0);
+            httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
+
+            return httpClient;
         }
     }
 }

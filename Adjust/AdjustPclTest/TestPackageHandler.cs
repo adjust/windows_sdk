@@ -24,7 +24,7 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetRequestHandler(null);
             AdjustFactory.Logger = null;
         }
-
+        /*
         public void TestFirstPackage()
         {
             // deleting previously created package queue file to make a new queue
@@ -174,5 +174,6 @@ namespace AdjustTest.Pcl
             Assert.IsTrue(MockLogger.DeleteLogUntil(LogLevel.Debug, "Package handler read 3 packages"),
                 MockLogger.ToString());
         }
+         * */
     }
 }

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
@@ -12,6 +8,7 @@ namespace AdjustSdk.Pcl
         private static ILogger InjectedLogger;
         private static IActivityHandler IActivityHandler;
         private static IPackageHandler IPackageHandler;
+        private static IAttributionHandler IAttributionHandler;
         private static IRequestHandler IRequestHandler;
         private static HttpMessageHandler HttpMessageHandler;
         private static TimeSpan? SessionInterval;
@@ -45,9 +42,23 @@ namespace AdjustSdk.Pcl
         {
             if (IPackageHandler == null)
                 return new PackageHandler(activityHandler, startPaused);
-            
+
             IPackageHandler.Init(activityHandler, startPaused);
             return IPackageHandler;
+        }
+
+        public static IAttributionHandler GetAttributionHandler(IActivityHandler activityHandler,
+            ActivityPackage attributionPacakage,
+            bool startPaused,
+            bool hasDelegate)
+        {
+            if (IAttributionHandler == null)
+            {
+                return new AttributionHandler(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            }
+
+            IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            return IAttributionHandler;
         }
 
         public static IRequestHandler GetRequestHandler(IPackageHandler packageHandler)
@@ -99,9 +110,19 @@ namespace AdjustSdk.Pcl
                 return TimerStart.Value;
         }
 
+        public static void SetActivityHandler(IActivityHandler activityHandler)
+        {
+            IActivityHandler = activityHandler;
+        }
+
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
             IPackageHandler = packageHandler;
+        }
+
+        public static void SetAttributionHandler(IAttributionHandler attributionHandler)
+        {
+            IAttributionHandler = attributionHandler;
         }
 
         public static void SetRequestHandler(IRequestHandler requestHandler)

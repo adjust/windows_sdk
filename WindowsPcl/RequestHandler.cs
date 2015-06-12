@@ -1,32 +1,29 @@
-﻿using AdjustSdk;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
-
-        private IPackageHandler PackageHandler;
-        private static ILogger Logger = AdjustFactory.Logger;
-        private HttpMessageHandler HttpMessageHandler;
+        private IPackageHandler PackageHandler { get; set; }
+        private ILogger Logger { get; set; }
+        private HttpClient HttpClient { get; set; }
 
         private struct SendResponse
         {
             internal bool WillRetry { get; set; }
+
             internal Dictionary<string, string> JsonDict { get; set; }
         }
 
         public RequestHandler(IPackageHandler packageHandler)
         {
+            Logger = AdjustFactory.Logger;
+
             Init(packageHandler);
-            HttpMessageHandler = AdjustFactory.GetHttpMessageHandler();
         }
 
         public void Init(IPackageHandler packageHandler)
@@ -40,11 +37,6 @@ namespace AdjustSdk.Pcl
                 // continuation used to prevent unhandled exceptions in SendInternal
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
                 .ContinueWith((sendResponse) => PackageSent(sendResponse));
-        }
-
-        public void SendClickPackage(ActivityPackage clickPackage)
-        {
-            Task.Factory.StartNew(() => SendInternal(clickPackage));
         }
 
         private SendResponse SendInternal(ActivityPackage activityPackage)
@@ -65,11 +57,7 @@ namespace AdjustSdk.Pcl
 
         private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
         {
-            var httpClient = new HttpClient(HttpMessageHandler);
-
-            httpClient.Timeout = Timeout;
-            httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
-
+            var httpClient = GetHttpClient(activityPackage);
             var url = Util.BaseUrl + activityPackage.Path;
 
             var sNow = Util.DateFormat(DateTime.Now);
@@ -83,18 +71,11 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
-            var sendResponse = new SendResponse 
+            var sendResponse = new SendResponse
             {
-                WillRetry = false
+                WillRetry = false,
+                JsonDict = Util.ParseJsonResponse(httpResponseMessage),
             };
-
-            string sResponse = null;
-            using (var content = httpResponseMessage.Content)
-            {
-                sResponse = content.ReadAsStringAsync().Result;
-            }
-
-            sendResponse.JsonDict = Util.BuildJsonDict(sResponse, httpResponseMessage.IsSuccessStatusCode);
 
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                 || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
@@ -111,29 +92,25 @@ namespace AdjustSdk.Pcl
                     activityPackage.FailureMessage(),
                     (int)httpResponseMessage.StatusCode);
             }
-            
 
             return sendResponse;
         }
 
         private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
         {
-            
             using (var response = webException.Response as HttpWebResponse)
-            using (var streamResponse = response.GetResponseStream())
-            using (var streamReader = new StreamReader(streamResponse))
             {
-                var sResponse = streamReader.ReadToEnd();
+                var statusCode = (response == null) ? 0 : (int)response.StatusCode;
 
                 var sendResponse = new SendResponse
                 {
                     WillRetry = true,
-                    JsonDict = Util.BuildJsonDict(sResponse, false)
+                    JsonDict = Util.ParseJsonExceptionResponse(response)
                 };
-                
+
                 Logger.Error("{0}. ({1}). Will retry later.",
                     activityPackage.FailureMessage(),
-                    (int)response.StatusCode);
+                    statusCode);
 
                 return sendResponse;
             }
@@ -165,6 +142,15 @@ namespace AdjustSdk.Pcl
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();
+        }
+
+        private HttpClient GetHttpClient(ActivityPackage activityPackage)
+        {
+            if (HttpClient == null)
+            {
+                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+            }
+            return HttpClient;
         }
     }
 }

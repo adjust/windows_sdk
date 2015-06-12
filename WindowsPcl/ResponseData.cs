@@ -1,6 +1,4 @@
 ﻿using AdjustSdk.Pcl;
-using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 
 namespace AdjustSdk
@@ -60,7 +58,7 @@ namespace AdjustSdk
 
         #region internal
 
-        public void SetResponseData(Dictionary<string,string> jsonDict, string jsonString)
+        public void SetResponseData(Dictionary<string, string> jsonDict, string jsonString)
         {
             if (jsonDict == null)
             {

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace AdjustSdk.Pcl
 {
@@ -20,7 +19,5 @@ namespace AdjustSdk.Pcl
         void ResumeSending();
 
         void FinishedTrackingActivity(Dictionary<string, string> jsonDict);
-
-        void SendClickPackage(ActivityPackage clickPackage);
     }
 }

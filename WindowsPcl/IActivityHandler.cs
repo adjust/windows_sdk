@@ -22,5 +22,11 @@ namespace AdjustSdk.Pcl
         void SetOfflineMode(bool offline);
 
         void OpenUrl(Uri uri);
+
+        bool UpdateAttribution(AdjustAttribution attribution);
+
+        void SetAskingAttribution(bool askingAttribution);
+
+        ActivityPackage GetAttributionPackage();
     }
 }

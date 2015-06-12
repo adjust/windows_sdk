@@ -36,7 +36,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ActivityKind.cs" />
-    <Compile Include="Adjust.cs" />
     <Compile Include="ActivityHandler.cs" />
     <Compile Include="ActivityPackage.cs" />
     <Compile Include="ActivityState.cs" />
@@ -45,9 +44,11 @@
     <Compile Include="AdjustEvent.cs" />
     <Compile Include="AdjustFactory.cs" />
     <Compile Include="AdjustInstance.cs" />
+    <Compile Include="AttributionHandler.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="Environment.cs" />
     <Compile Include="IActivityHandler.cs" />
+    <Compile Include="IAttributionHandler.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IPackageHandler.cs" />
     <Compile Include="IRequestHandler.cs" />
@@ -57,10 +58,11 @@
     <Compile Include="PackageHandler.cs" />
     <Compile Include="RequestHandler.cs" />
     <Compile Include="ActionQueue.cs" />
-    <Compile Include="PCLnet45Timer.cs" />
+    <Compile Include="TimerCycle.cs" />
     <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponseData.cs" />
+    <Compile Include="TimerOnce.cs" />
     <Compile Include="UtilPcl.cs" />
   </ItemGroup>
   <ItemGroup>

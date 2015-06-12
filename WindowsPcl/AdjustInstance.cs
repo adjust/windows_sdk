@@ -1,12 +1,19 @@
 ﻿using System;
+
 namespace AdjustSdk.Pcl
 {
     public class AdjustInstance
     {
         private IActivityHandler ActivityHandler { get; set; }
-        private static ILogger Logger = AdjustFactory.Logger;
 
-        public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil) 
+        private ILogger Logger { get; set; }
+
+        public AdjustInstance()
+        {
+            Logger = AdjustFactory.Logger;
+        }
+
+        public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
             if (ActivityHandler != null)
             {

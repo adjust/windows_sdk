@@ -10,6 +10,7 @@ namespace AdjustTest.Pcl
     public class MockLogger : ILogger
     {
         private const int LogLevelTest = 7;
+        private const int LogLevelCheck = 8;
         private const string LogTag = "Adjust";
 
         private StringBuilder LogBuffer;
@@ -20,7 +21,7 @@ namespace AdjustTest.Pcl
         public MockLogger()
         {
             LogBuffer = new StringBuilder();
-            LogMap = new Dictionary<int, List<string>>(7)
+            LogMap = new Dictionary<int, List<string>>(8)
             {
                 { (int)LogLevel.Verbose, new List<string>() },
                 { (int)LogLevel.Debug, new List<string>() },
@@ -29,12 +30,13 @@ namespace AdjustTest.Pcl
                 { (int)LogLevel.Error, new List<string>() },
                 { (int)LogLevel.Assert, new List<string>() },
                 { LogLevelTest, new List<string>() },
+                { LogLevelCheck, new List<string>() },
             };
         }
 
         public LogLevel LogLevel
         {
-            set { Test("Logger setLogLevel: {0}", value); }
+            set { Test("MockLogger setLogLevel: {0}", value); }
         }
 
         public void Verbose(string message, params object[] parameters)
@@ -72,6 +74,11 @@ namespace AdjustTest.Pcl
             LogMessage(message, LogLevelTest, "t", parameters);
         }
 
+        private void Check(string message, params object[] parameters)
+        {
+            LogMessage(message, LogLevelCheck, "c", parameters);
+        }
+        
         public bool DeleteLogUntil(LogLevel loglevel, string beginsWith)
         {
             return DeleteLevelUntil((int)loglevel, beginsWith);
@@ -84,20 +91,19 @@ namespace AdjustTest.Pcl
 
         private bool DeleteLevelUntil(int logLevel, string beginsWith)
         {
-            System.Diagnostics.Debug.WriteLine("Check: {0}", beginsWith);
             var logList = LogMap[logLevel];
             for (int i = 0; i < logList.Count; i++)
             {
                 var logMessage = logList[i];
                 if (logMessage.StartsWith(beginsWith))
                 {
-                    Test("found {0} ", logMessage);
+                    Check("found {0} ", logMessage);
                     logList.RemoveRange(0, i + 1);
                     return true;
                 }
             }
 
-            Test("{0} does not contain {1} ", string.Join(",", logList), beginsWith);
+            Check("{0} is not in: {1} ", beginsWith, string.Join(",", logList));
             return false;
         }
 

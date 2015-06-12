@@ -10,57 +10,24 @@ namespace AdjustTest.Pcl
         private MockLogger MockLogger;
         private const string prefix = "ActivityHandler";
 
-        public AdjustApi.Environment Environment
-        {
-            get
-            {
-                MockLogger.Test("{0} Environment", prefix);
-                return AdjustApi.Environment.Unknown;
-            }
-        }
-
         public MockActivityHandler(MockLogger mockLogger)
         {
             MockLogger = mockLogger;
         }
 
-        public void FinishTrackingWithResponse(ResponseData responseData, string deepLink)
+        public void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
-            MockLogger.Test("{0} FinishTrackingWithResponse", prefix);
+            MockLogger.Test("{0} Init", prefix);
         }
 
-        public bool IsBufferedEventsEnabled
+        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            get
-            {
-                MockLogger.Test("{0} IsBufferedEventsEnabled", prefix);
-                return false;
-            }
+            MockLogger.Test("{0} FinishedTrackingActivity", prefix);
         }
 
-        public void SetBufferedEvents(bool enabledEventBuffering)
+        public void TrackEvent(AdjustEvent adjustEvent)
         {
-            MockLogger.Test("{0} SetBufferedEvents", prefix);
-        }
-
-        public void SetEnvironment(AdjustApi.Environment enviornment)
-        {
-            MockLogger.Test("{0} SetEnvironment", prefix);
-        }
-
-        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
-        {
-            MockLogger.Test("{0} SetResponseDelegate", prefix);
-        }
-
-        public void TrackEvent(string eventToken, Dictionary<string, string> callbackParameters)
-        {
-            MockLogger.Test("{0} TrackEvent", prefix);
-        }
-
-        public void TrackRevenue(double amountInCents, string eventToken, Dictionary<string, string> callbackParameters)
-        {
-            MockLogger.Test("{0} TrackRevenue", prefix);
+            MockLogger.Test("{0} TrackEvent, {1}", prefix, adjustEvent);
         }
 
         public void TrackSubsessionEnd()
@@ -84,14 +51,31 @@ namespace AdjustTest.Pcl
             return true;
         }
 
-        public void ReadOpenUrl(Uri url)
+        public void SetOfflineMode(bool offline)
         {
-            MockLogger.Test("{0} ReadOpenUrl, {1}", prefix, url);
+            MockLogger.Test("{0} SetOfflineMode, {1}", prefix, offline);
         }
 
-        public void SetSdkPrefix(string sdkPrefix)
+        public void OpenUrl(Uri uri)
         {
-            MockLogger.Test("{0} SetSdkPrefix, {1}", prefix, sdkPrefix);
+            MockLogger.Test("{0} OpenUrl, {1}", prefix, uri);
+        }
+
+        public bool UpdateAttribution(AdjustAttribution attribution)
+        {
+            MockLogger.Test("{0} UpdateAttribution, {1}", prefix, attribution);
+            return false;
+        }
+
+        public void SetAskingAttribution(bool askingAttribution)
+        {
+            MockLogger.Test("{0} SetAskingAttribution, {1}", prefix, askingAttribution);
+        }
+
+        public ActivityPackage GetAttributionPackage()
+        {
+            MockLogger.Test("{0} GetAttributionPackage", prefix);
+            return null;
         }
     }
 }
