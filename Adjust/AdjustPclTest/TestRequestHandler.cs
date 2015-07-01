@@ -6,10 +6,11 @@ namespace AdjustTest.Pcl
 {
     public class TestRequestHandler : TestTemplate
     {
-        private RequestHandler RequestHandler;
-        private MockPackageHandler MockPackageHandler;
-        private MockHttpMessageHandler MockHttpMessageHandler;
-        private ActivityPackage SessionPackage;
+        private RequestHandler RequestHandler { get; set; }
+        private MockPackageHandler MockPackageHandler { get; set; }
+        private MockHttpMessageHandler MockHttpMessageHandler { get; set; }
+        private ActivityPackage SessionPackage { get; set; }
+        
 
         public TestRequestHandler(DeviceUtil deviceUtil, IAssert assert)
             : base(deviceUtil, assert)

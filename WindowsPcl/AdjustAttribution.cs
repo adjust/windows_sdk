@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace AdjustSdk.Pcl
 {
@@ -17,6 +20,29 @@ namespace AdjustSdk.Pcl
         public string Creative { get; set; }
 
         public string ClickLabel { get; set; }
+
+        public static AdjustAttribution FromJsonString(string attributionString)
+        {
+            try
+            {
+                var jsonDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(attributionString);
+                var attribution = new AdjustAttribution
+                {
+                    TrackerToken = Util.GetDictionaryValue(jsonDict, "tracker_token"),
+                    TrackerName = Util.GetDictionaryValue(jsonDict, "tracker_name"),
+                    Network = Util.GetDictionaryValue(jsonDict, "network"),
+                    Campaign = Util.GetDictionaryValue(jsonDict, "campaign"),
+                    Adgroup = Util.GetDictionaryValue(jsonDict, "adgroup"),
+                    Creative = Util.GetDictionaryValue(jsonDict, "creative"),
+                    ClickLabel = Util.GetDictionaryValue(jsonDict, "click_label"),
+                };
+                return attribution;
+            }
+            catch (Exception) { return null; }
+        }
+
+        public AdjustAttribution()
+        { }
 
         public override bool Equals(object obj)
         {
@@ -50,6 +76,18 @@ namespace AdjustSdk.Pcl
             return hashCode;
         }
 
+        public override string ToString()
+        {
+            return Util.f("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6}",
+                TrackerToken, 
+                TrackerName, 
+                Network, 
+                Campaign, 
+                Adgroup, 
+                Creative, 
+                ClickLabel);
+        }
+
         private bool EqualString(string first, string second)
         {
             if (first == null || second == null)
@@ -74,13 +112,23 @@ namespace AdjustSdk.Pcl
         {
             var writer = new BinaryWriter(stream);
 
-            writer.Write(attribution.TrackerToken);
-            writer.Write(attribution.TrackerName);
-            writer.Write(attribution.Network);
-            writer.Write(attribution.Campaign);
-            writer.Write(attribution.Adgroup);
-            writer.Write(attribution.Creative);
-            writer.Write(attribution.ClickLabel);
+            WriteOptionalString(writer, attribution.TrackerToken);
+            WriteOptionalString(writer, attribution.TrackerName);
+            WriteOptionalString(writer, attribution.Network);
+            WriteOptionalString(writer, attribution.Campaign);
+            WriteOptionalString(writer, attribution.Adgroup);
+            WriteOptionalString(writer, attribution.Creative);
+            WriteOptionalString(writer, attribution.ClickLabel);
+        }
+
+        private static void WriteOptionalString(BinaryWriter writer, string value)
+        {
+            var hasValue = value != null;
+            writer.Write(hasValue);
+            if (hasValue)
+            {
+                writer.Write(value);
+            }
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -90,15 +138,23 @@ namespace AdjustSdk.Pcl
             var reader = new BinaryReader(stream);
 
             attribution = new AdjustAttribution();
-            attribution.TrackerToken = reader.ReadString();
-            attribution.TrackerName = reader.ReadString();
-            attribution.Network = reader.ReadString();
-            attribution.Campaign = reader.ReadString();
-            attribution.Adgroup = reader.ReadString();
-            attribution.Creative = reader.ReadString();
-            attribution.ClickLabel = reader.ReadString();
+            attribution.TrackerToken = ReadOptionalString(reader);
+            attribution.TrackerName = ReadOptionalString(reader);
+            attribution.Network = ReadOptionalString(reader);
+            attribution.Campaign = ReadOptionalString(reader);
+            attribution.Adgroup = ReadOptionalString(reader);
+            attribution.Creative = ReadOptionalString(reader);
+            attribution.ClickLabel = ReadOptionalString(reader);
 
             return attribution;
+        }
+
+        private static string ReadOptionalString(BinaryReader reader)
+        {
+            var hasValue = reader.ReadBoolean();
+            if (!hasValue) { return null; }
+
+            return reader.ReadString();
         }
 
         #endregion Serialization

@@ -198,6 +198,15 @@ namespace AdjustTest.Pcl
             }
         }
 
+        public void TestAttributionPackage()
+        {
+            // test default package attributes
+            TestDefaultAttributes("/attribution", ActivityKind.Attribution, "attribution");
+
+            TestDeviceIdsParameters();
+        }
+
+
         private void TestDefaultParameters()
         {
             TestDeviceInfo();

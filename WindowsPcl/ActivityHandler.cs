@@ -595,6 +595,8 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
+            Logger.Error("Wellformed deeplink '{0}'", deeplink);
+
             var deeplinkUri = new Uri(deeplink);
             DeviceUtil.LauchDeeplink(deeplinkUri);
         }

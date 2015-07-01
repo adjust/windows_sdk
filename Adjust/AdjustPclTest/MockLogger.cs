@@ -20,6 +20,11 @@ namespace AdjustTest.Pcl
 
         public MockLogger()
         {
+            Reset();
+        }
+
+        public void Reset()
+        {
             LogBuffer = new StringBuilder();
             LogMap = new Dictionary<int, List<string>>(8)
             {
@@ -32,6 +37,8 @@ namespace AdjustTest.Pcl
                 { LogLevelTest, new List<string>() },
                 { LogLevelCheck, new List<string>() },
             };
+
+            Check("MockLogger Reset");
         }
 
         public LogLevel LogLevel
@@ -127,14 +134,8 @@ namespace AdjustTest.Pcl
                 var formattedLine = Util.f("\t[{0}]{1} {2}", LogTag, logLevelString, line);
 
                 LogBuffer.AppendLine(formattedLine);
-                if (LogDelegate != null)
-                {
-                    LogDelegate(formattedLine);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine(formattedLine);
-                }
+                System.Diagnostics.Debug.WriteLine(formattedLine);
+                
 
             }
 

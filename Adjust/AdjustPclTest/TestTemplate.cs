@@ -17,6 +17,7 @@ namespace AdjustTest.Pcl
         public virtual void SetUp()
         {
             MockLogger = new MockLogger();
+            Assert.MockLogger = MockLogger;
         }
 
         public abstract void TearDown();

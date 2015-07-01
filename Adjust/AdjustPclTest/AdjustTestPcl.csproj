@@ -52,6 +52,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestActivityHandler.cs" />
     <Compile Include="TestActivityPackage.cs" />
+    <Compile Include="TestAttributionHandler.cs" />
     <Compile Include="TestPackageHandler.cs" />
     <Compile Include="TestRequestHandler.cs" />
     <Compile Include="TestTemplate.cs" />

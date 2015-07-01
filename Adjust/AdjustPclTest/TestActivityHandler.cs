@@ -26,7 +26,6 @@ namespace AdjustTest.Pcl
 
             MockPackageHandler = new MockPackageHandler(MockLogger);
             MockAttributionHandler = new MockAttributionHandler(MockLogger);
-            Assert.MockLogger = MockLogger;
 
             AdjustFactory.Logger = MockLogger;
             AdjustFactory.SetPackageHandler(MockPackageHandler);
@@ -81,7 +80,7 @@ namespace AdjustTest.Pcl
 
             // set first session
             testActivityPackage.TestSessionPackage(1);
-         }
+        }
 
         public void TestEventsBuffered()
         {
@@ -456,7 +455,10 @@ namespace AdjustTest.Pcl
             DeviceUtil.Sleep(5000);
 
             // test the new sub session
-            CheckSubsession(1, 2, true);
+            CheckSubsession(
+                sessionCount: 1,
+                subsessionCount: 2,
+                timerAlreadyStarted: true);
 
             // test the end of the subsession
             CheckEndSession();
@@ -758,12 +760,10 @@ namespace AdjustTest.Pcl
             // set verbose log level
             config.LogLevel = LogLevel.Verbose;
 
-            config.LogDelegate = (attribution) => MockLogger.Test("LogDelegate: {0}", attribution);
+            config.AttributionChanged = (attribution) => MockLogger.Test("AttributionChanged: {0}", attribution);
             
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
-
-            activityHandler.TrackSubsessionStart();
 
             DeviceUtil.Sleep(3000);
 
@@ -789,7 +789,7 @@ namespace AdjustTest.Pcl
             DeviceUtil.Sleep(1000);
 
             // check that it was unable to open the url
-            Assert.Error("Unable to Malformed deeplink '<malformedUrl>'");
+            Assert.Error("Malformed deeplink '<malformedUrl>'");
 
             // checking the default values of the first session package
             // should only have one package
@@ -807,8 +807,420 @@ namespace AdjustTest.Pcl
             // set first session
             testActivityPackage.TestSessionPackage(sessionCount: 1);
         }
-       
-        private void InitTests(string environment, string logLevel, bool eventBuffering = false,
+        
+        public void TestUpdateAttribution() 
+        {
+            // create the config to start the session
+            AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            config.LogLevel = LogLevel.Verbose;
+
+            // start activity handler with config
+            ActivityHandler firstActivityHandler = GetActivityHandler(config);
+
+            DeviceUtil.Sleep(1000);
+
+            // test init values
+            InitTests(environment: "sandbox", logLevel: "Verbose");
+
+            // test first session start
+            CheckFirstSession();
+
+            string nullJsonString = null;
+
+            AdjustAttribution nullAttribution = AdjustAttribution.FromJsonString(nullJsonString);
+            
+            // check if Attribution wasn't built
+            Assert.Null(nullAttribution);
+
+            // check that it does not update a null attribution
+            Assert.IsFalse(firstActivityHandler.UpdateAttribution(nullAttribution));
+            
+            // create an empty attribution
+            var emptyJsonString = "{ }";
+            AdjustAttribution emptyAttribution = AdjustAttribution.FromJsonString(emptyJsonString);
+
+            // check that updates attribution
+            Assert.IsTrue(firstActivityHandler.UpdateAttribution(emptyAttribution));
+            Assert.Debug("Wrote Attribution: tt: tn: net: cam: adg: cre: cl:");
+            
+            emptyAttribution = AdjustAttribution.FromJsonString(emptyJsonString);
+
+            // check that it does not update the attribution
+            Assert.IsFalse(firstActivityHandler.UpdateAttribution(emptyAttribution));
+            Assert.NotDebug("Wrote Attribution");
+            
+            // end session
+            firstActivityHandler.TrackSubsessionEnd();
+            DeviceUtil.Sleep(1000);
+
+            CheckEndSession();
+
+            config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            config.AttributionChanged = (attribution) => MockLogger.Test("onAttributionChanged: {0}", attribution);
+
+            config.LogLevel = LogLevel.Debug;
+
+            ActivityHandler restartActivityHandler = GetActivityHandler(config);
+            
+            DeviceUtil.Sleep(3000);
+
+            // test init values
+            InitTests(environment: "sandbox", logLevel: "Debug", 
+                readActivityState: "ec:0 sc:1 ssc:1",
+                readAttribution: String.Format("tt:{0} tn:{0} net:{0} cam:{0} adg:{0} cre:{0} cl:{0}", (string)null));
+            
+            CheckSubsession(subsessionCount: 2);
+            
+            // check that it does not update the attribution after the restart
+            Assert.IsFalse(restartActivityHandler.UpdateAttribution(emptyAttribution));
+            Assert.NotDebug("Wrote Attribution");
+
+            // new attribution
+            var firstAttributionJsonString = "{ " +
+                        "\"tracker_token\" : \"ttValue\" , " +
+                        "\"tracker_name\"  : \"tnValue\" , " +
+                        "\"network\"       : \"nValue\" , " +
+                        "\"campaign\"      : \"cpValue\" , " +
+                        "\"adgroup\"       : \"aValue\" , " +
+                        "\"creative\"      : \"ctValue\" , " +
+                        "\"click_label\"   : \"clValue\" }";
+            AdjustAttribution firstAttribution = AdjustAttribution.FromJsonString(firstAttributionJsonString);
+
+            //check that it updates
+            Assert.IsTrue(restartActivityHandler.UpdateAttribution(firstAttribution));
+            Assert.Debug("Wrote Attribution: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+
+            // check that it launch the saved attribute
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("onAttributionChanged: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+
+            // check that it does not update the attribution
+            Assert.IsFalse(restartActivityHandler.UpdateAttribution(firstAttribution));
+            Assert.NotDebug("Wrote Attribution");
+
+            // end session
+            restartActivityHandler.TrackSubsessionEnd();
+            DeviceUtil.Sleep(1000);
+
+            CheckEndSession();
+
+            config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            config.LogLevel = LogLevel.Info;
+
+            config.AttributionChanged = (attribution) => MockLogger.Test("onAttributionChanged: {0}", attribution);
+
+            ActivityHandler secondRestartActivityHandler = GetActivityHandler(config);
+
+            DeviceUtil.Sleep(1000);
+
+            // test init values
+            InitTests(environment: "sandbox" , logLevel:"Info", 
+                readActivityState: "ec:0 sc:1 ssc:2", 
+                readAttribution: "tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+
+            CheckSubsession(subsessionCount: 3);
+
+            // check that it does not update the attribution after the restart
+            Assert.IsFalse(secondRestartActivityHandler.UpdateAttribution(firstAttribution));
+            Assert.NotDebug("Wrote Attribution");
+
+            // new attribution
+            var secondAttributionJson = "{ " +
+                        "\"tracker_token\" : \"ttValue2\" , " +
+                        "\"tracker_name\"  : \"tnValue2\" , " +
+                        "\"network\"       : \"nValue2\" , " +
+                        "\"campaign\"      : \"cpValue2\" , " +
+                        "\"adgroup\"       : \"aValue2\" , " +
+                        "\"creative\"      : \"ctValue2\" , " +
+                        "\"click_label\"   : \"clValue2\" }";
+
+            AdjustAttribution secondAttribution = AdjustAttribution.FromJsonString(secondAttributionJson);
+
+            //check that it updates
+            Assert.IsTrue(secondRestartActivityHandler.UpdateAttribution(secondAttribution));
+            Assert.Debug("Wrote Attribution: tt:ttValue2 tn:tnValue2 net:nValue2 cam:cpValue2 adg:aValue2 cre:ctValue2 cl:clValue2");
+
+            // check that it launch the saved attribute
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("onAttributionChanged: tt:ttValue2 tn:tnValue2 net:nValue2 cam:cpValue2 adg:aValue2 cre:ctValue2 cl:clValue2");
+
+            // check that it does not update the attribution
+            Assert.IsFalse(secondRestartActivityHandler.UpdateAttribution(secondAttribution));
+            Assert.NotDebug("Wrote Attribution");
+        }
+
+        public void TestOfflineMode()
+        {
+            // adjust the session intervals for testing
+            AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,2000));
+            AdjustFactory.SetSubsessionInterval( new TimeSpan(0,0,0,0,500));
+
+            // create the config to start the session
+            AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            // start activity handler with config
+            ActivityHandler activityHandler = GetActivityHandler(config);
+
+            // put SDK offline
+            activityHandler.SetOfflineMode(true);
+
+            DeviceUtil.Sleep(3000);
+
+            // check if message the disable of the SDK
+            Assert.Info("Pausing package and attribution handler to put in offline mode");
+
+            // test init values
+            InitTests();
+
+            // test first session start
+            CheckFirstSession(paused: true);
+
+            // test end session logs
+            CheckEndSession();
+
+            // disable the SDK
+            activityHandler.SetEnabled(false);
+
+            // check that it is disabled
+            Assert.IsFalse(activityHandler.IsEnabled());
+
+            // writing activity state after disabling
+            Assert.Debug("Wrote Activity state: ec:0 sc:1 ssc:1");
+
+            // check if message the disable of the SDK
+            Assert.Info("Pausing package and attribution handler to disable the SDK");
+
+            DeviceUtil.Sleep(1000);
+
+            // test end session logs
+            CheckEndSession(updateActivityState: false);
+
+            // put SDK back online
+            activityHandler.SetOfflineMode(false);
+
+            Assert.Info("Package and attribution handler remain paused because the SDK is disabled");
+
+            DeviceUtil.Sleep(1000);
+
+            // test the update status, still paused
+            Assert.NotTest("AttributionHandler PauseSending");
+            Assert.NotTest("PackageHandler PauseSending");
+
+            // try to do activities while SDK disabled
+            activityHandler.TrackSubsessionStart();
+            activityHandler.TrackEvent(new AdjustEvent("event1"));
+
+            DeviceUtil.Sleep(3000);
+
+            // check that timer was not executed
+            CheckTimerIsFired(false);
+
+            // check that it did not wrote activity state from new session or subsession
+            Assert.NotDebug("Wrote Activity state");
+
+            // check that it did not add any package
+            Assert.NotTest("PackageHandler AddPackage");
+
+            // enable the SDK again
+            activityHandler.SetEnabled(true);
+
+            // check that is enabled
+            Assert.IsTrue(activityHandler.IsEnabled());
+
+            DeviceUtil.Sleep(1000);
+
+            // test that is not paused anymore
+            CheckNewSession(paused: false, sessionCount: 2);
+        }
+
+        public void TestCheckAttributionState() {
+            
+            //AdjustFactory.setTimerStart(500);
+            AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,4000));
+            /***
+             * // if it's a new session
+             * if (ActivityState.SubSessionCount <= 1) { return; }
+             * 
+             * // if there is already an attribution saved and there was no attribution being asked
+             * if (Attribution != null && !ActivityState.AskingAttribution) { return; }
+             * 
+             * AttributionHandler.AskAttribution();
+             */
+
+            // create the config to start the session
+            AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            config.AttributionChanged = (adjustAttribution) => MockLogger.Test("AttributionChanged: {0}", adjustAttribution);
+
+            // start activity handler with config
+            ActivityHandler activityHandler = GetActivityHandler(config);
+
+            DeviceUtil.Sleep(3000);
+
+            // test init values
+            InitTests();
+
+            // subsession count is 1
+            // attribution is null,
+            // askingAttribution is false by default,
+            // -> Not called
+
+            // test first session start
+            CheckFirstSession();
+
+            // test that get attribution wasn't called
+            Assert.NotTest("AttributionHandler AskAttribution");
+
+            // subsession count increased to 2
+            // attribution is still null,
+            // askingAttribution is still false,
+            // -> Called
+
+            // trigger a new sub session
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount:1, subsessionCount: 2,
+                timerAlreadyStarted: true, askAttributionIsCalled: true);
+
+            // subsession count increased to 3
+            // attribution is still null,
+            // askingAttribution is set to true,
+            // -> Called
+
+            // set asking attribution
+            activityHandler.SetAskingAttribution(true);
+            Assert.Debug("Wrote Activity state: ec:0 sc:1 ssc:2");
+
+            // trigger a new session
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount: 1, subsessionCount: 3,
+                timerAlreadyStarted: true, askAttributionIsCalled: true);
+
+            // subsession is reset to 1 with new session
+            // attribution is still null,
+            // askingAttribution is set to true,
+            // -> Not called
+
+            DeviceUtil.Sleep(3000); // 5 seconds = 2 + 3
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount: 2, subsessionCount: 1,
+                timerAlreadyStarted: true, askAttributionIsCalled: false);
+            
+            // subsession count increased to 2
+            // attribution is set,
+            // askingAttribution is set to true,
+            // -> Called
+            var jsonAttribution = "{ " +
+                        "\"tracker_token\" : \"ttValue\" , " +
+                        "\"tracker_name\"  : \"tnValue\" , " +
+                        "\"network\"       : \"nValue\" , " +
+                        "\"campaign\"      : \"cpValue\" , " +
+                        "\"adgroup\"       : \"aValue\" , " +
+                        "\"creative\"      : \"ctValue\" , " +
+                        "\"click_label\"   : \"clValue\" }";
+
+            var attribution = AdjustAttribution.FromJsonString(jsonAttribution);
+
+            // update the attribution
+            activityHandler.UpdateAttribution(attribution);
+
+            // attribution was updated
+            Assert.Debug("Wrote Attribution: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+
+            // trigger a new sub session
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(2, 2, true, true);
+            // subsession count is reset to 1
+            // attribution is set,
+            // askingAttribution is set to true,
+            // -> Not called
+
+            DeviceUtil.Sleep(3000); // 5 seconds = 2 + 3
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount: 3, subsessionCount: 1,
+                timerAlreadyStarted: true, askAttributionIsCalled: false);
+
+            // subsession increased to 2
+            // attribution is set,
+            // askingAttribution is set to false
+            // -> Not called
+
+            activityHandler.SetAskingAttribution(false);
+            Assert.Debug("Wrote Activity state: ec:0 sc:3 ssc:1");
+
+            // trigger a new sub session
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount: 3, subsessionCount: 2,
+                timerAlreadyStarted: true, askAttributionIsCalled: false);
+
+            // subsession is reset to 1
+            // attribution is set,
+            // askingAttribution is set to false
+            // -> Not called
+
+            DeviceUtil.Sleep(3000); // 5 seconds = 2 + 3
+            activityHandler.TrackSubsessionStart();
+            DeviceUtil.Sleep(2000);
+
+            CheckSubsession(sessionCount: 4, subsessionCount: 1,
+                timerAlreadyStarted: true, askAttributionIsCalled: false);
+        }
+
+        public void TestTimer()
+        {
+            AdjustFactory.SetTimerInterval(new TimeSpan(0,0,0,0,4000));
+            AdjustFactory.SetTimerStart(new TimeSpan(0,0,0,0,0));
+
+            // create the config to start the session
+            AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            // start activity handler with config
+            ActivityHandler activityHandler = GetActivityHandler(config);
+
+            DeviceUtil.Sleep(2000);
+
+            // test init values
+            InitTests();
+
+            // test first session start
+            CheckFirstSession();
+
+            // wait enough to fire the first cycle
+            DeviceUtil.Sleep(3000);
+
+            CheckTimerIsFired(true);
+
+            // end subsession to stop timer
+            activityHandler.TrackSubsessionEnd();
+
+            // wait enough for a new cycle
+            DeviceUtil.Sleep(6000);
+
+            activityHandler.TrackSubsessionStart();
+
+            DeviceUtil.Sleep(1000);
+
+            CheckTimerIsFired(false);
+        }
+
+
+        private void InitTests(string environment = "sandbox", string logLevel = "Info", bool eventBuffering = false,
                                string readActivityState = null, string readAttribution = null)
         {
             // check environment level
@@ -840,16 +1252,9 @@ namespace AdjustTest.Pcl
 
             ReadFiles(readActivityState, readAttribution);
         }
-
-        private void CheckSubsession(int sessionCount, int subsessionCount, bool timerAlreadyStarted)
-        {
-            CheckSubsession(sessionCount, subsessionCount);
-
-            CheckTimerIsFired(!timerAlreadyStarted);
-        }
-
-        private void CheckSubsession(int sessionCount, int subsessionCount,
-            bool? timerAlreadyStarted = null, bool? getAttributionIsCalled = null)
+        
+        private void CheckSubsession(int sessionCount = 1, int subsessionCount = 1,
+            bool? timerAlreadyStarted = null, bool? askAttributionIsCalled = null)
         {
             // test the new sub session
             Assert.Test("PackageHandler ResumeSending");
@@ -868,15 +1273,15 @@ namespace AdjustTest.Pcl
                 Assert.NotInfo("Started subsession ");
             }
 
-            if (getAttributionIsCalled.HasValue)
+            if (askAttributionIsCalled.HasValue)
             {
-                if (getAttributionIsCalled.Value)
+                if (askAttributionIsCalled.Value)
                 {
-                    Assert.Test("AttributionHandler GetAttribution");
+                    Assert.Test("AttributionHandler AskAttribution");
                 }
                 else
                 {
-                    Assert.NotTest("AttributionHandler TetAttribution");
+                    Assert.NotTest("AttributionHandler AskAttribution");
                 }
             }
 

@@ -148,7 +148,6 @@ namespace AdjustTest.WS
 
         private void ContainsMessage(LogLevel logLevel, string message, object[] parameters)
         {
-
             var formattedMessage = String.Format(CultureInfo.InvariantCulture, message, parameters);
 
             IsTrue(MockLogger.DeleteLogUntil(logLevel, formattedMessage),

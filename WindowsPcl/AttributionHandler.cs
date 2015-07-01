@@ -169,25 +169,17 @@ namespace AdjustSdk.Pcl
 
         private AdjustAttribution DeserializeAttribution(Dictionary<string, string> jsonDict)
         {
-            string attributionString;
-            if (!jsonDict.TryGetValue("attribution", out attributionString))
-            {
-                return null;
-            }
-            try
-            {
-                return JsonConvert.DeserializeObject<AdjustAttribution>(attributionString);
-            }
-            catch (Exception) { return null; }
+            string attributionString = Util.GetDictionaryValue(jsonDict, "attribution");
+            if (attributionString == null) { return null; }
+
+            return AdjustAttribution.FromJsonString(attributionString);
         }
 
         private int? DeserializeAskIn(Dictionary<string, string> jsonDict)
         {
-            string askInString;
-            if (!jsonDict.TryGetValue("ask_in", out askInString))
-            {
-                return null;
-            }
+            var askInString = Util.GetDictionaryValue(jsonDict, "ask_in");
+            if (askInString == null) { return null; }
+
             int askIn;
             if (!int.TryParse(askInString, out askIn)) { return null; }
 

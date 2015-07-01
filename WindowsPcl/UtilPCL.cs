@@ -14,7 +14,7 @@ namespace AdjustSdk.Pcl
 {
     public static class Util
     {
-        public const string BaseUrl = "https://app.adjust.io";
+        public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger { get { return AdjustFactory.Logger; } }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
@@ -280,6 +280,16 @@ namespace AdjustSdk.Pcl
                 var sResponse = streamReader.ReadToEnd();
                 return BuildJsonDict(sResponse, false);
             }
+        }
+
+        internal static string GetDictionaryValue(Dictionary<string, string> dic, string key)
+        {
+            string value;
+            if (!dic.TryGetValue(key, out value))
+            {
+                return null;
+            }
+            return value;
         }
 
         internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)

@@ -42,9 +42,20 @@ namespace AdjustTest.WS
         [TestMethod]
         public void TestOpenUrlWS() { TestActivityHandler.TestOpenUrl(); }
 
-
         [TestMethod]
         public void TestFinishedTrackingActivityWS() { TestActivityHandler.TestFinishedTrackingActivity(); }
+
+        [TestMethod]
+        public void TestUpdateAttributionWS() { TestActivityHandler.TestUpdateAttribution(); }
+
+        [TestMethod]
+        public void TestOfflineModeWS() { TestActivityHandler.TestOfflineMode(); }
+
+        [TestMethod]
+        public void TestCheckAttributionStateWS() { TestActivityHandler.TestCheckAttributionState(); }
+
+        [TestMethod]
+        public void TestTimerWS() { TestActivityHandler.TestTimer(); }
 
         /*
          * 
