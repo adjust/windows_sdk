@@ -17,7 +17,7 @@ namespace AdjustTest.WP81
 
         [TestInitialize]
         public void SetUp() { TestPackageHandler.SetUp(); }
-
+        /*
         [TestCleanup]
         public void TearDown() { TestPackageHandler.TearDown(); }
 
@@ -29,5 +29,6 @@ namespace AdjustTest.WP81
 
         [TestMethod]
         public void TestMultiplePackagesWP81() { TestPackageHandler.TestMultiplePackages(); }
+         * */
     }
 }

@@ -29,11 +29,12 @@ namespace AdjustTest.WP
 
         [TestCleanup]
         public void TearDown() { TestRequestHandler.TearDown(); }
-
+        /*
         [TestMethod]
         public void TestSendFirstPackageWP80() { TestRequestHandler.TestSendFirstPackage(); }
 
         [TestMethod]
         public void TestErrorSendPackageWP80() { TestRequestHandler.TestErrorSendPackage(); }
+         * */
     }
 }

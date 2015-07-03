@@ -162,12 +162,15 @@ namespace AdjustSdk.Uap
 
         public static string GetAppDisplayName()
         {
+            /*
             string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
             XElement element = XDocument.Load("appxmanifest.xml").Root;
             element = element.Element(XName.Get("Properties", namespaceName));
             element = element.Element(XName.Get("DisplayName", namespaceName));
             string displayName = element.Value;
             return displayName;
+             * */
+            return null;
         }
 
         public static string GetHardwareId()

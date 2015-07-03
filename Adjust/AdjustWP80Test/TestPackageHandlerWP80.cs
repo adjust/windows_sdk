@@ -29,7 +29,7 @@ namespace AdjustTest.WP
 
         [TestCleanup]
         public void TearDown() { TestPackageHandler.TearDown(); }
-
+        /*
         [TestMethod]
         public void TestFirstPackageWP80() { TestPackageHandler.TestFirstPackage(); }
 
@@ -38,5 +38,6 @@ namespace AdjustTest.WP
 
         [TestMethod]
         public void TestMultiplePackagesWP80() { TestPackageHandler.TestMultiplePackages(); }
+         * */
     }
 }

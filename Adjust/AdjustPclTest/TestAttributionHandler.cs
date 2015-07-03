@@ -74,7 +74,7 @@ namespace AdjustTest.Pcl
             NullClientTest(attributionHandler);
 
             // test client exception
-            ClientExceptionTest(attributionHandler);
+            //ClientExceptionTest(attributionHandler);
 
             // test wrong json response
             //wrongJsonTest(attributionHandler);

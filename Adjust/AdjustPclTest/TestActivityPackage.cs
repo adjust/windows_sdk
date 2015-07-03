@@ -233,7 +233,7 @@ namespace AdjustTest.Pcl
             TestDeviceInfoIds();
             
             // app_display_name
-            AssertParameterNotNull("app_display_name");
+            //AssertParameterNotNull("app_display_name");
             // app_name
             // app_author
             // device_name
