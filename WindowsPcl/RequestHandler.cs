@@ -76,11 +76,18 @@ namespace AdjustSdk.Pcl
                 WillRetry = false,
                 JsonDict = Util.ParseJsonResponse(httpResponseMessage),
             };
-
+            /*
+            Logger.Debug("ProcessResponse, JsonDict {0}", sendResponse.JsonDict);
+            if (sendResponse.JsonDict == null)
+            {
+                sendResponse.WillRetry = true;
+            }
+            Logger.Debug("ProcessResponse, WillRetry {0}", sendResponse.WillRetry);
+            */
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                 || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
             {
-                Logger.Error("{0}. ({1}).",
+                Logger.Error("{0}. (Status code: {1}).",
                     activityPackage.FailureMessage(),
                     (int)httpResponseMessage.StatusCode);
             }
@@ -88,7 +95,7 @@ namespace AdjustSdk.Pcl
             {
                 sendResponse.WillRetry = true;
 
-                Logger.Error("{0}. ({1}). Will retry later.",
+                Logger.Error("{0}. (Status code: {1}). Will retry later.",
                     activityPackage.FailureMessage(),
                     (int)httpResponseMessage.StatusCode);
             }
@@ -100,7 +107,7 @@ namespace AdjustSdk.Pcl
         {
             using (var response = webException.Response as HttpWebResponse)
             {
-                var statusCode = (response == null) ? 0 : (int)response.StatusCode;
+                int? statusCode = (response == null) ? null : (int?)response.StatusCode;
 
                 var sendResponse = new SendResponse
                 {
@@ -108,8 +115,9 @@ namespace AdjustSdk.Pcl
                     JsonDict = Util.ParseJsonExceptionResponse(response)
                 };
 
-                Logger.Error("{0}. ({1}). Will retry later.",
+                Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
                     activityPackage.FailureMessage(),
+                    webException.Message,
                     statusCode);
 
                 return sendResponse;
@@ -133,11 +141,13 @@ namespace AdjustSdk.Pcl
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
             var successRunning =
                 !SendTask.IsFaulted
-                && !SendTask.IsCanceled;
+                && !SendTask.IsCanceled
+                && SendTask.Result.JsonDict != null;
 
             if (successRunning)
                 PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
 
+            //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
             if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else

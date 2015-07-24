@@ -9,9 +9,8 @@ namespace AdjustTest.Pcl
         private RequestHandler RequestHandler { get; set; }
         private MockPackageHandler MockPackageHandler { get; set; }
         private MockHttpMessageHandler MockHttpMessageHandler { get; set; }
-        private ActivityPackage SessionPackage { get; set; }
+        private ActivityPackage ClickPackage { get; set; }
         
-
         public TestRequestHandler(DeviceUtil deviceUtil, IAssert assert)
             : base(deviceUtil, assert)
         { }
@@ -19,6 +18,14 @@ namespace AdjustTest.Pcl
         public override void SetUp()
         {
             base.SetUp();
+
+            AdjustFactory.Logger = MockLogger;
+
+            var activityHandler = UtilTest.GetActivityHandler(MockLogger, DeviceUtil);
+
+            MockLogger.Reset();
+
+            ClickPackage = UtilTest.CreateClickPackage(activityHandler, "");
 
             MockHttpMessageHandler = new MockHttpMessageHandler(MockLogger);
             AdjustFactory.SetHttpMessageHandler(MockHttpMessageHandler);
@@ -40,6 +47,122 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetHttpMessageHandler(null);
             AdjustFactory.Logger = null;
         }
+
+        public void TestSend()
+        {
+            NullResponseTest();
+
+            ClientExceptionTest();
+
+            ServerErrorTest();
+
+            WrongJsonTest();
+
+            EmptyJsonTest();
+
+            MessageTest();
+        }
+
+        private void NullResponseTest()
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.NULL;
+
+            RequestHandler.SendPackage(ClickPackage);
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("HttpMessageHandler SendAsync");
+
+            Assert.Test("PackageHandler CloseFirstPackage");
+        }
+
+        private void ClientExceptionTest() 
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.CLIENT_PROTOCOL_EXCEPTION;
+
+            RequestHandler.SendPackage(ClickPackage);
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("HttpMessageHandler SendAsync");
+
+            Assert.Error("Failed to track click. (testResponseError, Status code: Null). Will retry later");
+
+            Assert.Test("PackageHandler CloseFirstPackage");
+        }
+
+        private void ServerErrorTest()
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.INTERNAL_SERVER_ERROR;
+
+            RequestHandler.SendPackage(ClickPackage);
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("HttpMessageHandler SendAsync, responseType: INTERNAL_SERVER_ERROR");
+
+            Assert.Verbose("Response: {{ \"message\": \"testResponseError\"}}");
+
+            Assert.Error("testResponseError");
+
+            Assert.Error("Failed to track click. (Status code: 500).");
+
+            Assert.Test("PackageHandler FinishedTrackingActivity, [message, testResponseError]");
+
+            Assert.Test("PackageHandler SendNextPackage");
+        }
+
+        private void WrongJsonTest()
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.WRONG_JSON;
+
+            RequestHandler.SendPackage(ClickPackage);
+            DeviceUtil.Sleep(2000);
+
+            Assert.Test("HttpMessageHandler SendAsync, responseType: WRONG_JSON");
+
+            Assert.Verbose("Response: not a json response");
+
+            Assert.Error("Failed to parse json response (Unexpected character encountered while parsing");
+
+            Assert.Test("PackageHandler CloseFirstPackage");
+        }
+
+        private void EmptyJsonTest()
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.EMPTY_JSON;
+
+            RequestHandler.SendPackage(ClickPackage);
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("HttpMessageHandler SendAsync, responseType: EMPTY_JSON");
+
+            Assert.Verbose("Response: {{ }}");
+
+            Assert.Info("No message found");
+
+            Assert.Test("PackageHandler FinishedTrackingActivity,");
+
+            Assert.Test("PackageHandler SendNextPackage");
+        }
+
+        private void MessageTest()
+        {
+            MockHttpMessageHandler.ResponseType = ResponseType.MESSAGE;
+
+            RequestHandler.SendPackage(ClickPackage);
+            
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("HttpMessageHandler SendAsync, responseType: MESSAGE");
+
+            Assert.Verbose("Response: {{ \"message\": \"response OK\"}}");
+
+            Assert.Info("response OK");
+
+            Assert.Test("PackageHandler FinishedTrackingActivity, [message, response OK]");
+
+            Assert.Test("PackageHandler SendNextPackage");
+        }
+
+
         /*
         public void TestSendFirstPackage()
         {

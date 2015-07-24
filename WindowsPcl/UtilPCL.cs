@@ -16,6 +16,7 @@ namespace AdjustSdk.Pcl
     {
         public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger { get { return AdjustFactory.Logger; } }
+        private static NullFormat NullFormat = new NullFormat();
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -65,7 +66,7 @@ namespace AdjustSdk.Pcl
 
         public static string f(string message, params object[] parameters)
         {
-            return String.Format(CultureInfo.InvariantCulture, message, parameters);
+            return String.Format(NullFormat, message, parameters);
         }
 
         internal static bool IsFileNotFound(this Exception ex)
@@ -143,7 +144,7 @@ namespace AdjustSdk.Pcl
             return defaultReturn();
         }
 
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> ObjectWriter, T input, string objectName)
+        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
             where T : class
         {
             try
@@ -154,14 +155,24 @@ namespace AdjustSdk.Pcl
                 using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
                 {
                     stream.Seek(0, SeekOrigin.Begin);
-                    ObjectWriter(stream, input);
+                    objectWriter(stream, input);
                 }
-                Logger.Debug("Wrote {0}: {1}", objectName, input);
+                Logger.Debug(sucessMessage());
             }
             catch (Exception ex)
             {
                 Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
             }
+
+        }
+        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
+            where T : class
+        {
+            await SerializeToFileAsync(
+                fileName: fileName,
+                objectWriter: objectWriter,
+                input: input,
+                sucessMessage: () => Util.f("Wrote {0}: {1}", objectName, input));
         }
 
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
@@ -297,19 +308,30 @@ namespace AdjustSdk.Pcl
             Logger.Verbose("Response: {0}", sResponse);
 
             if (sResponse == null) { return null; }
-
-            Dictionary<string, string> jsonDic = null;
+            
+            Dictionary<string, object> jsonDicObj = null;
             try
             {
-                jsonDic = JsonConvert.DeserializeObject<Dictionary<string, string>>(sResponse);
+                jsonDicObj = JsonConvert.DeserializeObject<Dictionary<string, object>>(sResponse);
             }
             catch (Exception e)
             {
                 Logger.Error("Failed to parse json response ({0})", e.Message);
             }
 
-            if (jsonDic == null) { return null; }
+            if (jsonDicObj == null) { return null; }
 
+            var jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
+                ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
+
+            /*
+            Dictionary<string, string> jsonDic = new Dictionary<string,string>(jsonDicObj.Count);
+            foreach(var kvp in jsonDicObj)
+            {
+                if (kvp.Value == null) continue;
+                jsonDic.Add(kvp.Key, kvp.Value.ToString());
+            }
+            */
             string message;
             if (!jsonDic.TryGetValue("message", out message))
             {
@@ -338,4 +360,35 @@ namespace AdjustSdk.Pcl
             return httpClient;
         }
     }
+
+    // http://stackoverflow.com/a/7689257
+    public class NullFormat : IFormatProvider, ICustomFormatter
+    {
+        public object GetFormat(Type service)
+        {
+            if (service == typeof(ICustomFormatter))
+            {
+                return this;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public string Format(string format, object arg, IFormatProvider provider)
+        {
+            if (arg == null)
+            {
+                return "Null";
+            }
+            IFormattable formattable = arg as IFormattable;
+            if (formattable != null)
+            {
+                return formattable.ToString(format, provider);
+            }
+            return arg.ToString();
+        }
+    }
+
 }

@@ -55,7 +55,7 @@ namespace AdjustTest.Pcl
 
         public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            MockLogger.Test("{0} FinishedTrackingActivity {1}", prefix, jsonDict);
+            MockLogger.Test("{0} FinishedTrackingActivity, {1}", prefix, string.Join(";", jsonDict));
         }
     }
 }

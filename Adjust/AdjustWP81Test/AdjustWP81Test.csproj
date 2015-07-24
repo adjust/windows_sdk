@@ -80,6 +80,7 @@
     <Compile Include="AssertTestWP81.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestActivityHandlerWP81.cs" />
+    <Compile Include="TestAttributionHandlerWP81.cs" />
     <Compile Include="TestPackageHandlerWP81.cs" />
     <Compile Include="TestRequestHandlerWP81.cs" />
   </ItemGroup>

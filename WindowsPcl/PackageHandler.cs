@@ -139,8 +139,13 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueue()
         {
-            var sucessMessage = Util.f("Package handler wrote {0} packages", PackageQueue.Count);
-            Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue, sucessMessage).Wait();
+            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
+            Util.SerializeToFileAsync(
+                fileName: PackageQueueFilename,
+                objectWriter: ActivityPackage.SerializeListToStream,
+                input: PackageQueue,
+                sucessMessage: sucessMessage)
+                .Wait();
         }
 
         private void ReadPackageQueue()

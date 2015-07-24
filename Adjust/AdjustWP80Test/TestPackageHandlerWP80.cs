@@ -29,6 +29,22 @@ namespace AdjustTest.WP
 
         [TestCleanup]
         public void TearDown() { TestPackageHandler.TearDown(); }
+
+        [TestMethod]
+        public void TestAddPackageWP80() { TestPackageHandler.TestAddPackage(); }
+
+        [TestMethod]
+        public void TestSendFirstWP80() { TestPackageHandler.TestSendFirst(); }
+
+        [TestMethod]
+        public void TestSendNextWP80() { TestPackageHandler.TestSendNext(); }
+
+        [TestMethod]
+        public void TestCloseFirstPackageWP80() { TestPackageHandler.TestCloseFirstPackage(); }
+
+        [TestMethod]
+        public void TestCallsWP80() { TestPackageHandler.TestCalls(); }
+
         /*
         [TestMethod]
         public void TestFirstPackageWP80() { TestPackageHandler.TestFirstPackage(); }

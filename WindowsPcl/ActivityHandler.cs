@@ -433,13 +433,13 @@ namespace AdjustSdk.Pcl
             }
 
             var queryPairs = queryString.Split('&');
-            var extraParamenters = new Dictionary<string, string>(queryPairs.Length);
+            var extraParameters = new Dictionary<string, string>(queryPairs.Length);
             var attribution = new AdjustAttribution();
             bool hasAdjustTags = false;
 
             foreach (var pair in queryPairs)
             {
-                if (ReadQueryString(pair, extraParamenters, attribution))
+                if (ReadQueryString(pair, extraParameters, attribution))
                 {
                     hasAdjustTags = true;
                 }
@@ -447,14 +447,19 @@ namespace AdjustSdk.Pcl
 
             if (!hasAdjustTags) { return; }
 
+            var clickPackage = GetDeeplinkClickPackage(extraParameters, attribution);
+            PackageHandler.AddPackage(clickPackage);
+            PackageHandler.SendFirstPackage();
+        }
+
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        {
             var now = DateTime.Now;
 
             var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, now);
-            packageBuilder.ExtraParameters = extraParamenters;
+            packageBuilder.ExtraParameters = extraParameters;
 
-            var clickPackage = packageBuilder.BuildClickPackage("deeplink", now, attribution);
-            PackageHandler.AddPackage(clickPackage);
-            PackageHandler.SendFirstPackage();
+            return packageBuilder.BuildClickPackage("deeplink", now, attribution);
         }
 
         private bool ReadQueryString(string queryString,
@@ -514,12 +519,22 @@ namespace AdjustSdk.Pcl
 
         private void WriteActivityState()
         {
-            Util.SerializeToFileAsync(ActivityStateFileName, ActivityState.SerializeToStream, ActivityState, ActivityStateName).Wait();
+            Util.SerializeToFileAsync(
+                fileName: ActivityStateFileName,
+                objectWriter: ActivityState.SerializeToStream, 
+                input: ActivityState,
+                objectName: ActivityStateName)
+                .Wait();
         }
 
         private void WriteAttribution()
         {
-            Util.SerializeToFileAsync(AttributionFileName, AdjustAttribution.SerializeToStream, Attribution, AttributionName).Wait();
+            Util.SerializeToFileAsync(
+                fileName: AttributionFileName, 
+                objectWriter: AdjustAttribution.SerializeToStream,
+                input: Attribution,
+                objectName: AttributionName)
+                .Wait();
         }
 
         private void ReadActivityState()

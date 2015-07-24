@@ -842,7 +842,7 @@ namespace AdjustTest.Pcl
 
             // check that updates attribution
             Assert.IsTrue(firstActivityHandler.UpdateAttribution(emptyAttribution));
-            Assert.Debug("Wrote Attribution: tt: tn: net: cam: adg: cre: cl:");
+            Assert.Debug("Wrote Attribution: tt:Null tn:Null net:Null cam:Null adg:Null cre:Null cl:Null");
             
             emptyAttribution = AdjustAttribution.FromJsonString(emptyJsonString);
 
@@ -869,7 +869,7 @@ namespace AdjustTest.Pcl
             // test init values
             InitTests(environment: "sandbox", logLevel: "Debug", 
                 readActivityState: "ec:0 sc:1 ssc:1",
-                readAttribution: String.Format("tt:{0} tn:{0} net:{0} cam:{0} adg:{0} cre:{0} cl:{0}", (string)null));
+                readAttribution: "tt:Null tn:Null net:Null cam:Null adg:Null cre:Null cl:Null");
             
             CheckSubsession(subsessionCount: 2);
             

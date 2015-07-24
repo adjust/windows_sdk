@@ -126,6 +126,8 @@ namespace AdjustSdk.Pcl
             }
 
             var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
+
+            CheckAttributionInternal(jsonDic);
         }
 
         private HttpClient GetHttpClient(ActivityPackage activityPackage)

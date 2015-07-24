@@ -22,7 +22,7 @@ namespace AdjustTest.Pcl
 
         public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            MockLogger.Test("{0} FinishedTrackingActivity", prefix);
+            MockLogger.Test("{0} FinishedTrackingActivity, {1}", prefix, jsonDict);
         }
 
         public void TrackEvent(AdjustEvent adjustEvent)
@@ -75,6 +75,12 @@ namespace AdjustTest.Pcl
         public ActivityPackage GetAttributionPackage()
         {
             MockLogger.Test("{0} GetAttributionPackage", prefix);
+            return null;
+        }
+
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        {
+            MockLogger.Test("{0} GetDeeplinkClickPackage", prefix);
             return null;
         }
     }

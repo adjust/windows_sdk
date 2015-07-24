@@ -5,7 +5,7 @@ namespace AdjustSdk
 {
     public enum ActivityKind
     {
-        Unkown = 0,
+        Unknown = 0,
         Session,
         Event,
         Click,
@@ -25,7 +25,7 @@ namespace AdjustSdk
             else if ("attribution".Equals(activityKindString))
                 return ActivityKind.Attribution;
             else
-                return ActivityKind.Unkown;
+                return ActivityKind.Unknown;
         }
 
         public static string ToString(ActivityKind activityKind)
@@ -49,7 +49,8 @@ namespace AdjustSdk
         {
             string eventToken;
 
-            if (!parameters.TryGetValue("event_token", out eventToken)) { return ""; }
+            if (parameters == null ||
+                !parameters.TryGetValue("event_token", out eventToken)) { return ""; }
 
             string sRevenue;
 

@@ -41,6 +41,33 @@ namespace AdjustTest.Pcl
             }
             return true;
         }
+
+        public static ActivityHandler GetActivityHandler(MockLogger mocklogger, DeviceUtil deviceUtil)
+        {
+            MockAttributionHandler mockAttributionHandler = new MockAttributionHandler(mocklogger);
+            MockPackageHandler mockPackageHandler = new MockPackageHandler(mocklogger);
+
+            AdjustFactory.SetAttributionHandler(mockAttributionHandler);
+            AdjustFactory.SetPackageHandler(mockPackageHandler);
+
+            // create the config to start the session
+            AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
+
+            // start activity handler with config
+            ActivityHandler activityHandler = ActivityHandler.GetInstance(config, deviceUtil);
+
+            deviceUtil.Sleep(3000);
+
+            return activityHandler;
+        }
+
+        public static ActivityPackage CreateClickPackage(ActivityHandler activityHandler, string suffix)
+        {
+            var clickPackage = activityHandler.GetDeeplinkClickPackage(null, null);
+            clickPackage.Suffix = suffix;
+            
+            return clickPackage;
+        }
     }
 
     public class TestActivityPackage

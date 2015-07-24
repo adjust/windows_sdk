@@ -107,6 +107,7 @@
       <DependentUpon>AppResources.resx</DependentUpon>
     </Compile>
     <Compile Include="TestActivityHandlerWP80.cs" />
+    <Compile Include="TestAttributionHandlerWP80.cs" />
     <Compile Include="TestPackageHandlerWP80.cs" />
     <Compile Include="TestRequestHandlerWP80.cs" />
   </ItemGroup>

@@ -7,7 +7,7 @@ namespace AdjustSdk.Pcl
 {
     public class ActivityPackage
     {
-        public ActivityKind ActivityKind { get; private set; }
+        public ActivityKind ActivityKind { get; set; }
 
         public string ClientSdk { get; private set; }
 
@@ -15,7 +15,7 @@ namespace AdjustSdk.Pcl
 
         public string Path { get; private set; }
 
-        public string Suffix { get; private set; }
+        public string Suffix { get; set; }
 
         private ActivityPackage()
         {

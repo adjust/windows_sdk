@@ -5,7 +5,15 @@ namespace AdjustTest.Pcl
 {
     public class TestPackageHandler : TestTemplate
     {
-        private MockRequestHandler MockRequestHandler;
+        private MockRequestHandler MockRequestHandler { get; set; }
+        private MockActivityHandler MockActivityHandler { get; set; }
+        private PackageHandler PackageHandler { get; set; }
+        private ActivityHandler ActivityHandler { get; set; }
+
+        private enum SendFirstState
+        {
+            EMPTY_QUEUE, PAUSED, IS_SENDING, SEND
+        }
 
         public TestPackageHandler(DeviceUtil deviceUtil, IAssert assert)
             : base(deviceUtil, assert)
@@ -16,14 +24,275 @@ namespace AdjustTest.Pcl
             base.SetUp();
 
             MockRequestHandler = new MockRequestHandler(MockLogger);
+            MockActivityHandler = new MockActivityHandler(MockLogger);
+
+            AdjustFactory.Logger = MockLogger;
             AdjustFactory.SetRequestHandler(MockRequestHandler);
+            AdjustFactory.SetActivityHandler(MockActivityHandler);
+
+            ActivityHandler = GetActivityHandler();
+
+            PackageHandler = StartPackageHandler();
         }
 
         public override void TearDown()
         {
             AdjustFactory.SetRequestHandler(null);
+            AdjustFactory.SetActivityHandler(null);
             AdjustFactory.Logger = null;
         }
+
+        private PackageHandler StartPackageHandler()
+        {
+            // delete package queue for fresh start
+            var packageQueueDeleted = Util.DeleteFile("AdjustIOPackageQueue");
+
+            MockLogger.Test("Was PackageQueue deleted? " + packageQueueDeleted);
+
+            PackageHandler packageHandler = new PackageHandler(
+                activityHandler:MockActivityHandler,
+                startPaused: false);
+
+            DeviceUtil.Sleep(1000);
+
+            Assert.Verbose("Package queue file not found");
+
+            return packageHandler;
+        }
+        
+        public void TestAddPackage()
+        {
+            ActivityPackage firstClickPackage = UtilTest.CreateClickPackage(ActivityHandler, "FirstPackage");
+
+            PackageHandler.AddPackage(firstClickPackage);
+
+            DeviceUtil.Sleep(1000);
+
+            AddPackageTests(packageNumber: 1, packageString: "clickFirstPackage");
+
+            PackageHandler secondPackageHandler = AddSecondPackageTest(null);
+
+            ActivityPackage secondClickPackage = UtilTest.CreateClickPackage(ActivityHandler, "ThirdPackage");
+
+            secondPackageHandler.AddPackage(secondClickPackage);
+
+            DeviceUtil.Sleep(1000);
+
+            AddPackageTests(packageNumber: 3, packageString: "clickThirdPackage");
+
+            // send the first click package/ first package
+            secondPackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("RequestHandler SendPackage, clickFirstPackage");
+
+            // send the second click package/ third package
+            secondPackageHandler.SendNextPackage();
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("RequestHandler SendPackage, clickThirdPackage");
+
+            // send the unknow package/ second package
+            secondPackageHandler.SendNextPackage();
+            DeviceUtil.Sleep(1000);
+
+            Assert.Test("RequestHandler SendPackage, unknownSecondPackage");
+        }
+
+        public void TestSendFirst()
+        {
+            PackageHandler.SendFirstPackage();
+
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.EMPTY_QUEUE);
+
+            AddAndSendFirstPackageTest(PackageHandler);
+
+            // try to send when it is still sending
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.IS_SENDING);
+
+            // try to send paused
+            PackageHandler.PauseSending();
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.PAUSED);
+
+            // unpause, it's still sending
+            PackageHandler.ResumeSending();
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.IS_SENDING);
+
+            // verify that both paused and isSending are reset with a new session
+            PackageHandler secondSessionPackageHandler = new PackageHandler(
+                activityHandler: MockActivityHandler,
+                startPaused: false);
+
+            secondSessionPackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            // send the package to request handler
+            SendFirstTests(SendFirstState.SEND, "unknownFirstPackage");
+        }
+
+        public void TestSendNext()
+        {
+            // add and send the first package
+            AddAndSendFirstPackageTest(PackageHandler);
+
+            // try to send when it is still sending
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.IS_SENDING);
+
+            // add a second package
+            AddSecondPackageTest(PackageHandler);
+
+            //send next package
+            PackageHandler.SendNextPackage();
+            DeviceUtil.Sleep(2000);
+
+            Assert.Debug("Package handler wrote 1 packages");
+
+            // try to send the second package
+            SendFirstTests(SendFirstState.SEND, "unknownSecondPackage");
+        }
+
+        public void TestCloseFirstPackage()
+        {
+            AddAndSendFirstPackageTest(PackageHandler);
+
+            // try to send when it is still sending
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(1000);
+
+            SendFirstTests(SendFirstState.IS_SENDING);
+
+            //send next package
+            PackageHandler.CloseFirstPackage();
+            DeviceUtil.Sleep(2000);
+
+            Assert.NotDebug("Package handler wrote");
+
+            PackageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(2000);
+
+            // try to send the first package again
+            SendFirstTests(SendFirstState.SEND, "unknownFirstPackage");
+        }
+
+        public void TestCalls()
+        {
+            // TODO test "will retry later"
+
+            PackageHandler.FinishedTrackingActivity(null);
+
+            Assert.Test("ActivityHandler FinishedTrackingActivity, Null");
+        }
+
+        private void SendFirstTests(SendFirstState sendFirstState, string packageString = null)
+        {
+            if (sendFirstState == SendFirstState.PAUSED)
+            {
+                Assert.Debug("Package handler is paused");
+            }
+            else
+            {
+                Assert.NotDebug("Package handler is paused");
+            }
+
+            if (sendFirstState == SendFirstState.IS_SENDING)
+            {
+                Assert.Verbose("Package handler is already sending");
+            }
+            else
+            {
+                Assert.NotVerbose("Package handler is already sending");
+            }
+
+            if (sendFirstState == SendFirstState.SEND)
+            {
+                Assert.Test("RequestHandler SendPackage, " + packageString);
+            }
+            else
+            {
+                Assert.NotTest("RequestHandler SendPackage");
+            }
+        }
+
+        private void AddAndSendFirstPackageTest(PackageHandler packageHandler)
+        {
+            // add a package
+            ActivityPackage activityPackage = CreateUnknowPackage("FirstPackage");
+
+            // send the first package
+            packageHandler.AddPackage(activityPackage);
+
+            packageHandler.SendFirstPackage();
+            DeviceUtil.Sleep(2000);
+
+            AddPackageTests(1, "unknownFirstPackage");
+
+            SendFirstTests(SendFirstState.SEND, "unknownFirstPackage");
+        }
+
+
+        private PackageHandler AddSecondPackageTest(PackageHandler packageHandler)
+        {
+            if (packageHandler == null)
+            {
+                packageHandler = new PackageHandler(
+                    activityHandler: MockActivityHandler,
+                    startPaused: false);
+
+                DeviceUtil.Sleep(1000);
+
+                // check that it can read the previously saved package
+                Assert.Debug("Package handler read 1 packages");
+            }
+
+            ActivityPackage secondActivityPackage = CreateUnknowPackage("SecondPackage");
+
+            packageHandler.AddPackage(secondActivityPackage);
+
+            DeviceUtil.Sleep(1000);
+
+            AddPackageTests(packageNumber: 2, packageString: "unknownSecondPackage");
+
+            return packageHandler;
+        }
+
+        private ActivityHandler GetActivityHandler()
+        {
+            ActivityHandler activityHandler = UtilTest.GetActivityHandler(MockLogger, DeviceUtil);
+
+            MockLogger.Reset();
+
+            return activityHandler;
+        }
+
+        private ActivityPackage CreateUnknowPackage(string suffix)
+        {
+            var activityPackage = UtilTest.CreateClickPackage(ActivityHandler, suffix); 
+            activityPackage.ActivityKind = ActivityKind.Unknown;
+            return activityPackage;
+        }
+        
+        private void AddPackageTests(int packageNumber, string packageString)
+        {
+            Assert.Debug("Added package {0} ({1})", packageNumber, packageString);
+
+            Assert.Debug("Package handler wrote {0} packages", packageNumber);
+        }
+
+
         /*
         public void TestFirstPackage()
         {
@@ -176,4 +445,5 @@ namespace AdjustTest.Pcl
         }
          * */
     }
+
 }

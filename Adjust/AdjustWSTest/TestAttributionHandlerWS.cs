@@ -28,5 +28,17 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestAskAttributionWS() { TestAttributionHandler.TestAskAttribution(); }
+        
+        [TestMethod]
+        public void TestCheckAttributionWS() { TestAttributionHandler.TestCheckAttribution(); }
+
+        [TestMethod]
+        public void TestAskInWS() { TestAttributionHandler.TestAskIn(); }
+
+        [TestMethod]
+        public void TestPauseWS() { TestAttributionHandler.TestPause(); }
+
+        [TestMethod]
+        public void TestWithoutListenerWS() { TestAttributionHandler.TestWithoutListener(); }
     }
 }
