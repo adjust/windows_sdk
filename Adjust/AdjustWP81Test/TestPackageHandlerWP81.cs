@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 namespace AdjustTest.WP81
 {
     [TestClass]
-    class TestPackageHandlerWP81
+    public class TestPackageHandlerWP81
     {
         private static TestPackageHandler TestPackageHandler;
 
