@@ -65,9 +65,7 @@ namespace AdjustSdk
                 return null;
             }
             string deviceId = Convert.ToBase64String(id as byte[]);
-
-            logger.Debug("Device unique Id ({0})", deviceId);
-
+                        
             return deviceId;
         }
 

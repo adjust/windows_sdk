@@ -271,6 +271,7 @@ namespace AdjustTest.Pcl
                 AssertParameterNotNull("app_author");
                 AssertParameterNotNull("device_name");
                 AssertParameterNull("win_adid");
+                AssertParameterNull("architecture");
             }
             else
             {
@@ -278,6 +279,7 @@ namespace AdjustTest.Pcl
                 AssertParameterNull("app_author");
                 AssertParameterNull("device_name");
                 AssertParameterNotNull("win_adid");
+                AssertParameterNotNull("architecture");
             }
             // app_version
             AssertParameterNotNull("app_version");
@@ -287,8 +289,6 @@ namespace AdjustTest.Pcl
             AssertParameterNotNull("device_type");
             // device_manufacturer
             AssertParameterNotNull("device_manufacturer");
-            // architecture
-            AssertParameterNotNull("architecture");
             // os_name
             AssertParameterNotNull("os_name");
             // os_version

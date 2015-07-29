@@ -214,17 +214,13 @@ namespace AdjustSdk.Pcl
 
             if (attribution.Equals(Attribution)) { return false; }
 
-            SaveAttribution(attribution);
+            Attribution = attribution;
+            WriteAttribution();
+
             RunDelegate(attribution);
             return true;
         }
-
-        private void SaveAttribution(AdjustAttribution attribution)
-        {
-            Attribution = attribution;
-            WriteAttribution();
-        }
-
+        
         public void SetAskingAttribution(bool askingAttribution)
         {
             ActivityState.AskingAttribution = askingAttribution;
@@ -241,6 +237,16 @@ namespace AdjustSdk.Pcl
         private void UpdateStatus()
         {
             InternalQueue.Enqueue(UpdateStatusInternal);
+        }
+
+        private void WriteActivityState()
+        {
+            InternalQueue.Enqueue(WriteActivityStateInternal);
+        }
+
+        private void WriteAttribution()
+        {
+            InternalQueue.Enqueue(WriteAttributionInternal);
         }
 
         private void InitInternal(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
@@ -322,7 +328,7 @@ namespace AdjustSdk.Pcl
 
                 ActivityState.ResetSessionAttributes(now);
                 ActivityState.Enabled = Enabled;
-                WriteActivityState();
+                WriteActivityStateInternal();
 
                 return;
             }
@@ -333,7 +339,7 @@ namespace AdjustSdk.Pcl
             {
                 Logger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
-                WriteActivityState();
+                WriteActivityStateInternal();
                 return;
             }
 
@@ -346,7 +352,7 @@ namespace AdjustSdk.Pcl
                 TransferSessionPackage();
 
                 ActivityState.ResetSessionAttributes(now);
-                WriteActivityState();
+                WriteActivityStateInternal();
 
                 return;
             }
@@ -358,7 +364,7 @@ namespace AdjustSdk.Pcl
                 ActivityState.SessionLenght += lastInterval;
                 ActivityState.LastActivity = now;
 
-                WriteActivityState();
+                WriteActivityStateInternal();
                 Logger.Info("Started subsession {0} of session {1}",
                     ActivityState.SubSessionCount, ActivityState.SessionCount);
                 return;
@@ -383,7 +389,7 @@ namespace AdjustSdk.Pcl
             StopTimer();
             if (UpdateActivityState(DateTime.Now))
             {
-                WriteActivityState();
+                WriteActivityStateInternal();
             }
         }
 
@@ -410,7 +416,7 @@ namespace AdjustSdk.Pcl
                 PackageHandler.SendFirstPackage();
             }
 
-            WriteActivityState();
+            WriteActivityStateInternal();
         }
 
         private void OpenUrlInternal(Uri uri)
@@ -517,7 +523,7 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        private void WriteActivityState()
+        private void WriteActivityStateInternal()
         {
             Util.SerializeToFileAsync(
                 fileName: ActivityStateFileName,
@@ -527,7 +533,7 @@ namespace AdjustSdk.Pcl
                 .Wait();
         }
 
-        private void WriteAttribution()
+        private void WriteAttributionInternal()
         {
             Util.SerializeToFileAsync(
                 fileName: AttributionFileName, 
@@ -681,7 +687,7 @@ namespace AdjustSdk.Pcl
 
             if (UpdateActivityState(DateTime.Now))
             {
-                WriteActivityState();
+                WriteActivityStateInternal();
             }
         }
 

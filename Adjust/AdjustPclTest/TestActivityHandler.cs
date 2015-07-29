@@ -818,7 +818,7 @@ namespace AdjustTest.Pcl
             // start activity handler with config
             ActivityHandler firstActivityHandler = GetActivityHandler(config);
 
-            DeviceUtil.Sleep(1000);
+            DeviceUtil.Sleep(2000);
 
             // test init values
             InitTests(environment: "sandbox", logLevel: "Verbose");
