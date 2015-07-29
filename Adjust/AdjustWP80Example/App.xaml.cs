@@ -8,7 +8,6 @@ using System.Windows;
 using System.Windows.Markup;
 using System.Windows.Navigation;
 using AdjustWP80Example.Resources;
-using AdjustSdk.Pcl;
 
 namespace AdjustWP80Example
 {
@@ -25,10 +24,26 @@ namespace AdjustWP80Example
         /// </summary>
         public App()
         {
-            //Adjust.AppDidLaunch("w5zaertrzaek");
-            //Adjust.SetLogLevel(LogLevel.Verbose);
-            //Adjust.SetEnvironment(AdjustEnvironment.Sandbox);
-            //Adjust.TrackEvent("ylyc00");
+            // configure Adjust
+            var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox);
+
+            // change the log level
+            config.LogLevel = LogLevel.Verbose;
+
+            // allow logging to be displayed on a debug app
+            config.LogDelegate = (msg) => System.Diagnostics.Debug.WriteLine(msg);
+            
+            // enable event buffering
+            //config.EventBufferingEnabled = true;
+
+            // set default tracker
+            //config.DefaultTracker = "{YourDefaultTracker}";
+
+            // set attribution delegate
+            config.AttributionChanged = (attribution) => 
+                System.Diagnostics.Debug.WriteLine("attribution: " + attribution);
+
+            Adjust.ApplicationLaunching(config);
 
             // Global handler for uncaught exceptions.
             UnhandledException += Application_UnhandledException;

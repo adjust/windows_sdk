@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using AdjustSdk.Pcl;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace AdjustSdk.Pcl
+namespace AdjustSdk
 {
     public class AdjustAttribution
     {

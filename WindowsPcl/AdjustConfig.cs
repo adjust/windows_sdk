@@ -1,6 +1,7 @@
-﻿using System;
+﻿using AdjustSdk.Pcl;
+using System;
 
-namespace AdjustSdk.Pcl
+namespace AdjustSdk
 {
     public class AdjustConfig
     {

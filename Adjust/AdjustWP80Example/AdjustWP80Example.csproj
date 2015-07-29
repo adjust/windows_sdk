@@ -153,15 +153,15 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\GitHub\windows_sdk\WindowsPclNet40\WindowsPCLnet40.csproj">
+    <ProjectReference Include="..\..\WindowsPCLnet40\WindowsPclNet40.csproj">
       <Project>{C739ABC8-258E-4111-ACD8-6CE58D00633D}</Project>
       <Name>WindowsPCLnet40</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\GitHub\windows_sdk\WindowsPcl\WindowsPCL.csproj">
+    <ProjectReference Include="..\..\WindowsPCL\WindowsPcl.csproj">
       <Project>{1037B76A-1170-414D-AFAE-4C4621E78007}</Project>
       <Name>WindowsPCL</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\GitHub\windows_sdk\WindowsPhone80\AdjustWP80.csproj">
+    <ProjectReference Include="..\..\WindowsPhone80\AdjustWP80.csproj">
       <Project>{147466fe-faf6-455a-8ca0-6819d0e7d82d}</Project>
       <Name>AdjustWP80</Name>
     </ProjectReference>

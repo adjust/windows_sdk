@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using AdjustSdk.Pcl;
+using System.Collections.Generic;
 
-namespace AdjustSdk.Pcl
+namespace AdjustSdk
 {
     public class AdjustEvent
     {
