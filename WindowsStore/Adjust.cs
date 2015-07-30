@@ -212,7 +212,8 @@ namespace AdjustSdk
             AdjustApi.SetResponseDelegate(responseDelegate);
         }
         */
-                /// <summary>
+        
+        /// <summary>
         /// Enable or disable the adjust SDK
         /// </summary>
         /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
@@ -228,6 +229,15 @@ namespace AdjustSdk
         public static bool IsEnabled()
         {
             return AdjustInstance.IsEnabled();
+        }
+
+        /// <summary>
+        /// Puts the SDK in offline or online mode
+        /// </summary>
+        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        public static void SetOfflineMode(bool offlineMode)
+        {
+            AdjustInstance.SetOfflineMode(offlineMode);
         }
 
         /// <summary>

@@ -45,6 +45,12 @@ namespace AdjustWP80Example
 
             Adjust.ApplicationLaunching(config);
 
+            // put the SDK in offline mode
+            //Adjust.SetOfflineMode(offlineMode: true);
+
+            // disable the SDK
+            //Adjust.SetEnabled(enabled: false);
+
             // Global handler for uncaught exceptions.
             UnhandledException += Application_UnhandledException;
 

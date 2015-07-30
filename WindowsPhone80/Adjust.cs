@@ -164,6 +164,15 @@ namespace AdjustSdk
         }
 
         /// <summary>
+        /// Puts the SDK in offline or online mode
+        /// </summary>
+        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        public static void SetOfflineMode(bool offlineMode)
+        {
+            AdjustInstance.SetOfflineMode(offlineMode);
+        }
+
+        /// <summary>
         /// Read the URL that opened the application to search for
         /// an adjust deep link
         /// </summary>

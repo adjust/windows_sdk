@@ -1,6 +1,8 @@
 ﻿using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
 
 namespace AdjustSdk
 {
@@ -15,7 +17,29 @@ namespace AdjustSdk
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
 
         private Adjust() { }
-        
+
+        private static bool firstVisibilityChanged = true;
+
+        /// <summary>
+        ///  Tell Adjust that the application is activated (brought to foreground) or deactivated (sent to background).
+        /// </summary>
+        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        {
+            if (firstVisibilityChanged)
+            {
+                firstVisibilityChanged = false;
+                return;
+            }
+            if (args.Visible)
+            {
+                AdjustInstance.ApplicationActivated();
+            }
+            else
+            {
+                AdjustInstance.ApplicationDeactivated();
+            }
+        }
+
         /// <summary>
         ///  Tell Adjust that the application was launched.
         ///
@@ -28,6 +52,15 @@ namespace AdjustSdk
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
             AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
+            try
+            {
+                Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
+            }
+            catch (Exception)
+            {
+                AdjustFactory.Logger.Debug("Not possible to detect automatically if the app goes to the background");
+            }
+
         }
         
         /// <summary>
@@ -63,89 +96,6 @@ namespace AdjustSdk
             AdjustInstance.TrackEvent(adjustEvent);
         }
 
-        /*
-        /// <summary>
-        ///  Tell Adjust that a user generated some revenue.
-        ///
-        ///  The amount is measured in cents and rounded to on digit after the
-        ///  decimal point. If you want to differentiate between several revenue
-        ///  types, you can do so by using different event tokens. If your revenue
-        ///  events have callbacks, you can also pass in parameters that will be
-        ///  forwarded to your end point.
-        /// </summary>
-        /// <param name="amountInCents">
-        ///  The amount in cents (example: 1.5 means one and a half cents)
-        /// </param>
-        /// <param name="eventToken">
-        ///  The token for this revenue event (optional, see above)
-        /// </param>
-        /// <param name="callbackParameters">
-        ///  Parameters for this revenue event (optional, see above)
-        /// </param>
-        public static void TrackRevenue(double amountInCents,
-            string eventToken = null,
-            Dictionary<string, string> callbackParameters = null)
-        {
-            AdjustApi.TrackRevenue(amountInCents, eventToken, callbackParameters);
-        }
-
-        /// <summary>
-        ///  Change the verbosity of Adjust's logs.
-        ///
-        ///  You can increase or reduce the amount of logs from Adjust by passing
-        ///  one of the following parameters. Use Log.ASSERT to disable all logging.
-        /// </summary>
-        /// <param name="logLevel">
-        ///  The desired minimum log level (default: info)
-        ///  Must be one of the following:
-        ///   - Verbose (enable all logging)
-        ///   - Debug   (enable more logging)
-        ///   - Info    (the default)
-        ///   - Warn    (disable info logging)
-        ///   - Error   (disable warnings as well)
-        ///   - Assert  (disable errors as well)
-        /// </param>
-        public static void SetLogLevel(LogLevel logLevel)
-        {
-            AdjustApi.SetLogLevel(logLevel);
-        }
-
-        /// <summary>
-        ///  Set the tracking environment to sandbox or production.
-        ///
-        ///  Use sandbox for testing and production for the final build that you release.
-        /// </summary>
-        /// <param name="environment">
-        ///  The new environment. Supported values:
-        ///   - AdjustEnvironment.Sandbox
-        ///   - AdjustEnvironment.Production
-        /// </param>
-        public static void SetEnvironment(AdjustEnvironment environment)
-        {
-            AdjustApi.SetEnvironment(environment);
-        }
-
-        /// <summary>
-        ///  Enable or disable event buffering.
-        ///
-        ///  Enable event buffering if your app triggers a lot of events.
-        ///  When enabled, events get buffered and only get tracked each
-        ///  minute. Buffered events are still persisted, of course.
-        /// </summary>
-        public static void SetEventBufferingEnabled(bool enabledEventBuffering)
-        {
-            AdjustApi.SetEventBufferingEnabled(enabledEventBuffering);
-        }
-
-        /// <summary>
-        /// Optional delegate method that will get called when a tracking attempt finished
-        /// </summary>
-        /// <param name="responseDelegate">The response data containing information about the activity and it's server response.</param>
-        public static void SetResponseDelegate(Action<ResponseData> responseDelegate)
-        {
-            AdjustApi.SetResponseDelegate(responseDelegate);
-        }
-        */
         /// <summary>
         /// Enable or disable the adjust SDK
         /// </summary>
@@ -162,6 +112,15 @@ namespace AdjustSdk
         public static bool IsEnabled()
         {
             return AdjustInstance.IsEnabled();
+        }
+
+        /// <summary>
+        /// Puts the SDK in offline or online mode
+        /// </summary>
+        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        public static void SetOfflineMode(bool offlineMode)
+        {
+            AdjustInstance.SetOfflineMode(offlineMode);
         }
 
         /// <summary>

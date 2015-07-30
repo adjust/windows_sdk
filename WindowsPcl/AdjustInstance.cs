@@ -54,6 +54,12 @@ namespace AdjustSdk.Pcl
             return ActivityHandler.IsEnabled();
         }
 
+        public void SetOfflineMode(bool offlineMode)
+        {
+            if (!CheckActivityHandler()) { return; }
+            ActivityHandler.SetOfflineMode(offlineMode);
+        }
+
         public void AppWillOpenUrl(Uri uri)
         {
             if (!CheckActivityHandler()) { return; }
