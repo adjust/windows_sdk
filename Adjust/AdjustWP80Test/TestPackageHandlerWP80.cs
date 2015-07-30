@@ -44,16 +44,5 @@ namespace AdjustTest.WP
 
         [TestMethod]
         public void TestCallsWP80() { TestPackageHandler.TestCalls(); }
-
-        /*
-        [TestMethod]
-        public void TestFirstPackageWP80() { TestPackageHandler.TestFirstPackage(); }
-
-        [TestMethod]
-        public void TestPauseWP80() { TestPackageHandler.TestPause(); }
-
-        [TestMethod]
-        public void TestMultiplePackagesWP80() { TestPackageHandler.TestMultiplePackages(); }
-         * */
     }
 }

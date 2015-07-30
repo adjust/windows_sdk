@@ -48,8 +48,8 @@ namespace AdjustSdk.Pcl
             TimeKeeper.Change(dueTime: TimeStart, period: TimeInterval);
 
             // save the date of the first fire
-            //var now = DateTime.Now;
-            FireDate = DateTime.Now.Add(TimeStart);
+            var now = DateTime.Now;
+            FireDate = now.Add(TimeStart);
 
             //AdjustFactory.Logger.Verbose("TimerCycle Resume dueTime:{0}, period:{1}, fireDate:{2}, now:{3}",
             //    TimeStart.TotalMilliseconds, TimeInterval.TotalMilliseconds, 
@@ -63,8 +63,8 @@ namespace AdjustSdk.Pcl
             if (IsPaused) return;
 
             // save the delay of the next fire when restarting
-            //var now = DateTime.Now;
-            TimeStart = FireDate.Value - DateTime.Now;
+            var now = DateTime.Now;
+            TimeStart = FireDate.Value - now;
 
             TimeKeeper.Change(dueTime: Timeout.Infinite, period: Timeout.Infinite);
 
@@ -77,8 +77,8 @@ namespace AdjustSdk.Pcl
         private void TimerCallback(object state)
         {
             // save the date of the next fire
-            //var now = DateTime.Now;
-            FireDate = DateTime.Now + TimeInterval;
+            var now = DateTime.Now;
+            FireDate = now + TimeInterval;
 
             //AdjustFactory.Logger.Verbose("TimerCycle TimerCallback fireDate:{0}, timeInterval:{1}, now:{2}",
             //    FireDate.Value.ToString("HH:mm:ss.fff"), TimeInterval.TotalMilliseconds, now.ToString("HH:mm:ss.fff"));

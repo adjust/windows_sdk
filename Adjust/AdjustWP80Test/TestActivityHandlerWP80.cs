@@ -32,7 +32,7 @@ namespace AdjustTest.WP
 
         [TestMethod]
         public void TestFirstSessionWP80() { TestActivityHandler.TestFirstSession(); }
-
+        
         [TestMethod]
         public void TestEventsBufferedWP80() { TestActivityHandler.TestEventsBuffered(); }
 
@@ -44,85 +44,26 @@ namespace AdjustTest.WP
 
         [TestMethod]
         public void TestSessionsWP80() { TestActivityHandler.TestSessions(); }
-
+        
         [TestMethod]
         public void TestDisableWP80() { TestActivityHandler.TestDisable(); }
-
+        
         [TestMethod]
         public void TestOpenUrlWP80() { TestActivityHandler.TestOpenUrl(); }
 
         [TestMethod]
         public void TestFinishedTrackingActivityWP80() { TestActivityHandler.TestFinishedTrackingActivity(); }
-
+        
         [TestMethod]
         public void TestUpdateAttributionWP80() { TestActivityHandler.TestUpdateAttribution(); }
-
+        
         [TestMethod]
         public void TestOfflineModeWP80() { TestActivityHandler.TestOfflineMode(); }
-
+        
         [TestMethod]
         public void TestCheckAttributionStateWP80() { TestActivityHandler.TestCheckAttributionState(); }
-
+        
         [TestMethod]
         public void TestTimerWP80() { TestActivityHandler.TestTimer(); }
-
-        /*
-        [TestMethod]
-        public void TestEventsBufferedWP80() { TestActivityHandler.TestEventsBuffered(); }
-
-        [TestMethod]
-        public void TestEventsNotBufferedWP80() { TestActivityHandler.TestEventsNotBuffered(); }
-
-        [TestMethod]
-        public void TesChecksWP80() { TestActivityHandler.testChecks(); }
-
-        [TestMethod]
-        public void TestSessionsWP80() { TestActivityHandler.TestSessions(); }
-
-        [TestMethod]
-        public void TestDisableWP80() { TestActivityHandler.TestDisable(); }
-
-        [TestMethod]
-        public void TestOpenUrlWP80() { TestActivityHandler.TestOpenUrl(); }
-
-        [TestMethod]
-        public void TestFinishedTrackingActivityWP80() { TestActivityHandler.TestFinishedTrackingActivity(); }
-
-        [TestMethod]
-        public void TestUpdateAttributionWP80() { TestActivityHandler.TestUpdateAttribution(); }
-
-        [TestMethod]
-        public void TestOfflineModeWP80() { TestActivityHandler.TestOfflineMode(); }
-
-        [TestMethod]
-        public void TestCheckAttributionStateWP80() { TestActivityHandler.TestCheckAttributionState(); }
-
-        [TestMethod]
-        public void TestTimerWP80() { TestActivityHandler.TestTimer(); }
-        /*
-        [TestMethod]
-        public void TestFirstSessionWP80() { TestActivityHandler.TestFirstSession("wphone80-3.5.1"); }
-
-        [TestMethod]
-        public void TestSessionsWP80() { TestActivityHandler.TestSessions(); }
-
-        [TestMethod]
-        public void TestEventsBufferedWP80() { TestActivityHandler.TestEventsBuffered(); }
-
-        [TestMethod]
-        public void TestEventsNotBufferedWP80() { TestActivityHandler.TestEventsNotBuffered(); }
-
-        [TestMethod]
-        public void TestChecksWP80() { TestActivityHandler.TestChecks(); }
-
-        [TestMethod]
-        public void TestDisableWP80() { TestActivityHandler.TestDisable(); }
-
-        [TestMethod]
-        public void TestOpenUrlWP80() { TestActivityHandler.TestOpenUrl(); }
-
-        [TestMethod]
-        public void TestUserAgentWP80() { TestActivityHandler.TestUserAgent(); }
-         * */
     }
 }

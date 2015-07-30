@@ -15,6 +15,7 @@ namespace AdjustTest.Pcl
 
         private StringBuilder LogBuffer;
         private Dictionary<int, List<string>> LogMap;
+        private List<string> ReverseLog;
 
         public Action<String> LogDelegate { private get; set; }
 
@@ -37,6 +38,7 @@ namespace AdjustTest.Pcl
                 { LogLevelTest, new List<string>() },
                 { LogLevelCheck, new List<string>() },
             };
+            ReverseLog = new List<string>();
 
             Check("MockLogger Reset");
         }
@@ -110,13 +112,14 @@ namespace AdjustTest.Pcl
                 }
             }
 
-            Check("{0} is not in: {1} ", beginsWith, string.Join(",", logList));
+            Check("{0} is not in: [{1}] ", beginsWith, string.Join(",", logList));
             return false;
         }
 
         public override string ToString()
         {
-            return LogBuffer.ToString();
+            //return LogBuffer.ToString();
+            return string.Join("\n", ReverseLog);
         }
 
         private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
@@ -135,8 +138,7 @@ namespace AdjustTest.Pcl
 
                 LogBuffer.AppendLine(formattedLine);
                 System.Diagnostics.Debug.WriteLine(formattedLine);
-                
-
+                ReverseLog.Insert(0, formattedLine);
             }
 
             var logList = LogMap[logLevelInt];

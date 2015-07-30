@@ -842,17 +842,19 @@ namespace AdjustTest.Pcl
 
             // check that updates attribution
             Assert.IsTrue(firstActivityHandler.UpdateAttribution(emptyAttribution));
+            DeviceUtil.Sleep(2000);
             Assert.Debug("Wrote Attribution: tt:Null tn:Null net:Null cam:Null adg:Null cre:Null cl:Null");
             
             emptyAttribution = AdjustAttribution.FromJsonString(emptyJsonString);
 
             // check that it does not update the attribution
             Assert.IsFalse(firstActivityHandler.UpdateAttribution(emptyAttribution));
+            DeviceUtil.Sleep(2000);
             Assert.NotDebug("Wrote Attribution");
             
             // end session
             firstActivityHandler.TrackSubsessionEnd();
-            DeviceUtil.Sleep(1000);
+            DeviceUtil.Sleep(2000);
 
             CheckEndSession();
 
@@ -890,20 +892,25 @@ namespace AdjustTest.Pcl
 
             //check that it updates
             Assert.IsTrue(restartActivityHandler.UpdateAttribution(firstAttribution));
+            
+            DeviceUtil.Sleep(2000);
             Assert.Debug("Wrote Attribution: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
-
-            // check that it launch the saved attribute
-            DeviceUtil.Sleep(1000);
-
-            Assert.Test("onAttributionChanged: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+            
+            // check that it launch the saved attribute if it's not WP8.0
+            if (TargetPlatform != Pcl.TargetPlatform.wphone80)
+            {
+                Assert.Test("onAttributionChanged: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
+            }
 
             // check that it does not update the attribution
             Assert.IsFalse(restartActivityHandler.UpdateAttribution(firstAttribution));
+            
+            DeviceUtil.Sleep(2000);
             Assert.NotDebug("Wrote Attribution");
 
             // end session
             restartActivityHandler.TrackSubsessionEnd();
-            DeviceUtil.Sleep(1000);
+            DeviceUtil.Sleep(2000);
 
             CheckEndSession();
 
@@ -915,7 +922,7 @@ namespace AdjustTest.Pcl
 
             ActivityHandler secondRestartActivityHandler = GetActivityHandler(config);
 
-            DeviceUtil.Sleep(1000);
+            DeviceUtil.Sleep(2000);
 
             // test init values
             InitTests(environment: "sandbox" , logLevel:"Info", 
@@ -926,6 +933,7 @@ namespace AdjustTest.Pcl
 
             // check that it does not update the attribution after the restart
             Assert.IsFalse(secondRestartActivityHandler.UpdateAttribution(firstAttribution));
+            DeviceUtil.Sleep(2000);
             Assert.NotDebug("Wrote Attribution");
 
             // new attribution
@@ -942,15 +950,17 @@ namespace AdjustTest.Pcl
 
             //check that it updates
             Assert.IsTrue(secondRestartActivityHandler.UpdateAttribution(secondAttribution));
+            DeviceUtil.Sleep(2000);
             Assert.Debug("Wrote Attribution: tt:ttValue2 tn:tnValue2 net:nValue2 cam:cpValue2 adg:aValue2 cre:ctValue2 cl:clValue2");
 
             // check that it launch the saved attribute
-            DeviceUtil.Sleep(1000);
-
-            Assert.Test("onAttributionChanged: tt:ttValue2 tn:tnValue2 net:nValue2 cam:cpValue2 adg:aValue2 cre:ctValue2 cl:clValue2");
-
+            if (TargetPlatform != Pcl.TargetPlatform.wphone80)
+            {
+                Assert.Test("onAttributionChanged: tt:ttValue2 tn:tnValue2 net:nValue2 cam:cpValue2 adg:aValue2 cre:ctValue2 cl:clValue2");
+            }
             // check that it does not update the attribution
             Assert.IsFalse(secondRestartActivityHandler.UpdateAttribution(secondAttribution));
+            DeviceUtil.Sleep(2000);
             Assert.NotDebug("Wrote Attribution");
         }
 
@@ -989,6 +999,8 @@ namespace AdjustTest.Pcl
             // check that it is disabled
             Assert.IsFalse(activityHandler.IsEnabled());
 
+            DeviceUtil.Sleep(1000);
+
             // writing activity state after disabling
             Assert.Debug("Wrote Activity state: ec:0 sc:1 ssc:1");
 
@@ -1011,17 +1023,19 @@ namespace AdjustTest.Pcl
             Assert.NotTest("AttributionHandler PauseSending");
             Assert.NotTest("PackageHandler PauseSending");
 
+            DeviceUtil.Sleep(3000);
+
             // try to do activities while SDK disabled
             activityHandler.TrackSubsessionStart();
             activityHandler.TrackEvent(new AdjustEvent("event1"));
 
-            DeviceUtil.Sleep(3000);
+            DeviceUtil.Sleep(1000);
 
             // check that timer was not executed
             CheckTimerIsFired(false);
 
             // check that it did not wrote activity state from new session or subsession
-            Assert.NotDebug("Wrote Activity state");
+            Assert.NotDebug("Wrote Activity state: ec:0 sc:2");
 
             // check that it did not add any package
             Assert.NotTest("PackageHandler AddPackage");
@@ -1095,6 +1109,7 @@ namespace AdjustTest.Pcl
 
             // set asking attribution
             activityHandler.SetAskingAttribution(true);
+            DeviceUtil.Sleep(1000);
             Assert.Debug("Wrote Activity state: ec:0 sc:1 ssc:2");
 
             // trigger a new session
@@ -1132,8 +1147,9 @@ namespace AdjustTest.Pcl
             var attribution = AdjustAttribution.FromJsonString(jsonAttribution);
 
             // update the attribution
-            activityHandler.UpdateAttribution(attribution);
+            Assert.IsTrue(activityHandler.UpdateAttribution(attribution));
 
+            DeviceUtil.Sleep(1000);
             // attribution was updated
             Assert.Debug("Wrote Attribution: tt:ttValue tn:tnValue net:nValue cam:cpValue adg:aValue cre:ctValue cl:clValue");
 
@@ -1160,6 +1176,7 @@ namespace AdjustTest.Pcl
             // -> Not called
 
             activityHandler.SetAskingAttribution(false);
+            DeviceUtil.Sleep(1000);
             Assert.Debug("Wrote Activity state: ec:0 sc:3 ssc:1");
 
             // trigger a new sub session
@@ -1202,8 +1219,7 @@ namespace AdjustTest.Pcl
             CheckFirstSession();
 
             // wait enough to fire the first cycle
-            DeviceUtil.Sleep(3000);
-
+            DeviceUtil.Sleep(4000);
             CheckTimerIsFired(true);
 
             // end subsession to stop timer
