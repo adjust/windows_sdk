@@ -2,15 +2,21 @@
 
 This is the Windows SDK of adjust™. You can read more about adjust™ at [adjust.com](http://adjust.com).
 
+## Example app
+
+There are different example apps inside the [`Adjust` directory][example]. `AdjustWP80Example` for Windows
+Phone 8.0, `AdjustWP81Example` for Windows Phone 8.1 and `AdjustWSExample` for Windows Store. You can use
+these projects to see an example on how the adjust SDK can be integrated.
+
 ## Basic Installation
 
 These are the minimal steps required to integrate the adjust SDK into your
 Windows Phone or Windows Store project. We are going to assume that you use
-Visual Studio 2013 with the latest NuGet package manager installed, but
-previous version that support Windows phone 8 or Windows 8 should work. The
-screenshots show the integration process for a Windows Phone app, but the
-procedure is very similar for Windows Store apps. The differences will get
-pointed out.
+Visual Studio 2013 or superior with the latest NuGet package manager installed, but
+previous version that support Windows Phone 8.0 or Windows 8 should work. The
+screenshots show the integration process for a Windows Universal app, but the
+procedure is very similar for both Windows Store or Phone apps. The differences with Windows Phone 8.0
+will get pointed out.
 
 ### 1. Install the package Adjust using NuGet
 
@@ -31,7 +37,7 @@ Install-Package Adjust
 It's also possible to install the Adjust package through the NuGet package
 manager for your Windows Phone or Windows Store project.
 
-### 2. Add capabilities (Windows Phone only)
+### 2. Add capabilities (Windows Phone 8.0 only)
 
 In the Solution Explorer open the `Properties\WMAppManifest.xml` file, switch
 to the Capabilities tab and check the `ID_CAP_IDENTITY_DEVICE` checkbox.
@@ -43,7 +49,7 @@ to the Capabilities tab and check the `ID_CAP_IDENTITY_DEVICE` checkbox.
 In the Solution Explorer open the file `App.xaml.cs`. Add the `using
 AdjustSdk;` statement at the top of the file.
 
-#### Windows Phone
+#### Windows Phone 8.0
 
 In the `Application_Launching` method of your app, call the method
 `AppDidLaunch`. This tells Adjust about the launch of your Application.
@@ -55,21 +61,22 @@ public partial class App : Application
 {
     private void Application_Launching(object sender, LaunchingEventArgs e)
     {
-        Adjust.AppDidLaunch("{YourAppToken}");
-        Adjust.SetLogLevel(LogLevel.Info);
-        Adjust.SetEnvironment(AdjustEnvironment.Sandbox);
+        string appToken = "{YourAppToken}";
+        string environment = AdjustConfig.EnvironmentSandbox;
+        var config = new AdjustConfig(appToken, environment);
+        Adjust.ApplicationLaunching(config);
         // ...
     }
 
     private void Application_Activated(object sender, ActivatedEventArgs e)
     {
-        Adjust.AppDidActivate();
+        Adjust.ApplicationActivated();
         // ...
     }
 
     private void Application_Deactivated(object sender, DeactivatedEventArgs e)
     {
-        Adjust.AppDidDeactivate();
+        Adjust.ApplicationDeactivated();
         // ...
     }
 }
@@ -77,7 +84,7 @@ public partial class App : Application
 
 ![][wp_app_integration]
 
-#### Windows Store
+#### Universal Apps
 
 In the `OnLaunched` method of your app, call the method `AppDidLaunch`. This
 tells adjust about the launch of your Application.
@@ -89,9 +96,10 @@ sealed partial class App : Application
 {
     protected override void OnLaunched(LaunchActivatedEventArgs e)
     {
-        Adjust.AppDidLaunch("{YourAppToken}");
-        Adjust.SetLogLevel(LogLevel.Info);
-        Adjust.SetEnvironment(AdjustEnvironment.Sandbox);
+        string appToken = "{YourAppToken}";
+        string environment = AdjustConfig.EnvironmentSandbox;
+        var config = new AdjustConfig(appToken, environment);
+        Adjust.ApplicationLaunching(config);
         // ...
     }
 }
@@ -99,47 +107,51 @@ sealed partial class App : Application
 
 ![][ws_app_integration]
 
-### 4 Update adjust settings
+### 4. Update adjust settings
 
 Replace the `{YourAppToken}` placeholder with your App Token. You can find in
 your [dashboard].
 
-You can increase or decrease the amount of logs you see by calling the
-`SetLogLevel` method with one of the following parameters:
-
-```cs
-Adjust.SetLogLevel(LogLevel.Verbose); // enable all logging
-Adjust.SetLogLevel(LogLevel.Debug);   // enable more logging
-Adjust.SetLogLevel(LogLevel.Info);    // the default
-Adjust.SetLogLevel(LogLevel.Warn);    // disable info logging
-Adjust.SetLogLevel(LogLevel.Error);   // disable warnings as well
-Adjust.SetLogLevel(LogLevel.Assert);  // disable errors as well
-```
-
-Add the following line to see log messages in the output. The messages will only be visible
-when your app is built with the `Debug` configuration.
-
-```cs
-Adjust.SetLogDelegate(msg => System.Diagnostics.Debug.WriteLine(msg));
-```
-
 Depending on whether or not you build your app for testing or for production,
-you must call the `SetEnvironment` method with one of these parameters:
+you must set the `environment` parameter with one of these values:
 
 ```cs
-Adjust.SetEnvironment(AdjustEnvironment.Sandbox);
-Adjust.SetEnvironment(AdjustEnvironment.Production);
+string environment = AdjustConfig.EnvironmentSandbox;
+string environment = AdjustConfig.EnvironmentProduction;
 ```
 
-**Important:** This value should be set to `AdjustEnvironment.Sandbox` if
-and only if you or someone else is testing your app. Make sure to set the
-environment to `AdjustEnvironment.Production` just before you publish the
-app. Set it back to `AdjustEnvironment.Sandbox` when you start testing it
-again.
+**Important:** This value should be set to `AdjustConfig.EnvironmentSandbox`
+if and only if you or someone else is testing your app. Make sure to set the
+environment to `AdjustConfig.EnvironmentProduction` just before you publish
+the app. Set it back to `AdjustConfig.EnvironmentSandbox` when you start
+developing and testing it again.
 
-We use this environment to distinguish between real traffic and artificial
-traffic from test devices. It is very important that you keep this value
-meaningful at all times! Especially if you are tracking revenue.
+We use this environment to distinguish between real traffic and test traffic
+from test devices. It is very important that you keep this value meaningful at
+all times! This is especially important if you are tracking revenue.
+
+#### Adjust Logging
+
+You can increase or decrease the amount of logs you see in tests by setting the
+`LogLevel` property on your `AdjustConfig` instance with one of the following
+parameters:
+
+```cs
+config.LogLevel = LogLevel.VERBOSE;   // enable all logging
+config.LogLevel = LogLevel.DEBUG;     // enable more logging
+config.LogLevel = LogLevel.INFO;      // the default
+config.LogLevel = LogLevel.WARN;      // disable info logging
+config.LogLevel = LogLevel.ERROR;     // disable warnings as well
+config.LogLevel = LogLevel.ASSERT;    // disable errors as well
+```
+
+To be able to see the log messages, you must set the `LogDelegate` property on your `AdjustConfig` instance 
+with a function to show the log message in the command line.
+The messages will only be visible when your app is built with the `Debug` configuration.
+
+```cs
+config.LogDelegate = msg => System.Diagnostics.Debug.WriteLine(msg));
+```
 
 ### 5. Build your app
 
@@ -150,194 +162,107 @@ should see the debug log `Tracked session start` in the Output view.
 
 ## Additional features
 
-Once you integrated the adjust SDK into your project, you can take advantage
-of the following features wherever you see fit.
+Once you have integrated the adjust SDK into your project, you can take
+advantage of the following features.
 
 ### 6. Add tracking of custom events
 
-You can tell adjust about every event you want. Suppose you want to track
-every tap on a button. You would have to create a new Event Token in your
-[dashboard]. Let's say that Event Token is `abc123`. In your button's
-`Button_Click` method you could then add the following line to track the click:
+You can use adjust to track any event in your app. Suppose you want to track
+every tap on a button. You would have to create a new event token in your
+[dashboard]. Let's say that event token is `abc123`. In your button's `Button_Click`
+method you could then add the following lines to track the click:
 
 ```cs
-Adjust.TrackEvent("abc123");
+var adjustEvent = new AdjustEvent("abc123");
+Adjust.trackEvent(adjustEvent);
 ```
 
-You can also register a callback URL for that event and we will send a request
-to the URL whenever the event happens. In that case you can also put some
-key-value-pairs in a dictionary and pass it to the `TrackEvent`  method. We
-will then forward these named parameters to your callback URL. Suppose you
-registered the URL `http://adjust.com/callback` for your event and execute the
-following lines:
+The event instance can be used to configure the event even more before tracking
+it.
+
+### 7. Add callback parameters
+
+You can register a callback URL for your events in your [dashboard]. We will
+send a GET request to that URL whenever the event gets tracked. You can add
+callback parameters to that event by calling `AddCallbackParameter` on the
+event instance before tracking it. We will then append these parameters to your
+callback URL.
+
+For example, suppose you have registered the URL
+`http://www.adjust.com/callback` then track an event like this:
 
 ```cs
-var parameters = new Dictionary<string, string> {
-    { "key", "value" },
-    { "foo", "bar" }
-};
-Adjust.TrackEvent("abc123", parameters);
+var adjustEvent = new AdjustEvent("abc123");
+
+adjustEvent.addCallbackParameter("key", "value");
+adjustEvent.addCallbackParameter("foo", "bar");
+
+Adjust.trackEvent(adjustEvent);
 ```
 
-In that case we would track the event and send a request to
-`http://adjust.com/callback?key=value&foo=bar`. In any case you need to import
-Adjust with `using AdjustSdk` in any file that makes use of the SDK.
-Please note that we don't store your custom parameters. If you haven't
-registered a callback URL for an event, there is no point in sending us
-parameters.
+In that case we would track the event and send a request to:
 
-### 7. Add tracking of revenue
+```
+http://www.adjust.com/callback?key=value&foo=bar
+```
 
-If your users can generate revenue by clicking on advertisements you can track
-those revenues. If the click is worth one cent, you could make the following
-call to track that revenue:
+It should be mentioned that we support a variety of placeholders like
+`{win_adid}` that can be used as parameter values. In the resulting callback
+this placeholder would be replaced with the Windows Advertising Id of the current device.
+Also note that we don't store any of your custom parameters, but only append
+them to your callbacks. If you haven't registered a callback for an event,
+these parameters won't even be read.
+
+You can read more about using URL callbacks, including a full list of available
+values, in our [callbacks guide][callbacks-guide].
+
+### 8. Partner parameters
+
+You can also add parameters to be transmitted to network partners, for the
+integrations that have been activated in your adjust dashboard.
+
+This works similarly to the callback parameters mentioned above, but can be
+added by calling the `AddPartnerParameter` method on your `AdjustEvent` instance.
 
 ```cs
-Adjust.TrackRevenue(1.0);
+var adjustEvent = new AdjustEvent("abc123");
+
+adjustEvent.addPartnerParameter("key", "value");
+adjustEvent.addPartnerParameter("foo", "bar");
+
+Adjust.trackEvent(adjustEvent);
 ```
 
-The parameter is supposed to be in cents and will get rounded to one decimal
-point. If you want to differentiate between different kinds of revenue you can
-get different Event Tokens for each kind. Again, you need to create those Event
-Tokens in your [dashboard]. In that case you would make a call like this:
+You can read more about special partners and these integrations in our [guide
+to special partners.][special-partners]
+
+### 9. Add tracking of revenue
+
+If your users can generate revenue by tapping on advertisements or making
+in-app purchases you can track those revenues with events. Lets say a tap is
+worth one Euro cent. You could then track the revenue event like this:
 
 ```cs
-Adjust.TrackRevenue(1.0, "abc123");
+var adjustEvent = new AdjustEvent("abc123");
+adjustEvent.setRevenue(0.01, "EUR");
+Adjust.trackEvent(adjustEvent);
 ```
 
-You can also register a callback URL again and provide a dictionary of named
-parameters, just like it worked with normal events.
+This can be combined with callback parameters of course.
 
-```cs
-var parameters = new Dictionary<string, string> {
-    { "key", "value" },
-    { "foo", "bar" }
-};
-Adjust.TrackRevenue(1.0, "abc123", parameters);
-```
+When you set a currency token, adjust will automatically convert the incoming revenues into a reporting revenue of your choice. Read more about [currency conversion here.][currency-conversion]
 
-In any case, don't forget to import Adjust. Again, there is no point in
-sending parameters if you haven't registered a callback URL for that revenue
-event.
+You can read more about revenue and event tracking in the [event tracking
+guide.][event-tracking]
 
-### 8. Receive delegate callbacks
+### 10. Set up deep link reattributions
 
-Every time your app tries to track a session, an event or some revenue, you can
-be notified about the success of that operation and receive additional
-information about the current install. Follow these steps to implement a
-delegate to this event.
+You can set up the adjust SDK to handle deep links that are used to open your
+app, also known as URI associations in Windows Phone 8.0 and URI activation in Universal apps.
+We will only read certain adjust specific parameters. This is essential if
+you are planning to run retargeting or re-engagement campaigns with deep links.
 
-Please make sure to consider [applicable attribution data policies.][attribution-data]
-
-1. Add the `using AdjustSdk` import and create a method with the signature of
-the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
-class.
-
-2. After calling the `AppDidLaunch` method of the AdjustSdk, at the start of
-your application, call the `SetResponseDelegate` with the previously created
-method. It is also be possible to use a lambda with the same signature.
-
-The delegate method will get called every time any activity was tracked or
-failed to track. Within the delegate method you have access to the
-`responseData` parameter. Here is a quick summary of its attributes:
-
-- `ActivityKind ActivityKind` indicates what kind of activity was tracked. It has
-one of these values:
-
-```
-Session
-Event
-Revenue
-Reattribution
-```
-
-- `string ActivityKindString` human readable version of the activity kind.
-Possible values:
-
-```
-session
-event
-revenue
-reattribution
-```
-
-- `bool Success` indicates whether or not the tracking attempt was
-  successful.
-- `bool WillRetry` is true when the request failed, but will be retried.
-- `string Error` an error message when the activity failed to track or
-  the response could not be parsed. Is `null` otherwise.
-- `string TrackerToken` the tracker token of the current install. Is `null` if
-  request failed or response could not be parsed.
-- `string TrackerName` the tracker name of the current install. Is `null` if
-  request failed or response could not be parsed.
-- `string Network` the network grouping level of the current install. Is `null` if
-  request failed, unavailable, or response could not be parsed.
-- `string Campaign` the campaign grouping level of the current install. Is `null` if
-  request failed, unavailable or response could not be parsed.
-- `string Adgroup` the ad group grouping level of the current install. Is `null` if
-  request failed, unavailable or response could not be parsed.
-- `string Creative` the creative grouping level of the current install. Is `null` if
-  request failed, unavailable or response could not be parsed.
-
-#### Windows Phone
-```cs
-using AdjustSdk;
-
-public partial class App : Application
-{
-    private void Application_Launching(object sender, LaunchingEventArgs e)
-    {
-        Adjust.AppDidLaunch("{YourAppToken}");
-        Adjust.SetResponseDelegate(OnResponseAdjust);
-        //...
-    }
-    
-    private void OnResponseAdjust(ResponseData responseData) 
-    {
-        //...
-    }
-}
-```
-
-#### Windows Store
-```cs
-using AdjustSdk;
-
-public partial class App : Application
-{
-    protected override void OnLaunched(LaunchActivatedEventArgs e)
-    {
-        Adjust.AppDidLaunch("{YourAppToken}");
-        Adjust.SetResponseDelegate(OnResponseAdjust);
-        //...
-    }
-    
-    private void OnResponseAdjust(ResponseData responseData) 
-    {
-        //...
-    }
-}
-```
-
-### 9.Enable event buffering
-
-If your app makes heavy use of event tracking, you might want to delay some
-HTTP requests in order to send them in one batch every minute. You can enable
-event buffering by adding the following line after calling
-`Adjust.AppDidLaunch` at the launch of the app.
-
-```cs
-Adjust.SetEventBufferingEnabled(enabledEventBuffering: true);
-```
-
-### 10. Handle deep linking
-
-You can also set up the adjust SDK to read deep links that come to your app,
-also known as URI associations in Windows Phone and URI activation in Windows Store. 
-We will only read the data that is injected by adjust tracker URLs. 
-This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
-
-#### Windows Phone
+#### Windows Phone 8.0
 
 In the `MapUri` method of the `UriMapperBase` class created to handle the deep links,
 call the `AppWillOpenUrl` method.
@@ -355,7 +280,10 @@ public class AssociationUriMapper : UriMapperBase
 }
 ```
 
-#### Windows Store
+#### Universal Apps
+
+In the `OnActivated` method of your app, call the method `AppWillOpenUrl`.
+
 ```cs
 using AdjustSdk;
 
@@ -377,6 +305,81 @@ public partial class App : Application
 }
 ```
 
+### 11. Enable event buffering
+
+If your app makes heavy use of event tracking, you might want to delay some
+HTTP requests in order to send them in one batch every minute. You can enable
+event buffering with your `AdjustConfig` instance:
+
+```cs
+var config = new AdjustConfig(appToken, environment);
+
+config.setEventBufferingEnabled(true);
+
+Adjust.ApplicationLaunching(config);
+```
+
+### 12. Set listener for attribution changes
+
+You can register a listener to be notified of tracker attribution changes. Due
+to the different sources considered for attribution, this information can not
+be provided synchronously. The simplest way is to create a single anonymous
+listener:
+
+Please make sure to consider our [applicable attribution data
+policies][attribution-data].
+
+1. Add the `using AdjustSdk` import and create a method with the signature of
+the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
+class.
+
+2. After calling the `AppDidLaunch` method of the AdjustSdk, at the start of
+your application, call the `SetResponseDelegate` with the previously created
+method. It is also be possible to use a lambda with the same signature.
+
+The delegate method will get called every time any activity was tracked or
+failed to track. Within the delegate method you have access to the
+`responseData` parameter. Here is a quick summary of its attributes:
+
+
+With the `AdjustConfig` instance, before starting the SDK, set the
+`AttributionChanged` delegate with the `Action<AdjustAttribution>` signature.
+
+```cs
+var config = new AdjustConfig(appToken, environment);
+
+config.AttributionChanged = (attribution) => 
+    System.Diagnostics.Debug.WriteLine("attribution: " + attribution);
+    
+Adjust.ApplicationLaunching(config);
+```
+
+Alternatively, you could implement the `AttributionChanged` delegate
+interface in your `Application` class and set it as a delegate:
+
+```cs
+var config = new AdjustConfig(appToken, environment);
+config.AttributionChanged = AdjustAttributionChanged;
+Adjust.ApplicationLaunching(config);
+
+private void AdjustAttributionChanged(AdjustAttribution attribution) 
+{
+    //...
+}
+```
+
+The delegate function will be called when the SDK receives the final attribution
+information. Within the listener function you have access to the `attribution`
+parameter. Here is a quick summary of its properties:
+
+- `string TrackerToken` the tracker token of the current install.
+- `string TrackerName` the tracker name of the current install.
+- `string Network` the network grouping level of the current install.
+- `string Campaign` the campaign grouping level of the current install.
+- `string Adgroup` the ad group grouping level of the current install.
+- `string Creative` the creative grouping level of the current install.
+- `string ClickLabel` the click label of the current install.
+
 [adjust.com]: http://www.adjust.com
 [dashboard]: http://www.adjust.com
 [nuget]: http://nuget.org/packages/Adjust
@@ -388,11 +391,35 @@ public partial class App : Application
 [run_app]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/06_run_app.png
 [attribution-data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
 
+[dashboard]:     http://adjust.com
+[releases]:      https://github.com/adjust/adjust_android_sdk/releases
+[import_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/01_import_module.png
+[select_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/02_select_module.png
+[imported_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/03_imported_module.png
+[gradle_adjust]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/04_gradle_adjust.png
+[gradle_gps]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/05_gradle_gps.png
+[manifest_gps]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/06_manifest_gps.png
+[manifest_permissions]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/07_manifest_permissions.png
+[proguard]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/08_proguard.png
+[receiver]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/09_receiver.png
+[application_class]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/11_application_class.png
+[manifest_application]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/12_manifest_application.png
+[application_config]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/13_application_config.png
+[activity]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/14_activity.png
+[log_message]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/15_log_message.png
+
+[callbacks-guide]:      https://docs.adjust.com/en/callbacks
+[event-tracking]:       https://docs.adjust.com/en/event-tracking
+[special-partners]:     https://docs.adjust.com/en/special-partners
+[example]:              https://github.com/adjust/windows_sdk/tree/master/Adjust
+[currency-conversion]:  https://docs.adjust.com/en/event-tracking/#tracking-purchases-in-different-currencies
+
+
 ## License
 
 The adjust-sdk is licensed under the MIT License.
 
-Copyright (c) 2014 adjust GmbH,
+Copyright (c) 2015 adjust GmbH,
 http://www.adjust.com
 
 Permission is hereby granted, free of charge, to any person obtaining
