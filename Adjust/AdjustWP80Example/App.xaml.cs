@@ -24,15 +24,13 @@ namespace AdjustWP80Example
         /// </summary>
         public App()
         {
+            // setup logging
+            Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Verbose);
+
             // configure Adjust
             var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox);
-
-            // change the log level
-            config.LogLevel = LogLevel.Verbose;
-
-            // allow logging to be displayed on a debug app
-            config.LogDelegate = (msg) => System.Diagnostics.Debug.WriteLine(msg);
-            
+                        
             // enable event buffering
             //config.EventBufferingEnabled = true;
 

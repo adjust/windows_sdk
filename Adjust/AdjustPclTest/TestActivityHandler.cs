@@ -53,10 +53,11 @@ namespace AdjustTest.Pcl
 
         public void TestFirstSession()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: null);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig("123456789012", AdjustConfig.EnvironmentSandbox);
-
-            config.LogDelegate = (msg => System.Diagnostics.Debug.WriteLine(msg));
 
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
@@ -84,17 +85,15 @@ namespace AdjustTest.Pcl
 
         public void TestEventsBuffered()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Verbose);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig("123456789012", AdjustConfig.EnvironmentSandbox);
 
-            config.LogDelegate = (msg => System.Diagnostics.Debug.WriteLine(msg));
-
             // buffer events
             config.EventBufferingEnabled = true;
-
-            // set verbose log level
-            config.LogLevel = LogLevel.Verbose;
-
+            
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -247,14 +246,12 @@ namespace AdjustTest.Pcl
 
         public void TestEventsNotBuffered()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Debug);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig("123456789012", AdjustConfig.EnvironmentSandbox);
-
-            config.LogDelegate = (msg => System.Diagnostics.Debug.WriteLine(msg));
             
-            // set log level
-            config.LogLevel = LogLevel.Debug;
-
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -394,12 +391,12 @@ namespace AdjustTest.Pcl
 
             Assert.Error("Partner parameter value is empty");
 
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Warn);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig("123456789012", AdjustConfig.EnvironmentSandbox);
-
-            // set the log level
-            config.LogLevel = LogLevel.Warn;
-
+            
             // create handler and start the first session
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -425,16 +422,16 @@ namespace AdjustTest.Pcl
 
         public void TestSessions()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Info);
+
             // adjust the session intervals for testing
             AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,4000));
             AdjustFactory.SetSubsessionInterval(new TimeSpan(0,0,0,0,1000));
 
             // create the config to start the session
             AdjustConfig config = new AdjustConfig("123456789012", AdjustConfig.EnvironmentSandbox);
-
-            // set verbose log level
-            config.LogLevel = LogLevel.Info;
-
+            
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -506,16 +503,16 @@ namespace AdjustTest.Pcl
 
         public void TestDisable()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Error);
+
             // adjust the session intervals for testing
             AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,4000));
             AdjustFactory.SetSubsessionInterval(new TimeSpan(0,0,0,0,1000));
 
             // create the config to start the session
             AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
-
-            // set log level
-            config.LogLevel = LogLevel.Error;
-
+            
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -656,12 +653,12 @@ namespace AdjustTest.Pcl
 
         public void TestOpenUrl()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Assert);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
-
-            // set log level
-            config.LogLevel = LogLevel.Assert;
-
+            
             // start activity handler with config
             ActivityHandler activityHandler = GetActivityHandler(config);
 
@@ -754,12 +751,12 @@ namespace AdjustTest.Pcl
 
         public void TestFinishedTrackingActivity() 
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Verbose);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentProduction);
-
-            // set verbose log level
-            config.LogLevel = LogLevel.Verbose;
-
+            
             config.AttributionChanged = (attribution) => MockLogger.Test("AttributionChanged: {0}", attribution);
             
             // start activity handler with config
@@ -810,10 +807,11 @@ namespace AdjustTest.Pcl
         
         public void TestUpdateAttribution() 
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Verbose);
+
             // create the config to start the session
             AdjustConfig config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
-
-            config.LogLevel = LogLevel.Verbose;
 
             // start activity handler with config
             ActivityHandler firstActivityHandler = GetActivityHandler(config);
@@ -861,8 +859,9 @@ namespace AdjustTest.Pcl
             config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
 
             config.AttributionChanged = (attribution) => MockLogger.Test("onAttributionChanged: {0}", attribution);
-
-            config.LogLevel = LogLevel.Debug;
+            
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Debug);
 
             ActivityHandler restartActivityHandler = GetActivityHandler(config);
             
@@ -915,8 +914,9 @@ namespace AdjustTest.Pcl
             CheckEndSession();
 
             config = new AdjustConfig(appToken: "123456789012", environment: AdjustConfig.EnvironmentSandbox);
-
-            config.LogLevel = LogLevel.Info;
+            
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Info);
 
             config.AttributionChanged = (attribution) => MockLogger.Test("onAttributionChanged: {0}", attribution);
 

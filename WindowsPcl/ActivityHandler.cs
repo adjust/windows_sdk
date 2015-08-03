@@ -51,10 +51,6 @@ namespace AdjustSdk.Pcl
 
             Logger = AdjustFactory.Logger;
 
-            // TODO
-            //System.Diagnostics.Debug.WriteLine("ActivityHandler adjustConfig " + adjustConfig == null);
-            Logger.LogDelegate = adjustConfig.LogDelegate;
-
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
             InternalQueue.Enqueue(() => InitInternal(adjustConfig, deviceUtil));
         }
@@ -263,11 +259,7 @@ namespace AdjustSdk.Pcl
             {
                 Logger.LogLevel = LogLevel.Assert;
             }
-            else
-            {
-                Logger.LogLevel = AdjustConfig.LogLevel;
-            }
-
+            
             if (AdjustConfig.EventBufferingEnabled)
             {
                 Logger.Info("Event buffering is enabled");

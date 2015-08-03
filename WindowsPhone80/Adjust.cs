@@ -16,6 +16,11 @@ namespace AdjustSdk
 
         private Adjust() { }
 
+        public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
+        {
+            LogConfig.SetupLogging(logDelegate, logLevel);
+        }
+
         /// <summary>
         ///  Tell Adjust that the application was launched.
         ///

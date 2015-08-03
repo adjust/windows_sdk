@@ -51,6 +51,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="IPackageHandler.cs" />
     <Compile Include="IRequestHandler.cs" />
+    <Compile Include="LogConfig.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LogLevel.cs" />
     <Compile Include="PackageBuilder.cs" />

@@ -12,8 +12,6 @@ namespace AdjustSdk
 
         internal string Environment { get; private set; }
 
-        public LogLevel LogLevel { get; set; }
-
         public string SdkPrefix { get; set; }
 
         public bool EventBufferingEnabled { get; set; }
@@ -21,8 +19,6 @@ namespace AdjustSdk
         public string DefaultTracker { get; set; }
 
         public Action<AdjustAttribution> AttributionChanged { get; set; }
-
-        public Action<String> LogDelegate { get; set; }
 
         public bool HasDelegate { get { return AttributionChanged != null; } }
 
@@ -38,7 +34,6 @@ namespace AdjustSdk
             Environment = environment;
 
             // default values
-            LogLevel = LogLevel.Info;
             EventBufferingEnabled = false;
         }
 
