@@ -137,24 +137,5 @@ namespace AdjustSdk
         {
             AdjustInstance.AppWillOpenUrl(uri);
         }
-        /*
-        /// <summary>
-        /// Special method used by SDK wrappers
-        /// </summary>
-        /// <param name="sdkPrefix">The SDK prefix to be added</param>
-        public static void SetSdkPrefix(string sdkPrefix)
-        {
-            AdjustApi.SetSdkPrefix(sdkPrefix);
-        }
-
-        /// <summary>
-        /// Delegate method to get the log messages of the adjust SDK
-        /// </summary>
-        /// <param name="logDelegate"></param>
-        public static void SetLogDelegate(Action<String> logDelegate)
-        {
-            AdjustApi.SetLogDelegate(logDelegate);
-        }
-         * */
     }
 }

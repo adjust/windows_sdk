@@ -67,89 +67,7 @@ namespace AdjustSdk
         {
             AdjustInstance.TrackEvent(adjustEvent);
         }
-        /*
-        /// <summary>
-        ///  Tell Adjust that a user generated some revenue.
-        ///
-        ///  The amount is measured in cents and rounded to on digit after the
-        ///  decimal point. If you want to differentiate between several revenue
-        ///  types, you can do so by using different event tokens. If your revenue
-        ///  events have callbacks, you can also pass in parameters that will be
-        ///  forwarded to your end point.
-        /// </summary>
-        /// <param name="amountInCents">
-        ///  The amount in cents (example: 1.5 means one and a half cents)
-        /// </param>
-        /// <param name="eventToken">
-        ///  The token for this revenue event (optional, see above)
-        /// </param>
-        /// <param name="callbackParameters">
-        ///  Parameters for this revenue event (optional, see above)
-        /// </param>
-        public static void TrackRevenue(double amountInCents,
-            string eventToken = null,
-            Dictionary<string, string> callbackParameters = null)
-        {
-            AdjustApi.TrackRevenue(amountInCents, eventToken, callbackParameters);
-        }
 
-        /// <summary>
-        ///  Change the verbosity of Adjust's logs.
-        ///
-        ///  You can increase or reduce the amount of logs from Adjust by passing
-        ///  one of the following parameters. Use Log.ASSERT to disable all logging.
-        /// </summary>
-        /// <param name="logLevel">
-        ///  The desired minimum log level (default: info)
-        ///  Must be one of the following:
-        ///   - Verbose (enable all logging)
-        ///   - Debug   (enable more logging)
-        ///   - Info    (the default)
-        ///   - Warn    (disable info logging)
-        ///   - Error   (disable warnings as well)
-        ///   - Assert  (disable errors as well)
-        /// </param>
-        public static void SetLogLevel(LogLevel logLevel)
-        {
-            AdjustApi.SetLogLevel(logLevel);
-        }
-
-        /// <summary>
-        ///  Set the tracking environment to sandbox or production.
-        ///
-        ///  Use sandbox for testing and production for the final build that you release.
-        /// </summary>
-        /// <param name="environment">
-        ///  The new environment. Supported values:
-        ///   - AdjustEnvironment.Sandbox
-        ///   - AdjustEnvironment.Production
-        /// </param>
-        public static void SetEnvironment(AdjustEnvironment environment)
-        {
-            AdjustApi.SetEnvironment(environment);
-        }
-
-        /// <summary>
-        ///  Enable or disable event buffering.
-        ///
-        ///  Enable event buffering if your app triggers a lot of events.
-        ///  When enabled, events get buffered and only get tracked each
-        ///  minute. Buffered events are still persisted, of course.
-        /// </summary>
-        public static void SetEventBufferingEnabled(bool enabledEventBuffering)
-        {
-            AdjustApi.SetEventBufferingEnabled(enabledEventBuffering);
-        }
-
-        /// <summary>
-        /// Optional delegate method that will get called when a tracking attempt finished
-        /// </summary>
-        /// <param name="responseDelegate">The response data containing information about the activity and it's server response.</param>
-        public static void SetResponseDelegate(Action<ResponseData> responseDelegate)
-        {
-            AdjustApi.SetResponseDelegate(responseDelegate);
-        }
-        */
         /// <summary>
         /// Enable or disable the adjust SDK
         /// </summary>
@@ -186,24 +104,5 @@ namespace AdjustSdk
         {
             AdjustInstance.AppWillOpenUrl(uri);
         }
-        /*
-        /// <summary>
-        /// Special method used by SDK wrappers
-        /// </summary>
-        /// <param name="sdkPrefix">The SDK prefix to be added</param>
-        public static void SetSdkPrefix(string sdkPrefix)
-        {
-            AdjustApi.SetSdkPrefix(sdkPrefix);
-        }
-        
-        /// <summary>
-        /// Delegate method to get the log messages of the adjust SDK
-        /// </summary>
-        /// <param name="logDelegate"></param>
-        public static void SetLogDelegate(Action<String> logDelegate)
-        {
-            AdjustApi.SetLogDelegate(logDelegate);
-        }
-         * */
     }
 }
