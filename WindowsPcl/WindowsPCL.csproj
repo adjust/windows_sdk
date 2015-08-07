@@ -61,7 +61,6 @@
     <Compile Include="TimerCycle.cs" />
     <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResponseData.cs" />
     <Compile Include="TimerOnce.cs" />
     <Compile Include="UtilPcl.cs" />
   </ItemGroup>
