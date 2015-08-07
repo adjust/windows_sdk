@@ -89,6 +89,28 @@ namespace AdjustSdk
                 ClickLabel);
         }
 
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                {"trackerName", TrackerName},
+                {"trackerToken", TrackerToken},
+                {"network", Network},
+                {"campaign", Campaign},
+                {"adgroup", Adgroup},
+                {"creative", Creative},
+                {"clickLabel", ClickLabel},
+            };
+        }
+
+        private void addToDic(Dictionary<string, string> dic, string key, string value)
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                dic.Add(key, value);
+            }
+        }
+
         private bool EqualString(string first, string second)
         {
             if (first == null || second == null)
