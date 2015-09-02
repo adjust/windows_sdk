@@ -966,6 +966,9 @@ namespace AdjustTest.Pcl
 
         public void TestOfflineMode()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: null);
+
             // adjust the session intervals for testing
             AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,2000));
             AdjustFactory.SetSubsessionInterval( new TimeSpan(0,0,0,0,500));
@@ -1052,8 +1055,11 @@ namespace AdjustTest.Pcl
             CheckNewSession(paused: false, sessionCount: 2);
         }
 
-        public void TestCheckAttributionState() {
-            
+        public void TestCheckAttributionState() 
+        {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: null);
+
             //AdjustFactory.setTimerStart(500);
             AdjustFactory.SetSessionInterval(new TimeSpan(0,0,0,0,4000));
             /***
@@ -1201,6 +1207,9 @@ namespace AdjustTest.Pcl
 
         public void TestTimer()
         {
+            LogConfig.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: null);
+
             AdjustFactory.SetTimerInterval(new TimeSpan(0,0,0,0,4000));
             AdjustFactory.SetTimerStart(new TimeSpan(0,0,0,0,0));
 
@@ -1239,6 +1248,9 @@ namespace AdjustTest.Pcl
         private void InitTests(string environment = "sandbox", string logLevel = "Info", bool eventBuffering = false,
                                string readActivityState = null, string readAttribution = null)
         {
+            // check log level
+            Assert.Test("MockLogger setLogLevel: " + logLevel);
+
             // check environment level
             if (environment.Equals("sandbox"))
             {
@@ -1252,9 +1264,6 @@ namespace AdjustTest.Pcl
             {
                 Assert.Fail();
             }
-
-            // check log level
-            Assert.Test("MockLogger setLogLevel: " + logLevel);
 
             // check event buffering
             if (eventBuffering)

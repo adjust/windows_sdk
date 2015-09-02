@@ -11,6 +11,10 @@ namespace AdjustSdk.Pcl
             {
                 AdjustFactory.Logger.LogLevel = logLevel.Value;
             }
+            else
+            {
+                AdjustFactory.Logger.LogLevel = LogLevel.Info;
+            }
         }
     }
 }
