@@ -76,14 +76,7 @@ namespace AdjustSdk.Pcl
                 WillRetry = false,
                 JsonDict = Util.ParseJsonResponse(httpResponseMessage),
             };
-            /*
-            Logger.Debug("ProcessResponse, JsonDict {0}", sendResponse.JsonDict);
-            if (sendResponse.JsonDict == null)
-            {
-                sendResponse.WillRetry = true;
-            }
-            Logger.Debug("ProcessResponse, WillRetry {0}", sendResponse.WillRetry);
-            */
+
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                 || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
             {
@@ -117,7 +110,7 @@ namespace AdjustSdk.Pcl
 
                 Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
                     activityPackage.FailureMessage(),
-                    webException.Message,
+                    Util.ExtractExceptionMessage(webException),
                     statusCode);
 
                 return sendResponse;
@@ -126,7 +119,7 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
+            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
 
             return new SendResponse
             {

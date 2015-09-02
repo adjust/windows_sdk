@@ -284,7 +284,6 @@ namespace AdjustSdk.Pcl
 
             Timer = new TimerCycle(InternalQueue, TimerFiredInternal, timeInterval: TimerInterval, timeStart: TimerStart);
 
-            // TODO remove or keep?
             StartInternal();
         }
 

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using PCLStorage;
+//using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -136,7 +137,7 @@ namespace AdjustSdk.Pcl
                 }
                 else
                 {
-                    Logger.Error("Failed to read file {0} ({1})", objectName, ex.Message);
+                    Logger.Error("Failed to read file {0} ({1})", objectName, Util.ExtractExceptionMessage(ex));
                 }
             }
 
@@ -161,7 +162,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to write to file {0} ({1})", fileName, ex.Message);
+                Logger.Error("Failed to write to file {0} ({1})", fileName, Util.ExtractExceptionMessage(ex));
             }
 
         }
@@ -316,7 +317,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse json response ({0})", e.Message);
+                Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
             }
 
             if (jsonDicObj == null) { return null; }
@@ -324,14 +325,6 @@ namespace AdjustSdk.Pcl
             var jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
                 ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
 
-            /*
-            Dictionary<string, string> jsonDic = new Dictionary<string,string>(jsonDicObj.Count);
-            foreach(var kvp in jsonDicObj)
-            {
-                if (kvp.Value == null) continue;
-                jsonDic.Add(kvp.Key, kvp.Value.ToString());
-            }
-            */
             string message;
             if (!jsonDic.TryGetValue("message", out message))
             {
@@ -358,6 +351,15 @@ namespace AdjustSdk.Pcl
             httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
 
             return httpClient;
+        }
+
+        internal static string ExtractExceptionMessage(Exception e)
+        {
+            if (e == null)
+            {
+                return "";
+            }
+            return e.Message + ExtractExceptionMessage(e.InnerException);
         }
     }
 
@@ -390,5 +392,4 @@ namespace AdjustSdk.Pcl
             return arg.ToString();
         }
     }
-
 }

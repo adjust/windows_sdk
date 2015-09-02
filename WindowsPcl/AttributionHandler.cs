@@ -121,7 +121,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to get attribution ({0})", ex.Message);
+                Logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
                 return;
             }
 
