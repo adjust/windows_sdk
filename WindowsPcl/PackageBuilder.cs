@@ -113,6 +113,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
             AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
             AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
+            AddString(parameters, "win_adid", DeviceInfo.AdvertisingId);
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
@@ -132,7 +133,6 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "os_version", DeviceInfo.OsVersion);
             AddString(parameters, "language", DeviceInfo.Language);
             AddString(parameters, "country", DeviceInfo.Country);
-            AddString(parameters, "win_adid", DeviceInfo.AdvertisingId);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)
