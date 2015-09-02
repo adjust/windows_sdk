@@ -33,6 +33,12 @@
             BackgroundColor="#464646">
             <m2:SplashScreen Image="Assets\SplashScreen.png" />
         </m2:VisualElements>
+      <Extensions>
+        <Extension Category="windows.protocol">
+          <Protocol Name="adjustws" m2:DesiredView="default">
+          </Protocol>
+        </Extension>
+      </Extensions>
     </Application>
   </Applications>
   <Capabilities>

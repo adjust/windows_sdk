@@ -35,7 +35,7 @@
       </PrimaryToken>
     </Tokens>
     <Extensions>
-      <Protocol Name="pedrotest" NavUriFragment="encodedLaunchUri=%s" TaskID="_default" />
+      <Protocol Name="adjustwp80" NavUriFragment="encodedLaunchUri=%s" TaskID="_default" />
     </Extensions>
     <ScreenResolutions>
       <ScreenResolution Name="ID_RESOLUTION_WVGA" />

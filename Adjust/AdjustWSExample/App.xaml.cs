@@ -107,6 +107,20 @@ namespace AdjustWSExample
             Window.Current.Activate();
         }
 
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            if (args.Kind == ActivationKind.Protocol)
+            {
+                var eventArgs = args as ProtocolActivatedEventArgs;
+
+                if (eventArgs != null)
+                {
+                    Adjust.AppWillOpenUrl(eventArgs.Uri);
+                }
+            }
+            base.OnActivated(args);
+        }
+
         /// <summary>
         /// Invoked when Navigation to a certain page fails
         /// </summary>

@@ -126,6 +126,20 @@ namespace AdjustWP81Example
             Window.Current.Activate();
         }
 
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            if (args.Kind == ActivationKind.Protocol)
+            {
+                var eventArgs = args as ProtocolActivatedEventArgs;
+
+                if (eventArgs != null)
+                {
+                    Adjust.AppWillOpenUrl(eventArgs.Uri);
+                }
+            }
+            base.OnActivated(args);
+        }
+
         /// <summary>
         /// Restores the content transitions after the app has launched.
         /// </summary>
