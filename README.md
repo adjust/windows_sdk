@@ -132,25 +132,74 @@ all times! This is especially important if you are tracking revenue.
 
 #### Adjust Logging
 
-You can increase or decrease the amount of logs you see in tests by setting the
-`LogLevel` property on your `AdjustConfig` instance with one of the following
-parameters:
+To be able to see the logs from our library that is compiled is `released` mode, it is
+necessary to redirect the log output to your app while it's being tested in `debug` mode.
+
+Call the `Adjust.SetupLogging` method before any other calls to our sdk.
 
 ```cs
-config.LogLevel = LogLevel.VERBOSE;   // enable all logging
-config.LogLevel = LogLevel.DEBUG;     // enable more logging
-config.LogLevel = LogLevel.INFO;      // the default
-config.LogLevel = LogLevel.WARN;      // disable info logging
-config.LogLevel = LogLevel.ERROR;     // disable warnings as well
-config.LogLevel = LogLevel.ASSERT;    // disable errors as well
+Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg));
+// ...
+var config = new AdjustConfig(appToken, environment);
+Adjust.ApplicationLaunching(config);
+// ...
 ```
 
-To be able to see the log messages, you must set the `LogDelegate` property on your `AdjustConfig` instance 
-with a function to show the log message in the command line.
-The messages will only be visible when your app is built with the `Debug` configuration.
+You can increase or decrease the amount of logs you see in tests by setting the
+second argument of `SetupLogging` method, `logLevel` with one of the following values:
 
 ```cs
-config.LogDelegate = msg => System.Diagnostics.Debug.WriteLine(msg));
+logLevel: LogLevel.Verbose  // enable all logging
+logLevel: LogLevel.Debug    // enable more logging
+logLevel: LogLevel.Info     // the default
+logLevel: LogLevel.Warn     // disable info logging
+logLevel: LogLevel.Error    // disable warnings as well
+logLevel: LogLevel.Assert   // disable errors as well
+```
+
+#### Windows Phone 8.0
+
+In the `Application_Launching` method of your app, call the method
+`SetupLogging` before any other calls to our sdk.
+
+```cs
+using AdjustSdk;
+
+public partial class App : Application
+{
+    private void Application_Launching(object sender, LaunchingEventArgs e)
+    {
+        Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+            logLevel: LogLevel.Verbose);
+        // ...
+        var config = new AdjustConfig(appToken, environment);
+        Adjust.ApplicationLaunching(config);
+        // ...
+    }
+    // ...
+}
+```
+
+#### Universal Apps
+
+In the `OnLaunched` method of your app, call the method `SetupLogging` 
+before any other calls to our sdk.
+
+```cs
+using AdjustSdk;
+
+sealed partial class App : Application
+{
+    protected override void OnLaunched(LaunchActivatedEventArgs e)
+    {
+        Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+            logLevel: LogLevel.Verbose);
+        // ...
+        var config = new AdjustConfig(appToken, environment);
+        Adjust.ApplicationLaunching(config);
+        // ...
+    }
+}
 ```
 
 ### 5. Build your app
@@ -328,19 +377,6 @@ listener:
 
 Please make sure to consider our [applicable attribution data
 policies][attribution-data].
-
-1. Add the `using AdjustSdk` import and create a method with the signature of
-the delegate `Action<ResponseData>`. It can be implemented in the `App.xaml.cs`
-class.
-
-2. After calling the `AppDidLaunch` method of the AdjustSdk, at the start of
-your application, call the `SetResponseDelegate` with the previously created
-method. It is also be possible to use a lambda with the same signature.
-
-The delegate method will get called every time any activity was tracked or
-failed to track. Within the delegate method you have access to the
-`responseData` parameter. Here is a quick summary of its attributes:
-
 
 With the `AdjustConfig` instance, before starting the SDK, set the
 `AttributionChanged` delegate with the `Action<AdjustAttribution>` signature.
