@@ -4,23 +4,22 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
 
 ## Example app
 
-There are different example apps inside the [`Adjust` directory][example]. `AdjustWP80Example` for Windows
+There are different example apps inside the [`Adjust` directory][example]: `AdjustWP80Example` for Windows
 Phone 8.0, `AdjustWP81Example` for Windows Phone 8.1 and `AdjustWSExample` for Windows Store. You can use
-these projects to see an example on how the adjust SDK can be integrated.
+these example projects to see how the adjust SDK can be integrated into your app.
 
 ## Basic Installation
 
-These are the minimal steps required to integrate the adjust SDK into your
+These are the basic steps required to integrate the adjust SDK into your
 Windows Phone or Windows Store project. We are going to assume that you use
-Visual Studio 2013 or superior with the latest NuGet package manager installed, but
-previous version that support Windows Phone 8.0 or Windows 8 should work. The
+Visual Studio 2013 or later, with the latest NuGet package manager installed. A previous version that supports Windows Phone 8.0 or Windows 8 should also work. The
 screenshots show the integration process for a Windows Universal app, but the
 procedure is very similar for both Windows Store or Phone apps. The differences with Windows Phone 8.0
-will get pointed out.
+will be noted throughout the walkthrough.
 
 ### 1. Install the package Adjust using NuGet
 
-In the Visual Studio menu select `TOOLS → Library Package Manager → Package
+In the Visual Studio menu, select `TOOLS → Library Package Manager → Package
 Manager Console` to open the Package Manager Console view.
 
 ![][nuget_click]
@@ -39,14 +38,14 @@ manager for your Windows Phone or Windows Store project.
 
 ### 2. Add capabilities (Windows Phone 8.0 only)
 
-In the Solution Explorer open the `Properties\WMAppManifest.xml` file, switch
+In the Solution Explorer, open the `Properties\WMAppManifest.xml` file, switch
 to the Capabilities tab and check the `ID_CAP_IDENTITY_DEVICE` checkbox.
 
 ![][wp_capabilities]
 
 ### 3. Integrate adjust into your app
 
-In the Solution Explorer open the file `App.xaml.cs`. Add the `using
+In the Solution Explorer, open the file `App.xaml.cs`. Add the `using
 AdjustSdk;` statement at the top of the file.
 
 #### Windows Phone 8.0
@@ -109,11 +108,11 @@ sealed partial class App : Application
 
 ### 4. Update adjust settings
 
-Replace the `{YourAppToken}` placeholder with your App Token. You can find in
+Replace the `{YourAppToken}` placeholder with your App Token, which you can find in
 your [dashboard].
 
 Depending on whether or not you build your app for testing or for production,
-you must set the `environment` parameter with one of these values:
+you will need to set the `environment` parameter with one of these values:
 
 ```cs
 string environment = AdjustConfig.EnvironmentSandbox;
@@ -123,19 +122,19 @@ string environment = AdjustConfig.EnvironmentProduction;
 **Important:** This value should be set to `AdjustConfig.EnvironmentSandbox`
 if and only if you or someone else is testing your app. Make sure to set the
 environment to `AdjustConfig.EnvironmentProduction` just before you publish
-the app. Set it back to `AdjustConfig.EnvironmentSandbox` when you start
+your app. Set it back to `AdjustConfig.EnvironmentSandbox` if you start
 developing and testing it again.
 
 We use this environment to distinguish between real traffic and test traffic
 from test devices. It is very important that you keep this value meaningful at
-all times! This is especially important if you are tracking revenue.
+all times, especially if you are tracking revenue.
 
 #### Adjust Logging
 
-To be able to see the logs from our library that is compiled is `released` mode, it is
+To see the compiled logs from our library in `released` mode, it is
 necessary to redirect the log output to your app while it's being tested in `debug` mode.
 
-Call the `Adjust.SetupLogging` method before any other calls to our sdk.
+Call the `Adjust.SetupLogging` method before making any other calls to our SDK.
 
 ```cs
 Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg));
@@ -146,7 +145,7 @@ Adjust.ApplicationLaunching(config);
 ```
 
 You can increase or decrease the amount of logs you see in tests by setting the
-second argument of `SetupLogging` method, `logLevel` with one of the following values:
+second argument of the `SetupLogging` method, `logLevel`, with one of the following values:
 
 ```cs
 logLevel: LogLevel.Verbose  // enable all logging
@@ -160,7 +159,7 @@ logLevel: LogLevel.Assert   // disable errors as well
 #### Windows Phone 8.0
 
 In the `Application_Launching` method of your app, call the method
-`SetupLogging` before any other calls to our sdk.
+`SetupLogging` before making any other calls to our SDK.
 
 ```cs
 using AdjustSdk;
@@ -183,7 +182,7 @@ public partial class App : Application
 #### Universal Apps
 
 In the `OnLaunched` method of your app, call the method `SetupLogging` 
-before any other calls to our sdk.
+before making any other calls to our SDK.
 
 ```cs
 using AdjustSdk;
@@ -204,7 +203,7 @@ sealed partial class App : Application
 
 ### 5. Build your app
 
-From the menu select `DEBUG → Start Debugging`. After the app launched, you
+From the menu, select `DEBUG → Start Debugging`. After the app launches, you
 should see the debug log `Tracked session start` in the Output view.
 
 ![][run_app]
@@ -217,25 +216,21 @@ advantage of the following features.
 ### 6. Add tracking of custom events
 
 You can use adjust to track any event in your app. Suppose you want to track
-every tap on a button. You would have to create a new event token in your
+every tap of a button. You would have to create a new event token in your
 [dashboard]. Let's say that event token is `abc123`. In your button's `Button_Click`
-method you could then add the following lines to track the click:
+method, you can add the following lines to track the click:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
 Adjust.trackEvent(adjustEvent);
 ```
 
-The event instance can be used to configure the event even more before tracking
-it.
+The event instance can be used to further configure before you begin tracking.
 
 ### 7. Add callback parameters
 
-You can register a callback URL for your events in your [dashboard]. We will
-send a GET request to that URL whenever the event gets tracked. You can add
-callback parameters to that event by calling `AddCallbackParameter` on the
-event instance before tracking it. We will then append these parameters to your
-callback URL.
+You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling `AddCallbackParameter` on the
+event instance before tracking it. We will then append these parameters to your specified callback URL.
 
 For example, suppose you have registered the URL
 `http://www.adjust.com/callback` then track an event like this:
@@ -255,10 +250,10 @@ In that case we would track the event and send a request to:
 http://www.adjust.com/callback?key=value&foo=bar
 ```
 
-It should be mentioned that we support a variety of placeholders like
-`{win_adid}` that can be used as parameter values. In the resulting callback
-this placeholder would be replaced with the Windows Advertising Id of the current device.
-Also note that we don't store any of your custom parameters, but only append
+We should mention that we support a variety of placeholders like
+`{win_adid}` that are usuable as parameter values. In the resulting callback,
+this placeholder would be replaced with the Windows Advertising ID of the current device.
+You should also note that we do not store any of your custom parameters, but only append
 them to your callbacks. If you haven't registered a callback for an event,
 these parameters won't even be read.
 
@@ -267,10 +262,10 @@ values, in our [callbacks guide][callbacks-guide].
 
 ### 8. Partner parameters
 
-You can also add parameters to be transmitted to network partners, for the
+You can also add parameters to be transmitted to network partners for
 integrations that have been activated in your adjust dashboard.
 
-This works similarly to the callback parameters mentioned above, but can be
+This works similarly to the callback parameters mentioned above, but these are instead
 added by calling the `AddPartnerParameter` method on your `AdjustEvent` instance.
 
 ```cs
@@ -287,9 +282,9 @@ to special partners.][special-partners]
 
 ### 9. Add tracking of revenue
 
-If your users can generate revenue by tapping on advertisements or making
-in-app purchases you can track those revenues with events. Lets say a tap is
-worth one Euro cent. You could then track the revenue event like this:
+If your users generate revenue by tapping on advertisements or making
+in-app purchases, then you can track those revenues with events. Let's say a tap is
+worth €0.01. You can then track the revenue event like this:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
@@ -297,19 +292,16 @@ adjustEvent.setRevenue(0.01, "EUR");
 Adjust.trackEvent(adjustEvent);
 ```
 
-This can be combined with callback parameters of course.
+This can be combined with callback parameters, of course.
 
-When you set a currency token, adjust will automatically convert the incoming revenues into a reporting revenue of your choice. Read more about [currency conversion here.][currency-conversion]
+When you set a currency token, adjust will automatically convert the incoming revenue into the reporting revenue of your choice. Read more about [currency conversion here.][currency-conversion]
 
 You can read more about revenue and event tracking in the [event tracking
 guide.][event-tracking]
 
 ### 10. Set up deep link reattributions
 
-You can set up the adjust SDK to handle deep links that are used to open your
-app, also known as URI associations in Windows Phone 8.0 and URI activation in Universal apps.
-We will only read certain adjust specific parameters. This is essential if
-you are planning to run retargeting or re-engagement campaigns with deep links.
+You can set up the adjust SDK to handle any deep links (also known as URI associations in Windows Phone 8.0 and URI activation in Universal apps) used to open your app. We will only read adjust-specific parameters. This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
 
 #### Windows Phone 8.0
 
@@ -356,8 +348,8 @@ public partial class App : Application
 
 ### 11. Enable event buffering
 
-If your app makes heavy use of event tracking, you might want to delay some
-HTTP requests in order to send them in one batch every minute. You can enable
+If your app makes heavy use of event tracking, you may want to delay some
+HTTP requests in order to send them in a single batch per minute. You can enable
 event buffering with your `AdjustConfig` instance:
 
 ```cs
@@ -371,9 +363,9 @@ Adjust.ApplicationLaunching(config);
 ### 12. Set listener for attribution changes
 
 You can register a listener to be notified of tracker attribution changes. Due
-to the different sources considered for attribution, this information can not
+to the different sources considered for attribution, this information cannot
 be provided synchronously. The simplest way is to create a single anonymous
-listener:
+listener.
 
 Please make sure to consider our [applicable attribution data
 policies][attribution-data].
