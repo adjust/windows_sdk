@@ -132,12 +132,11 @@ namespace AdjustSdk.Pcl
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
-            var successRunning =
+             var successRunning =
                 !SendTask.IsFaulted
-                && !SendTask.IsCanceled
-                && SendTask.Result.JsonDict != null;
+                && !SendTask.IsCanceled;
 
-            if (successRunning)
+            if (successRunning && SendTask.Result.JsonDict != null)
                 PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
 
             //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
