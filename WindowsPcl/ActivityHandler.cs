@@ -416,7 +416,13 @@ namespace AdjustSdk.Pcl
 
             var sUri = Uri.UnescapeDataString(uri.ToString());
 
-            var queryStringIdx = sUri.IndexOf("?");
+            var windowsPhone80Protocol = "/Protocol?";
+            if (sUri.StartsWith(windowsPhone80Protocol))
+            {
+                sUri = sUri.Substring(windowsPhone80Protocol.Length);
+            }
+            
+            var queryStringIdx = sUri. IndexOf("?");
             // check if '?' exists and it's not the last char
             if (queryStringIdx == -1 || queryStringIdx + 1 == sUri.Length) return;
 

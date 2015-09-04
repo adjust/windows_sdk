@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AdjustSdk;
+using System;
 using System.Windows.Navigation;
 
 namespace AdjustWP80Example
@@ -13,6 +10,8 @@ namespace AdjustWP80Example
 
         public override Uri MapUri(Uri uri)
         {
+            Adjust.AppWillOpenUrl(uri);
+
             // Map everything to the main page. 
             return new Uri("/MainPage.xaml", UriKind.Relative);
         }
