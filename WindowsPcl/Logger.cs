@@ -1,6 +1,4 @@
-﻿using AdjustSdk;
-using System;
-using System.Globalization;
+﻿using System;
 
 namespace AdjustSdk.Pcl
 {
@@ -9,6 +7,7 @@ namespace AdjustSdk.Pcl
         private const string LogTag = "Adjust";
 
         public LogLevel LogLevel { private get; set; }
+
         public Action<String> LogDelegate { private get; set; }
 
         internal Logger()
@@ -66,7 +65,7 @@ namespace AdjustSdk.Pcl
             // write to Debug by new line '\n'
             foreach (string formattedLine in formattedMessage.Split(new char[] { '\n' }))
             {
-                var logMessage = String.Format("\t[{0}]{1} {2}", LogTag, logLevelString, formattedLine); 
+                var logMessage = String.Format("\t[{0}]{1} {2}", LogTag, logLevelString, formattedLine);
                 LogDelegate(logMessage);
             }
         }

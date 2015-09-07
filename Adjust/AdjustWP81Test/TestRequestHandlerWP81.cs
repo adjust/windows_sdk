@@ -23,9 +23,14 @@ namespace AdjustTest.WP81
         public void TearDown() { TestRequestHandler.TearDown(); }
 
         [TestMethod]
+        public void TestSendWP81() { TestRequestHandler.TestSend(); }
+
+        /*
+        [TestMethod]
         public void TestSendFirstPackageWP81() { TestRequestHandler.TestSendFirstPackage(); }
 
         [TestMethod]
         public void TestErrorSendPackageWP81() { TestRequestHandler.TestErrorSendPackage(); }
+         * */
     }
 }

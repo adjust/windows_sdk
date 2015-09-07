@@ -23,6 +23,22 @@ namespace AdjustTest.WS
         public void TearDown() { TestPackageHandler.TearDown(); }
 
         [TestMethod]
+        public void TestAddPackageWS() { TestPackageHandler.TestAddPackage(); }
+
+        [TestMethod]
+        public void TestSendFirstWS() { TestPackageHandler.TestSendFirst(); }
+
+        [TestMethod]
+        public void TestSendNextWS() { TestPackageHandler.TestSendNext(); }
+
+        [TestMethod]
+        public void TestCloseFirstPackageWS() { TestPackageHandler.TestCloseFirstPackage(); }
+
+        [TestMethod]
+        public void TestCallsWS() { TestPackageHandler.TestCalls(); }
+
+        /*
+        [TestMethod]
         public void TestFirstPackageWS() { TestPackageHandler.TestFirstPackage(); }
 
         [TestMethod]
@@ -30,5 +46,6 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestMultiplePackagesWS() { TestPackageHandler.TestMultiplePackages(); }
+         * */
     }
 }

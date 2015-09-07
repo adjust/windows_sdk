@@ -19,56 +19,30 @@ namespace AdjustSdk
                 Dispatcher = coreWindow.Dispatcher;
         }
 
-        public string ClientSdk { get { return "wstore3.5.1"; } }
-
-        public string GetMd5Hash(string input)
+        public DeviceInfo GetDeviceInfo()
         {
-            return UtilUap.GetMd5Hash(input);
+            return new DeviceInfo
+            {
+                ClientSdk = GetClientSdk(),
+                HardwareId = UtilUap.GetHardwareId(),
+                NetworkAdapterId = UtilUap.GetNetworkAdapterId(),
+                AppDisplayName = UtilUap.GetAppDisplayName(),
+                AppVersion = UtilUap.GetAppVersion(),
+                AppPublisher = UtilUap.GetAppPublisher(),
+                DeviceType = UtilUap.GetDeviceType(),
+                DeviceManufacturer = UtilUap.GetDeviceManufacturer(),
+                Architecture = UtilUap.GetArchitecture(),
+                OsName = GetOsName(),
+                OsVersion = UtilUap.GetOsVersion(),
+                Language = UtilUap.GetLanguage(),
+                Country = UtilUap.GetCountry(),
+                AdvertisingId = UtilUap.GetAdvertisingId(),
+            };
         }
 
-        public string GetDeviceUniqueId()
+        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
         {
-            return null;
-        }
-
-        public string GetHardwareId()
-        {
-            return UtilUap.GetHardwareId();
-        }
-
-        public string GetNetworkAdapterId()
-        {
-            return UtilUap.GetNetworkAdapterId();
-        }
-
-        public string GetUserAgent()
-        {
-            var deviceInfo = new EasClientDeviceInformation();
-
-            var userAgent = String.Join(" ",
-                UtilUap.getAppDisplayName(),
-                UtilUap.getAppVersion(),
-                UtilUap.getAppPublisher(),
-                UtilUap.getDeviceType(),
-                UtilUap.getDeviceName(),
-                UtilUap.getDeviceManufacturer(),
-                UtilUap.getArchitecture(),
-                getOsName(),
-                UtilUap.getOsVersion(),
-                UtilUap.getLanguage(),
-                UtilUap.getCountry());
-
-            return userAgent;
-        }
-
-        private string getOsName()
-        {
-            return "windows";
-        }
-
-        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
-        {
-            UtilUap.runInForeground(Dispatcher, () => responseDelegate(responseData));
+            UtilUap.runInForeground(Dispatcher, () => attributionChanged(adjustAttribution));
         }
 
         public void Sleep(int milliseconds)
@@ -76,9 +50,16 @@ namespace AdjustSdk
             UtilUap.SleepAsync(milliseconds).Wait();
         }
 
-        public void LauchDeepLink(Uri deepLinkUri)
+        public void LauchDeeplink(Uri deepLinkUri)
         {
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
+        }
+
+        private string GetClientSdk() { return "wstore4.0.0"; }
+
+        private string GetOsName()
+        {
+            return "windows";
         }
     }
 }

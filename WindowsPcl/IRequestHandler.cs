@@ -1,11 +1,9 @@
-﻿using System;
-
-namespace AdjustSdk.Pcl
+﻿namespace AdjustSdk.Pcl
 {
     public interface IRequestHandler
     {
-        void SendPackage(ActivityPackage package);
+        void Init(IPackageHandler packageHandler);
 
-        void SetResponseDelegate(Action<AdjustSdk.ResponseData> responseDelegate);
+        void SendPackage(ActivityPackage package);
     }
 }

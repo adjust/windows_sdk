@@ -1,5 +1,4 @@
-﻿using AdjustSdk;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -9,27 +8,31 @@ namespace AdjustSdk.Pcl
     public class PackageHandler : IPackageHandler
     {
         private const string PackageQueueFilename = "AdjustIOPackageQueue";
+        private const string PackageQueueName = "Package queue";
 
-        private ActionQueue InternalQueue;
-        private List<ActivityPackage> PackageQueue;
-        private IRequestHandler RequestHandler;
-        private IActivityHandler ActivityHandler;
-        private ILogger Logger;
+        private ActionQueue InternalQueue { get; set; }
+        private List<ActivityPackage> PackageQueue { get; set; }
+        private IRequestHandler RequestHandler { get; set; }
+        private IActivityHandler ActivityHandler { get; set; }
+        private ILogger Logger { get; set; }
 
         private ManualResetEvent InternalWaitHandle;
 
         private bool IsPaused;
 
-        public PackageHandler(IActivityHandler activityHandler)
+        public PackageHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            InternalQueue = new ActionQueue("adjust.PackageQueue");
-            PackageQueue = new List<ActivityPackage>();
-            IsPaused = true;
             Logger = AdjustFactory.Logger;
 
-            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
+            InternalQueue = new ActionQueue("adjust.PackageQueue");
 
-            InternalQueue.Enqueue(() => InitInternal(activityHandler));
+            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused));
+        }
+
+        public void Init(IActivityHandler activityHandler, bool startPaused)
+        {
+            ActivityHandler = activityHandler;
+            IsPaused = startPaused;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
@@ -62,32 +65,35 @@ namespace AdjustSdk.Pcl
             IsPaused = false;
         }
 
-        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData, Dictionary<string, string> jsonDict)
+        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            responseData.ActivityKind = activityPackage.ActivityKind;
-
-            string deepLink = null;
-            if (jsonDict != null)
-            {
-                jsonDict.TryGetValue("deeplink", out deepLink);
-            }
-
-            ActivityHandler.FinishTrackingWithResponse(responseData, deepLink);
+            ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
-        private void InitInternal(IActivityHandler activityHandler)
+        private void InitInternal(IActivityHandler activityHandler, bool startPaused)
         {
-            ActivityHandler = activityHandler;
-            RequestHandler = AdjustFactory.GetRequestHandler(this);
+            Init(activityHandler, startPaused);
 
             ReadPackageQueue();
+
+            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
+
+            RequestHandler = AdjustFactory.GetRequestHandler(this);
         }
 
         private void AddInternal(ActivityPackage activityPackage)
         {
-            PackageQueue.Add(activityPackage);
+            if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && PackageQueue.Count > 0)
+            {
+                PackageQueue.Insert(1, activityPackage);
+            }
+            else
+            {
+                PackageQueue.Add(activityPackage);
+            }
+
             Logger.Debug("Added package {0} ({1})", PackageQueue.Count, activityPackage);
-            Logger.Verbose("{0}", activityPackage.ExtendedString());
+            Logger.Verbose("{0}", activityPackage.GetExtendedString());
 
             WritePackageQueue();
         }
@@ -133,19 +139,31 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueue()
         {
-            var sucessMessage = Util.f("Package handler wrote {0} packages", PackageQueue.Count);
-            Util.SerializeToFileAsync(PackageQueueFilename, ActivityPackage.SerializeListToStream, PackageQueue, sucessMessage).Wait();
+            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
+            Util.SerializeToFileAsync(
+                fileName: PackageQueueFilename,
+                objectWriter: ActivityPackage.SerializeListToStream,
+                input: PackageQueue,
+                sucessMessage: sucessMessage)
+                .Wait();
         }
 
         private void ReadPackageQueue()
         {
-            Func<List<ActivityPackage>, string> successMessage = (queue) => Util.f("Package handler read {0} packages", queue.Count);
-
             PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
-                () => new List<ActivityPackage>(), // default value in case of error
-                successMessage) // message generated for the queue, if it was succesfully read
-                .Result;
+                () => null, // default value in case of error
+                PackageQueueName) // package queue name
+                .Result; // wait to finish
+
+            if (PackageQueue != null)
+            {
+                Logger.Debug("Package handler read {0} packages", PackageQueue.Count);
+            } 
+            else
+            {
+                PackageQueue = new List<ActivityPackage>();
+            }
         }
     }
 }

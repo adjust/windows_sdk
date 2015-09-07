@@ -21,11 +21,16 @@ namespace AdjustTest.WS
 
         [TestCleanup]
         public void TearDown() { TestRequestHandler.TearDown(); }
+    
+        [TestMethod]
+        public void TestSendWS() { TestRequestHandler.TestSend(); }
 
+        /*
         [TestMethod]
         public void TestSendFirstPackageWS() { TestRequestHandler.TestSendFirstPackage(); }
 
         [TestMethod]
         public void TestErrorSendPackageWS() { TestRequestHandler.TestErrorSendPackage(); }
+         * */
     }
 }

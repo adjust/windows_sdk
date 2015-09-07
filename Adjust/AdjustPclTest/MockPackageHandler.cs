@@ -11,33 +11,36 @@ namespace AdjustTest.Pcl
 
         public IList<ActivityPackage> PackageQueue { get; set; }
 
-        public ActivityPackage LastFinishedPackage { get; private set; }
-
-        public ResponseData LastResponseData { get; private set; }
-
         public MockPackageHandler(MockLogger mockLogger)
         {
             MockLogger = mockLogger;
             PackageQueue = new List<ActivityPackage>();
         }
 
+        public void Init(IActivityHandler activityHandler, bool startPaused)
+        {
+            MockLogger.Test("{0} Init, startPaused: {1}", prefix, startPaused);
+        }
+        
         public void AddPackage(ActivityPackage activityPackage)
         {
             MockLogger.Test("{0} AddPackage", prefix);
             PackageQueue.Add(activityPackage);
         }
 
+        public void SendFirstPackage()
+        {
+            MockLogger.Test("{0} SendFirstPackage", prefix);
+        }
+
+        public void SendNextPackage()
+        {
+            MockLogger.Test("{0} SendNextPackage", prefix);
+        }
+
         public void CloseFirstPackage()
         {
             MockLogger.Test("{0} CloseFirstPackage", prefix);
-        }
-
-        public void FinishedTrackingActivity(ActivityPackage activityPackage, ResponseData responseData, Dictionary<string, string> jsonDict)
-        {
-            MockLogger.Test("{0} FinishedTrackingActivity", prefix);
-
-            LastFinishedPackage = activityPackage;
-            LastResponseData = LastResponseData;
         }
 
         public void PauseSending()
@@ -50,14 +53,9 @@ namespace AdjustTest.Pcl
             MockLogger.Test("{0} ResumeSending", prefix);
         }
 
-        public void SendFirstPackage()
+        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            MockLogger.Test("{0} SendFirstPackage", prefix);
-        }
-
-        public void SendNextPackage()
-        {
-            MockLogger.Test("{0} SendNextPackage", prefix);
+            MockLogger.Test("{0} FinishedTrackingActivity, {1}", prefix, string.Join(";", jsonDict));
         }
     }
 }

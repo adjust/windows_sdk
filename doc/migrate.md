@@ -1,4 +1,83 @@
-## Migrate your adjust SDK for Windows to 3.5.0
+## Migrate your adjust SDK for Windows to v4.0.0 from v3.5.1
+
+### Initial setup
+
+We changed how you configure the adjust SDK. All initial setup is now done with
+a new config object. 
+Here is an example of how the setup in `App.xaml.cs` might look before and
+after the migration:
+
+##### Before
+
+```cs
+Adjust.AppDidLaunch("{YourAppToken}");
+Adjust.SetLogLevel(LogLevel.VERBOSE);
+Adjust.SetLogDelegate(msg => System.Diagnostics.Debug.WriteLine(msg));
+Adjust.SetEnvironment(AdjustEnvironment.Sandbox);
+```
+
+##### After
+
+```cs
+Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+   logLevel: LogLevel.Verbose);
+string appToken = "{YourAppToken}";
+string environment = AdjustConfig.EnvironmentSandbox;
+var config = new AdjustConfig(appToken, environment);
+Adjust.ApplicationLaunching(config);
+```
+
+### Event tracking
+
+We also introduced proper event objects that can be set up before they are
+tracked. Again, an example of how it might look like before and after:
+
+##### Before
+
+```cs
+var parameters = new Dictionary<string, string> {
+    { "key", "value" },
+    { "foo", "bar" }
+};
+Adjust.TrackEvent("abc123", parameters);
+```
+
+##### After
+
+```cs
+var adjustEvent = new AdjustEvent("abc123");
+adjustEvent.addCallbackParameter("key", "value");
+adjustEvent.addCallbackParameter("foo", "bar");
+Adjust.trackEvent(adjustEvent);
+```
+
+### Revenue tracking
+
+Revenues are now handled like normal events. You just set a revenue and a
+currency to track revenues. Note that it is no longer possible to track revenues
+without associated event tokens. You might need to create an additional event token
+in your dashboard. The optional transaction ID is now a property of the event
+instance.
+
+*Please note* - the revenue format has been changed from a cent float to a whole 
+currency-unit float. Current revenue tracking must be adjusted to whole currency
+units (i.e., divided by 100) in order to remain consistent.
+
+##### Before
+
+```cs
+Adjust.TrackRevenue(1.0, "abc123");
+```
+
+##### After
+
+```cs
+var adjustEvent = new AdjustEvent("abc123");
+adjustEvent.setRevenue(0.01, "EUR");
+Adjust.trackEvent(adjustEvent);
+```
+
+## Additional steps if you come from 3.4.2
 
 Add the following line to see log messages in the output. The messages will only be visible
 when your app is built with the `Debug` configuration.

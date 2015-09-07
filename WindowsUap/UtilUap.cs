@@ -19,34 +19,31 @@ namespace AdjustSdk.Uap
 {
     public class UtilUap
     {
-        #region User Agent
-
-        public static string getAppName()
+        public static string GetAdvertisingId()
         {
-            PackageId package = getPackage();
-            string packageName = package.Name;
-            string sanitized = Util.SanitizeUserAgent(packageName);
-            return sanitized;
+            return Windows.System.UserProfile.AdvertisingManager.AdvertisingId;
         }
 
-        public static string getAppVersion()
+        public static string GetAppName()
         {
-            PackageId package = getPackage();
+            PackageId package = GetPackage();
+            return package.Name;
+        }
+
+        public static string GetAppVersion()
+        {
+            PackageId package = GetPackage();
             PackageVersion pv = package.Version;
-            string version = Util.f("{0}.{1}", pv.Major, pv.Minor);
-            string sanitized = Util.SanitizeUserAgent(version);
-            return sanitized;
+            return Util.f("{0}.{1}", pv.Major, pv.Minor);
         }
 
-        public static string getAppPublisher()
+        public static string GetAppPublisher()
         {
-            PackageId package = getPackage();
-            string publisher = package.Publisher;
-            string sanitized = Util.SanitizeUserAgent(publisher);
-            return sanitized;
+            PackageId package = GetPackage();
+            return package.Publisher;
         }
 
-        public static string getDeviceType()
+        public static string GetDeviceType()
         {
             var deviceType = SystemInfoEstimate.GetDeviceCategoryAsync().Result;
             switch (deviceType)
@@ -58,7 +55,7 @@ namespace AdjustSdk.Uap
             }
         }
 
-        public static string getDeviceType(EasClientDeviceInformation deviceInfo)
+        public static string GetDeviceType(EasClientDeviceInformation deviceInfo)
         {
             var deviceType = SystemInfoEstimate.GetDeviceCategoryAsync().Result;
 
@@ -77,33 +74,27 @@ namespace AdjustSdk.Uap
             return "unknown";
         }
 
-        public static string getDeviceName()
+        public static string GetDeviceName() 
         {
-            var deviceModel = SystemInfoEstimate.GetDeviceModelAsync().Result;
-            return Util.SanitizeUserAgent(deviceModel);
+            return SystemInfoEstimate.GetDeviceModelAsync().Result;
         }
 
-        public static string getDeviceName(EasClientDeviceInformation deviceInfo)
+        public static string GetDeviceName(EasClientDeviceInformation deviceInfo)
         {
-            var deviceName = deviceInfo.SystemProductName;
-            var sanitized = Util.SanitizeUserAgent(deviceName);
-            return sanitized;
+            return deviceInfo.SystemProductName;
         }
 
-        public static string getDeviceManufacturer()
+        public static string GetDeviceManufacturer()
         {
-            var deviceManufacturer = SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
-            return Util.SanitizeUserAgent(deviceManufacturer);
+            return SystemInfoEstimate.GetDeviceManufacturerAsync().Result;
         }
 
-        public static string getDeviceManufacturer(EasClientDeviceInformation deviceInfo)
+        public static string GetDeviceManufacturer(EasClientDeviceInformation deviceInfo)
         {
-            var deviceManufacturer = deviceInfo.SystemManufacturer;
-            var sanitized = Util.SanitizeUserAgent(deviceManufacturer);
-            return sanitized;
+            return deviceInfo.SystemManufacturer;
         }
 
-        public static string getArchitecture()
+        public static string GetArchitecture()
         {
             ProcessorArchitecture architecture = SystemInfoEstimate.GetProcessorArchitectureAsync().Result;
             switch (architecture)
@@ -117,89 +108,73 @@ namespace AdjustSdk.Uap
             }
         }
 
-        public static string getOsVersion()
+        public static string GetOsVersion()
         {
             return SystemInfoEstimate.GetWindowsVersionAsync().Result;
         }
 
-        public static string getLanguage()
+        public static string GetLanguage()
         {
             CultureInfo currentCulture = CultureInfo.CurrentUICulture;
             string cultureName = currentCulture.Name;
             if (cultureName.Length < 2)
             {
-                return "zz";
+                return null;
             }
 
             string language = cultureName.Substring(0, 2);
-            string sanitized = Util.SanitizeUserAgent(language, "zz");
-            return sanitized;
+            return language;
         }
 
-        public static string getCountry()
+        public static string GetCountry()
         {
             CultureInfo currentCulture = CultureInfo.CurrentCulture;
             string cultureName = currentCulture.Name;
             int length = cultureName.Length;
             if (length < 2)
             {
-                return "zz";
+                return null;
             }
 
             string substring = cultureName.Substring(length - 2, 2);
             string country = substring.ToLower();
-            string sanitized = Util.SanitizeUserAgent(country, "zz");
-            return sanitized;
+            return country;
         }
 
-        public static PackageId getPackage()
+        public static PackageId GetPackage()
         {
             Package package = Package.Current;
             PackageId packageId = package.Id;
             return packageId;
         }
 
-        public static string getAppFamilyName()
+        public static string GetAppFamilyName()
         {
-            PackageId package = getPackage();
-            string packageName = package.FamilyName;
-            string sanitized = Util.SanitizeUserAgent(packageName);
-            return sanitized;
+            PackageId package = GetPackage();
+            return package.FamilyName;
         }
 
-        public static string getAppFullName()
+        public static string GetAppFullName()
         {
-            PackageId package = getPackage();
-            string fullName = package.FullName;
-            string sanitized = Util.SanitizeUserAgent(fullName);
-            return sanitized;
+            PackageId package = GetPackage();
+            return package.FullName;
         }
 
-        public static string getAppDisplayName()
+        public static string GetAppDisplayName()
         {
-            string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
-            XElement element = XDocument.Load("appxmanifest.xml").Root;
-            element = element.Element(XName.Get("Properties", namespaceName));
-            element = element.Element(XName.Get("DisplayName", namespaceName));
-            string displayName = element.Value;
-            string sanitized = Util.SanitizeUserAgent(displayName);
-            return sanitized;
-        }
-
-        #endregion User Agent
-
-        public static string GetMd5Hash(string input)
-        {
-            var alg = HashAlgorithmProvider.OpenAlgorithm("MD5");
-            IBuffer buff = CryptographicBuffer.ConvertStringToBinary(input, BinaryStringEncoding.Utf8);
-            var hashed = alg.HashData(buff);
-            var res = CryptographicBuffer.EncodeToHexString(hashed);
-            return res;
-        }
-
-        public static string GetDeviceUniqueId()
-        {
-            return null; //deviceUniqueId is from WP
+            string displayName = null;
+            try
+            {
+                string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
+                XElement element = XDocument.Load("appxmanifest.xml").Root;
+                element = element.Element(XName.Get("Properties", namespaceName));
+                element = element.Element(XName.Get("DisplayName", namespaceName));
+                displayName = element.Value;
+            }
+            catch (Exception e)
+            { }
+            
+            return displayName;
         }
 
         public static string GetHardwareId()

@@ -7,7 +7,6 @@ namespace AdjustTest.Pcl
     public class MockRequestHandler : IRequestHandler
     {
         private MockLogger MockLogger;
-        private IPackageHandler PackageHandler;
 
         private const string prefix = "RequestHandler";
 
@@ -16,22 +15,14 @@ namespace AdjustTest.Pcl
             MockLogger = mockLogger;
         }
 
+        public void Init(IPackageHandler packageHandler)
+        {
+            MockLogger.Test("{0} Init", prefix);
+        }
+
         public void SendPackage(ActivityPackage package)
         {
-            MockLogger.Test("{0} SendPackage", prefix);
-
-            if (PackageHandler != null)
-                PackageHandler.SendNextPackage();
-        }
-
-        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
-        {
-            MockLogger.Test("{0} SetResponseDelegate", prefix);
-        }
-
-        public void SetPackageHandler(IPackageHandler packageHandler)
-        {
-            PackageHandler = packageHandler;
+            MockLogger.Test("{0} SendPackage, {1}", prefix, package);
         }
     }
 }

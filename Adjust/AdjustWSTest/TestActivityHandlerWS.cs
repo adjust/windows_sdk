@@ -12,7 +12,7 @@ namespace AdjustTest.WS
         [ClassInitialize]
         public static void InitializeTestActivityHandlerWS(TestContext testContext)
         {
-            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestWS());
+            TestActivityHandler = new TestActivityHandler(new UtilWS(), new AssertTestWS(), TargetPlatform.wstore);
         }
 
         [TestInitialize]
@@ -22,13 +22,45 @@ namespace AdjustTest.WS
         public void TearDown() { TestActivityHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession("wstore3.5.1"); }
+        public void TestFirstSessionWS() { TestActivityHandler.TestFirstSession(); }
+
+        [TestMethod]
+        public void TestEventsBufferedWS() { TestActivityHandler.TestEventsBuffered(); }
+
+        [TestMethod]
+        public void TestEventsNotBufferedWS() {TestActivityHandler.TestEventsNotBuffered(); }
+
+        [TestMethod]
+        public void TesChecksWS() { TestActivityHandler.testChecks(); }
 
         [TestMethod]
         public void TestSessionsWS() { TestActivityHandler.TestSessions(); }
 
         [TestMethod]
-        public void TestEventsBufferedWS() { TestActivityHandler.TestEventsBuffered(); }
+        public void TestDisableWS() { TestActivityHandler.TestDisable(); }
+
+        [TestMethod]
+        public void TestOpenUrlWS() { TestActivityHandler.TestOpenUrl(); }
+
+        [TestMethod]
+        public void TestFinishedTrackingActivityWS() { TestActivityHandler.TestFinishedTrackingActivity(); }
+
+        [TestMethod]
+        public void TestUpdateAttributionWS() { TestActivityHandler.TestUpdateAttribution(); }
+
+        [TestMethod]
+        public void TestOfflineModeWS() { TestActivityHandler.TestOfflineMode(); }
+
+        [TestMethod]
+        public void TestCheckAttributionStateWS() { TestActivityHandler.TestCheckAttributionState(); }
+
+        [TestMethod]
+        public void TestTimerWS() { TestActivityHandler.TestTimer(); }
+
+        /*
+         * 
+        [TestMethod]
+        public void TestSessionsWS() { TestActivityHandler.TestSessions(); }
 
         [TestMethod]
         public void TestEventsNotBufferedWS() { TestActivityHandler.TestEventsNotBuffered(); }
@@ -44,5 +76,6 @@ namespace AdjustTest.WS
 
         [TestMethod]
         public void TestUserAgentWS() { TestActivityHandler.TestUserAgent(); }
+         * */
     }
 }

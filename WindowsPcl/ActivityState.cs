@@ -7,19 +7,28 @@ namespace AdjustSdk.Pcl
     {
         // global counters
         internal int EventCount { get; set; }
+
         internal int SessionCount { get; set; }
 
         // session atributes
         internal int SubSessionCount { get; set; }
+
         internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
+
         internal TimeSpan? TimeSpent { get; set; }
+
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
+
         internal DateTime? CreatedAt { get; set; }
+
         internal TimeSpan? LastInterval { get; set; }
 
         // persistent data
         internal Guid Uuid { get; set; }
-        internal bool IsEnabled { get; set; }
+
+        internal bool Enabled { get; set; }
+
+        internal bool AskingAttribution { get; set; }
 
         internal ActivityState()
         {
@@ -32,7 +41,8 @@ namespace AdjustSdk.Pcl
             CreatedAt = null;
             LastInterval = null;
             Uuid = Guid.NewGuid();
-            IsEnabled = true;
+            Enabled = true;
+            AskingAttribution = false;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -45,16 +55,10 @@ namespace AdjustSdk.Pcl
             LastInterval = null;
         }
 
-        internal void InjectSessionAttributes(PackageBuilder packageBuilder)
+        internal ActivityState Clone()
         {
-            InjectGeneralAttributes(packageBuilder);
-            packageBuilder.LastInterval = LastInterval;
-        }
-
-        internal void InjectEventAttributes(PackageBuilder packageBuilder)
-        {
-            InjectGeneralAttributes(packageBuilder);
-            packageBuilder.EventCount = EventCount;
+            // TODO check if Timespans and Datetimes are altered by the original activity state
+            return (ActivityState)this.MemberwiseClone();
         }
 
         public override string ToString()
@@ -85,7 +89,8 @@ namespace AdjustSdk.Pcl
             writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
             writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
             writer.Write(activity.Uuid.ToString());
-            writer.Write(activity.IsEnabled);
+            writer.Write(activity.Enabled);
+            writer.Write(activity.AskingAttribution);
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -107,21 +112,13 @@ namespace AdjustSdk.Pcl
             // create Uuid for migrating devices
             activity.Uuid = Util.TryRead(() => Guid.Parse(reader.ReadString()), () => Guid.NewGuid());
             // default value of IsEnabled for migrating devices
-            activity.IsEnabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
+            activity.Enabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
+            // default value for AskingAttribution for migrating devices
+            activity.AskingAttribution = Util.TryRead(() => reader.ReadBoolean(), () => false);
 
             return activity;
         }
 
         #endregion Serialization
-
-        private void InjectGeneralAttributes(PackageBuilder packageBuilder)
-        {
-            packageBuilder.SessionCount = SessionCount;
-            packageBuilder.SubSessionCount = SubSessionCount;
-            packageBuilder.SessionLength = SessionLenght;
-            packageBuilder.TimeSpent = TimeSpent;
-            packageBuilder.CreatedAt = CreatedAt;
-            packageBuilder.Uuid = Uuid;
-        }
     }
 }

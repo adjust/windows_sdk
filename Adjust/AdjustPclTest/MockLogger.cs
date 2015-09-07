@@ -10,17 +10,24 @@ namespace AdjustTest.Pcl
     public class MockLogger : ILogger
     {
         private const int LogLevelTest = 7;
+        private const int LogLevelCheck = 8;
         private const string LogTag = "Adjust";
 
         private StringBuilder LogBuffer;
         private Dictionary<int, List<string>> LogMap;
+        private List<string> ReverseLog;
 
         public Action<String> LogDelegate { private get; set; }
 
         public MockLogger()
         {
+            Reset();
+        }
+
+        public void Reset()
+        {
             LogBuffer = new StringBuilder();
-            LogMap = new Dictionary<int, List<string>>(7)
+            LogMap = new Dictionary<int, List<string>>(8)
             {
                 { (int)LogLevel.Verbose, new List<string>() },
                 { (int)LogLevel.Debug, new List<string>() },
@@ -29,12 +36,16 @@ namespace AdjustTest.Pcl
                 { (int)LogLevel.Error, new List<string>() },
                 { (int)LogLevel.Assert, new List<string>() },
                 { LogLevelTest, new List<string>() },
+                { LogLevelCheck, new List<string>() },
             };
+            ReverseLog = new List<string>();
+
+            Check("MockLogger Reset");
         }
 
         public LogLevel LogLevel
         {
-            set { Test("Logger setLogLevel: {0}", value); }
+            set { Test("MockLogger setLogLevel: {0}", value); }
         }
 
         public void Verbose(string message, params object[] parameters)
@@ -72,6 +83,11 @@ namespace AdjustTest.Pcl
             LogMessage(message, LogLevelTest, "t", parameters);
         }
 
+        private void Check(string message, params object[] parameters)
+        {
+            LogMessage(message, LogLevelCheck, "c", parameters);
+        }
+        
         public bool DeleteLogUntil(LogLevel loglevel, string beginsWith)
         {
             return DeleteLevelUntil((int)loglevel, beginsWith);
@@ -84,26 +100,26 @@ namespace AdjustTest.Pcl
 
         private bool DeleteLevelUntil(int logLevel, string beginsWith)
         {
-            System.Diagnostics.Debug.WriteLine("Check: {0}", beginsWith);
             var logList = LogMap[logLevel];
             for (int i = 0; i < logList.Count; i++)
             {
                 var logMessage = logList[i];
                 if (logMessage.StartsWith(beginsWith))
                 {
-                    Test("found {0} ", logMessage);
+                    Check("found {0} ", logMessage);
                     logList.RemoveRange(0, i + 1);
                     return true;
                 }
             }
 
-            Test("{0} does not contain {1} ", string.Join(",", logList), beginsWith);
+            Check("{0} is not in: [{1}] ", beginsWith, string.Join(",", logList));
             return false;
         }
 
         public override string ToString()
         {
-            return LogBuffer.ToString();
+            //return LogBuffer.ToString();
+            return string.Join("\n", ReverseLog);
         }
 
         private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
@@ -121,15 +137,8 @@ namespace AdjustTest.Pcl
                 var formattedLine = Util.f("\t[{0}]{1} {2}", LogTag, logLevelString, line);
 
                 LogBuffer.AppendLine(formattedLine);
-                if (LogDelegate != null)
-                {
-                    LogDelegate(formattedLine);
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine(formattedLine);
-                }
-
+                System.Diagnostics.Debug.WriteLine(formattedLine);
+                ReverseLog.Insert(0, formattedLine);
             }
 
             var logList = LogMap[logLevelInt];

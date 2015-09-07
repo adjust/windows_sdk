@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 namespace AdjustTest.WP81
 {
     [TestClass]
-    class TestPackageHandlerWP81
+    public class TestPackageHandlerWP81
     {
         private static TestPackageHandler TestPackageHandler;
 
@@ -17,17 +17,23 @@ namespace AdjustTest.WP81
 
         [TestInitialize]
         public void SetUp() { TestPackageHandler.SetUp(); }
-
+        
         [TestCleanup]
         public void TearDown() { TestPackageHandler.TearDown(); }
 
         [TestMethod]
-        public void TestFirstPackageWP81() { TestPackageHandler.TestFirstPackage(); }
+        public void TestAddPackageWP81() { TestPackageHandler.TestAddPackage(); }
 
         [TestMethod]
-        public void TestPauseWP81() { TestPackageHandler.TestPause(); }
+        public void TestSendFirstWP81() { TestPackageHandler.TestSendFirst(); }
 
         [TestMethod]
-        public void TestMultiplePackagesWP81() { TestPackageHandler.TestMultiplePackages(); }
+        public void TestSendNextWP81() { TestPackageHandler.TestSendNext(); }
+
+        [TestMethod]
+        public void TestCloseFirstPackageWP81() { TestPackageHandler.TestCloseFirstPackage(); }
+
+        [TestMethod]
+        public void TestCallsWP81() { TestPackageHandler.TestCalls(); }
     }
 }

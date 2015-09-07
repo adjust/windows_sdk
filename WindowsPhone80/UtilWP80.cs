@@ -14,14 +14,48 @@ namespace AdjustSdk
 {
     public class UtilWP80 : DeviceUtil
     {
-        public string ClientSdk { get { return "wphone80-3.5.1"; } }
+        public UtilWP80()
+        { }
 
-        public string GetMd5Hash(string input)
+        public DeviceInfo GetDeviceInfo()
         {
-            return MD5Core.GetHashString(input);
+            return new DeviceInfo
+            {
+                ClientSdk = GetClientSdk(),
+                DeviceUniqueId = GetDeviceUniqueId(),
+                AppName = GetAppName(),
+                AppVersion = GetAppVersion(),
+                AppAuthor = GetAppAuthor(),
+                AppPublisher = GetAppPublisher(),
+                DeviceType = GetDeviceType(),
+                DeviceName = GetDeviceName(),
+                DeviceManufacturer = getDeviceManufacturer(),
+                OsName = getOsName(),
+                OsVersion = getOsVersion(),
+                Language = getLanguage(),
+                Country = getCountry(),
+            };
         }
 
-        public string GetDeviceUniqueId()
+
+        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
+        {
+            Deployment.Current.Dispatcher.BeginInvoke(() => attributionChanged(adjustAttribution));
+        }
+
+        public void Sleep(int milliseconds)
+        {
+            System.Threading.Thread.Sleep(milliseconds);
+        }
+
+        public void LauchDeeplink(Uri deepLinkUri)
+        {
+            Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+        }
+
+        private string GetClientSdk() { return "wphone80-4.0.0"; }
+                
+        private string GetDeviceUniqueId()
         {
             var logger = AdjustFactory.Logger;
             object id;
@@ -31,62 +65,19 @@ namespace AdjustSdk
                 return null;
             }
             string deviceId = Convert.ToBase64String(id as byte[]);
-
-            logger.Debug("Device unique Id ({0})", deviceId);
-
+                        
             return deviceId;
         }
 
-        public string GetHardwareId()
+        private static string GetAppName()
         {
-            return null; // hardwareId is from WS
+            return getAppAttributeValue("Title");
         }
 
-        public string GetNetworkAdapterId()
+        private static string GetAppVersion()
         {
-            return null; // networkAdapter is from WS
-        }
-
-        public string GetUserAgent()
-        {
-            var userAgent = String.Join(" ",
-                getAppName(),
-                getAppVersion(),
-                getAppAuthor(),
-                getAppPublisher(),
-                getDeviceType(),
-                getDeviceName(),
-                getDeviceManufacturer(),
-                getOsName(),
-                getOsVersion(),
-                getLanguage(),
-                getCountry());
-
-            return userAgent;
-        }
-
-        public void RunResponseDelegate(Action<ResponseData> responseDelegate, ResponseData responseData)
-        {
-            Deployment.Current.Dispatcher.BeginInvoke(() => responseDelegate(responseData));
-        }
-
-        public void Sleep(int milliseconds)
-        {
-            System.Threading.Thread.Sleep(milliseconds);
-        }
-
-        #region User Agent
-
-        private static string getAppName()
-        {
-            string title = getManifest().Root.Element("App").Attribute("Title").Value;
-            string sanitized = Util.SanitizeUserAgent(title);
-            return sanitized;
-        }
-
-        private static string getAppVersion()
-        {
-            string version = getManifest().Root.Element("App").Attribute("Version").Value;
+            var version = getAppAttributeValue("Version");
+            if (version == null) { return null; }
 
             string[] splits = version.Split('.');
             if (splits.Length >= 2)
@@ -94,25 +85,20 @@ namespace AdjustSdk
                 version = Util.f("{0}.{1}", splits[0], splits[1]);
             }
 
-            string sanitized = Util.SanitizeUserAgent(version);
-            return sanitized;
+            return version;
         }
 
-        private static string getAppAuthor()
+        private static string GetAppAuthor()
         {
-            string author = getManifest().Root.Element("App").Attribute("Author").Value;
-            string sanitized = Util.SanitizeUserAgent(author);
-            return sanitized;
+            return getAppAttributeValue("Author");
         }
 
-        private static string getAppPublisher()
+        private static string GetAppPublisher()
         {
-            string publisher = getManifest().Root.Element("App").Attribute("Publisher").Value;
-            string sanitized = Util.SanitizeUserAgent(publisher);
-            return sanitized;
+            return getAppAttributeValue("Publisher");
         }
 
-        private static string getDeviceType()
+        private static string GetDeviceType()
         {
             var deviceType = Microsoft.Devices.Environment.DeviceType;
             switch (deviceType)
@@ -123,18 +109,14 @@ namespace AdjustSdk
             }
         }
 
-        private static string getDeviceName()
+        private static string GetDeviceName()
         {
-            string deviceName = DeviceStatus.DeviceName;
-            string sanitized = Util.SanitizeUserAgent(deviceName);
-            return sanitized;
+            return DeviceStatus.DeviceName;
         }
 
         private static string getDeviceManufacturer()
         {
-            string manufacturer = DeviceStatus.DeviceManufacturer;
-            string sanitized = Util.SanitizeUserAgent(manufacturer);
-            return sanitized;
+            return DeviceStatus.DeviceManufacturer;
         }
 
         private static string getOsName()
@@ -145,9 +127,7 @@ namespace AdjustSdk
         private static string getOsVersion()
         {
             Version v = System.Environment.OSVersion.Version;
-            string version = Util.f("{0}.{1}", v.Major, v.Minor);
-            string sanitized = Util.SanitizeUserAgent(version);
-            return sanitized;
+            return Util.f("{0}.{1}", v.Major, v.Minor);
         }
 
         private static string getLanguage()
@@ -156,42 +136,40 @@ namespace AdjustSdk
             string cultureName = currentCulture.Name;
             if (cultureName.Length < 2)
             {
-                return "zz";
+                return null;
             }
 
-            string language = cultureName.Substring(0, 2);
-            string sanitized = Util.SanitizeUserAgent(language, "zz");
-            return sanitized;
+            var language = cultureName.Substring(0, 2);
+            return language;
         }
 
         private static string getCountry()
         {
-            CultureInfo currentCulture = CultureInfo.CurrentCulture;
-            string cultureName = currentCulture.Name;
-            int length = cultureName.Length;
+            var currentCulture = CultureInfo.CurrentCulture;
+            var cultureName = currentCulture.Name;
+            var length = cultureName.Length;
             if (length < 2)
             {
-                return "zz";
+                return null;
             }
 
-            string substring = cultureName.Substring(length - 2, 2);
-            string country = substring.ToLower();
-            string sanitized = Util.SanitizeUserAgent(country, "zz");
-            return sanitized;
+            var substring = cultureName.Substring(length - 2, 2);
+            var country = substring.ToLower();
+            return country;
         }
 
-        private static XDocument getManifest()
+        private static string getAppAttributeValue(string attributeName)
         {
-            XDocument manifest = XDocument.Load("WMAppManifest.xml");
-            return manifest;
-        }
+            var manifest = XDocument.Load("WMAppManifest.xml");
+            if (manifest == null) { return null; }
 
-        #endregion User Agent
+            var appElement = manifest.Root.Element("App");
+            if (appElement == null) { return null; }
 
+            var attribute = appElement.Attribute(attributeName);
+            if (attribute == null) { return null; }
 
-        public void LauchDeepLink(Uri deepLinkUri)
-        {
-            Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+            return attribute.Value;
         }
     }
 }

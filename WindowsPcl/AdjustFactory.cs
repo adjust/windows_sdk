@@ -1,21 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
         private static ILogger InjectedLogger;
-        private static IPackageHandler InjectedPackageHandler;
-        private static IRequestHandler InjectedRequestHandler;
-        private static HttpMessageHandler InjectedHttpMessageHandler;
-        private static TimeSpan? InjectedSessionInterval;
-        private static TimeSpan? InjectedSubsessionInterval;
-        private static TimeSpan? InjectedTimerInterval;
+        private static IActivityHandler IActivityHandler;
+        private static IPackageHandler IPackageHandler;
+        private static IAttributionHandler IAttributionHandler;
+        private static IRequestHandler IRequestHandler;
+        private static HttpMessageHandler HttpMessageHandler;
+        private static TimeSpan? SessionInterval;
+        private static TimeSpan? SubsessionInterval;
+        private static TimeSpan? TimerInterval;
+        private static TimeSpan? TimerStart;
 
         public static ILogger Logger
         {
@@ -30,82 +29,130 @@ namespace AdjustSdk.Pcl
             set { InjectedLogger = value; }
         }
 
-        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler)
+        public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
-            if (InjectedPackageHandler == null)
-                return new PackageHandler(activityHandler);
-            else
-                return InjectedPackageHandler;
+            if (IActivityHandler == null)
+                return ActivityHandler.GetInstance(adjustConfig, deviceUtil);
+
+            IActivityHandler.Init(adjustConfig, deviceUtil);
+            return IActivityHandler;
+        }
+
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, bool startPaused)
+        {
+            if (IPackageHandler == null)
+                return new PackageHandler(activityHandler, startPaused);
+
+            IPackageHandler.Init(activityHandler, startPaused);
+            return IPackageHandler;
+        }
+
+        public static IAttributionHandler GetAttributionHandler(IActivityHandler activityHandler,
+            ActivityPackage attributionPacakage,
+            bool startPaused,
+            bool hasDelegate)
+        {
+            if (IAttributionHandler == null)
+            {
+                return new AttributionHandler(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            }
+
+            IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            return IAttributionHandler;
         }
 
         public static IRequestHandler GetRequestHandler(IPackageHandler packageHandler)
         {
-            if (InjectedRequestHandler == null)
+            if (IRequestHandler == null)
                 return new RequestHandler(packageHandler);
-            else
-                return InjectedRequestHandler;
+
+            IRequestHandler.Init(packageHandler);
+            return IRequestHandler;
         }
 
         public static HttpMessageHandler GetHttpMessageHandler()
         {
-            if (InjectedHttpMessageHandler == null)
+            if (HttpMessageHandler == null)
                 return new HttpClientHandler();
             else
-                return InjectedHttpMessageHandler;
+                return HttpMessageHandler;
         }
 
         public static TimeSpan GetSessionInterval()
         {
-            if (!InjectedSessionInterval.HasValue)
+            if (!SessionInterval.HasValue)
                 return new TimeSpan(0, 30, 0); // 30 minutes
             else
-                return InjectedSessionInterval.Value;
+                return SessionInterval.Value;
         }
 
         public static TimeSpan GetSubsessionInterval()
         {
-            if (!InjectedSubsessionInterval.HasValue)
+            if (!SubsessionInterval.HasValue)
                 return new TimeSpan(0, 0, 1); // 1 second
             else
-                return InjectedSubsessionInterval.Value;
+                return SubsessionInterval.Value;
         }
 
         public static TimeSpan GetTimerInterval()
         {
-            if (!InjectedTimerInterval.HasValue)
+            if (!TimerInterval.HasValue)
                 return new TimeSpan(0, 1, 0); // 1 minute
             else
-                return InjectedTimerInterval.Value;
+                return TimerInterval.Value;
+        }
+
+        public static TimeSpan GetTimerStart()
+        {
+            if (!TimerStart.HasValue)
+                return new TimeSpan(0, 0, 0); // 0 seconds
+            else
+                return TimerStart.Value;
+        }
+
+        public static void SetActivityHandler(IActivityHandler activityHandler)
+        {
+            IActivityHandler = activityHandler;
         }
 
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
-            InjectedPackageHandler = packageHandler;
+            IPackageHandler = packageHandler;
+        }
+
+        public static void SetAttributionHandler(IAttributionHandler attributionHandler)
+        {
+            IAttributionHandler = attributionHandler;
         }
 
         public static void SetRequestHandler(IRequestHandler requestHandler)
         {
-            InjectedRequestHandler = requestHandler;
+            IRequestHandler = requestHandler;
         }
 
         public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
-            InjectedHttpMessageHandler = httpMessageHandler;
+            HttpMessageHandler = httpMessageHandler;
         }
 
         public static void SetSessionInterval(TimeSpan? sessionInterval)
         {
-            InjectedSessionInterval = sessionInterval;
+            SessionInterval = sessionInterval;
         }
 
         public static void SetSubsessionInterval(TimeSpan? subsessionInterval)
         {
-            InjectedSubsessionInterval = subsessionInterval;
+            SubsessionInterval = subsessionInterval;
         }
 
         public static void SetTimerInterval(TimeSpan? timerInterval)
         {
-            InjectedTimerInterval = timerInterval;
+            TimerInterval = timerInterval;
+        }
+
+        public static void SetTimerStart(TimeSpan? timerStart)
+        {
+            TimerStart = timerStart;
         }
     }
 }

@@ -1,6 +1,4 @@
-﻿using AdjustSdk;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,23 +7,27 @@ namespace AdjustSdk.Pcl
 {
     public class ActivityPackage
     {
-        // data
-        public string Path { get; set; }
-
-        public string UserAgent { get; set; }
-
-        public string ClientSdk { get; set; }
-
-        public Dictionary<string, string> Parameters { get; set; }
-
-        // logs
         public ActivityKind ActivityKind { get; set; }
+
+        public string ClientSdk { get; private set; }
+
+        public Dictionary<string, string> Parameters { get; private set; }
+
+        public string Path { get; private set; }
 
         public string Suffix { get; set; }
 
-        public string SuccessMessage()
+        private ActivityPackage()
         {
-            return Util.f("Tracked {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+        }
+
+        public ActivityPackage(ActivityKind activityKind, string clientSdk, Dictionary<string, string> parameters)
+        {
+            ActivityKind = activityKind;
+            ClientSdk = clientSdk;
+            Parameters = parameters;
+            Path = ActivityKindUtil.GetPath(ActivityKind);
+            Suffix = ActivityKindUtil.GetSuffix(Parameters);
         }
 
         public string FailureMessage()
@@ -38,18 +40,18 @@ namespace AdjustSdk.Pcl
             return Util.f("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
-        public string ExtendedString()
+        public string GetExtendedString()
         {
             var stringBuilder = new StringBuilder();
 
             stringBuilder.AppendFormat("Path:      {0}\n", Path);
-            stringBuilder.AppendFormat("UserAgent: {0}\n", UserAgent);
             stringBuilder.AppendFormat("ClientSdk: {0}\n", ClientSdk);
 
             if (Parameters != null)
             {
                 stringBuilder.AppendFormat("Parameters:");
-                foreach (var keyValuePair in Parameters)
+                var sortedParameters = new SortedDictionary<string,string>(Parameters);
+                foreach (var keyValuePair in sortedParameters)
                 {
                     stringBuilder.AppendFormat("\n\t\t{0} {1}", keyValuePair.Key.PadRight(16, ' '), keyValuePair.Value);
                 }
@@ -66,7 +68,7 @@ namespace AdjustSdk.Pcl
             var writer = new BinaryWriter(stream);
 
             writer.Write(activityPackage.Path);
-            writer.Write(activityPackage.UserAgent);
+            writer.Write("");
             writer.Write(activityPackage.ClientSdk);
             writer.Write(ActivityKindUtil.ToString(activityPackage.ActivityKind));
             writer.Write(activityPackage.Suffix);
@@ -88,7 +90,7 @@ namespace AdjustSdk.Pcl
 
             activityPackage = new ActivityPackage();
             activityPackage.Path = reader.ReadString();
-            activityPackage.UserAgent = reader.ReadString();
+            reader.ReadString(); //activityPackage.UserAgent
             activityPackage.ClientSdk = reader.ReadString();
             activityPackage.ActivityKind = ActivityKindUtil.FromString(reader.ReadString());
             activityPackage.Suffix = reader.ReadString();

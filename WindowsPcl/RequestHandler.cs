@@ -1,40 +1,34 @@
-﻿using AdjustSdk;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private static readonly TimeSpan Timeout = new TimeSpan(0, 1, 0);       // 1 minute
-
-        private IPackageHandler PackageHandler;
-        private Action<ResponseData> ResponseDelegate;
-        private ILogger Logger;
-        private HttpMessageHandler HttpMessageHandler;
+        private IPackageHandler PackageHandler { get; set; }
+        private ILogger Logger { get; set; }
+        private HttpClient HttpClient { get; set; }
 
         private struct SendResponse
         {
-            internal ActivityPackage ActivtyPackage;
-            internal ResponseData ResponseData;
-            internal Dictionary<string, string> JsonDict;
+            internal bool WillRetry { get; set; }
+
+            internal Dictionary<string, string> JsonDict { get; set; }
         }
 
         public RequestHandler(IPackageHandler packageHandler)
         {
-            PackageHandler = packageHandler;
             Logger = AdjustFactory.Logger;
-            HttpMessageHandler = AdjustFactory.GetHttpMessageHandler();
+
+            Init(packageHandler);
         }
 
-        public void SetResponseDelegate(Action<ResponseData> responseDelegate)
+        public void Init(IPackageHandler packageHandler)
         {
-            ResponseDelegate = responseDelegate;
+            PackageHandler = packageHandler;
         }
 
         public void SendPackage(ActivityPackage package)
@@ -58,18 +52,12 @@ namespace AdjustSdk.Pcl
             catch (WebException we) { sendResponse = ProcessException(we, activityPackage); }
             catch (Exception ex) { sendResponse = ProcessException(ex, activityPackage); }
 
-            sendResponse.ActivtyPackage = activityPackage;
             return sendResponse;
         }
 
         private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
         {
-            var httpClient = new HttpClient(HttpMessageHandler);
-
-            httpClient.Timeout = Timeout;
-            httpClient.DefaultRequestHeaders.Add("Client-SDK", activityPackage.ClientSdk);
-            httpClient.DefaultRequestHeaders.Add("User-Agent", activityPackage.UserAgent);
-
+            var httpClient = GetHttpClient(activityPackage);
             var url = Util.BaseUrl + activityPackage.Path;
 
             var sNow = Util.DateFormat(DateTime.Now);
@@ -83,88 +71,59 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-            Dictionary<string, string> jsonDict = null;
-
-            using (var content = httpResponseMessage.Content)
+            var sendResponse = new SendResponse
             {
-                var responseString = content.ReadAsStringAsync().Result;
-                jsonDict = Util.BuildJsonDict(responseString);
+                WillRetry = false,
+                JsonDict = Util.ParseJsonResponse(httpResponseMessage),
+            };
 
-                responseData.SetResponseData(jsonDict, responseString);
+            if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
+                || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
+            {
+                Logger.Error("{0}. (Status code: {1}).",
+                    activityPackage.FailureMessage(),
+                    (int)httpResponseMessage.StatusCode);
+            }
+            else if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                sendResponse.WillRetry = true;
 
-                if (httpResponseMessage.IsSuccessStatusCode)
-                {
-                    responseData.Success = true;
-
-                    Logger.Info("{0}", activityPackage.SuccessMessage());
-                }
-                else if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
-                    || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)         // 501
-                {
-                    Logger.Error("{0}. ({1}, {2}).",
-                        activityPackage.FailureMessage(),
-                        responseString.TrimEnd('\r', '\n'),
-                        (int)httpResponseMessage.StatusCode);
-                }
-                else
-                {
-                    responseData.WillRetry = true;
-
-                    Logger.Error("{0}. ({1}). Will retry later.",
-                        activityPackage.FailureMessage(),
-                        (int)httpResponseMessage.StatusCode);
-                }
+                Logger.Error("{0}. (Status code: {1}). Will retry later.",
+                    activityPackage.FailureMessage(),
+                    (int)httpResponseMessage.StatusCode);
             }
 
-            return new SendResponse
-            {
-                ResponseData = responseData,
-                JsonDict = jsonDict
-            };
+            return sendResponse;
         }
 
         private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-            Dictionary<string, string> jsonDict = null;
-
-
             using (var response = webException.Response as HttpWebResponse)
-            using (var streamResponse = response.GetResponseStream())
-            using (var streamReader = new StreamReader(streamResponse))
             {
-                var responseString = streamReader.ReadToEnd();
-                jsonDict = Util.BuildJsonDict(responseString);
+                int? statusCode = (response == null) ? null : (int?)response.StatusCode;
 
-                responseData.SetResponseData(jsonDict, responseString);
-                responseData.WillRetry = true;
+                var sendResponse = new SendResponse
+                {
+                    WillRetry = true,
+                    JsonDict = Util.ParseJsonExceptionResponse(response)
+                };
 
-                Logger.Error("{0}. ({1}, {2}). Will retry later.",
+                Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
                     activityPackage.FailureMessage(),
-                    responseString.Trim(),
-                    (int)response.StatusCode);
-            }
+                    Util.ExtractExceptionMessage(webException),
+                    statusCode);
 
-            return new SendResponse
-            {
-                ResponseData = responseData,
-                JsonDict = jsonDict,
-            };
+                return sendResponse;
+            }
         }
 
         private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            ResponseData responseData = new ResponseData();
-
-            responseData.SetResponseError(exception.Message);
-            responseData.WillRetry = true;
-
-            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), exception.Message);
+            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
 
             return new SendResponse
             {
-                ResponseData = responseData,
+                WillRetry = true,
             };
         }
 
@@ -173,20 +132,27 @@ namespace AdjustSdk.Pcl
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
-            var successRunning =
+             var successRunning =
                 !SendTask.IsFaulted
                 && !SendTask.IsCanceled;
 
-            if (successRunning)
-                PackageHandler.FinishedTrackingActivity(
-                    activityPackage: SendTask.Result.ActivtyPackage,
-                    responseData: SendTask.Result.ResponseData,
-                    jsonDict: SendTask.Result.JsonDict);
+            if (successRunning && SendTask.Result.JsonDict != null)
+                PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
 
-            if (successRunning && !SendTask.Result.ResponseData.WillRetry)
+            //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
+            if (successRunning && !SendTask.Result.WillRetry)
                 PackageHandler.SendNextPackage();
             else
                 PackageHandler.CloseFirstPackage();
+        }
+
+        private HttpClient GetHttpClient(ActivityPackage activityPackage)
+        {
+            if (HttpClient == null)
+            {
+                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+            }
+            return HttpClient;
         }
     }
 }

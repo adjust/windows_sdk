@@ -1,219 +1,219 @@
-﻿using AdjustSdk;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    public class PackageBuilder
+    internal class PackageBuilder
     {
-        // possible Ids
-        public string DeviceUniqueId { get; set; }
-        public string HardwareId { get; set; }
-        public string NetworkAdapterId { get; set; }
+        private AdjustConfig AdjustConfig { get; set; }
 
-        // general
-        public string AppToken { get; set; }
-        public AdjustApi.Environment Environment { get; set; }
-        public string UserAgent { get; set; }
-        public string ClientSdk { get; set; }
-        public Guid Uuid { get; set; }
+        private DeviceInfo DeviceInfo { get; set; }
 
-        // session
-        public int SessionCount { get; set; }
-        public int SubSessionCount { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public TimeSpan? SessionLength { get; set; }
-        public TimeSpan? TimeSpent { get; set; }
-        public TimeSpan? LastInterval { get; set; }
+        private ActivityState ActivityState { get; set; }
 
-        // events
-        public int EventCount { get; set; }
-        public string EventToken { get; set; }
-        public Dictionary<string, string> CallbackParameters { get; set; }
-        public double AmountInCents { get; set; }
+        private DateTime CreatedAt { get; set; }
 
-        // reattributions
-        public Dictionary<string, string> DeepLinksParameters { get; set; }
+        public Dictionary<string, string> ExtraParameters { get; set; }
 
-        // defaults
-        private ActivityPackage activityPackage { get; set; }
-
-        public PackageBuilder()
+        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
+            : this(adjustConfig, deviceInfo, createdAt)
         {
-            activityPackage = new ActivityPackage
+            ActivityState = activityState.Clone();
+        }
+
+        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
+            DateTime createdAt)
+        {
+            AdjustConfig = adjustConfig;
+            DeviceInfo = deviceInfo;
+            CreatedAt = createdAt;
+        }
+
+        internal ActivityPackage BuildSessionPackage()
+        {
+            var parameters = GetDefaultParameters();
+
+            AddTimeSpan(parameters, "last_interval", ActivityState.LastInterval);
+            AddString(parameters, "default_tracker", AdjustConfig.DefaultTracker);
+
+            return new ActivityPackage(ActivityKind.Session, DeviceInfo.ClientSdk, parameters);
+        }
+
+        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent)
+        {
+            var parameters = GetDefaultParameters();
+
+            AddInt(parameters, "event_count", ActivityState.EventCount);
+            AddString(parameters, "event_token", adjustEvent.EventToken);
+            AddDouble(parameters, "revenue", adjustEvent.Revenue);
+            AddString(parameters, "currency", adjustEvent.Currency);
+            AddDictionaryJson(parameters, "callback_params", adjustEvent.CallbackParameters);
+            AddDictionaryJson(parameters, "partner_params", adjustEvent.PartnerParameters);
+
+            return new ActivityPackage(ActivityKind.Event, DeviceInfo.ClientSdk, parameters);
+        }
+
+        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime, AdjustAttribution attribution)
+        {
+            var parameters = GetIdsParameters();
+
+            AddString(parameters, "source", source);
+            AddDateTime(parameters, "click_time", clickTime);
+            AddDictionaryJson(parameters, "params", ExtraParameters);
+
+            if (attribution != null)
             {
-                Parameters = new Dictionary<string, string>()
-            };
-        }
-
-        private void FillDefaults()
-        {
-            activityPackage.UserAgent = this.UserAgent;
-            activityPackage.ClientSdk = this.ClientSdk;
-
-            // general
-            SaveParameter("created_at", CreatedAt);
-            SaveParameter("app_token", AppToken);
-            SaveParameter("win_udid", DeviceUniqueId);
-            SaveParameter("win_hwid", HardwareId);
-            SaveParameter("win_naid", NetworkAdapterId);
-            SaveParameter("win_uuid", Uuid.ToString());
-            SaveParameter("environment", Environment.ToString().ToLower());
-            // session related (used for events as well)
-            SaveParameter("session_count", SessionCount);
-            SaveParameter("subsession_count", SubSessionCount);
-            SaveParameter("session_length", SessionLength);
-            SaveParameter("time_spent", TimeSpent);
-        }
-
-        public ActivityPackage BuildSessionPackage()
-        {
-            FillDefaults();
-            SaveParameter("last_interval", LastInterval);
-
-            activityPackage.Path = @"/startup";
-            activityPackage.ActivityKind = ActivityKind.Session;
-            activityPackage.Suffix = "";
-
-            return activityPackage;
-        }
-
-        public ActivityPackage BuildEventPackage()
-        {
-            FillDefaults();
-            InjectEventParameters();
-
-            activityPackage.Path = @"/event";
-            activityPackage.ActivityKind = ActivityKind.Event;
-            activityPackage.Suffix = this.EventSuffix();
-
-            return activityPackage;
-        }
-
-        public ActivityPackage BuildRevenuePackage()
-        {
-            FillDefaults();
-            SaveParameter("amount", AmountToString());
-            InjectEventParameters();
-
-            activityPackage.Path = @"/revenue";
-            activityPackage.ActivityKind = ActivityKind.Revenue;
-            activityPackage.Suffix = this.RevenueSuffx();
-
-            return activityPackage;
-        }
-
-        public ActivityPackage BuildReattributionPackage()
-        {
-            FillDefaults();
-            SaveParameterJson("deeplink_parameters", DeepLinksParameters);
-
-            activityPackage.Path = @"/reattribute";
-            activityPackage.ActivityKind = ActivityKind.Reattribution;
-            activityPackage.Suffix = "";
-
-            return activityPackage;
-        }
-
-        private string EventSuffix()
-        {
-            return Util.f(" '{0}'", EventToken);
-        }
-
-        private string RevenueSuffx()
-        {
-            if (EventToken != null)
-            {
-                return Util.f(" ({0:0.0} cent, '{1}')", AmountInCents, EventToken);
+                AddString(parameters, "tracker", attribution.TrackerName);
+                AddString(parameters, "campaign", attribution.Campaign);
+                AddString(parameters, "adgroup", attribution.Adgroup);
+                AddString(parameters, "creative", attribution.Creative);
             }
-            else
-            {
-                return Util.f(" ({0:0.0} cent)", AmountInCents);
-            }
+
+            return new ActivityPackage(ActivityKind.Click, DeviceInfo.ClientSdk, parameters);
         }
 
-        private void InjectEventParameters()
+        internal ActivityPackage BuildAttributionPackage()
         {
-            SaveParameter("event_count", EventCount);
-            SaveParameter("event_token", EventToken);
-            SaveParameterBase64("params", CallbackParameters);
+            var parameters = GetIdsParameters();
+
+            return new ActivityPackage(ActivityKind.Attribution, DeviceInfo.ClientSdk, parameters);
         }
 
-        private string AmountToString()
+        private Dictionary<string, string> GetIdsParameters()
         {
-            int amountInMillis = (int)Math.Round(AmountInCents * 10, MidpointRounding.AwayFromZero);
-            AmountInCents = amountInMillis / 10.0; // now rounded to one decimal point
-            var amountString = amountInMillis.ToString();
-            return amountString;
+            var parameters = new Dictionary<string, string>();
+
+            InjectDeviceInfoIds(parameters);
+            InjectConfig(parameters);
+            InjectCreatedAt(parameters);
+
+            return parameters;
         }
 
-        #region SaveParameter
-
-        private void SaveParameter(string key, string value)
+        private Dictionary<string, string> GetDefaultParameters()
         {
-            if (String.IsNullOrEmpty(value))
-                return;
+            var parameters = new Dictionary<string, string>();
 
-            activityPackage.Parameters.Add(key, value);
+            InjectDeviceInfo(parameters);
+            InjectConfig(parameters);
+            InjectActivityState(parameters);
+            InjectCreatedAt(parameters);
+
+            return parameters;
         }
 
-        private void SaveParameter(string key, DateTime? value)
+        private void InjectCreatedAt(Dictionary<string, string> parameters)
         {
-            if (!value.HasValue || value.Value.Ticks < 0)
-                return;
+            AddDateTime(parameters, "created_at", CreatedAt);
+        }
+
+        private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
+        {
+            AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
+            AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
+            AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
+            AddString(parameters, "win_adid", DeviceInfo.AdvertisingId);
+        }
+
+        private void InjectDeviceInfo(Dictionary<string, string> parameters)
+        {
+            InjectDeviceInfoIds(parameters);
+
+            AddString(parameters, "app_display_name", DeviceInfo.AppDisplayName);
+            AddString(parameters, "app_name", DeviceInfo.AppName);
+            AddString(parameters, "app_version", DeviceInfo.AppVersion);
+            AddString(parameters, "app_publisher", DeviceInfo.AppPublisher);
+            AddString(parameters, "app_author", DeviceInfo.AppAuthor);
+            AddString(parameters, "device_type", DeviceInfo.DeviceType);
+            AddString(parameters, "device_name", DeviceInfo.DeviceName);
+            AddString(parameters, "device_manufacturer", DeviceInfo.DeviceManufacturer);
+            AddString(parameters, "architecture", DeviceInfo.Architecture);
+            AddString(parameters, "os_name", DeviceInfo.OsName);
+            AddString(parameters, "os_version", DeviceInfo.OsVersion);
+            AddString(parameters, "language", DeviceInfo.Language);
+            AddString(parameters, "country", DeviceInfo.Country);
+        }
+
+        private void InjectConfig(Dictionary<string, string> parameters)
+        {
+            AddString(parameters, "app_token", AdjustConfig.AppToken);
+            AddString(parameters, "environment", AdjustConfig.Environment);
+            AddBool(parameters, "needs_attribution_data", AdjustConfig.HasDelegate);
+        }
+
+        private void InjectActivityState(Dictionary<string, string> parameters)
+        {
+            AddInt(parameters, "session_count", ActivityState.SessionCount);
+            AddInt(parameters, "subsession_count", ActivityState.SubSessionCount);
+            AddTimeSpan(parameters, "session_length", ActivityState.SessionLenght);
+            AddTimeSpan(parameters, "time_spent", ActivityState.TimeSpent);
+            AddString(parameters, "win_uuid", ActivityState.Uuid.ToString());
+        }
+
+        #region AddParameter
+
+        private void AddString(Dictionary<string, string> parameters, string key, string value)
+        {
+            if (String.IsNullOrEmpty(value)) { return; }
+
+            parameters.Add(key, value);
+        }
+
+        private void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
+        {
+            if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
             var sDateTime = Util.DateFormat(value.Value);
 
-            activityPackage.Parameters.Add(key, sDateTime);
+            AddString(parameters, key, sDateTime);
         }
 
-        private void SaveParameter(string key, int value)
+        private void AddInt(Dictionary<string, string> parameters, string key, int? value)
         {
-            if (value < 0)
-                return;
+            if (!value.HasValue || value.Value < 0) { return; }
 
-            activityPackage.Parameters.Add(key, value.ToString());
+            var sInt = value.Value.ToString();
+            AddString(parameters, key, sInt);
         }
 
-        private void SaveParameter(string key, bool value)
+        private void AddBool(Dictionary<string, string> parameters, string key, bool? value)
         {
-            SaveParameter(key, Convert.ToInt32(value));
+            if (!value.HasValue) { return; }
+
+            var iBool = value.Value ? 1 : 0;
+
+            AddInt(parameters, key, iBool);
         }
 
-        private void SaveParameter(string key, TimeSpan? value)
+        private void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
         {
-            if (!value.HasValue || value.Value.Ticks < 0)
-                return;
+            if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
             double roundedSeconds = Math.Round(value.Value.TotalSeconds, 0, MidpointRounding.AwayFromZero);
 
-            SaveParameter(key, (int)roundedSeconds);
+            AddInt(parameters, key, (int)roundedSeconds);
         }
 
-        private void SaveParameterBase64(string key, Dictionary<string, string> value)
+        private void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
         {
-            if (value == null)
-                return;
-
-            string json = JsonConvert.SerializeObject(value);
-            byte[] bytes = Encoding.UTF8.GetBytes(json);
-            string encoded = Convert.ToBase64String(bytes);
-
-            activityPackage.Parameters.Add(key, encoded);
-        }
-
-        private void SaveParameterJson(string key, Dictionary<string, string> value)
-        {
-            if (value == null)
-                return;
+            if (value == null) { return; }
+            if (value.Count == 0) { return; }
 
             string json = JsonConvert.SerializeObject(value);
 
-            activityPackage.Parameters.Add(key, json);
+            AddString(parameters, key, json);
         }
 
-        #endregion SaveParameter
+        private void AddDouble(Dictionary<string, string> parameters, string key, double? value)
+        {
+            if (value == null) { return; }
+
+            string sDouble = Util.f("{0:0.00000}", value);
+
+            AddString(parameters, key, sDouble);
+        }
+
+        #endregion AddParameter
     }
 }
