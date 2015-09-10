@@ -117,7 +117,7 @@ namespace AdjustTest.Pcl
             // default values
             AppToken = "123456789012";
             Environment = "sandbox";
-            Version = "4.0.0";
+            Version = "4.0.1";
             Suffix = "";
             Attribution = new AdjustAttribution();
             NeedsAttributionData = false;

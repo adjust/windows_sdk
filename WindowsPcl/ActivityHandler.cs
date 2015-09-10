@@ -249,6 +249,7 @@ namespace AdjustSdk.Pcl
         {
             Init(adjustConfig, deviceUtil);
             DeviceInfo = DeviceUtil.GetDeviceInfo();
+            DeviceInfo.SdkPrefix = adjustConfig.SdkPrefix;
 
             TimerInterval = AdjustFactory.GetTimerInterval();
             TimerStart = AdjustFactory.GetTimerStart();

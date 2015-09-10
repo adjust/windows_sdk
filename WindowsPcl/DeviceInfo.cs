@@ -37,5 +37,14 @@
         public string Language { get; set; }
 
         public string Country { get; set; }
+
+        public string SdkPrefix
+        {
+            set
+            {
+                if (value == null) { return; }
+                ClientSdk = Util.f("{0}@{1}", value, ClientSdk);
+            }
+        }
     }
 }
