@@ -53,7 +53,7 @@ namespace AdjustSdk
             Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
         }
 
-        private string GetClientSdk() { return "wphone80-4.0.1"; }
+        private string GetClientSdk() { return "wphone80-4.0.2"; }
                 
         private string GetDeviceUniqueId()
         {

@@ -55,7 +55,7 @@ namespace AdjustSdk
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
         }
         
-        private string GetClientSdk() { return "wphone81-4.0.1"; }
+        private string GetClientSdk() { return "wphone81-4.0.2"; }
 
         private static string GetOsName()
         {
