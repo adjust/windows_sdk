@@ -108,6 +108,11 @@ namespace AdjustSdk.Uap
             }
         }
 
+        public static string GetOperatingSystem(EasClientDeviceInformation deviceInfo)
+        {
+            return deviceInfo.OperatingSystem;
+        }
+
         public static string GetOsVersion()
         {
             return SystemInfoEstimate.GetWindowsVersionAsync().Result;

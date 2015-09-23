@@ -21,6 +21,8 @@ namespace AdjustSdk
 
         public DeviceInfo GetDeviceInfo()
         {
+            var easClientDeviceInformation = new EasClientDeviceInformation();
+
             return new DeviceInfo
             {
                 ClientSdk = GetClientSdk(),
@@ -32,7 +34,7 @@ namespace AdjustSdk
                 DeviceType = UtilUap.GetDeviceType(),
                 DeviceManufacturer = UtilUap.GetDeviceManufacturer(),
                 Architecture = UtilUap.GetArchitecture(),
-                OsName = GetOsName(),
+                OsName = UtilUap.GetOperatingSystem(easClientDeviceInformation),
                 OsVersion = UtilUap.GetOsVersion(),
                 Language = UtilUap.GetLanguage(),
                 Country = UtilUap.GetCountry(),
