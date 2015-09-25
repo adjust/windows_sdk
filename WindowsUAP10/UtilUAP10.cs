@@ -1,6 +1,7 @@
 ﻿using AdjustSdk.Pcl;
 using AdjustSdk.Uap;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.Core;
@@ -22,7 +23,7 @@ namespace AdjustSdk
         public DeviceInfo GetDeviceInfo()
         {
             var easClientDeviceInformation = new EasClientDeviceInformation();
-
+            
             return new DeviceInfo
             {
                 ClientSdk = GetClientSdk(),
@@ -39,14 +40,14 @@ namespace AdjustSdk
                 Language = UtilUap.GetLanguage(),
                 Country = UtilUap.GetCountry(),
                 AdvertisingId = UtilUap.GetAdvertisingId(),
-                EasFriendlyName = easClientDeviceInformation.FriendlyName,
-                EasId = easClientDeviceInformation.Id.ToString(),
-                EasOperatingSystem = easClientDeviceInformation.OperatingSystem,
-                EasSystemFirmwareVersion = easClientDeviceInformation.SystemFirmwareVersion,
-                EasSystemHardwareVersion = easClientDeviceInformation.SystemHardwareVersion,
-                EasSystemManufacturer = easClientDeviceInformation.SystemManufacturer,
-                EasSystemProductName = easClientDeviceInformation.SystemProductName,
-                EasSystemSku = easClientDeviceInformation.SystemSku,
+                EasFriendlyName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.FriendlyName),
+                EasId = UtilUap.ExceptionWrap(() => easClientDeviceInformation.Id.ToString()),
+                EasOperatingSystem = UtilUap.ExceptionWrap(() => easClientDeviceInformation.OperatingSystem),
+                EasSystemFirmwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemFirmwareVersion),
+                EasSystemHardwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemHardwareVersion),
+                EasSystemManufacturer = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemManufacturer),
+                EasSystemProductName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemProductName),
+                EasSystemSku = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemSku),
             };
         }
 

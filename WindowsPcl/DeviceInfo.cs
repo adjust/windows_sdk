@@ -38,6 +38,22 @@
 
         public string Country { get; set; }
 
+        public string EasFriendlyName { get; set; }
+
+        public string EasId { get; set; }
+
+        public string EasOperatingSystem { get; set; }
+
+        public string EasSystemFirmwareVersion { get; set; }
+
+        public string EasSystemHardwareVersion { get; set; }
+
+        public string EasSystemManufacturer { get; set; }
+
+        public string EasSystemProductName { get; set; }
+
+        public string EasSystemSku { get; set; }
+        
         public string SdkPrefix
         {
             set
