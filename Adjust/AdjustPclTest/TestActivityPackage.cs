@@ -13,6 +13,7 @@ namespace AdjustTest.Pcl
         wstore,
         wphone80,
         wphone81,
+        wuap,
     }
 
     public static class UtilTest
@@ -82,6 +83,7 @@ namespace AdjustTest.Pcl
                 case TargetPlatform.wstore: return "wstore" + Version;
                 case TargetPlatform.wphone80: return "wphone80-" + Version;
                 case TargetPlatform.wphone81: return "wphone81-" + Version;
+                case TargetPlatform.wuap: return "wuap" + Version;
                 default: return null;
             }
         } }
