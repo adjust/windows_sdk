@@ -54,14 +54,19 @@
 			<group targetFramework="WindowsPhone8.0">
 				<reference file="AdjustWP80.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsPclNet40.dll" />
 			</group>
 			<group targetFramework=".NETCore4.5">
 				<reference file="AdjustWS.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+                <reference file="WindowsPclNet40.dll" />
             </group>
 			<group targetFramework="WindowsPhoneApp8.1">
 				<reference file="AdjustWP81.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+                <reference file="WindowsPclNet40.dll" />
             </group>
             <group targetFramework="uap10.0">
 				<reference file="AdjustUAP10.dll" />
