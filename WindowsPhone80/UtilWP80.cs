@@ -34,6 +34,7 @@ namespace AdjustSdk
                 OsVersion = getOsVersion(),
                 Language = getLanguage(),
                 Country = getCountry(),
+                AdvertisingId = GetAdvertisingId()
             };
         }
 
@@ -170,6 +171,12 @@ namespace AdjustSdk
             if (attribute == null) { return null; }
 
             return attribute.Value;
+        }
+
+        public static string GetAdvertisingId()
+        {
+            var type = Type.GetType("Windows.System.UserProfile.AdvertisingManager, Windows, Version = 255.255.255.255, Culture = neutral, PublicKeyToken = null, ContentType = WindowsRuntime");
+            return type != null ? (string) type.GetProperty("AdvertisingId").GetValue(null, null) : "";
         }
     }
 }
