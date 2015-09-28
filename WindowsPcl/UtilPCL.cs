@@ -1,9 +1,7 @@
 ﻿using Newtonsoft.Json;
 using PCLStorage;
-//using PCLStorage;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -112,15 +110,15 @@ namespace AdjustSdk.Pcl
             {
                 var localStorage = FileSystem.Current.LocalStorage;
 
-                var activityStateFile = await localStorage.GetFileAsync(fileName);
+                var file = await localStorage.GetFileAsync(fileName);
 
-                if (activityStateFile == null)
+                if (file == null)
                 {
                     throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
                 }
 
                 T output;
-                using (var stream = await activityStateFile.OpenAsync(FileAccess.Read))
+                using (var stream = await file.OpenAsync(FileAccess.Read))
                 {
                     output = ObjectReader(stream);
                 }

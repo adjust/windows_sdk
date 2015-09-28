@@ -106,7 +106,7 @@ namespace AdjustSdk.Uap
                 case ProcessorArchitecture.Unknown: return "unknown";
                 default: return "unknown";
             }
-        }
+        }        
 
         public static string GetOsVersion()
         {
@@ -211,6 +211,18 @@ namespace AdjustSdk.Uap
         public static async Task SleepAsync(int milliseconds)
         {
             await Task.Delay(milliseconds);
+        }
+
+        public static string ExceptionWrap(Func<string> function)
+        {
+            try
+            {
+                return function();
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
     }
 }
