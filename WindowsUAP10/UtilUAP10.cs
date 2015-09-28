@@ -70,7 +70,7 @@ namespace AdjustSdk
 
         private static string GetOsName()
         {
-            return "windows-universal";
+            return "windows";
         }
     }
 }
