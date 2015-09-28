@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdjustSdk;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -25,6 +26,33 @@ namespace AdjustUAP10Example
         public MainPage()
         {
             this.InitializeComponent();
+        }
+
+        private void btnSimpleEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var simpleEvent = new AdjustEvent("{yourSimpleEventToken}");
+            Adjust.TrackEvent(simpleEvent);
+        }
+
+        private void btnRevenueEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var revenueEvent = new AdjustEvent("{yourRevenueEventToken}");
+            revenueEvent.SetRevenue(0.01, "EUR");
+            Adjust.TrackEvent(revenueEvent);
+        }
+
+        private void btnCallbakEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var callbackEvent = new AdjustEvent("{yourCallbackEventToken}");
+            callbackEvent.AddPartnerParameter("key", "value");
+            Adjust.TrackEvent(callbackEvent);
+        }
+
+        private void btnPartnerEvent_Click(object sender, RoutedEventArgs e)
+        {
+            var partnerEvent = new AdjustEvent("{yourPartnerEventToken}");
+            partnerEvent.AddPartnerParameter("foo", "bar");
+            Adjust.TrackEvent(partnerEvent);
         }
     }
 }
