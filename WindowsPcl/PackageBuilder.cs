@@ -133,6 +133,15 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "os_version", DeviceInfo.OsVersion);
             AddString(parameters, "language", DeviceInfo.Language);
             AddString(parameters, "country", DeviceInfo.Country);
+
+            AddString(parameters, "eas_name", DeviceInfo.EasFriendlyName);
+            AddString(parameters, "eas_id", DeviceInfo.EasId);
+            AddString(parameters, "eas_os", DeviceInfo.EasOperatingSystem);
+            AddString(parameters, "eas_firmware_version", DeviceInfo.EasSystemFirmwareVersion);
+            AddString(parameters, "eas_hardware_version", DeviceInfo.EasSystemHardwareVersion);
+            AddString(parameters, "eas_system_manufacturer", DeviceInfo.EasSystemManufacturer);
+            AddString(parameters, "eas_product_name", DeviceInfo.EasSystemProductName);
+            AddString(parameters, "eas_system_sku", DeviceInfo.EasSystemSku);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)

@@ -34,11 +34,17 @@ namespace AdjustSdk
                 DeviceType = UtilUap.GetDeviceType(),
                 DeviceManufacturer = UtilUap.GetDeviceManufacturer(),
                 Architecture = UtilUap.GetArchitecture(),
-                OsName = UtilUap.GetOperatingSystem(easClientDeviceInformation),
+                OsName = GetOsName(),
                 OsVersion = UtilUap.GetOsVersion(),
                 Language = UtilUap.GetLanguage(),
                 Country = UtilUap.GetCountry(),
                 AdvertisingId = UtilUap.GetAdvertisingId(),
+                EasFriendlyName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.FriendlyName),
+                EasId = UtilUap.ExceptionWrap(() => easClientDeviceInformation.Id.ToString()),
+                EasOperatingSystem = UtilUap.ExceptionWrap(() => easClientDeviceInformation.OperatingSystem),
+                EasSystemManufacturer = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemManufacturer),
+                EasSystemProductName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemProductName),
+                EasSystemSku = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemSku),
             };
         }
 
