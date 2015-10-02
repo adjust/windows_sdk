@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsPcl", "..\WindowsPCL\WindowsPcl.csproj", "{1037B76A-1170-414D-AFAE-4C4621E78007}"
 EndProject
@@ -40,6 +40,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWP81Example", "AdjustWP81Example\AdjustWP81Example.csproj", "{FE1441FA-1FAB-4AE5-AAAE-A6ECE9990406}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWSExample", "AdjustWSExample\AdjustWSExample.csproj", "{EB84D0D2-583E-405E-9272-0F5FE2DCA507}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustUAP10", "..\WindowsUAP10\AdjustUAP10.csproj", "{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -330,6 +332,26 @@ Global
 		{EB84D0D2-583E-405E-9272-0F5FE2DCA507}.Release|x86.ActiveCfg = Release|x86
 		{EB84D0D2-583E-405E-9272-0F5FE2DCA507}.Release|x86.Build.0 = Release|x86
 		{EB84D0D2-583E-405E-9272-0F5FE2DCA507}.Release|x86.Deploy.0 = Release|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|ARM.ActiveCfg = Debug|ARM
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|ARM.Build.0 = Debug|ARM
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|x64.ActiveCfg = Debug|x64
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|x64.Build.0 = Debug|x64
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|x86.ActiveCfg = Debug|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Debug|x86.Build.0 = Debug|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|ARM.ActiveCfg = Release|ARM
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|ARM.Build.0 = Release|ARM
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|Mixed Platforms.Build.0 = Release|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|x64.ActiveCfg = Release|x64
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|x64.Build.0 = Release|x64
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|x86.ActiveCfg = Release|x86
+		{0013B5DC-2C9F-4CDE-8FB2-56CDAC76028E}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
