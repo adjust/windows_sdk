@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>4.0.1</version>
+        <version>4.0.2</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
@@ -16,44 +16,64 @@
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
         <dependencies>
             <group targetFramework="WindowsPhone8.0">
-                <dependency id="Microsoft.Bcl.Build" version="1.0.14" />
-                <dependency id="Microsoft.Bcl" version="1.1.9" />
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
-                <dependency id="Microsoft.Net.Http" version="2.2.22" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
                 <dependency id="PCLStorage" version="1.0.2" />
-                <dependency id="Newtonsoft.Json" version="6.0.4" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
 				<dependency id="Md5.WP7" version="1.0.3" />
             </group>
             <group targetFramework=".NETCore4.5">
-                <dependency id="Microsoft.Bcl.Build" version="1.0.14" />
-                <dependency id="Microsoft.Bcl" version="1.1.9" />
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
-                <dependency id="Microsoft.Net.Http" version="2.2.22" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
                 <dependency id="PCLStorage" version="1.0.2" />
-                <dependency id="Newtonsoft.Json" version="6.0.4" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
             </group>
             <group targetFramework="WindowsPhoneApp8.1">
-                <dependency id="Microsoft.Bcl.Build" version="1.0.14" />
-                <dependency id="Microsoft.Bcl" version="1.1.9" />
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
-                <dependency id="Microsoft.Net.Http" version="2.2.22" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
                 <dependency id="PCLStorage" version="1.0.2" />
-                <dependency id="Newtonsoft.Json" version="6.0.4" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
+            </group>
+            <group targetFramework="uap10.0">
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
+                <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
+                <dependency id="PCLStorage" version="1.0.2" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
             </group>
         </dependencies>
 		<references>
 			<group targetFramework="WindowsPhone8.0">
 				<reference file="AdjustWP80.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsPclNet40.dll" />
 			</group>
 			<group targetFramework=".NETCore4.5">
 				<reference file="AdjustWS.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+                <reference file="WindowsPclNet40.dll" />
             </group>
 			<group targetFramework="WindowsPhoneApp8.1">
 				<reference file="AdjustWP81.dll" />
 				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+                <reference file="WindowsPclNet40.dll" />
             </group>
+            <group targetFramework="uap10.0">
+				<reference file="AdjustUAP10.dll" />
+				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+                <reference file="WindowsPclNet40.dll" />
+            </group>
+
 		</references>
 		<tags>Adjust</tags>
     </metadata>
@@ -71,5 +91,11 @@
         <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
 		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
 		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
+        
+        <file src="..\WindowsUAP10\bin\Release\AdjustUAP10.dll" target="lib\uap10.0\AdjustUAP10.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\uap10.0\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\uap10.0\WindowsPclNet40.dll" />
+   		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\uap10.0\WindowsUap.dll" />
+        <file src="..\WindowsUAP10\Properties\AdjustUAP10.rd.xml" target="lib\uap10.0\AdjustUAP10.rd.xml" />
     </files>
 </package>

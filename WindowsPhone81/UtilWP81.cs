@@ -21,6 +21,7 @@ namespace AdjustSdk
 
         public DeviceInfo GetDeviceInfo()
         {
+            var easClientDeviceInformation = new EasClientDeviceInformation();
             return new DeviceInfo
             {
                 ClientSdk = GetClientSdk(),
@@ -37,6 +38,14 @@ namespace AdjustSdk
                 Language = UtilUap.GetLanguage(),
                 Country = UtilUap.GetCountry(),
                 AdvertisingId = UtilUap.GetAdvertisingId(),
+                EasFriendlyName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.FriendlyName),
+                EasId = UtilUap.ExceptionWrap(() => easClientDeviceInformation.Id.ToString()),
+                EasOperatingSystem = UtilUap.ExceptionWrap(() => easClientDeviceInformation.OperatingSystem),
+                EasSystemFirmwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemFirmwareVersion),
+                EasSystemHardwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemHardwareVersion),
+                EasSystemManufacturer = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemManufacturer),
+                EasSystemProductName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemProductName),
+                EasSystemSku = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemSku),
             };
         }
 
@@ -55,7 +64,7 @@ namespace AdjustSdk
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
         }
         
-        private string GetClientSdk() { return "wphone81-4.0.1"; }
+        private string GetClientSdk() { return "wphone81-4.0.2"; }
 
         private static string GetOsName()
         {

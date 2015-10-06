@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+    <metadata>	
+        <id>Adjust</id>
+        <version>4.0.2</version>
+        <title>Adjust</title>
+        <authors>Adjust</authors>
+        <owners>Adjust</owners>
+        <description>This is the Windows SDK of Adjust. http://www.adjust.com</description>
+		<releaseNotes>If your upgrading to 3.5.0+ please follow the instructions at https://github.com/adjust/windows_sdk/blob/master/doc/migrate.md</releaseNotes>
+		<summary>This is the Windows SDK of Adjust.</summary>
+		<projectUrl>https://github.com/adjust/adjust_windows_sdk</projectUrl>
+		<iconUrl>https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/gravatar.gif</iconUrl>
+		<licenseUrl>https://github.com/adjust/adjust_windows_sdk</licenseUrl>
+		<copyright>Copyright adjust 2014</copyright>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <dependencies>
+            <group targetFramework="WindowsPhone8.0">
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
+                <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
+                <dependency id="PCLStorage" version="1.0.2" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
+				<dependency id="Md5.WP7" version="1.0.3" />
+            </group>
+            <group targetFramework=".NETCore4.5">
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
+                <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
+                <dependency id="PCLStorage" version="1.0.2" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
+            </group>
+            <group targetFramework="WindowsPhoneApp8.1">
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
+                <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
+                <dependency id="PCLStorage" version="1.0.2" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
+            </group>
+        </dependencies>
+		<references>
+			<group targetFramework="WindowsPhone8.0">
+				<reference file="AdjustWP80.dll" />
+				<reference file="WindowsPcl.dll" />
+			</group>
+			<group targetFramework=".NETCore4.5">
+				<reference file="AdjustWS.dll" />
+				<reference file="WindowsPcl.dll" />
+            </group>
+			<group targetFramework="WindowsPhoneApp8.1">
+				<reference file="AdjustWP81.dll" />
+				<reference file="WindowsPcl.dll" />
+            </group>
+		</references>
+		<tags>Adjust</tags>
+    </metadata>
+    <files>
+        <file src="..\WindowsPhone80\bin\Release\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
+		
+        <file src="..\WindowsStore\bin\Release\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\netcore45\WindowsUap.dll" />
+		
+        <file src="..\WindowsPhone81\bin\Release\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
+		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
+		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
+    </files>
+</package>
