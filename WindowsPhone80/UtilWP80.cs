@@ -161,7 +161,14 @@ namespace AdjustSdk
 
         private static string getAppAttributeValue(string attributeName)
         {
-            var manifest = XDocument.Load("WMAppManifest.xml");
+            XDocument manifest = null;
+            try
+            {
+                manifest = XDocument.Load("WMAppManifest.xml");
+            }
+            catch (Exception e)
+            { }
+            
             if (manifest == null) { return null; }
 
             var appElement = manifest.Root.Element("App");
