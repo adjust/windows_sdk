@@ -71,10 +71,13 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
+            var jsonDict = Util.ParseJsonResponse(httpResponseMessage);
+            var willRetry = jsonDict == null;
+
             var sendResponse = new SendResponse
             {
-                WillRetry = false,
-                JsonDict = Util.ParseJsonResponse(httpResponseMessage),
+                WillRetry = willRetry,
+                JsonDict = jsonDict,
             };
 
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
