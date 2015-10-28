@@ -11,6 +11,7 @@ namespace AdjustTest.Pcl
     public enum TargetPlatform
     {
         wstore,
+        wstore80,
         wphone80,
         wphone81,
         wuap,
@@ -81,6 +82,7 @@ namespace AdjustTest.Pcl
             switch(TargetPlatform)
             {
                 case TargetPlatform.wstore: return "wstore" + Version;
+                case TargetPlatform.wstore80: return "wstore80-" + Version;
                 case TargetPlatform.wphone80: return "wphone80-" + Version;
                 case TargetPlatform.wphone81: return "wphone81-" + Version;
                 case TargetPlatform.wuap: return "wuap" + Version;
