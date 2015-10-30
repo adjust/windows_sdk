@@ -13,6 +13,7 @@ using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
+using Windows.System.UserProfile;
 using Windows.UI.Core;
 
 namespace AdjustSdk.Uap
@@ -21,7 +22,7 @@ namespace AdjustSdk.Uap
     {
         public static string GetAdvertisingId()
         {
-            return Windows.System.UserProfile.AdvertisingManager.AdvertisingId;
+            return AdvertisingManager.AdvertisingId;
         }
 
         public static string GetAppName()
@@ -106,7 +107,7 @@ namespace AdjustSdk.Uap
                 case ProcessorArchitecture.Unknown: return "unknown";
                 default: return "unknown";
             }
-        }        
+        }
 
         public static string GetOsVersion()
         {
