@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsPcl", "..\WindowsPCL\WindowsPcl.csproj", "{1037B76A-1170-414D-AFAE-4C4621E78007}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsPclNet40", "..\WindowsPCLnet40\WindowsPclNet40.csproj", "{C739ABC8-258E-4111-ACD8-6CE58D00633D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustWS", "..\WindowsStore\AdjustWS.csproj", "{882C2A80-B6A5-42A2-8E28-0749B2090D04}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdjustTestPcl", "AdjustPclTest\AdjustTestPcl.csproj", "{1C45AFC4-DB01-4D8E-95C6-9EC258E55C65}"
@@ -75,20 +73,6 @@ Global
 		{1037B76A-1170-414D-AFAE-4C4621E78007}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{1037B76A-1170-414D-AFAE-4C4621E78007}.Release|x64.ActiveCfg = Release|Any CPU
 		{1037B76A-1170-414D-AFAE-4C4621E78007}.Release|x86.ActiveCfg = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|ARM.ActiveCfg = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|x64.ActiveCfg = Release|Any CPU
-		{C739ABC8-258E-4111-ACD8-6CE58D00633D}.Release|x86.ActiveCfg = Release|Any CPU
 		{882C2A80-B6A5-42A2-8E28-0749B2090D04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{882C2A80-B6A5-42A2-8E28-0749B2090D04}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{882C2A80-B6A5-42A2-8E28-0749B2090D04}.Debug|ARM.ActiveCfg = Debug|ARM

@@ -69,12 +69,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WindowsPCLnet40\WindowsPclNet40.csproj">
-      <Project>{c739abc8-258e-4111-acd8-6ce58d00633d}</Project>
-      <Name>WindowsPclNet40</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="Microsoft.Threading.Tasks">
       <HintPath>..\Adjust\packages\Microsoft.Bcl.Async.1.0.168\lib\portable-net45+win8+wp8+wpa81\Microsoft.Threading.Tasks.dll</HintPath>
     </Reference>
