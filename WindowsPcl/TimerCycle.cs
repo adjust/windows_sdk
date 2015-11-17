@@ -1,5 +1,4 @@
-﻿using AdjustSdk.PclNet40;
-using System;
+﻿using System;
 using System.Threading;
 
 namespace AdjustSdk.Pcl
@@ -10,7 +9,7 @@ namespace AdjustSdk.Pcl
         //  3) Create a new project targeting .NET 4.0 and Windows Store apps, and put the code that requires timer in that.
         //  Then reference that from the .NET 4.5 and Windows Store apps project.
 
-        private TimerPclNet40 TimeKeeper;
+        //private TimerPclNet40 TimeKeeper;
 
         private TimeSpan TimeInterval { get; set; }
 
@@ -34,7 +33,7 @@ namespace AdjustSdk.Pcl
             // timer initially set as paused
             IsPaused = true;
 
-            TimeKeeper = new TimerPclNet40(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
+            //TimeKeeper = new TimerPclNet40(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
 
             //AdjustFactory.Logger.Verbose("TimerCycle Create dueTime:{0}, period:{1}",
             //    TimeStart.TotalMilliseconds, TimeInterval.TotalMilliseconds);
@@ -45,7 +44,7 @@ namespace AdjustSdk.Pcl
         {
             if (!IsPaused) return;
 
-            TimeKeeper.Change(dueTime: TimeStart, period: TimeInterval);
+            //TimeKeeper.Change(dueTime: TimeStart, period: TimeInterval);
 
             // save the date of the first fire
             var now = DateTime.Now;
@@ -66,7 +65,7 @@ namespace AdjustSdk.Pcl
             var now = DateTime.Now;
             TimeStart = FireDate.Value - now;
 
-            TimeKeeper.Change(dueTime: Timeout.Infinite, period: Timeout.Infinite);
+            //TimeKeeper.Change(dueTime: Timeout.Infinite, period: Timeout.Infinite);
 
             //AdjustFactory.Logger.Verbose("TimerCycle Suspend timeStart:{0}, fireDate:{1}, now:{2}", 
             //    TimeStart.TotalMilliseconds, FireDate.Value.ToString("HH:mm:ss.fff"), now.ToString("HH:mm:ss.fff"));

@@ -1,6 +1,6 @@
-﻿using AdjustSdk.PclNet40;
-using System;
+﻿using System;
 using System.Threading;
+using System.Time;
 
 namespace AdjustSdk.Pcl
 {
@@ -8,7 +8,7 @@ namespace AdjustSdk.Pcl
     {
         // using wrapper for Timer class, reason: http://stackoverflow.com/questions/12555049/timer-in-portable-library, solution used:
         //  3) Create a new project targeting .NET 4.0 and Windows Store apps, and put the code that requires timer in that.
-        private TimerPclNet40 TimeKeeper { get; set; }
+        //private TimerPclNet40 TimeKeeper { get; set; }
 
         private ActionQueue ActionQueue { get; set; }
 
@@ -21,7 +21,9 @@ namespace AdjustSdk.Pcl
             ActionQueue = actionQueue;
             Action = action;
 
-            TimeKeeper = new TimerPclNet40(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
+            HighResolutionTimer x = new HighResolutionTimer();
+            x.
+            //TimeKeeper = new TimerPclNet40(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
         }
 
         internal void StartIn(int milliSecondsDelay)
@@ -29,7 +31,7 @@ namespace AdjustSdk.Pcl
             // save the next fire date
             FireDate = DateTime.Now.AddMilliseconds(milliSecondsDelay);
             // start/reset timer
-            TimeKeeper.Change(dueTime: milliSecondsDelay, period: Timeout.Infinite);
+            //TimeKeeper.Change(dueTime: milliSecondsDelay, period: Timeout.Infinite);
         }
 
         internal TimeSpan FireIn
