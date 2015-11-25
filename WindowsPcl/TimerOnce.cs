@@ -1,37 +1,45 @@
 ﻿using System;
 using System.Threading;
-using System.Time;
+using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     internal class TimerOnce
     {
-        // using wrapper for Timer class, reason: http://stackoverflow.com/questions/12555049/timer-in-portable-library, solution used:
-        //  3) Create a new project targeting .NET 4.0 and Windows Store apps, and put the code that requires timer in that.
-        //private TimerPclNet40 TimeKeeper { get; set; }
-
         private ActionQueue ActionQueue { get; set; }
 
         private Action Action { get; set; }
 
         private DateTime? FireDate { get; set; }
 
+        private CancellationTokenSource CancelDelayTokenSource { get; set; }
+
         internal TimerOnce(ActionQueue actionQueue, Action action)
         {
             ActionQueue = actionQueue;
             Action = action;
 
-            HighResolutionTimer x = new HighResolutionTimer();
-            x.
-            //TimeKeeper = new TimerPclNet40(TimerCallback, null, Timeout.Infinite, Timeout.Infinite);
+            CancelDelayTokenSource = new CancellationTokenSource();
         }
 
         internal void StartIn(int milliSecondsDelay)
         {
+            // reset current timer if active 
+            if (FireDate.HasValue)
+            {
+                CancelDelayTokenSource.Cancel();
+                CancelDelayTokenSource = new CancellationTokenSource();
+            }
             // save the next fire date
             FireDate = DateTime.Now.AddMilliseconds(milliSecondsDelay);
+            
             // start/reset timer
-            //TimeKeeper.Change(dueTime: milliSecondsDelay, period: Timeout.Infinite);
+            Task.Delay(milliSecondsDelay, CancelDelayTokenSource.Token).ContinueWith((t) => {
+                if (t.IsCanceled) { 
+                    return; 
+                }
+                TimerCallback(); 
+            });
         }
 
         internal TimeSpan FireIn
@@ -49,10 +57,10 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private void TimerCallback(object state)
+        private void TimerCallback()
         {
-            ActionQueue.Enqueue(Action);
             FireDate = null;
+            ActionQueue.Enqueue(Action);
         }
     }
 }
