@@ -15,7 +15,15 @@
 		<copyright>Copyright adjust 2014</copyright>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
         <dependencies>
-            <group targetFramework="WindowsPhone8.0">
+            <group targetFramework="win8">
+                <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
+                <dependency id="Microsoft.Bcl" version="1.1.10" />
+                <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
+                <dependency id="Microsoft.Net.Http" version="2.2.29" />
+                <dependency id="PCLStorage" version="1.0.2" />
+                <dependency id="Newtonsoft.Json" version="7.0.1" />
+            </group>
+            <group targetFramework="wp8">
                 <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
                 <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
@@ -24,7 +32,7 @@
                 <dependency id="Newtonsoft.Json" version="7.0.1" />
 				<dependency id="Md5.WP7" version="1.0.3" />
             </group>
-            <group targetFramework=".NETCore4.5">
+            <group targetFramework="net45">
                 <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
                 <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
@@ -32,7 +40,7 @@
                 <dependency id="PCLStorage" version="1.0.2" />
                 <dependency id="Newtonsoft.Json" version="7.0.1" />
             </group>
-            <group targetFramework="WindowsPhoneApp8.1">
+            <group targetFramework="wpa81">
                 <dependency id="Microsoft.Bcl.Build" version="1.0.21" />
                 <dependency id="Microsoft.Bcl" version="1.1.10" />
                 <dependency id="Microsoft.Bcl.Async" version="1.0.168" />
@@ -50,16 +58,20 @@
             </group>
         </dependencies>
 		<references>
-			<group targetFramework="WindowsPhone8.0">
+            <group targetFramework="win8">
+				<reference file="AdjustWS8.dll" />
+				<reference file="WindowsPcl.dll" />
+            </group>
+			<group targetFramework="wp8">
 				<reference file="AdjustWP80.dll" />
 				<reference file="WindowsPcl.dll" />
 			</group>
-			<group targetFramework=".NETCore4.5">
+			<group targetFramework="net45">
 				<reference file="AdjustWS.dll" />
 				<reference file="WindowsPcl.dll" />
                 <reference file="WindowsUap.dll" />
             </group>
-			<group targetFramework="WindowsPhoneApp8.1">
+			<group targetFramework="wpa81">
 				<reference file="AdjustWP81.dll" />
 				<reference file="WindowsPcl.dll" />
                 <reference file="WindowsUap.dll" />
@@ -74,8 +86,16 @@
 		<tags>Adjust</tags>
     </metadata>
     <files>
+        <file src="..\WindowsStore8\bin\Release\AdjustWS8.dll" target="lib\win8\AdjustWS8.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\win8\WindowsPcl.dll" />
+
         <file src="..\WindowsPhone80\bin\Release\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
         <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
+        
+        <file src="..\WindowsStore\bin\Release\AdjustWS.dll" target="lib\net45\AdjustWS.dll" />
+        <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\net45\WindowsPcl.dll" />
+		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\net45\WindowsUap.dll" />
+	
         <file src="..\WindowsPhone81\bin\Release\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
         <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
 		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
