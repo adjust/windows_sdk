@@ -81,8 +81,16 @@
 				<reference file="WindowsPcl.dll" />
                 <reference file="WindowsUap.dll" />
             </group>
-
+            <group targetFramework="portable-net45+sl5+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac">
+				<reference file="AdjustUAP10.dll" />
+				<reference file="WindowsPcl.dll" />
+                <reference file="WindowsUap.dll" />
+            </group>
 		</references>
+            <file src="..\src\PCLStorage\bin\Release\PCLStorage.dll" target="lib\portable-net45+sl5+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.dll" />
+            <file src="..\src\PCLStorage\bin\Release\PCLStorage.xml" target="lib\portable-net45+sl5+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.xml" />
+            <file src="..\src\PCLStorage.Abstractions\bin\Release\PCLStorage.Abstractions.dll" target="lib\portable-net45+sl5+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.dll" />
+            <file src="..\src\PCLStorage.Abstractions\bin\Release\PCLStorage.Abstractions.xml" target="lib\portable-net45+sl5+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.xml" />
 		<tags>Adjust</tags>
     </metadata>
     <files>
