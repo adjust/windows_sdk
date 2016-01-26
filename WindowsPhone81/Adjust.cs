@@ -137,5 +137,13 @@ namespace AdjustSdk
         {
             AdjustInstance.AppWillOpenUrl(uri);
         }
+
+        /// <summary>
+        /// Get the Windows Advertising Id for easy access to frameworks
+        /// </summary>
+        public static string GetWindowsAdId()
+        {
+            return DeviceUtil.GetDeviceInfo().AdvertisingId;
+        }
     }
 }
