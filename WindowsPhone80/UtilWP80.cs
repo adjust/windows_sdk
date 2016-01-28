@@ -14,28 +14,34 @@ namespace AdjustSdk
 {
     public class UtilWP80 : DeviceUtil
     {
+        private DeviceInfo DeviceInfo;
+
         public UtilWP80()
         { }
 
         public DeviceInfo GetDeviceInfo()
         {
-            return new DeviceInfo
+            if (DeviceInfo == null)
             {
-                ClientSdk = GetClientSdk(),
-                DeviceUniqueId = GetDeviceUniqueId(),
-                AppName = GetAppName(),
-                AppVersion = GetAppVersion(),
-                AppAuthor = GetAppAuthor(),
-                AppPublisher = GetAppPublisher(),
-                DeviceType = GetDeviceType(),
-                DeviceName = GetDeviceName(),
-                DeviceManufacturer = getDeviceManufacturer(),
-                OsName = getOsName(),
-                OsVersion = getOsVersion(),
-                Language = getLanguage(),
-                Country = getCountry(),
-                AdvertisingId = GetAdvertisingId()
-            };
+                DeviceInfo = new DeviceInfo
+                {
+                    ClientSdk = GetClientSdk(),
+                    DeviceUniqueId = GetDeviceUniqueId(),
+                    AppName = GetAppName(),
+                    AppVersion = GetAppVersion(),
+                    AppAuthor = GetAppAuthor(),
+                    AppPublisher = GetAppPublisher(),
+                    DeviceType = GetDeviceType(),
+                    DeviceName = GetDeviceName(),
+                    DeviceManufacturer = getDeviceManufacturer(),
+                    OsName = getOsName(),
+                    OsVersion = getOsVersion(),
+                    Language = getLanguage(),
+                    Country = getCountry(),
+                    AdvertisingId = GetAdvertisingId()
+                };
+            }
+            return DeviceInfo;
         }
 
 
