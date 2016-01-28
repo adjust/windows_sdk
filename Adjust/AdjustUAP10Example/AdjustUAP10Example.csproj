@@ -128,10 +128,6 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\WindowsPCLnet40\WindowsPclNet40.csproj">
-      <Project>{c739abc8-258e-4111-acd8-6ce58d00633d}</Project>
-      <Name>WindowsPclNet40</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\WindowsPCL\WindowsPcl.csproj">
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
       <Name>WindowsPcl</Name>
