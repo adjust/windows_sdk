@@ -106,11 +106,11 @@ namespace AdjustSdk
         }
 
         /// <summary>
-        /// Get the Windows Advertising Id for easy access to frameworks
+        /// Get the Windows Advertising Id
         /// </summary>
         public static string GetWindowsAdId()
         {
-            return DeviceUtil.GetDeviceInfo().AdvertisingId;
+            return DeviceUtil.ReadWindowsAdvertisingId();
         }
     }
 }

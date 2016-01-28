@@ -1,11 +1,11 @@
-﻿namespace AdjustSdk.Pcl
+﻿using System;
+
+namespace AdjustSdk.Pcl
 {
     public class DeviceInfo
     {
         public string ClientSdk { get; set; }
-
-        public string AdvertisingId { get; set; }
-
+        
         public string DeviceUniqueId { get; set; }
 
         public string HardwareId { get; set; }
@@ -53,7 +53,9 @@
         public string EasSystemProductName { get; set; }
 
         public string EasSystemSku { get; set; }
-        
+
+        public Func<string> ReadWindowsAdvertisingId { get; set; }
+
         public string SdkPrefix
         {
             set

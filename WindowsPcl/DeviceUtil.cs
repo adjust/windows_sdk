@@ -11,5 +11,7 @@ namespace AdjustSdk.Pcl
         void Sleep(int milliseconds);
 
         void LauchDeeplink(Uri deeplinkUri);
+
+        string ReadWindowsAdvertisingId();
     }
 }

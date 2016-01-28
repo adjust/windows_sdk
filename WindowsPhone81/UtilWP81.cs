@@ -40,7 +40,7 @@ namespace AdjustSdk
                     OsVersion = UtilUap.GetOsVersion(),
                     Language = UtilUap.GetLanguage(),
                     Country = UtilUap.GetCountry(),
-                    AdvertisingId = UtilUap.GetAdvertisingId(),
+                    ReadWindowsAdvertisingId = ReadWindowsAdvertisingId,
                     EasFriendlyName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.FriendlyName),
                     EasId = UtilUap.ExceptionWrap(() => easClientDeviceInformation.Id.ToString()),
                     EasOperatingSystem = UtilUap.ExceptionWrap(() => easClientDeviceInformation.OperatingSystem),
@@ -69,7 +69,12 @@ namespace AdjustSdk
         {
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
         }
-        
+
+        public string ReadWindowsAdvertisingId()
+        {
+            return UtilUap.GetAdvertisingId();
+        }
+
         private string GetClientSdk() { return "wphone81-4.0.3"; }
 
         private static string GetOsName()

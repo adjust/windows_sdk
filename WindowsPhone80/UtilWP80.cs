@@ -38,12 +38,11 @@ namespace AdjustSdk
                     OsVersion = getOsVersion(),
                     Language = getLanguage(),
                     Country = getCountry(),
-                    AdvertisingId = GetAdvertisingId()
+                    ReadWindowsAdvertisingId = ReadWindowsAdvertisingId
                 };
             }
             return DeviceInfo;
         }
-
 
         public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
         {
@@ -58,6 +57,11 @@ namespace AdjustSdk
         public void LauchDeeplink(Uri deepLinkUri)
         {
             Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+        }
+
+        public string ReadWindowsAdvertisingId()
+        {
+            return GetAdvertisingId();
         }
 
         private string GetClientSdk() { return "wphone80-4.0.3"; }
