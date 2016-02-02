@@ -117,7 +117,7 @@
     <Compile Include="Adjust.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilUAP10.cs" />
-    <Content Include="Properties\AdjustUAP10.rd.xml" />
+    <EmbeddedResource Include="Properties\AdjustUAP10.rd.xml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\WindowsPCL\WindowsPcl.csproj">
@@ -129,7 +129,6 @@
       <Name>WindowsUap</Name>
     </ProjectReference>
   </ItemGroup>
-  
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
