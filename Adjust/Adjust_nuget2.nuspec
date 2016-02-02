@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
     <metadata>	
         <id>Adjust</id>
-        <version>4.0.2</version>
+        <version>4.0.3</version>
         <title>Adjust</title>
         <authors>Adjust</authors>
         <owners>Adjust</owners>
@@ -60,16 +60,13 @@
     <files>
         <file src="..\WindowsPhone80\bin\Release\AdjustWP80.dll" target="lib\wp8\AdjustWP80.dll" />
         <file src="..\WindowsPCL\bin\Release\WindowsPcl.dll" target="lib\wp8\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wp8\WindowsPclNet40.dll" />
 		
         <file src="..\WindowsStore\bin\Release\AdjustWS.dll" target="lib\netcore45\AdjustWS.dll" />
         <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\netcore45\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\netcore45\WindowsPclNet40.dll" />
 		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\netcore45\WindowsUap.dll" />
 		
         <file src="..\WindowsPhone81\bin\Release\AdjustWP81.dll" target="lib\wpa81\AdjustWP81.dll" />
         <file src="..\WindowsPCL\bin\Release\WindowsPCL.dll" target="lib\wpa81\WindowsPcl.dll" />
-		<file src="..\WindowsPCLnet40\bin\Release\WindowsPclNet40.dll" target="lib\wpa81\WindowsPclNet40.dll" />
 		<file src="..\WindowsUap\bin\Release\WindowsUap.dll" target="lib\wpa81\WindowsUap.dll" />
     </files>
 </package>

@@ -25,15 +25,6 @@ namespace AdjustWP80Example
 
         private void btnSimpleEvent_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                Windows.System.Launcher.LaunchUriAsync(new Uri("adjustwp81:"));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-
             var simpleEvent = new AdjustEvent("{yourSimpleEventToken}");
             Adjust.TrackEvent(simpleEvent);
         }

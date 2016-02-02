@@ -1,4 +1,4 @@
-## Migrate your adjust SDK for Windows to v4.0.2 from v3.5.1
+## Migrate your adjust SDK for Windows to v4.0.3 from v3.5.1
 
 ### Initial setup
 

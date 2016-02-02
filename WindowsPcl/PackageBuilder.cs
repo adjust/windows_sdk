@@ -113,7 +113,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
             AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
             AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
-            AddString(parameters, "win_adid", DeviceInfo.AdvertisingId);
+            AddString(parameters, "win_adid", DeviceInfo.ReadWindowsAdvertisingId());
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
