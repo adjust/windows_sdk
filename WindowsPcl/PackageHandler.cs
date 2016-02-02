@@ -141,6 +141,7 @@ namespace AdjustSdk.Pcl
         {
             Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
             Util.SerializeToFileAsync(
+                fileWriter: ((AdjustConfig)((ActivityHandler)ActivityHandler).AdjustConfig).FileWriter,
                 fileName: PackageQueueFilename,
                 objectWriter: ActivityPackage.SerializeListToStream,
                 input: PackageQueue,
@@ -153,7 +154,8 @@ namespace AdjustSdk.Pcl
             PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
                 () => null, // default value in case of error
-                PackageQueueName) // package queue name
+                PackageQueueName, 
+                fileReader: ((AdjustConfig)((ActivityHandler)ActivityHandler).AdjustConfig).FileReader) // package queue name
                 .Result; // wait to finish
 
             if (PackageQueue != null)

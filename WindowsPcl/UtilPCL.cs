@@ -8,8 +8,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace AdjustSdk.Pcl
 {
@@ -105,29 +107,57 @@ namespace AdjustSdk.Pcl
         internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
             Func<Stream, T> ObjectReader,
             Func<T> defaultReturn,
-            string objectName)
+            string objectName,
+            Func<string, byte[]> fileReader
+            )
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
-
-                var file = await localStorage.GetFileAsync(fileName);
-
-                if (file == null)
+                if (fileReader == null)
                 {
-                    throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
-                }
+                    // Regular reading scenario.
+                    var localStorage = FileSystem.Current.LocalStorage;
 
-                T output;
-                using (var stream = await file.OpenAsync(FileAccess.Read))
+                    var file = await localStorage.GetFileAsync(fileName);
+
+                    if (file == null)
+                    {
+                        throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
+                    }
+
+                    T output;
+
+                    using (var stream = await file.OpenAsync(FileAccess.Read))
+                    {
+                        output = ObjectReader(stream);
+                    }
+
+                    Logger.Debug("Read {0}: {1}", objectName, output);
+
+                    // successful read
+                    return output;
+                }
+                else
                 {
-                    output = ObjectReader(stream);
-                }
-                Logger.Debug("Read {0}: {1}", objectName, output);
+                    // Cocos2d-x reading scenario.
+                    byte[] readContent = fileReader(fileName);
 
-                // successful read
-                return output;
+                    if (readContent == null)
+                    {
+                        return defaultReturn();
+                    }
+
+                    using (MemoryStream memoryStream = new MemoryStream(readContent))
+                    {
+                        using (XmlDictionaryReader reader = XmlDictionaryReader.CreateBinaryReader(memoryStream, XmlDictionaryReaderQuotas.Max))
+                        {
+                            DataContractSerializer dcs = new DataContractSerializer(typeof(T));
+
+                            return (T)dcs.ReadObject(reader);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -145,20 +175,41 @@ namespace AdjustSdk.Pcl
             return defaultReturn();
         }
 
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
+        internal static async Task SerializeToFileAsync<T>(Action<string, byte[]> fileWriter, string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
-                var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-
-                using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
+                if (fileWriter == null)
                 {
-                    stream.Seek(0, SeekOrigin.Begin);
-                    objectWriter(stream, input);
+                    // Regular writing scenario.
+                    var localStorage = FileSystem.Current.LocalStorage;
+                    var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
+
+                    using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
+                    {
+                        stream.Seek(0, SeekOrigin.Begin);
+                        objectWriter(stream, input);
+                    }
+
+                    Logger.Debug(sucessMessage());
                 }
-                Logger.Debug(sucessMessage());
+                else
+                {
+                    // Cocos2d-x writing scenario.
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        using (XmlDictionaryWriter writer = XmlDictionaryWriter.CreateBinaryWriter(ms))
+                        {
+                            DataContractSerializer dcs = new DataContractSerializer(typeof(T));
+                            dcs.WriteObject(writer, input);
+                            writer.Flush();
+                            fileWriter(fileName, ms.ToArray());
+                        }
+                    }
+
+                    Logger.Debug(sucessMessage());
+                }
             }
             catch (Exception ex)
             {
@@ -166,10 +217,12 @@ namespace AdjustSdk.Pcl
             }
 
         }
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
+
+        internal static async Task SerializeToFileAsync<T>(Action<string, byte[]> fileWriter, string fileName, Action<Stream, T> objectWriter, T input, string objectName)
             where T : class
         {
             await SerializeToFileAsync(
+                fileWriter: fileWriter,
                 fileName: fileName,
                 objectWriter: objectWriter,
                 input: input,

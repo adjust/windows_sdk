@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AdjustSdk.Pcl
 {
@@ -14,7 +15,7 @@ namespace AdjustSdk.Pcl
 
         private DeviceUtil DeviceUtil { get; set; }
 
-        private AdjustConfig AdjustConfig { get; set; }
+        public AdjustConfig AdjustConfig { get; set; }
 
         private DeviceInfo DeviceInfo { get; set; }
 
@@ -524,6 +525,7 @@ namespace AdjustSdk.Pcl
         private void WriteActivityStateInternal()
         {
             Util.SerializeToFileAsync(
+                fileWriter: ((AdjustConfig)AdjustConfig).FileWriter,
                 fileName: ActivityStateFileName,
                 objectWriter: ActivityState.SerializeToStream, 
                 input: ActivityState,
@@ -534,6 +536,7 @@ namespace AdjustSdk.Pcl
         private void WriteAttributionInternal()
         {
             Util.SerializeToFileAsync(
+                fileWriter: ((AdjustConfig)AdjustConfig).FileWriter,
                 fileName: AttributionFileName, 
                 objectWriter: AdjustAttribution.SerializeToStream,
                 input: Attribution,
@@ -546,7 +549,8 @@ namespace AdjustSdk.Pcl
             ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
                 () => null, //default value in case of error
-                ActivityStateName) // activity state name
+                ActivityStateName,
+                fileReader: ((AdjustConfig)AdjustConfig).FileReader) // activity state name
                 .Result;
         }
 
@@ -555,7 +559,8 @@ namespace AdjustSdk.Pcl
             Attribution = Util.DeserializeFromFileAsync(AttributionFileName,
                 AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
                 () => null, //default value in case of error
-                AttributionName) // attribution name
+                AttributionName,
+                fileReader: ((AdjustConfig)AdjustConfig).FileReader) // attribution name
                 .Result;
         }
 

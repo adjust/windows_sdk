@@ -3,34 +3,34 @@ using System.IO;
 
 namespace AdjustSdk.Pcl
 {
-    internal class ActivityState
+    public class ActivityState
     {
         // global counters
-        internal int EventCount { get; set; }
+        public int EventCount { get; set; }
 
-        internal int SessionCount { get; set; }
+        public int SessionCount { get; set; }
 
         // session atributes
-        internal int SubSessionCount { get; set; }
+        public int SubSessionCount { get; set; }
 
-        internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
+        public TimeSpan? SessionLenght { get; set; } // all duration in seconds
 
-        internal TimeSpan? TimeSpent { get; set; }
+        public TimeSpan? TimeSpent { get; set; }
 
-        internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
+        public DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
 
-        internal DateTime? CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
-        internal TimeSpan? LastInterval { get; set; }
+        public TimeSpan? LastInterval { get; set; }
 
         // persistent data
-        internal Guid Uuid { get; set; }
+        public Guid Uuid { get; set; }
 
-        internal bool Enabled { get; set; }
+        public bool Enabled { get; set; }
 
-        internal bool AskingAttribution { get; set; }
+        public bool AskingAttribution { get; set; }
 
-        internal ActivityState()
+        public ActivityState()
         {
             EventCount = 0;
             SessionCount = 0;
@@ -45,7 +45,7 @@ namespace AdjustSdk.Pcl
             AskingAttribution = false;
         }
 
-        internal void ResetSessionAttributes(DateTime now)
+        public void ResetSessionAttributes(DateTime now)
         {
             SubSessionCount = 1;
             SessionLenght = new TimeSpan();
@@ -55,7 +55,7 @@ namespace AdjustSdk.Pcl
             LastInterval = null;
         }
 
-        internal ActivityState Clone()
+        public ActivityState Clone()
         {
             // TODO check if Timespans and Datetimes are altered by the original activity state
             return (ActivityState)this.MemberwiseClone();
@@ -76,7 +76,7 @@ namespace AdjustSdk.Pcl
         #region Serialization
 
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, ActivityState activity)
+        public static void SerializeToStream(Stream stream, ActivityState activity)
         {
             var writer = new BinaryWriter(stream);
 
@@ -94,7 +94,7 @@ namespace AdjustSdk.Pcl
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static ActivityState DeserializeFromStream(Stream stream)
+        public static ActivityState DeserializeFromStream(Stream stream)
         {
             ActivityState activity = null;
             var reader = new BinaryReader(stream);

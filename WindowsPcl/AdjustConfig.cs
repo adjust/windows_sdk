@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using System;
+using System.IO;
 
 namespace AdjustSdk
 {
@@ -18,6 +19,8 @@ namespace AdjustSdk
 
         public string DefaultTracker { get; set; }
 
+        public Func<string, byte[]> FileReader { get; set; }
+        public Action<string, byte[]> FileWriter { get; set; }
         public Action<AdjustAttribution> AttributionChanged { get; set; }
 
         public bool HasDelegate { get { return AttributionChanged != null; } }
