@@ -16,7 +16,7 @@ namespace AdjustSdk.Pcl
     public static class Util
     {
         public const string BaseUrl = "https://app.adjust.com";
-        private static ILogger Logger { get { return AdjustFactory.Logger; } }
+        private static ILogger _Logger { get { return AdjustFactory.Logger; } }
         private static NullFormat NullFormat = new NullFormat();
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
@@ -124,7 +124,7 @@ namespace AdjustSdk.Pcl
                 {
                     output = ObjectReader(stream);
                 }
-                Logger.Debug("Read {0}: {1}", objectName, output);
+                _Logger.Debug("Read {0}: {1}", objectName, output);
 
                 // successful read
                 return output;
@@ -133,11 +133,11 @@ namespace AdjustSdk.Pcl
             {
                 if (ex.IsFileNotFound())
                 {
-                    Logger.Verbose("{0} file not found", objectName);
+                    _Logger.Verbose("{0} file not found", objectName);
                 }
                 else
                 {
-                    Logger.Error("Failed to read file {0} ({1})", objectName, Util.ExtractExceptionMessage(ex));
+                    _Logger.Error("Failed to read file {0} ({1})", objectName, Util.ExtractExceptionMessage(ex));
                 }
             }
 
@@ -158,11 +158,11 @@ namespace AdjustSdk.Pcl
                     stream.Seek(0, SeekOrigin.Begin);
                     objectWriter(stream, input);
                 }
-                Logger.Debug(sucessMessage());
+                _Logger.Debug(sucessMessage());
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to write to file {0} ({1})", fileName, Util.ExtractExceptionMessage(ex));
+                _Logger.Error("Failed to write to file {0} ({1})", fileName, Util.ExtractExceptionMessage(ex));
             }
 
         }
@@ -306,7 +306,7 @@ namespace AdjustSdk.Pcl
 
         internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
         {
-            Logger.Verbose("Response: {0}", sResponse);
+            _Logger.Verbose("Response: {0}", sResponse);
 
             if (sResponse == null) { return null; }
             
@@ -317,7 +317,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
+                _Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
             }
 
             if (jsonDicObj == null) { return null; }

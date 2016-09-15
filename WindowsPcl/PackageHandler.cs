@@ -26,7 +26,7 @@ namespace AdjustSdk.Pcl
 
             InternalQueue = new ActionQueue("adjust.PackageQueue");
 
-            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused));
+            InternalQueue.Enqueue(() => InitI(activityHandler, startPaused));
         }
 
         public void Init(IActivityHandler activityHandler, bool startPaused)
@@ -37,17 +37,17 @@ namespace AdjustSdk.Pcl
 
         public void AddPackage(ActivityPackage activityPackage)
         {
-            InternalQueue.Enqueue(() => AddInternal(activityPackage));
+            InternalQueue.Enqueue(() => AddI(activityPackage));
         }
 
         public void SendFirstPackage()
         {
-            InternalQueue.Enqueue(SendFirstInternal);
+            InternalQueue.Enqueue(SendFirstI);
         }
 
         public void SendNextPackage()
         {
-            InternalQueue.Enqueue(SendNextInternal);
+            InternalQueue.Enqueue(SendNextI);
         }
 
         public void CloseFirstPackage()
@@ -70,7 +70,7 @@ namespace AdjustSdk.Pcl
             ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
-        private void InitInternal(IActivityHandler activityHandler, bool startPaused)
+        private void InitI(IActivityHandler activityHandler, bool startPaused)
         {
             Init(activityHandler, startPaused);
 
@@ -81,7 +81,7 @@ namespace AdjustSdk.Pcl
             RequestHandler = AdjustFactory.GetRequestHandler(this);
         }
 
-        private void AddInternal(ActivityPackage activityPackage)
+        private void AddI(ActivityPackage activityPackage)
         {
             if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && PackageQueue.Count > 0)
             {
@@ -98,7 +98,7 @@ namespace AdjustSdk.Pcl
             WritePackageQueue();
         }
 
-        private void SendFirstInternal()
+        private void SendFirstI()
         {
             if (PackageQueue.Count == 0) return;
 
@@ -122,7 +122,7 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private void SendNextInternal()
+        private void SendNextI()
         {
             try
             {
@@ -134,7 +134,7 @@ namespace AdjustSdk.Pcl
             {
                 InternalWaitHandle.Set(); // open the door (signals the wait handle)
             }
-            SendFirstInternal();
+            SendFirstI();
         }
 
         private void WritePackageQueue()

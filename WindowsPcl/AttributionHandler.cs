@@ -34,7 +34,7 @@ namespace AdjustSdk.Pcl
                 startPaused: startPaused,
                 hasDelegate: hasDelegate);
 
-            Timer = new TimerOnce(actionQueue: InternalQueue, action: GetAttributionInternal);
+            Timer = new TimerOnce(actionQueue: InternalQueue, action: GetAttributionI);
         }
 
         public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
@@ -47,7 +47,7 @@ namespace AdjustSdk.Pcl
 
         public void CheckAttribution(Dictionary<string, string> jsonDict)
         {
-            InternalQueue.Enqueue(() => CheckAttributionInternal(jsonDict));
+            InternalQueue.Enqueue(() => CheckAttributionI(jsonDict));
         }
 
         public void AskAttribution()
@@ -79,7 +79,7 @@ namespace AdjustSdk.Pcl
             Timer.StartIn(milliSecondsDelay);
         }
 
-        private void CheckAttributionInternal(Dictionary<string, string> jsonDict)
+        private void CheckAttributionI(Dictionary<string, string> jsonDict)
         {
             if (jsonDict == null) { return; }
 
@@ -100,7 +100,7 @@ namespace AdjustSdk.Pcl
             AskAttribution(askIn.Value);
         }
 
-        private void GetAttributionInternal()
+        private void GetAttributionI()
         {
             if (!HasDelegate) { return; }
 
@@ -127,7 +127,7 @@ namespace AdjustSdk.Pcl
 
             var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
 
-            CheckAttributionInternal(jsonDic);
+            CheckAttributionI(jsonDic);
         }
 
         private HttpClient GetHttpClient(ActivityPackage activityPackage)
