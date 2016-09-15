@@ -52,7 +52,9 @@ namespace AdjustSdk.Pcl
             Logger = AdjustFactory.Logger;
 
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
-            InternalQueue.Enqueue(() => InitInternal(adjustConfig, deviceUtil));
+            Init(adjustConfig, deviceUtil);
+
+            InternalQueue.Enqueue(InitI);
         }
 
         public void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
@@ -81,17 +83,17 @@ namespace AdjustSdk.Pcl
 
         public void TrackEvent(AdjustEvent adjustEvent)
         {
-            InternalQueue.Enqueue(() => TrackEventInternal(adjustEvent));
+            InternalQueue.Enqueue(() => TrackEventI(adjustEvent));
         }
 
         public void TrackSubsessionStart()
         {
-            InternalQueue.Enqueue(StartInternal);
+            InternalQueue.Enqueue(StartI);
         }
 
         public void TrackSubsessionEnd()
         {
-            InternalQueue.Enqueue(EndInternal);
+            InternalQueue.Enqueue(EndI);
         }
 
         public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
@@ -188,7 +190,7 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (Paused())
+            if (PausedI())
             {
                 Logger.Info(remainsPausedMessage);
             }
@@ -201,7 +203,7 @@ namespace AdjustSdk.Pcl
 
         public void OpenUrl(Uri uri)
         {
-            InternalQueue.Enqueue(() => OpenUrlInternal(uri));
+            InternalQueue.Enqueue(() => OpenUrlI(uri));
         }
 
         public bool UpdateAttribution(AdjustAttribution attribution)
@@ -225,31 +227,33 @@ namespace AdjustSdk.Pcl
 
         public ActivityPackage GetAttributionPackage()
         {
-            var now = DateTime.Now;
-            var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, now);
-            return packageBuilder.BuildAttributionPackage();
+            return GetAttributionPackageI();
+        }
+
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        {
+            return GetDeeplinkClickPackageI(extraParameters, attribution);
         }
 
         private void UpdateStatus()
         {
-            InternalQueue.Enqueue(UpdateStatusInternal);
+            InternalQueue.Enqueue(UpdateStatusI);
         }
 
         private void WriteActivityState()
         {
-            InternalQueue.Enqueue(WriteActivityStateInternal);
+            InternalQueue.Enqueue(WriteActivityStateI);
         }
 
         private void WriteAttribution()
         {
-            InternalQueue.Enqueue(WriteAttributionInternal);
+            InternalQueue.Enqueue(WriteAttributionI);
         }
 
-        private void InitInternal(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        private void InitI()
         {
-            Init(adjustConfig, deviceUtil);
             DeviceInfo = DeviceUtil.GetDeviceInfo();
-            DeviceInfo.SdkPrefix = adjustConfig.SdkPrefix;
+            DeviceInfo.SdkPrefix = AdjustConfig.SdkPrefix;
 
             TimerInterval = AdjustFactory.GetTimerInterval();
             TimerStart = AdjustFactory.GetTimerStart();
@@ -271,24 +275,24 @@ namespace AdjustSdk.Pcl
                 Logger.Info("Default tracker: '{0}'", AdjustConfig.DefaultTracker);
             }
 
-            ReadAttribution();
-            ReadActivityState();
+            ReadAttributionI();
+            ReadActivityStateI();
 
-            PackageHandler = AdjustFactory.GetPackageHandler(this, Paused());
+            PackageHandler = AdjustFactory.GetPackageHandler(this, PausedI());
 
-            var attributionPackage = GetAttributionPackage();
+            var attributionPackage = GetAttributionPackageI();
 
             AttributionHandler = AdjustFactory.GetAttributionHandler(this,
                 attributionPackage,
-                Paused(),
+                PausedI(),
                 AdjustConfig.HasDelegate);
 
-            Timer = new TimerCycle(InternalQueue, TimerFiredInternal, timeInterval: TimerInterval, timeStart: TimerStart);
+            Timer = new TimerCycle(InternalQueue, TimerFiredI, timeInterval: TimerInterval, timeStart: TimerStart);
 
-            StartInternal();
+            StartI();
         }
 
-        private void StartInternal()
+        private void StartI()
         {
             if (ActivityState != null
                 && !ActivityState.Enabled)
@@ -296,16 +300,16 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            UpdateStatusInternal();
+            UpdateStatusI();
 
-            ProcessSession();
+            ProcessSessionI();
 
-            CheckAttributionState();
+            CheckAttributionStateI();
 
-            StartTimer();
+            StartTimerI();
         }
 
-        private void ProcessSession()
+        private void ProcessSessionI()
         {
             var now = DateTime.Now;
 
@@ -316,11 +320,11 @@ namespace AdjustSdk.Pcl
                 ActivityState = new ActivityState();
                 ActivityState.SessionCount = 1; // first session
 
-                TransferSessionPackage();
+                TransferSessionPackageI();
 
                 ActivityState.ResetSessionAttributes(now);
                 ActivityState.Enabled = Enabled;
-                WriteActivityStateInternal();
+                WriteActivityStateI();
 
                 return;
             }
@@ -331,7 +335,7 @@ namespace AdjustSdk.Pcl
             {
                 Logger.Error("Time Travel!");
                 ActivityState.LastActivity = now;
-                WriteActivityStateInternal();
+                WriteActivityStateI();
                 return;
             }
 
@@ -341,10 +345,10 @@ namespace AdjustSdk.Pcl
                 ActivityState.SessionCount++;
                 ActivityState.LastInterval = lastInterval;
 
-                TransferSessionPackage();
+                TransferSessionPackageI();
 
                 ActivityState.ResetSessionAttributes(now);
-                WriteActivityStateInternal();
+                WriteActivityStateI();
 
                 return;
             }
@@ -356,14 +360,14 @@ namespace AdjustSdk.Pcl
                 ActivityState.SessionLenght += lastInterval;
                 ActivityState.LastActivity = now;
 
-                WriteActivityStateInternal();
+                WriteActivityStateI();
                 Logger.Info("Started subsession {0} of session {1}",
                     ActivityState.SubSessionCount, ActivityState.SessionCount);
                 return;
             }
         }
 
-        private void CheckAttributionState()
+        private void CheckAttributionStateI()
         {
             // if it's a new session
             if (ActivityState.SubSessionCount <= 1) { return; }
@@ -374,26 +378,26 @@ namespace AdjustSdk.Pcl
             AttributionHandler.AskAttribution();
         }
 
-        private void EndInternal()
+        private void EndI()
         {
             PackageHandler.PauseSending();
             AttributionHandler.PauseSending();
-            StopTimer();
-            if (UpdateActivityState(DateTime.Now))
+            StopTimerI();
+            if (UpdateActivityStateI(DateTime.Now))
             {
-                WriteActivityStateInternal();
+                WriteActivityStateI();
             }
         }
 
-        private void TrackEventInternal(AdjustEvent adjustEvent)
+        private void TrackEventI(AdjustEvent adjustEvent)
         {
-            if (!IsEnabled()) { return; }
-            if (!CheckEvent(adjustEvent)) { return; }
+            if (!IsEnabledI()) { return; }
+            if (!CheckEventI(adjustEvent)) { return; }
 
             var now = DateTime.Now;
 
             ActivityState.EventCount++;
-            UpdateActivityState(now);
+            UpdateActivityStateI(now);
 
             var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, now);
             ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent);
@@ -408,10 +412,10 @@ namespace AdjustSdk.Pcl
                 PackageHandler.SendFirstPackage();
             }
 
-            WriteActivityStateInternal();
+            WriteActivityStateI();
         }
 
-        private void OpenUrlInternal(Uri uri)
+        private void OpenUrlI(Uri uri)
         {
             if (uri == null) return;
 
@@ -443,7 +447,7 @@ namespace AdjustSdk.Pcl
 
             foreach (var pair in queryPairs)
             {
-                if (ReadQueryString(pair, extraParameters, attribution))
+                if (ReadQueryStringI(pair, extraParameters, attribution))
                 {
                     hasAdjustTags = true;
                 }
@@ -451,12 +455,12 @@ namespace AdjustSdk.Pcl
 
             if (!hasAdjustTags) { return; }
 
-            var clickPackage = GetDeeplinkClickPackage(extraParameters, attribution);
+            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution);
             PackageHandler.AddPackage(clickPackage);
             PackageHandler.SendFirstPackage();
         }
 
-        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
         {
             var now = DateTime.Now;
 
@@ -466,7 +470,7 @@ namespace AdjustSdk.Pcl
             return packageBuilder.BuildClickPackage("deeplink", now, attribution);
         }
 
-        private bool ReadQueryString(string queryString,
+        private bool ReadQueryStringI(string queryString,
             Dictionary<string, string> extraParameters,
             AdjustAttribution attribution)
         {
@@ -482,7 +486,7 @@ namespace AdjustSdk.Pcl
             var keyWOutPrefix = key.Substring(AdjustPrefix.Length);
             if (keyWOutPrefix.Length == 0) return false;
 
-            if (!ReadAttributionQueryString(attribution, keyWOutPrefix, value))
+            if (!ReadAttributionQueryStringI(attribution, keyWOutPrefix, value))
             {
                 extraParameters.Add(keyWOutPrefix, value);
             }
@@ -490,7 +494,7 @@ namespace AdjustSdk.Pcl
             return true;
         }
 
-        private bool ReadAttributionQueryString(AdjustAttribution attribution,
+        private bool ReadAttributionQueryStringI(AdjustAttribution attribution,
             string key,
             string value)
         {
@@ -521,7 +525,26 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        private void WriteActivityStateInternal()
+        private bool IsEnabledI()
+        {
+            if (ActivityState != null)
+            {
+                return ActivityState.Enabled;
+            }
+            else
+            {
+                return Enabled;
+            }
+        }
+
+        private ActivityPackage GetAttributionPackageI()
+        {
+            var now = DateTime.Now;
+            var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, now);
+            return packageBuilder.BuildAttributionPackage();
+        }
+
+        private void WriteActivityStateI()
         {
             Util.SerializeToFileAsync(
                 fileName: ActivityStateFileName,
@@ -531,7 +554,7 @@ namespace AdjustSdk.Pcl
                 .Wait();
         }
 
-        private void WriteAttributionInternal()
+        private void WriteAttributionI()
         {
             Util.SerializeToFileAsync(
                 fileName: AttributionFileName, 
@@ -541,7 +564,7 @@ namespace AdjustSdk.Pcl
                 .Wait();
         }
 
-        private void ReadActivityState()
+        private void ReadActivityStateI()
         {
             ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
                 ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
@@ -550,7 +573,7 @@ namespace AdjustSdk.Pcl
                 .Result;
         }
 
-        private void ReadAttribution()
+        private void ReadAttributionI()
         {
             Attribution = Util.DeserializeFromFileAsync(AttributionFileName,
                 AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
@@ -560,7 +583,7 @@ namespace AdjustSdk.Pcl
         }
 
         // return whether or not activity state should be written
-        private bool UpdateActivityState(DateTime now)
+        private bool UpdateActivityStateI(DateTime now)
         {
             var lastInterval = now - ActivityState.LastActivity.Value;
 
@@ -582,7 +605,7 @@ namespace AdjustSdk.Pcl
             return true;
         }
 
-        private void TransferSessionPackage()
+        private void TransferSessionPackageI()
         {
             // build Session Package
             var sessionBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, DateTime.Now);
@@ -620,15 +643,15 @@ namespace AdjustSdk.Pcl
             DeviceUtil.LauchDeeplink(deeplinkUri);
         }
 
-        private void UpdateStatusInternal()
+        private void UpdateStatusI()
         {
-            UpdateAttributionHandlerStatus();
-            UpdatePackageHandlerStatus();
+            UpdateAttributionHandlerStatusI();
+            UpdatePackageHandlerStatusI();
         }
 
-        private void UpdateAttributionHandlerStatus()
+        private void UpdateAttributionHandlerStatusI()
         {
-            if (Paused())
+            if (PausedI())
             {
                 AttributionHandler.PauseSending();
             }
@@ -638,9 +661,9 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private void UpdatePackageHandlerStatus()
+        private void UpdatePackageHandlerStatusI()
         {
-            if (Paused())
+            if (PausedI())
             {
                 PackageHandler.PauseSending();
             }
@@ -650,16 +673,16 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private bool Paused()
+        private bool PausedI()
         {
-            return Offline || !IsEnabled();
+            return Offline || !IsEnabledI();
         }
 
         #region Timer
 
-        private void StartTimer()
+        private void StartTimerI()
         {
-            if (Paused())
+            if (PausedI())
             {
                 return;
             }
@@ -667,31 +690,31 @@ namespace AdjustSdk.Pcl
             Timer.Resume();
         }
 
-        private void StopTimer()
+        private void StopTimerI()
         {
             Timer.Suspend();
         }
 
-        private void TimerFiredInternal()
+        private void TimerFiredI()
         {
-            if (Paused())
+            if (PausedI())
             {
-                StopTimer();
+                StopTimerI();
                 return;
             }
 
             Logger.Debug("Session timer fired");
             PackageHandler.SendFirstPackage();
 
-            if (UpdateActivityState(DateTime.Now))
+            if (UpdateActivityStateI(DateTime.Now))
             {
-                WriteActivityStateInternal();
+                WriteActivityStateI();
             }
         }
 
         #endregion Timer
 
-        private bool CheckEvent(AdjustEvent adjustEvent)
+        private bool CheckEventI(AdjustEvent adjustEvent)
         {
             if (adjustEvent == null)
             {
