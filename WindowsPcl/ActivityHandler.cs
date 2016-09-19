@@ -13,45 +13,39 @@ namespace AdjustSdk.Pcl
         private const string AdjustPrefix = "adjust_";
 
         private DeviceUtil DeviceUtil { get; set; }
-
         private AdjustConfig AdjustConfig { get; set; }
-
         private DeviceInfo DeviceInfo { get; set; }
-
         private ActivityState ActivityState { get; set; }
-
         private AdjustAttribution Attribution { get; set; }
-
-        private bool Enabled { get; set; }
-
-        private bool Offline { get; set; }
-
         private TimeSpan SessionInterval { get; set; }
-
         private TimeSpan SubsessionInterval { get; set; }
-
-        private TimeSpan TimerInterval { get; set; }
-
-        private TimeSpan TimerStart { get; set; }
-
         private IPackageHandler PackageHandler { get; set; }
-
         private IAttributionHandler AttributionHandler { get; set; }
-
         private TimerCycle Timer { get; set; }
-
         private ActionQueue InternalQueue { get; set; }
-
         private ILogger Logger { get; set; }
+        private InternalState State { get; set; }
+
+        public class InternalState
+        {
+            internal bool enabled;
+            internal bool offline;
+
+            public bool IsEnabled { get { return enabled; } }
+            public bool IsDisabled { get { return !enabled; } }
+            public bool IsOffline { get { return offline; } }
+            public bool IsOnline { get { return !offline; } }
+        }
 
         private ActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
-            // default values
-            Enabled = true;
-
             Logger = AdjustFactory.Logger;
 
             InternalQueue = new ActionQueue("adjust.ActivityQueue");
+            // default values
+            State.enabled = true;
+            State.offline = false;
+
             Init(adjustConfig, deviceUtil);
 
             InternalQueue.Enqueue(InitI);
@@ -113,7 +107,7 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            Enabled = enabled;
+            State.enabled = enabled;
 
             if (ActivityState != null)
             {
@@ -136,14 +130,14 @@ namespace AdjustSdk.Pcl
             }
             else
             {
-                return Enabled;
+                return State.enabled;
             }
         }
 
         public void SetOfflineMode(bool offline)
         {
             if (!HasChangedState(
-                previousState: Offline,
+                previousState: State.IsOffline,
                 newState: offline, 
                 trueMessage: "Adjust already in offline mode",
                 falseMessage: "Adjust already in online mode"))
@@ -151,7 +145,7 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            Offline = offline;
+            State.offline = offline;
 
             UpdateStatusCondition(
                 pausingState: offline,
@@ -255,8 +249,8 @@ namespace AdjustSdk.Pcl
             DeviceInfo = DeviceUtil.GetDeviceInfo();
             DeviceInfo.SdkPrefix = AdjustConfig.SdkPrefix;
 
-            TimerInterval = AdjustFactory.GetTimerInterval();
-            TimerStart = AdjustFactory.GetTimerStart();
+            TimeSpan timerInterval = AdjustFactory.GetTimerInterval();
+            TimeSpan timerStart = AdjustFactory.GetTimerStart();
             SessionInterval = AdjustFactory.GetSessionInterval();
             SubsessionInterval = AdjustFactory.GetSubsessionInterval();
 
@@ -287,7 +281,7 @@ namespace AdjustSdk.Pcl
                 PausedI(),
                 AdjustConfig.HasDelegate);
 
-            Timer = new TimerCycle(InternalQueue, TimerFiredI, timeInterval: TimerInterval, timeStart: TimerStart);
+            Timer = new TimerCycle(InternalQueue, TimerFiredI, timeInterval: timerInterval, timeStart: timerStart);
 
             StartI();
         }
@@ -323,7 +317,7 @@ namespace AdjustSdk.Pcl
                 TransferSessionPackageI();
 
                 ActivityState.ResetSessionAttributes(now);
-                ActivityState.Enabled = Enabled;
+                ActivityState.Enabled = State.IsEnabled;
                 WriteActivityStateI();
 
                 return;
@@ -533,7 +527,7 @@ namespace AdjustSdk.Pcl
             }
             else
             {
-                return Enabled;
+                return State.IsEnabled;
             }
         }
 
@@ -675,7 +669,7 @@ namespace AdjustSdk.Pcl
 
         private bool PausedI()
         {
-            return Offline || !IsEnabledI();
+            return State.IsOffline || !IsEnabledI();
         }
 
         #region Timer
