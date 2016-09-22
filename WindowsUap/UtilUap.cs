@@ -165,13 +165,25 @@ namespace AdjustSdk.Uap
             string displayName = null;
             try
             {
-                string namespaceName = "http://schemas.microsoft.com/appx/2010/manifest";
-                XElement element = XDocument.Load("appxmanifest.xml").Root;
-                element = element.Element(XName.Get("Properties", namespaceName));
-                element = element.Element(XName.Get("DisplayName", namespaceName));
-                displayName = element.Value;
+                // Windows 8.1
+                string namespaceNameW81 = "http://schemas.microsoft.com/appx/2010/manifest";
+                // Windows 10
+                string namespaceNameUAP10 = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
+
+                XElement element = XDocument.Load("appxmanifest.xml")?.Root;
+
+                // try to read Windows 8.1 manifest first
+                displayName = element?.Element(XName.Get("Properties", namespaceNameW81))
+                    ?.Element(XName.Get("DisplayName", namespaceNameW81))?.Value;
+
+                // try to read Windows 10 manifest next
+                if (displayName == null)
+                {
+                    displayName = element?.Element(XName.Get("Properties", namespaceNameUAP10))
+                        ?.Element(XName.Get("DisplayName", namespaceNameUAP10))?.Value;
+                }
             }
-            catch (Exception e)
+            catch (Exception)
             { }
             
             return displayName;
