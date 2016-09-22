@@ -99,7 +99,7 @@ namespace AdjustSdk.Pcl
         {
             using (var response = webException.Response as HttpWebResponse)
             {
-                int? statusCode = (response == null) ? null : (int?)response.StatusCode;
+                int? statusCode = (int?) response?.StatusCode;
 
                 var sendResponse = new SendResponse
                 {

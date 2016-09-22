@@ -47,10 +47,11 @@ namespace AdjustSdk
 
         public static string GetSuffix(Dictionary<string, string> parameters)
         {
-            string eventToken;
+            string eventToken = null;
 
-            if (parameters == null ||
-                !parameters.TryGetValue("event_token", out eventToken)) { return ""; }
+            parameters?.TryGetValue("event_token", out eventToken);
+
+            if (eventToken == null) { return ""; }
 
             string sRevenue;
 
