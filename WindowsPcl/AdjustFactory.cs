@@ -5,46 +5,46 @@ namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
-        private static ILogger InjectedLogger;
-        private static IActivityHandler IActivityHandler;
-        private static IPackageHandler IPackageHandler;
-        private static IAttributionHandler IAttributionHandler;
-        private static IRequestHandler IRequestHandler;
-        private static HttpMessageHandler HttpMessageHandler;
-        private static TimeSpan? SessionInterval;
-        private static TimeSpan? SubsessionInterval;
-        private static TimeSpan? TimerInterval;
-        private static TimeSpan? TimerStart;
+        private static ILogger _Logger;
+        private static IActivityHandler _IActivityHandler;
+        private static IPackageHandler _IPackageHandler;
+        private static IAttributionHandler _IAttributionHandler;
+        private static IRequestHandler _IRequestHandler;
+        private static HttpMessageHandler _HttpMessageHandler;
+        private static TimeSpan? _SessionInterval;
+        private static TimeSpan? _SubsessionInterval;
+        private static TimeSpan? _TimerInterval;
+        private static TimeSpan? _TimerStart;
 
         public static ILogger Logger
         {
             get
             {
                 // same instance of logger for all calls
-                if (InjectedLogger == null)
-                    InjectedLogger = new Logger();
-                return InjectedLogger;
+                if (_Logger == null)
+                    _Logger = new Logger();
+                return _Logger;
             }
 
-            set { InjectedLogger = value; }
+            set { _Logger = value; }
         }
 
         public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
-            if (IActivityHandler == null)
+            if (_IActivityHandler == null)
                 return ActivityHandler.GetInstance(adjustConfig, deviceUtil);
 
-            IActivityHandler.Init(adjustConfig, deviceUtil);
-            return IActivityHandler;
+            _IActivityHandler.Init(adjustConfig, deviceUtil);
+            return _IActivityHandler;
         }
 
         public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            if (IPackageHandler == null)
+            if (_IPackageHandler == null)
                 return new PackageHandler(activityHandler, startPaused);
 
-            IPackageHandler.Init(activityHandler, startPaused);
-            return IPackageHandler;
+            _IPackageHandler.Init(activityHandler, startPaused);
+            return _IPackageHandler;
         }
 
         public static IAttributionHandler GetAttributionHandler(IActivityHandler activityHandler,
@@ -52,107 +52,107 @@ namespace AdjustSdk.Pcl
             bool startPaused,
             bool hasDelegate)
         {
-            if (IAttributionHandler == null)
+            if (_IAttributionHandler == null)
             {
                 return new AttributionHandler(activityHandler, attributionPacakage, startPaused, hasDelegate);
             }
 
-            IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused, hasDelegate);
-            return IAttributionHandler;
+            _IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            return _IAttributionHandler;
         }
 
         public static IRequestHandler GetRequestHandler(IPackageHandler packageHandler)
         {
-            if (IRequestHandler == null)
+            if (_IRequestHandler == null)
                 return new RequestHandler(packageHandler);
 
-            IRequestHandler.Init(packageHandler);
-            return IRequestHandler;
+            _IRequestHandler.Init(packageHandler);
+            return _IRequestHandler;
         }
 
         public static HttpMessageHandler GetHttpMessageHandler()
         {
-            if (HttpMessageHandler == null)
+            if (_HttpMessageHandler == null)
                 return new HttpClientHandler();
             else
-                return HttpMessageHandler;
+                return _HttpMessageHandler;
         }
 
         public static TimeSpan GetSessionInterval()
         {
-            if (!SessionInterval.HasValue)
+            if (!_SessionInterval.HasValue)
                 return new TimeSpan(0, 30, 0); // 30 minutes
             else
-                return SessionInterval.Value;
+                return _SessionInterval.Value;
         }
 
         public static TimeSpan GetSubsessionInterval()
         {
-            if (!SubsessionInterval.HasValue)
+            if (!_SubsessionInterval.HasValue)
                 return new TimeSpan(0, 0, 1); // 1 second
             else
-                return SubsessionInterval.Value;
+                return _SubsessionInterval.Value;
         }
 
         public static TimeSpan GetTimerInterval()
         {
-            if (!TimerInterval.HasValue)
+            if (!_TimerInterval.HasValue)
                 return new TimeSpan(0, 1, 0); // 1 minute
             else
-                return TimerInterval.Value;
+                return _TimerInterval.Value;
         }
 
         public static TimeSpan GetTimerStart()
         {
-            if (!TimerStart.HasValue)
+            if (!_TimerStart.HasValue)
                 return new TimeSpan(0, 0, 0); // 0 seconds
             else
-                return TimerStart.Value;
+                return _TimerStart.Value;
         }
 
         public static void SetActivityHandler(IActivityHandler activityHandler)
         {
-            IActivityHandler = activityHandler;
+            _IActivityHandler = activityHandler;
         }
 
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
-            IPackageHandler = packageHandler;
+            _IPackageHandler = packageHandler;
         }
 
         public static void SetAttributionHandler(IAttributionHandler attributionHandler)
         {
-            IAttributionHandler = attributionHandler;
+            _IAttributionHandler = attributionHandler;
         }
 
         public static void SetRequestHandler(IRequestHandler requestHandler)
         {
-            IRequestHandler = requestHandler;
+            _IRequestHandler = requestHandler;
         }
 
         public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
-            HttpMessageHandler = httpMessageHandler;
+            _HttpMessageHandler = httpMessageHandler;
         }
 
         public static void SetSessionInterval(TimeSpan? sessionInterval)
         {
-            SessionInterval = sessionInterval;
+            _SessionInterval = sessionInterval;
         }
 
         public static void SetSubsessionInterval(TimeSpan? subsessionInterval)
         {
-            SubsessionInterval = subsessionInterval;
+            _SubsessionInterval = subsessionInterval;
         }
 
         public static void SetTimerInterval(TimeSpan? timerInterval)
         {
-            TimerInterval = timerInterval;
+            _TimerInterval = timerInterval;
         }
 
         public static void SetTimerStart(TimeSpan? timerStart)
         {
-            TimerStart = timerStart;
+            _TimerStart = timerStart;
         }
     }
 }
