@@ -29,7 +29,7 @@ namespace AdjustSdk.Pcl
             _FireDate = DateTime.Now.AddMilliseconds(milliSecondsDelay);
             
             // start/reset timer
-            Task.Delay(milliSecondsDelay, _CancelDelayTokenSource.Token).ContinueWith((t) => {
+            Task.Delay(milliSecondsDelay, _CancelDelayTokenSource.Token).ContinueWith(t => {
                 if (t.IsCanceled) { 
                     return; 
                 }

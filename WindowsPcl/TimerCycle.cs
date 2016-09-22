@@ -78,8 +78,8 @@ namespace AdjustSdk.Pcl
         {
             var now = DateTime.Now;
             _FireDate = now.Add(fireIn);
-
-            Task.Delay((int)fireIn.TotalMilliseconds, _CancelDelayTokenSource.Token).ContinueWith((t) =>
+            
+            Task.Delay((int)fireIn.TotalMilliseconds, _CancelDelayTokenSource.Token).ContinueWith(t =>
             {
                 //AdjustFactory.Logger.Verbose("TimerCycle StartTimer, IsCanceled {0}, IsCompleted{1}, IsFaulted {2}, Status {3} ", t.IsCanceled, t.IsCompleted, t.IsFaulted, t.Status);
                 if (t.IsCanceled)

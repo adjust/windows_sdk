@@ -33,7 +33,7 @@ namespace AdjustSdk.Pcl
         public void SendPackage(ActivityPackage package)
         {
             Task.Factory.StartNew(() => SendI(package))
-                // continuation used to prevent unhandled exceptions in SendInternal
+                // continuation used to prevent unhandled exceptions in SendI
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
                 .ContinueWith((sendResponse) => PackageSent(sendResponse));
         }

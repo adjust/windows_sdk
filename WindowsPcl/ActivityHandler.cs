@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
@@ -245,6 +246,9 @@ namespace AdjustSdk.Pcl
             _DeviceInfo = _DeviceUtil.GetDeviceInfo();
             _DeviceInfo.SdkPrefix = _Config.SdkPrefix;
 
+            ReadAttributionI();
+            ReadActivityStateI();
+
             TimeSpan timerInterval = AdjustFactory.GetTimerInterval();
             TimeSpan timerStart = AdjustFactory.GetTimerStart();
             _SessionInterval = AdjustFactory.GetSessionInterval();
@@ -264,9 +268,6 @@ namespace AdjustSdk.Pcl
             {
                 _Logger.Info("Default tracker: '{0}'", _Config.DefaultTracker);
             }
-
-            ReadAttributionI();
-            ReadActivityStateI();
 
             _PackageHandler = AdjustFactory.GetPackageHandler(this, PausedI());
 
