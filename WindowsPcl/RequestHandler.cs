@@ -8,9 +8,10 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private IPackageHandler PackageHandler { get; set; }
-        private ILogger Logger { get; set; }
-        private HttpClient HttpClient { get; set; }
+        private ILogger _Logger = AdjustFactory.Logger;
+
+        private IPackageHandler _PackageHandler;
+        private HttpClient _HttpClient;
 
         private struct SendResponse
         {
@@ -21,14 +22,12 @@ namespace AdjustSdk.Pcl
 
         public RequestHandler(IPackageHandler packageHandler)
         {
-            Logger = AdjustFactory.Logger;
-
             Init(packageHandler);
         }
 
         public void Init(IPackageHandler packageHandler)
         {
-            PackageHandler = packageHandler;
+            _PackageHandler = packageHandler;
         }
 
         public void SendPackage(ActivityPackage package)
@@ -80,7 +79,7 @@ namespace AdjustSdk.Pcl
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
                 || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
             {
-                Logger.Error("{0}. (Status code: {1}).",
+                _Logger.Error("{0}. (Status code: {1}).",
                     activityPackage.FailureMessage(),
                     (int)httpResponseMessage.StatusCode);
             }
@@ -88,7 +87,7 @@ namespace AdjustSdk.Pcl
             {
                 sendResponse.WillRetry = true;
 
-                Logger.Error("{0}. (Status code: {1}). Will retry later.",
+                _Logger.Error("{0}. (Status code: {1}). Will retry later.",
                     activityPackage.FailureMessage(),
                     (int)httpResponseMessage.StatusCode);
             }
@@ -108,7 +107,7 @@ namespace AdjustSdk.Pcl
                     JsonDict = Util.ParseJsonExceptionResponse(response)
                 };
 
-                Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
+                _Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
                     activityPackage.FailureMessage(),
                     Util.ExtractExceptionMessage(webException),
                     statusCode);
@@ -119,7 +118,7 @@ namespace AdjustSdk.Pcl
 
         private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
+            _Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
 
             return new SendResponse
             {
@@ -137,22 +136,22 @@ namespace AdjustSdk.Pcl
                 && !SendTask.IsCanceled;
 
             if (successRunning && SendTask.Result.JsonDict != null)
-                PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
+                _PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
 
             //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
             if (successRunning && !SendTask.Result.WillRetry)
-                PackageHandler.SendNextPackage();
+                _PackageHandler.SendNextPackage();
             else
-                PackageHandler.CloseFirstPackage();
+                _PackageHandler.CloseFirstPackage();
         }
 
         private HttpClient GetHttpClient(ActivityPackage activityPackage)
         {
-            if (HttpClient == null)
+            if (_HttpClient == null)
             {
-                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+                _HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
             }
-            return HttpClient;
+            return _HttpClient;
         }
     }
 }

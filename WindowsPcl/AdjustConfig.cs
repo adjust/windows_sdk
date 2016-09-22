@@ -8,26 +8,19 @@ namespace AdjustSdk
         public const string EnvironmentSandbox = "sandbox";
         public const string EnvironmentProduction = "production";
 
-        internal string AppToken { get; private set; }
+        private ILogger _Logger = AdjustFactory.Logger;
 
+        internal string AppToken { get; private set; }
         internal string Environment { get; private set; }
 
         public string SdkPrefix { get; set; }
-
         public bool EventBufferingEnabled { get; set; }
-
         public string DefaultTracker { get; set; }
-
         public Action<AdjustAttribution> AttributionChanged { get; set; }
-
         public bool HasDelegate { get { return AttributionChanged != null; } }
-
-        private ILogger Logger { get; set; }
 
         public AdjustConfig(string appToken, string environment)
         {
-            Logger = AdjustFactory.Logger;
-
             if (!IsValid(appToken, environment)) { return; }
 
             AppToken = appToken;
@@ -54,13 +47,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(appToken))
             {
-                Logger.Error("Missing App Token");
+                _Logger.Error("Missing App Token");
                 return false;
             }
 
             if (appToken.Length != 12)
             {
-                Logger.Error("Malformed App Token '{0}'", appToken);
+                _Logger.Error("Malformed App Token '{0}'", appToken);
                 return false;
             }
 
@@ -71,13 +64,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(environment))
             {
-                Logger.Error("Missing environment");
+                _Logger.Error("Missing environment");
                 return false;
             }
 
             if (environment.Equals(EnvironmentSandbox))
             {
-                Logger.Assert("SANDBOX: Adjust is running in Sandbox mode. " +
+                _Logger.Assert("SANDBOX: Adjust is running in Sandbox mode. " +
                    "Use this setting for testing. " +
                    "Don't forget to set the environment to `production` before publishing!");
 
@@ -85,13 +78,13 @@ namespace AdjustSdk
             }
             else if (environment.Equals(EnvironmentProduction))
             {
-                Logger.Assert("PRODUCTION: Adjust is running in Production mode. " +
+                _Logger.Assert("PRODUCTION: Adjust is running in Production mode. " +
                            "Use this setting only for the build that you want to publish. " +
                            "Set the environment to `sandbox` if you want to test your app!");
                 return true;
             }
 
-            Logger.Error("Unknown environment '{0}'", environment);
+            _Logger.Error("Unknown environment '{0}'", environment);
             return false;
         }
     }

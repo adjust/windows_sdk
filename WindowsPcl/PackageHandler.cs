@@ -10,11 +10,12 @@ namespace AdjustSdk.Pcl
         private const string PackageQueueFilename = "AdjustIOPackageQueue";
         private const string PackageQueueName = "Package queue";
 
-        private ActionQueue InternalQueue { get; set; }
-        private List<ActivityPackage> PackageQueue { get; set; }
-        private IRequestHandler RequestHandler { get; set; }
-        private IActivityHandler ActivityHandler { get; set; }
-        private ILogger Logger { get; set; }
+        private ILogger _Logger = AdjustFactory.Logger;
+        private ActionQueue _ActionQueue = new ActionQueue("adjust.PackageHandler");
+
+        private List<ActivityPackage> _PackageQueue;
+        private IRequestHandler _RequestHandler;
+        private IActivityHandler _ActivityHandler;
 
         private ManualResetEvent InternalWaitHandle;
 
@@ -22,32 +23,28 @@ namespace AdjustSdk.Pcl
 
         public PackageHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            Logger = AdjustFactory.Logger;
-
-            InternalQueue = new ActionQueue("adjust.PackageQueue");
-
-            InternalQueue.Enqueue(() => InitI(activityHandler, startPaused));
+            _ActionQueue.Enqueue(() => InitI(activityHandler, startPaused));
         }
 
         public void Init(IActivityHandler activityHandler, bool startPaused)
         {
-            ActivityHandler = activityHandler;
+            _ActivityHandler = activityHandler;
             IsPaused = startPaused;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
         {
-            InternalQueue.Enqueue(() => AddI(activityPackage));
+            _ActionQueue.Enqueue(() => AddI(activityPackage));
         }
 
         public void SendFirstPackage()
         {
-            InternalQueue.Enqueue(SendFirstI);
+            _ActionQueue.Enqueue(SendFirstI);
         }
 
         public void SendNextPackage()
         {
-            InternalQueue.Enqueue(SendNextI);
+            _ActionQueue.Enqueue(SendNextI);
         }
 
         public void CloseFirstPackage()
@@ -67,7 +64,7 @@ namespace AdjustSdk.Pcl
 
         public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
         {
-            ActivityHandler.FinishedTrackingActivity(jsonDict);
+            _ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
         private void InitI(IActivityHandler activityHandler, bool startPaused)
@@ -78,33 +75,33 @@ namespace AdjustSdk.Pcl
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            RequestHandler = AdjustFactory.GetRequestHandler(this);
+            _RequestHandler = AdjustFactory.GetRequestHandler(this);
         }
 
         private void AddI(ActivityPackage activityPackage)
         {
-            if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && PackageQueue.Count > 0)
+            if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && _PackageQueue.Count > 0)
             {
-                PackageQueue.Insert(1, activityPackage);
+                _PackageQueue.Insert(1, activityPackage);
             }
             else
             {
-                PackageQueue.Add(activityPackage);
+                _PackageQueue.Add(activityPackage);
             }
 
-            Logger.Debug("Added package {0} ({1})", PackageQueue.Count, activityPackage);
-            Logger.Verbose("{0}", activityPackage.GetExtendedString());
+            _Logger.Debug("Added package {0} ({1})", _PackageQueue.Count, activityPackage);
+            _Logger.Verbose("{0}", activityPackage.GetExtendedString());
 
             WritePackageQueue();
         }
 
         private void SendFirstI()
         {
-            if (PackageQueue.Count == 0) return;
+            if (_PackageQueue.Count == 0) return;
 
             if (IsPaused)
             {
-                Logger.Debug("Package handler is paused");
+                _Logger.Debug("Package handler is paused");
                 return;
             }
 
@@ -114,11 +111,11 @@ namespace AdjustSdk.Pcl
             if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
                 InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                RequestHandler.SendPackage(PackageQueue.First());
+                _RequestHandler.SendPackage(_PackageQueue.First());
             }
             else
             {
-                Logger.Verbose("Package handler is already sending");
+                _Logger.Verbose("Package handler is already sending");
             }
         }
 
@@ -126,7 +123,7 @@ namespace AdjustSdk.Pcl
         {
             try
             {
-                PackageQueue.RemoveAt(0);
+                _PackageQueue.RemoveAt(0);
                 WritePackageQueue();
             }
             finally
@@ -139,30 +136,30 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueue()
         {
-            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
+            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", _PackageQueue.Count);
             Util.SerializeToFileAsync(
                 fileName: PackageQueueFilename,
                 objectWriter: ActivityPackage.SerializeListToStream,
-                input: PackageQueue,
+                input: _PackageQueue,
                 sucessMessage: sucessMessage)
                 .Wait();
         }
 
         private void ReadPackageQueue()
         {
-            PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
+            _PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
                 () => null, // default value in case of error
                 PackageQueueName) // package queue name
                 .Result; // wait to finish
 
-            if (PackageQueue != null)
+            if (_PackageQueue != null)
             {
-                Logger.Debug("Package handler read {0} packages", PackageQueue.Count);
+                _Logger.Debug("Package handler read {0} packages", _PackageQueue.Count);
             } 
             else
             {
-                PackageQueue = new List<ActivityPackage>();
+                _PackageQueue = new List<ActivityPackage>();
             }
         }
     }

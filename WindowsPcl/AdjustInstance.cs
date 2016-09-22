@@ -6,18 +6,17 @@ namespace AdjustSdk.Pcl
     {
         private IActivityHandler ActivityHandler { get; set; }
 
-        private ILogger Logger { get; set; }
+        private ILogger _Logger = AdjustFactory.Logger;
 
         public AdjustInstance()
         {
-            Logger = AdjustFactory.Logger;
         }
 
         public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
             if (ActivityHandler != null)
             {
-                Logger.Error("Adjust already initialized");
+                _Logger.Error("Adjust already initialized");
                 return;
             }
 
@@ -70,7 +69,7 @@ namespace AdjustSdk.Pcl
         {
             if (ActivityHandler == null)
             {
-                Logger.Error("Please initialize Adjust by calling 'ApplicationLaunching' before");
+                _Logger.Error("Please initialize Adjust by calling 'ApplicationLaunching' before");
                 return false;
             }
 

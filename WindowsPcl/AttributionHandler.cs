@@ -7,47 +7,37 @@ namespace AdjustSdk.Pcl
 {
     public class AttributionHandler : IAttributionHandler
     {
-        private ILogger Logger { get; set; }
+        private ILogger _Logger = AdjustFactory.Logger;
+        private ActionQueue _ActionQueue = new ActionQueue("adjust.AttributionHandler");
 
-        private ActionQueue InternalQueue { get; set; }
-
-        private IActivityHandler ActivityHandler { get; set; }
-
-        private TimerOnce Timer { get; set; }
-
-        private ActivityPackage AttributionPackage { get; set; }
-
-        public bool Paused { private get; set; }
-
-        private bool HasDelegate { get; set; }
-
-        private HttpClient HttpClient { get; set; }
+        private IActivityHandler _ActivityHandler;
+        private TimerOnce _Timer;
+        private ActivityPackage _AttributionPackage;
+        private bool _Paused;
+        private bool _HasDelegate;
+        private HttpClient _HttpClient;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
         {
-            Logger = AdjustFactory.Logger;
-
-            InternalQueue = new ActionQueue("adjust.AttributionHandler");
-
             Init(activityHandler: activityHandler,
                 attributionPackage: attributionPackage,
                 startPaused: startPaused,
                 hasDelegate: hasDelegate);
 
-            Timer = new TimerOnce(actionQueue: InternalQueue, action: GetAttributionI);
+            _Timer = new TimerOnce(actionQueue: _ActionQueue, action: GetAttributionI);
         }
 
         public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
         {
-            ActivityHandler = activityHandler;
-            AttributionPackage = attributionPackage;
-            Paused = startPaused;
-            HasDelegate = hasDelegate;
+            _ActivityHandler = activityHandler;
+            _AttributionPackage = attributionPackage;
+            _Paused = startPaused;
+            _HasDelegate = hasDelegate;
         }
 
         public void CheckAttribution(Dictionary<string, string> jsonDict)
         {
-            InternalQueue.Enqueue(() => CheckAttributionI(jsonDict));
+            _ActionQueue.Enqueue(() => CheckAttributionI(jsonDict));
         }
 
         public void AskAttribution()
@@ -57,26 +47,26 @@ namespace AdjustSdk.Pcl
 
         public void PauseSending()
         {
-            Paused = true;
+            _Paused = true;
         }
 
         public void ResumeSending()
         {
-            Paused = false;
+            _Paused = false;
         }
 
         private void AskAttribution(int milliSecondsDelay)
         {
             // don't reset if new time is shorter than the last one
-            if (Timer.FireIn.Milliseconds > milliSecondsDelay) { return; }
+            if (_Timer.FireIn.Milliseconds > milliSecondsDelay) { return; }
 
             if (milliSecondsDelay > 0)
             {
-                Logger.Debug("Waiting to query attribution in {0} milliseconds", milliSecondsDelay);
+                _Logger.Debug("Waiting to query attribution in {0} milliseconds", milliSecondsDelay);
             }
 
             // set the new time the timer will fire in
-            Timer.StartIn(milliSecondsDelay);
+            _Timer.StartIn(milliSecondsDelay);
         }
 
         private void CheckAttributionI(Dictionary<string, string> jsonDict)
@@ -89,39 +79,39 @@ namespace AdjustSdk.Pcl
             // without ask_in attribute
             if (!askIn.HasValue)
             {
-                ActivityHandler.UpdateAttribution(attribution);
+                _ActivityHandler.UpdateAttribution(attribution);
 
-                ActivityHandler.SetAskingAttribution(false);
+                _ActivityHandler.SetAskingAttribution(false);
 
                 return;
             }
-            ActivityHandler.SetAskingAttribution(true);
+            _ActivityHandler.SetAskingAttribution(true);
 
             AskAttribution(askIn.Value);
         }
 
         private void GetAttributionI()
         {
-            if (!HasDelegate) { return; }
+            if (!_HasDelegate) { return; }
 
-            if (Paused)
+            if (_Paused)
             {
-                Logger.Debug("Attribution handler is paused");
+                _Logger.Debug("Attribution handler is paused");
                 return;
             }
 
-            Logger.Verbose("{0}", AttributionPackage.GetExtendedString());
+            _Logger.Verbose("{0}", _AttributionPackage.GetExtendedString());
 
             HttpResponseMessage httpResponseMessage;
             try
             {
-                var httpClient = GetHttpClient(AttributionPackage);
+                var httpClient = GetHttpClient(_AttributionPackage);
                 var attribution = GetAttributionUrl();
                 httpResponseMessage = httpClient.GetAsync(attribution).Result;
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
+                _Logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
                 return;
             }
 
@@ -132,18 +122,18 @@ namespace AdjustSdk.Pcl
 
         private HttpClient GetHttpClient(ActivityPackage activityPackage)
         {
-            if (HttpClient == null)
+            if (_HttpClient == null)
             {
-                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+                _HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
             }
-            return HttpClient;
+            return _HttpClient;
         }
 
         private string GetAttributionUrl()
         {
-            var queryList = new List<string>(AttributionPackage.Parameters.Count);
+            var queryList = new List<string>(_AttributionPackage.Parameters.Count);
 
-            foreach (var entry in AttributionPackage.Parameters)
+            foreach (var entry in _AttributionPackage.Parameters)
             {
                 if (entry.Key == null) { continue; }
                 var keyEscaped = Uri.EscapeDataString(entry.Key);
@@ -163,7 +153,7 @@ namespace AdjustSdk.Pcl
             var query = string.Join("&", queryList);
 
             var uriBuilder = new UriBuilder(Util.BaseUrl);
-            uriBuilder.Path = AttributionPackage.Path;
+            uriBuilder.Path = _AttributionPackage.Path;
             uriBuilder.Query = query;
 
             return uriBuilder.Uri.ToString();

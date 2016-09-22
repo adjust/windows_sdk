@@ -5,22 +5,16 @@ namespace AdjustSdk
 {
     public class AdjustEvent
     {
+        private ILogger _Logger = AdjustFactory.Logger;
+
         internal string EventToken { get; private set; }
-
         internal double? Revenue { get; private set; }
-
         internal string Currency { get; private set; }
-
         internal Dictionary<string, string> CallbackParameters { get; private set; }
-
         internal Dictionary<string, string> PartnerParameters { get; private set; }
-
-        private ILogger Logger { get; set; }
 
         public AdjustEvent(string eventToken)
         {
-            Logger = AdjustFactory.Logger;
-
             if (!CheckEventToken(eventToken)) { return; }
 
             EventToken = eventToken;
@@ -47,7 +41,7 @@ namespace AdjustSdk
             string previousValue;
             if (CallbackParameters.TryGetValue(key, out previousValue))
             {
-                Logger.Warn("key {0} was overwritten", key);
+                _Logger.Warn("key {0} was overwritten", key);
                 CallbackParameters.Remove(key);
             }
             CallbackParameters.Add(key, value);
@@ -66,7 +60,7 @@ namespace AdjustSdk
             string previousValue;
             if (PartnerParameters.TryGetValue(key, out previousValue))
             {
-                Logger.Warn("key {0} was overwritten", key);
+                _Logger.Warn("key {0} was overwritten", key);
                 PartnerParameters.Remove(key);
             }
 
@@ -82,13 +76,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(eventToken))
             {
-                Logger.Error("Missing Event Token");
+                _Logger.Error("Missing Event Token");
                 return false;
             }
 
             if (eventToken.Length != 6)
             {
-                Logger.Error("Malformed Event Token '{0}'", eventToken);
+                _Logger.Error("Malformed Event Token '{0}'", eventToken);
                 return false;
             }
 
@@ -101,25 +95,25 @@ namespace AdjustSdk
             {
                 if (revenue < 0.0)
                 {
-                    Logger.Error("Invalid amount {0:0.0000}", revenue);
+                    _Logger.Error("Invalid amount {0:0.0000}", revenue);
                     return false;
                 }
 
                 if (currency == null)
                 {
-                    Logger.Error("Currency must be set with revenue");
+                    _Logger.Error("Currency must be set with revenue");
                     return false;
                 }
 
                 if (string.Empty.Equals(currency))
                 {
-                    Logger.Error("Currency is empty");
+                    _Logger.Error("Currency is empty");
                     return false;
                 }
             }
             else if (currency != null)
             {
-                Logger.Error("Revenue must be set with currency");
+                _Logger.Error("Revenue must be set with currency");
                 return false;
             }
 
@@ -130,13 +124,13 @@ namespace AdjustSdk
         {
             if (attribute == null)
             {
-                Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
+                _Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
                 return false;
             }
 
             if (attribute.Length == 0)
             {
-                Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
+                _Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
                 return false;
             }
 

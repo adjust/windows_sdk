@@ -8,13 +8,9 @@ namespace AdjustSdk.Pcl
     public class ActivityPackage
     {
         public ActivityKind ActivityKind { get; set; }
-
         public string ClientSdk { get; private set; }
-
         public Dictionary<string, string> Parameters { get; private set; }
-
         public string Path { get; private set; }
-
         public string Suffix { get; set; }
 
         private ActivityPackage()
