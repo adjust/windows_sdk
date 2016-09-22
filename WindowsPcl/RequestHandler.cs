@@ -16,8 +16,8 @@ namespace AdjustSdk.Pcl
         private struct SendResponse
         {
             internal bool WillRetry { get; set; }
-
             internal Dictionary<string, string> JsonDict { get; set; }
+            internal ActivityPackage ActivityPackage { get; set; }
         }
 
         public RequestHandler(IPackageHandler packageHandler)
@@ -74,6 +74,7 @@ namespace AdjustSdk.Pcl
             {
                 WillRetry = false,
                 JsonDict = Util.ParseJsonResponse(httpResponseMessage),
+                ActivityPackage = activityPackage,
             };
 
             if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
@@ -104,7 +105,8 @@ namespace AdjustSdk.Pcl
                 var sendResponse = new SendResponse
                 {
                     WillRetry = true,
-                    JsonDict = Util.ParseJsonExceptionResponse(response)
+                    JsonDict = Util.ParseJsonExceptionResponse(response),
+                    ActivityPackage = activityPackage,
                 };
 
                 _Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
@@ -123,6 +125,7 @@ namespace AdjustSdk.Pcl
             return new SendResponse
             {
                 WillRetry = true,
+                ActivityPackage = activityPackage,
             };
         }
 
@@ -142,7 +145,7 @@ namespace AdjustSdk.Pcl
             if (successRunning && !SendTask.Result.WillRetry)
                 _PackageHandler.SendNextPackage();
             else
-                _PackageHandler.CloseFirstPackage();
+                _PackageHandler.CloseFirstPackage(SendTask.Result.ActivityPackage);
         }
 
         private HttpClient GetHttpClient(ActivityPackage activityPackage)

@@ -45,6 +45,7 @@
     <Compile Include="AdjustFactory.cs" />
     <Compile Include="AdjustInstance.cs" />
     <Compile Include="AttributionHandler.cs" />
+    <Compile Include="BackoffStrategy.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="IActivityHandler.cs" />
     <Compile Include="IAttributionHandler.cs" />

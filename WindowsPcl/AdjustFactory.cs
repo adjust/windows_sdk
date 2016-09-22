@@ -15,6 +15,7 @@ namespace AdjustSdk.Pcl
         private static TimeSpan? _SubsessionInterval;
         private static TimeSpan? _TimerInterval;
         private static TimeSpan? _TimerStart;
+        private static BackoffStrategy _PackageHandlerBackoffStrategy;
 
         public static ILogger Logger
         {
@@ -110,6 +111,15 @@ namespace AdjustSdk.Pcl
                 return _TimerStart.Value;
         }
 
+        public static BackoffStrategy GetPackageHandlerBackoffStrategy()
+        {
+            if (_PackageHandlerBackoffStrategy == null)
+            {
+                return BackoffStrategy.LongWait;
+            }
+            return _PackageHandlerBackoffStrategy;
+        }
+
         public static void SetActivityHandler(IActivityHandler activityHandler)
         {
             _IActivityHandler = activityHandler;
@@ -153,6 +163,11 @@ namespace AdjustSdk.Pcl
         public static void SetTimerStart(TimeSpan? timerStart)
         {
             _TimerStart = timerStart;
+        }
+
+        public static void SetPackageHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
+        {
+            _PackageHandlerBackoffStrategy = backoffStrategy;
         }
     }
 }
