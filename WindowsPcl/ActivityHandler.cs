@@ -26,6 +26,7 @@ namespace AdjustSdk.Pcl
         private IPackageHandler _PackageHandler;
         private IAttributionHandler _AttributionHandler;
         private TimerCycle _Timer;
+        private object _ActivityStateLock = new object();
 
         public class InternalState
         {
@@ -108,8 +109,7 @@ namespace AdjustSdk.Pcl
 
             if (_ActivityState != null)
             {
-                _ActivityState.Enabled = enabled;
-                WriteActivityState();
+                WriteActivityStateS(() => _ActivityState.Enabled = enabled);
             }
 
             UpdateStatusCondition(
@@ -212,8 +212,7 @@ namespace AdjustSdk.Pcl
         
         public void SetAskingAttribution(bool askingAttribution)
         {
-            _ActivityState.AskingAttribution = askingAttribution;
-            WriteActivityState();
+            WriteActivityStateS(() => _ActivityState.AskingAttribution = askingAttribution);
         }
 
         public ActivityPackage GetAttributionPackage()
@@ -537,12 +536,22 @@ namespace AdjustSdk.Pcl
 
         private void WriteActivityStateI()
         {
-            Util.SerializeToFileAsync(
-                fileName: ActivityStateFileName,
-                objectWriter: ActivityState.SerializeToStream, 
-                input: _ActivityState,
-                objectName: ActivityStateName)
-                .Wait();
+            WriteActivityStateS(null);
+        }
+
+        private void WriteActivityStateS(Action action)
+        {
+            lock (_ActivityStateLock)
+            {
+                action?.Invoke();
+
+                Util.SerializeToFileAsync(
+                    fileName: ActivityStateFileName,
+                    objectWriter: ActivityState.SerializeToStream,
+                    input: _ActivityState,
+                    objectName: ActivityStateName)
+                    .Wait();
+            }
         }
 
         private void WriteAttributionI()
