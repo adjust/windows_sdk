@@ -7,27 +7,19 @@ namespace AdjustSdk.Pcl
     {
         // global counters
         internal int EventCount { get; set; }
-
         internal int SessionCount { get; set; }
 
         // session atributes
         internal int SubSessionCount { get; set; }
-
         internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
-
         internal TimeSpan? TimeSpent { get; set; }
-
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
-
         internal DateTime? CreatedAt { get; set; }
-
         internal TimeSpan? LastInterval { get; set; }
 
         // persistent data
         internal Guid Uuid { get; set; }
-
         internal bool Enabled { get; set; }
-
         internal bool AskingAttribution { get; set; }
 
         internal ActivityState()
