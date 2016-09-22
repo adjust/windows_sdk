@@ -12,6 +12,7 @@ namespace AdjustSdk.Pcl
 
         private ILogger _Logger = AdjustFactory.Logger;
         private ActionQueue _ActionQueue = new ActionQueue("adjust.PackageHandler");
+        private BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
         private List<ActivityPackage> _PackageQueue;
         private IRequestHandler _RequestHandler;
@@ -47,9 +48,23 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(SendNextI);
         }
 
-        public void CloseFirstPackage()
+        public void CloseFirstPackage(ActivityPackage activityPackage)
         {
-            InternalWaitHandle.Set(); // open the door (signals the wait handle)
+            Action action = () =>
+            {
+                _Logger.Verbose("Package handler can send");
+                InternalWaitHandle.Set(); // open the door (signals the wait handle)
+
+                SendFirstPackage();
+            };
+
+            int retries = activityPackage.IncreaseRetries();
+
+            TimeSpan waitTime = Util.WaitingTime(retries, _backoffStrategy);
+
+            _Logger.Verbose("Waiting for {0} seconds before retrying for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
+
+            _ActionQueue.Delay(waitTime, action);
         }
 
         public void PauseSending()

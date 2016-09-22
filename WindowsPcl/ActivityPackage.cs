@@ -12,6 +12,7 @@ namespace AdjustSdk.Pcl
         public Dictionary<string, string> Parameters { get; private set; }
         public string Path { get; private set; }
         public string Suffix { get; set; }
+        public int Retries { get; private set; }
 
         private ActivityPackage()
         {
@@ -24,6 +25,7 @@ namespace AdjustSdk.Pcl
             Parameters = parameters;
             Path = ActivityKindUtil.GetPath(ActivityKind);
             Suffix = ActivityKindUtil.GetSuffix(Parameters);
+            Retries = 0;
         }
 
         public string FailureMessage()
@@ -54,6 +56,12 @@ namespace AdjustSdk.Pcl
             }
 
             return stringBuilder.ToString();
+        }
+
+        public int IncreaseRetries()
+        {
+            Retries++;
+            return Retries;
         }
 
         #region Serialization

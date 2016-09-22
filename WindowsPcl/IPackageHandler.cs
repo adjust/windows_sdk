@@ -12,7 +12,7 @@ namespace AdjustSdk.Pcl
 
         void SendNextPackage();
 
-        void CloseFirstPackage();
+        void CloseFirstPackage(ActivityPackage activityPackage);
 
         void PauseSending();
 

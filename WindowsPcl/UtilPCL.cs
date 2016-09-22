@@ -361,6 +361,45 @@ namespace AdjustSdk.Pcl
             }
             return e.Message + ExtractExceptionMessage(e.InnerException);
         }
+
+        internal static TimeSpan WaitingTime(int retries, BackoffStrategy backoffStrategy)
+        {
+            if (retries < backoffStrategy.MinRetries)
+            {
+                return TimeSpan.Zero;
+            }
+
+            // Start with base 0
+            int baseValue = retries - backoffStrategy.MinRetries;
+
+            // Get the exponential Time from the base: 1, 2, 4, 8, 16, ... * times the multiplier
+            long exponentialTimeTicks = (long)Math.Pow(2, baseValue) * backoffStrategy.TicksMultiplier;
+
+            // Limit the maximum allowed time to wait
+            long ceilingTimeTicks = Math.Min(exponentialTimeTicks, backoffStrategy.MaxWaitTicks);
+
+            // get the random range
+            double randomRange = GetRandomNumber(backoffStrategy.MinRange, backoffStrategy.MaxRange);
+
+            // Apply jitter factor
+            double waitingTimeTicks = ceilingTimeTicks * randomRange;
+
+            return TimeSpan.FromTicks((long)exponentialTimeTicks);
+        }
+
+        private static double GetRandomNumber(double minRange, double maxRange)
+        {
+            Random random = new Random();
+            double range = maxRange - minRange;
+            double scaled = random.NextDouble() * range;
+            double shifted = scaled + minRange;
+            return shifted;
+        }
+
+        public static string SecondDisplayFormat(TimeSpan timeSpan)
+        {
+            return String.Format("{0:0.0}", timeSpan.TotalSeconds);
+        }
     }
 
     // http://stackoverflow.com/a/7689257
