@@ -269,6 +269,8 @@ namespace AdjustSdk.Pcl
                 _Logger.Info("Default tracker: '{0}'", _Config.DefaultTracker);
             }
 
+            Util.ConfigureHttpClient(_DeviceInfo.ClientSdk);
+
             _PackageHandler = AdjustFactory.GetPackageHandler(this, PausedI());
 
             var attributionPackage = GetAttributionPackageI();

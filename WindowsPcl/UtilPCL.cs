@@ -18,6 +18,7 @@ namespace AdjustSdk.Pcl
         public const string BaseUrl = "https://app.adjust.com";
         private static ILogger _Logger { get { return AdjustFactory.Logger; } }
         private static NullFormat NullFormat = new NullFormat();
+        private static HttpClient _HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -282,7 +283,7 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        internal static Dictionary<string, string> ParseJsonExceptionResponse(HttpWebResponse httpWebResponse)
+        internal static Dictionary<string, string> ParseJsonResponse(HttpWebResponse httpWebResponse)
         {
             if (httpWebResponse == null) { return null; }
 
@@ -290,7 +291,7 @@ namespace AdjustSdk.Pcl
             using (var streamReader = new StreamReader(streamResponse))
             {
                 var sResponse = streamReader.ReadToEnd();
-                return BuildJsonDict(sResponse, false);
+                return BuildJsonDict(sResponse: sResponse, IsSuccessStatusCode: false);
             }
         }
 
@@ -322,35 +323,17 @@ namespace AdjustSdk.Pcl
 
             if (jsonDicObj == null) { return null; }
 
-            var jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
+            // convert to a string,string dictionary
+            Dictionary<string, string> jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
                 ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
-
-            string message;
-            if (!jsonDic.TryGetValue("message", out message))
-            {
-                message = "No message found";
-            }
-
-            if (IsSuccessStatusCode)
-            {
-                Logger.Info("{0}", message);
-            }
-            else
-            {
-                Logger.Error("{0}", message);
-            }
 
             return jsonDic;
         }
 
-        internal static HttpClient BuildHttpClient(string clientSdk)
+        internal static void ConfigureHttpClient(string clientSdk)
         {
-            var httpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
-
-            httpClient.Timeout = new TimeSpan(0, 1, 0);
-            httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
-
-            return httpClient;
+            _HttpClient.Timeout = new TimeSpan(0, 1, 0);
+            _HttpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
         }
 
         internal static string ExtractExceptionMessage(Exception e)
@@ -399,6 +382,101 @@ namespace AdjustSdk.Pcl
         public static string SecondDisplayFormat(TimeSpan timeSpan)
         {
             return String.Format("{0:0.0}", timeSpan.TotalSeconds);
+        }
+
+        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage)
+        {
+            var url = Util.BaseUrl + activityPackage.Path;
+
+            var sNow = Util.DateFormat(DateTime.Now);
+            activityPackage.Parameters["sent_at"] = sNow;
+
+            using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
+            {
+                return _HttpClient.PostAsync(url, parameters).Result;
+            }
+        }
+
+        public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
+        {
+            var finalQuery = Util.f("{0}&send_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
+
+            var uriBuilder = new UriBuilder(Util.BaseUrl);
+            uriBuilder.Path = activityPackage.Path;
+            uriBuilder.Query = finalQuery;
+
+            return _HttpClient.GetAsync(uriBuilder.Uri).Result;
+        }
+
+        public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse)
+        {
+            var jsonDic = Util.ParseJsonResponse(httpWebResponse);
+            return Util.ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode);
+        }
+
+        public static ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage)
+        {
+            var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
+            return Util.ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode);
+        }
+
+        private static ResponseData ProcessResponse(Dictionary<string, string> jsonResponse, int? statusCode)
+        {
+            var responseData = new ResponseData()
+            {
+                JsonResponse = jsonResponse,
+                StatusCode = statusCode,
+                Success = false, // false by default, set to true later
+            };
+
+            if (jsonResponse == null)
+            {
+                responseData.WillRetry = true;
+                return responseData;
+            }
+
+            responseData.Message = Util.ReadJsonProperty(jsonResponse, "message");
+            responseData.Timestamp = Util.ReadJsonProperty(jsonResponse, "timestamp");
+            responseData.Adid = Util.ReadJsonProperty(jsonResponse, "adid");
+
+            string message = responseData.Message;
+            if (message == null)
+            {
+                message = "No message found";
+            }
+            
+            if (statusCode.HasValue && statusCode.Value == 200)
+            {
+                _Logger.Info("{0}", message);
+                responseData.Success = true;
+            }
+            else
+            {
+                _Logger.Error("{0}", message);
+                responseData.Success = false;
+            }
+
+            if (!statusCode.HasValue)
+            {
+                responseData.WillRetry = true;
+            }
+            else if (statusCode == 500 || statusCode == 501)
+            {
+                responseData.WillRetry = false;
+            }
+            else if (statusCode != 200)
+            {
+                responseData.WillRetry = true;
+            }
+
+            return responseData;
+        }
+
+        private static string ReadJsonProperty(Dictionary<string, string> json, string propertyName)
+        {
+            string value;
+            json.TryGetValue(propertyName, out value);
+            return value;
         }
     }
 

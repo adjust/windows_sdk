@@ -16,6 +16,7 @@ namespace AdjustSdk.Pcl
         private bool _Paused;
         private bool _HasDelegate;
         private HttpClient _HttpClient;
+        private string _UrlQuery;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
         {
@@ -23,6 +24,8 @@ namespace AdjustSdk.Pcl
                 attributionPackage: attributionPackage,
                 startPaused: startPaused,
                 hasDelegate: hasDelegate);
+
+            _UrlQuery = BuildUrlQuery();
 
             _Timer = new TimerOnce(actionQueue: _ActionQueue, action: GetAttributionI);
         }
@@ -73,8 +76,8 @@ namespace AdjustSdk.Pcl
         {
             if (jsonDict == null) { return; }
 
-            var attribution = DeserializeAttribution(jsonDict);
-            var askIn = DeserializeAskIn(jsonDict);
+            var attribution = DeserializeAttributionI(jsonDict);
+            var askIn = DeserializeAskInI(jsonDict);
 
             // without ask_in attribute
             if (!askIn.HasValue)
@@ -102,34 +105,23 @@ namespace AdjustSdk.Pcl
 
             _Logger.Verbose("{0}", _AttributionPackage.GetExtendedString());
 
-            HttpResponseMessage httpResponseMessage;
+            ResponseData responseData;
             try
             {
-                var httpClient = GetHttpClient(_AttributionPackage);
-                var attribution = GetAttributionUrl();
-                httpResponseMessage = httpClient.GetAsync(attribution).Result;
+                using (var httpResponseMessage = Util.SendGetRequest(_AttributionPackage, _UrlQuery))
+                {
+                    responseData = Util.ProcessResponse(httpResponseMessage);
+                    CheckAttributionI(responseData.JsonResponse);
+                }
             }
             catch (Exception ex)
             {
                 _Logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
                 return;
             }
-
-            var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
-
-            CheckAttributionI(jsonDic);
         }
 
-        private HttpClient GetHttpClient(ActivityPackage activityPackage)
-        {
-            if (_HttpClient == null)
-            {
-                _HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
-            }
-            return _HttpClient;
-        }
-
-        private string GetAttributionUrl()
+        private string BuildUrlQuery()
         {
             var queryList = new List<string>(_AttributionPackage.Parameters.Count);
 
@@ -146,20 +138,12 @@ namespace AdjustSdk.Pcl
                 queryList.Add(queryParameter);
             }
 
-            var sNow = Uri.EscapeDataString(Util.DateFormat(DateTime.Now));
-            var sentAtParameter = "sent_at=" + sNow;
-            queryList.Add(sentAtParameter);
-
             var query = string.Join("&", queryList);
 
-            var uriBuilder = new UriBuilder(Util.BaseUrl);
-            uriBuilder.Path = _AttributionPackage.Path;
-            uriBuilder.Query = query;
-
-            return uriBuilder.Uri.ToString();
+            return query;
         }
 
-        private AdjustAttribution DeserializeAttribution(Dictionary<string, string> jsonDict)
+        private AdjustAttribution DeserializeAttributionI(Dictionary<string, string> jsonDict)
         {
             string attributionString = Util.GetDictionaryValue(jsonDict, "attribution");
             if (attributionString == null) { return null; }
@@ -167,7 +151,7 @@ namespace AdjustSdk.Pcl
             return AdjustAttribution.FromJsonString(attributionString);
         }
 
-        private int? DeserializeAskIn(Dictionary<string, string> jsonDict)
+        private int? DeserializeAskInI(Dictionary<string, string> jsonDict)
         {
             var askInString = Util.GetDictionaryValue(jsonDict, "ask_in");
             if (askInString == null) { return null; }

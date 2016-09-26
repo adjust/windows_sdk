@@ -43,13 +43,17 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(SendFirstI);
         }
 
-        public void SendNextPackage()
+        public void SendNextPackage(ResponseData responseData)
         {
             _ActionQueue.Enqueue(SendNextI);
+
+            _ActivityHandler.FinishedTrackingActivity(responseData.JsonResponse);
         }
 
-        public void CloseFirstPackage(ActivityPackage activityPackage)
+        public void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage)
         {
+            _ActivityHandler.FinishedTrackingActivity(responseData.JsonResponse);
+
             Action action = () =>
             {
                 _Logger.Verbose("Package handler can send");
@@ -60,7 +64,7 @@ namespace AdjustSdk.Pcl
 
             int retries = activityPackage.IncreaseRetries();
 
-            TimeSpan waitTime = Util.WaitingTime(retries, _backoffStrategy);
+            var waitTime = Util.WaitingTime(retries, _backoffStrategy);
 
             _Logger.Verbose("Waiting for {0} seconds before retrying for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
 
@@ -75,11 +79,6 @@ namespace AdjustSdk.Pcl
         public void ResumeSending()
         {
             IsPaused = false;
-        }
-
-        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
-        {
-            _ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
         private void InitI(IActivityHandler activityHandler, bool startPaused)
