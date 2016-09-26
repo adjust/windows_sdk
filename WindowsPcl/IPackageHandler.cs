@@ -10,14 +10,12 @@ namespace AdjustSdk.Pcl
 
         void SendFirstPackage();
 
-        void SendNextPackage();
+        void SendNextPackage(ResponseData responseData);
 
-        void CloseFirstPackage(ActivityPackage activityPackage);
+        void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage);
 
         void PauseSending();
 
         void ResumeSending();
-
-        void FinishedTrackingActivity(Dictionary<string, string> jsonDict);
     }
 }

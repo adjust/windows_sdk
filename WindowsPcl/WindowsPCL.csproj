@@ -59,6 +59,7 @@
     <Compile Include="PackageHandler.cs" />
     <Compile Include="RequestHandler.cs" />
     <Compile Include="ActionQueue.cs" />
+    <Compile Include="ResponseData.cs" />
     <Compile Include="TimerCycle.cs" />
     <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

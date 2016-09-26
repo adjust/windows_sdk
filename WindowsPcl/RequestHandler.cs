@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
@@ -9,16 +10,7 @@ namespace AdjustSdk.Pcl
     public class RequestHandler : IRequestHandler
     {
         private ILogger _Logger = AdjustFactory.Logger;
-
         private IPackageHandler _PackageHandler;
-        private HttpClient _HttpClient;
-
-        private struct SendResponse
-        {
-            internal bool WillRetry { get; set; }
-            internal Dictionary<string, string> JsonDict { get; set; }
-            internal ActivityPackage ActivityPackage { get; set; }
-        }
 
         public RequestHandler(IPackageHandler packageHandler)
         {
@@ -30,131 +22,110 @@ namespace AdjustSdk.Pcl
             _PackageHandler = packageHandler;
         }
 
-        public void SendPackage(ActivityPackage package)
+        public void SendPackage(ActivityPackage activityPackage)
         {
-            Task.Factory.StartNew(() => SendI(package))
+            Task.Run(() => SendI(activityPackage))
                 // continuation used to prevent unhandled exceptions in SendI
                 // not signaling the WaitHandle in PackageHandler and preventing deadlocks
-                .ContinueWith((sendResponse) => PackageSent(sendResponse));
+                .ContinueWith((responseData) => PackageSent(responseData, activityPackage));
         }
 
-        private SendResponse SendI(ActivityPackage activityPackage)
+        private ResponseData SendI(ActivityPackage activityPackage)
         {
-            SendResponse sendResponse;
+            ResponseData responseData = null;
+
             try
             {
-                using (var httpResponseMessage = ExecuteRequest(activityPackage))
+                using (var httpResponseMessage = Util.SendPostRequest(activityPackage))
                 {
-                    sendResponse = ProcessResponse(httpResponseMessage, activityPackage);
+                    responseData = Util.ProcessResponse(httpResponseMessage);
+                }
+                //PackageSent(responseData, activityPackage);
+            }
+            catch (HttpRequestException hre)
+            {
+                var we = hre.InnerException as WebException;
+                if (we == null)
+                {
+                    responseData = ProcessException(hre);
+                } else
+                {
+                    responseData = ProcessWebException(we);
                 }
             }
-            catch (WebException we) { sendResponse = ProcessException(we, activityPackage); }
-            catch (Exception ex) { sendResponse = ProcessException(ex, activityPackage); }
+            catch (WebException we) { responseData = ProcessWebException(we); }
+            catch (Exception ex) { responseData = ProcessException(ex); }
 
-            return sendResponse;
+            return responseData;
         }
 
-        private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
-        {
-            var httpClient = GetHttpClient(activityPackage);
-            var url = Util.BaseUrl + activityPackage.Path;
-
-            var sNow = Util.DateFormat(DateTime.Now);
-            activityPackage.Parameters["sent_at"] = sNow;
-
-            using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
-            {
-                return httpClient.PostAsync(url, parameters).Result;
-            }
-        }
-
-        private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
-        {
-            var sendResponse = new SendResponse
-            {
-                WillRetry = false,
-                JsonDict = Util.ParseJsonResponse(httpResponseMessage),
-                ActivityPackage = activityPackage,
-            };
-
-            if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
-                || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
-            {
-                _Logger.Error("{0}. (Status code: {1}).",
-                    activityPackage.FailureMessage(),
-                    (int)httpResponseMessage.StatusCode);
-            }
-            else if (!httpResponseMessage.IsSuccessStatusCode)
-            {
-                sendResponse.WillRetry = true;
-
-                _Logger.Error("{0}. (Status code: {1}). Will retry later.",
-                    activityPackage.FailureMessage(),
-                    (int)httpResponseMessage.StatusCode);
-            }
-
-            return sendResponse;
-        }
-
-        private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
+        private ResponseData ProcessWebException(WebException webException)
         {
             using (var response = webException.Response as HttpWebResponse)
             {
-                int? statusCode = (int?) response?.StatusCode;
-
-                var sendResponse = new SendResponse
-                {
-                    WillRetry = true,
-                    JsonDict = Util.ParseJsonExceptionResponse(response),
-                    ActivityPackage = activityPackage,
-                };
-
-                _Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
-                    activityPackage.FailureMessage(),
-                    Util.ExtractExceptionMessage(webException),
-                    statusCode);
-
-                return sendResponse;
+                return Util.ProcessResponse(response);
+                //PackageSent(responseData, activityPackage, webException);
             }
         }
 
-        private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
+        private ResponseData ProcessException(Exception exception)
         {
-            _Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
-
-            return new SendResponse
+            return new ResponseData()
             {
+                Success = false,
                 WillRetry = true,
-                ActivityPackage = activityPackage,
+                Exception = exception,
             };
         }
 
-        private void PackageSent(Task<SendResponse> SendTask)
+        private void PackageSent(Task<ResponseData> responseDataTask, ActivityPackage activityPackage)
         {
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
-             var successRunning =
-                !SendTask.IsFaulted
-                && !SendTask.IsCanceled;
+            if (responseDataTask.Status != TaskStatus.RanToCompletion)
+            {
+                var responseDataFaulted = ProcessException(responseDataTask.Exception);
+                LogSendErrorI(responseDataFaulted, activityPackage);
+                _PackageHandler.CloseFirstPackage(responseDataFaulted, activityPackage);
+                return;
+            }
 
-            if (successRunning && SendTask.Result.JsonDict != null)
-                _PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
+            var responseData = responseDataTask.Result;
 
-            //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
-            if (successRunning && !SendTask.Result.WillRetry)
-                _PackageHandler.SendNextPackage();
+            if (!responseData.Success)
+            {
+                LogSendErrorI(responseData, activityPackage);
+            }
+
+            if (responseData.WillRetry)
+            {
+                _PackageHandler.CloseFirstPackage(responseData, activityPackage);
+            }
             else
-                _PackageHandler.CloseFirstPackage(SendTask.Result.ActivityPackage);
+            {
+                _PackageHandler.SendNextPackage(responseData);
+            }
         }
 
-        private HttpClient GetHttpClient(ActivityPackage activityPackage)
+        private void LogSendErrorI(ResponseData responseData, ActivityPackage activityPackage)
         {
-            if (_HttpClient == null)
+            var errorMessagBuilder = new StringBuilder(activityPackage.FailureMessage());
+
+            if (responseData.Exception != null)
             {
-                _HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+                errorMessagBuilder.AppendFormat(" ({0})", Util.ExtractExceptionMessage(responseData.Exception));
             }
-            return _HttpClient;
+            if (responseData.StatusCode.HasValue)
+            {
+                errorMessagBuilder.AppendFormat(" (Status code: {0})", responseData.StatusCode.Value);
+            }
+            if (responseData.WillRetry)
+            {
+                errorMessagBuilder.Append(" Will retry later");
+            }
+
+            _Logger.Error("{0}", errorMessagBuilder.ToString());
         }
     }
 }
