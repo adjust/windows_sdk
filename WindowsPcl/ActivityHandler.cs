@@ -223,9 +223,11 @@ namespace AdjustSdk.Pcl
             return GetAttributionPackageI();
         }
 
-        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, 
+            AdjustAttribution attribution, 
+            string deeplink)
         {
-            return GetDeeplinkClickPackageI(extraParameters, attribution);
+            return GetDeeplinkClickPackageI(extraParameters, attribution, deeplink);
         }
 
         #region private
@@ -419,21 +421,25 @@ namespace AdjustSdk.Pcl
 
         private void OpenUrlI(Uri uri)
         {
-            if (uri == null) return;
+            if (uri == null) { return; }
 
-            var sUri = Uri.UnescapeDataString(uri.ToString());
+            var deeplink = Uri.UnescapeDataString(uri.ToString());
+
+            if (deeplink?.Length == 0) { return; }
 
             var windowsPhone80Protocol = "/Protocol?";
-            if (sUri.StartsWith(windowsPhone80Protocol))
+            if (deeplink?.StartsWith(windowsPhone80Protocol) == true)
             {
-                sUri = sUri.Substring(windowsPhone80Protocol.Length);
+                deeplink = deeplink.Substring(windowsPhone80Protocol.Length);
             }
-            
-            var queryStringIdx = sUri. IndexOf("?");
-            // check if '?' exists and it's not the last char
-            if (queryStringIdx == -1 || queryStringIdx + 1 == sUri.Length) return;
 
-            var queryString = sUri.Substring(queryStringIdx + 1);
+            var queryString = "";
+            var queryStringIdx = deeplink.IndexOf("?");
+            // check if '?' exists and it's not the last char
+            if (queryStringIdx != -1 && queryStringIdx + 1 != deeplink.Length)
+            {
+                queryString = deeplink.Substring(queryStringIdx + 1);
+            }
 
             // remove any possible fragments
             var fragmentIdx = queryString.LastIndexOf("#");
@@ -445,54 +451,54 @@ namespace AdjustSdk.Pcl
             var queryPairs = queryString.Split('&');
             var extraParameters = new Dictionary<string, string>(queryPairs.Length);
             var attribution = new AdjustAttribution();
-            bool hasAdjustTags = false;
 
             foreach (var pair in queryPairs)
             {
-                if (ReadQueryStringI(pair, extraParameters, attribution))
-                {
-                    hasAdjustTags = true;
-                }
+                ReadQueryStringI(pair, extraParameters, attribution);
             }
 
-            if (!hasAdjustTags) { return; }
+            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution, deeplink);
 
-            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution);
             _SdkClickHandler.SendSdkClick(clickPackage);
         }
 
-        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, 
+            AdjustAttribution attribution,
+            string deeplink)
         {
             var now = DateTime.Now;
 
-            var packageBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, now);
-            packageBuilder.ExtraParameters = extraParameters;
+            var clickBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, now);
+            clickBuilder.ExtraParameters = extraParameters;
+            clickBuilder.Deeplink = deeplink;
+            clickBuilder.Attribution = attribution;
+            clickBuilder.ClickTime = now;
 
-            return packageBuilder.BuildClickPackage("deeplink", now, attribution);
+            var clickPackage = clickBuilder.BuildClickPackage("deeplink");
+
+            return clickBuilder.BuildClickPackage("deeplink");
         }
 
-        private bool ReadQueryStringI(string queryString,
+        private void ReadQueryStringI(string queryString,
             Dictionary<string, string> extraParameters,
             AdjustAttribution attribution)
         {
             var pairComponents = queryString.Split('=');
-            if (pairComponents.Length != 2) return false;
+            if (pairComponents.Length != 2) return;
 
             var key = pairComponents[0];
-            if (!key.StartsWith(AdjustPrefix)) return false;
+            if (!key.StartsWith(AdjustPrefix)) return;
 
             var value = pairComponents[1];
-            if (value.Length == 0) return false;
+            if (value.Length == 0) return;
 
             var keyWOutPrefix = key.Substring(AdjustPrefix.Length);
-            if (keyWOutPrefix.Length == 0) return false;
+            if (keyWOutPrefix.Length == 0) return;
 
             if (!ReadAttributionQueryStringI(attribution, keyWOutPrefix, value))
             {
                 extraParameters.Add(keyWOutPrefix, value);
             }
-
-            return true;
         }
 
         private bool ReadAttributionQueryStringI(AdjustAttribution attribution,
