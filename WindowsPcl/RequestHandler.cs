@@ -10,24 +10,38 @@ namespace AdjustSdk.Pcl
     public class RequestHandler : IRequestHandler
     {
         private ILogger _Logger = AdjustFactory.Logger;
-        private IPackageHandler _PackageHandler;
 
-        public RequestHandler(IPackageHandler packageHandler)
+        private Action<ResponseData> _SendNextCallback;
+        private Action<ResponseData, ActivityPackage> _RetryCallback;
+        
+        public RequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
-            Init(packageHandler);
+            Init(sendNextCallback, retryCallback);
         }
 
-        public void Init(IPackageHandler packageHandler)
+        public void Init(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
-            _PackageHandler = packageHandler;
+            _SendNextCallback = sendNextCallback;
+            _RetryCallback = retryCallback;
         }
 
         public void SendPackage(ActivityPackage activityPackage)
         {
             Task.Run(() => SendI(activityPackage))
                 // continuation used to prevent unhandled exceptions in SendI
-                // not signaling the WaitHandle in PackageHandler and preventing deadlocks
-                .ContinueWith((responseData) => PackageSent(responseData, activityPackage));
+                .ContinueWith((responseData) => PackageSent(responseData, activityPackage),
+                    TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI
+        }
+
+        public void SendPackageSync(ActivityPackage activityPackage)
+        {
+            var sendTask = new Task<ResponseData>(() => SendI(activityPackage));
+            // continuation used to prevent unhandled exceptions in SendI
+            sendTask.ContinueWith((responseData) => {
+                PackageSent(responseData, activityPackage);
+            }, TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI ->
+
+            sendTask.RunSynchronously();
         }
 
         private ResponseData SendI(ActivityPackage activityPackage)
@@ -40,7 +54,6 @@ namespace AdjustSdk.Pcl
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage);
                 }
-                //PackageSent(responseData, activityPackage);
             }
             catch (HttpRequestException hre)
             {
@@ -64,7 +77,6 @@ namespace AdjustSdk.Pcl
             using (var response = webException.Response as HttpWebResponse)
             {
                 return Util.ProcessResponse(response);
-                //PackageSent(responseData, activityPackage, webException);
             }
         }
 
@@ -87,7 +99,7 @@ namespace AdjustSdk.Pcl
             {
                 var responseDataFaulted = ProcessException(responseDataTask.Exception);
                 LogSendErrorI(responseDataFaulted, activityPackage);
-                _PackageHandler.CloseFirstPackage(responseDataFaulted, activityPackage);
+                _RetryCallback?.Invoke(responseDataFaulted, activityPackage);
                 return;
             }
 
@@ -100,11 +112,11 @@ namespace AdjustSdk.Pcl
 
             if (responseData.WillRetry)
             {
-                _PackageHandler.CloseFirstPackage(responseData, activityPackage);
+                _RetryCallback?.Invoke(responseData, activityPackage);
             }
             else
             {
-                _PackageHandler.SendNextPackage(responseData);
+                _SendNextCallback?.Invoke(responseData);
             }
         }
 

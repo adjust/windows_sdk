@@ -62,12 +62,12 @@ namespace AdjustSdk.Pcl
             return _IAttributionHandler;
         }
 
-        public static IRequestHandler GetRequestHandler(IPackageHandler packageHandler)
+        public static IRequestHandler GetRequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
             if (_IRequestHandler == null)
-                return new RequestHandler(packageHandler);
+                return new RequestHandler(sendNextCallback, retryCallback);
 
-            _IRequestHandler.Init(packageHandler);
+            _IRequestHandler.Init(sendNextCallback, retryCallback);
             return _IRequestHandler;
         }
 

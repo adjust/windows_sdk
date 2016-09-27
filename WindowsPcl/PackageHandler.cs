@@ -89,7 +89,7 @@ namespace AdjustSdk.Pcl
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            _RequestHandler = AdjustFactory.GetRequestHandler(this);
+            _RequestHandler = AdjustFactory.GetRequestHandler(SendNextPackage, CloseFirstPackage);
         }
 
         private void AddI(ActivityPackage activityPackage)
