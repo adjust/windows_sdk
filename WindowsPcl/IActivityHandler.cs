@@ -29,6 +29,8 @@ namespace AdjustSdk.Pcl
 
         ActivityPackage GetAttributionPackage();
 
-        ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution);
+        ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, 
+            AdjustAttribution attribution, 
+            string deeplink);
     }
 }

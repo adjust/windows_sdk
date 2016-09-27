@@ -12,6 +12,9 @@ namespace AdjustSdk.Pcl
         private DateTime _CreatedAt;
 
         public Dictionary<string, string> ExtraParameters { get; set; }
+        public string Deeplink { get; set; }
+        public AdjustAttribution Attribution { get; set; }
+        public DateTime ClickTime { get; set;}
 
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
             : this(adjustConfig, deviceInfo, createdAt)
@@ -51,20 +54,20 @@ namespace AdjustSdk.Pcl
             return new ActivityPackage(ActivityKind.Event, _DeviceInfo.ClientSdk, parameters);
         }
 
-        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime, AdjustAttribution attribution)
+        internal ActivityPackage BuildClickPackage(string source)
         {
             var parameters = GetIdsParameters();
 
             AddString(parameters, "source", source);
-            AddDateTime(parameters, "click_time", clickTime);
+            AddDateTime(parameters, "click_time", ClickTime);
             AddDictionaryJson(parameters, "params", ExtraParameters);
 
-            if (attribution != null)
+            if (Attribution != null)
             {
-                AddString(parameters, "tracker", attribution.TrackerName);
-                AddString(parameters, "campaign", attribution.Campaign);
-                AddString(parameters, "adgroup", attribution.Adgroup);
-                AddString(parameters, "creative", attribution.Creative);
+                AddString(parameters, "tracker", Attribution.TrackerName);
+                AddString(parameters, "campaign", Attribution.Campaign);
+                AddString(parameters, "adgroup", Attribution.Adgroup);
+                AddString(parameters, "creative", Attribution.Creative);
             }
 
             return new ActivityPackage(ActivityKind.Click, _DeviceInfo.ClientSdk, parameters);
