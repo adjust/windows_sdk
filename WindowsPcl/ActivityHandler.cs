@@ -28,6 +28,7 @@ namespace AdjustSdk.Pcl
         private IAttributionHandler _AttributionHandler;
         private TimerCycle _Timer;
         private object _ActivityStateLock = new object();
+        private ISdkClickHandler _SdkClickHandler;
 
         public class InternalState
         {
@@ -175,22 +176,23 @@ namespace AdjustSdk.Pcl
         private void UpdateStatusCondition(bool pausingState, string pausingMessage,
             string remainsPausedMessage, string unPausingMessage)
         {
+            // it is changing from an active state to a pause state
             if (pausingState)
             {
                 _Logger.Info(pausingMessage);
-                TrackSubsessionEnd();
-                return;
             }
-
-            if (PausedI())
+            // check if it's remaining in a pause state
+            else if (PausedI()) // safe to use internal version of paused (read only), can suffer from phantom read but not an issue
             {
                 _Logger.Info(remainsPausedMessage);
             }
             else
             {
+                // it is changing from a pause state to an active state
                 _Logger.Info(unPausingMessage);
-                TrackSubsessionStart();
             }
+
+            UpdateHandlersStatusAndSend();
         }
 
         public void OpenUrl(Uri uri)
@@ -226,11 +228,7 @@ namespace AdjustSdk.Pcl
             return GetDeeplinkClickPackageI(extraParameters, attribution);
         }
 
-        private void UpdateStatus()
-        {
-            _ActionQueue.Enqueue(UpdateStatusI);
-        }
-
+        #region private
         private void WriteActivityState()
         {
             _ActionQueue.Enqueue(WriteActivityStateI);
@@ -239,6 +237,11 @@ namespace AdjustSdk.Pcl
         private void WriteAttribution()
         {
             _ActionQueue.Enqueue(WriteAttributionI);
+        }
+
+        private void UpdateHandlersStatusAndSend()
+        {
+            _ActionQueue.Enqueue(UpdateHandlersStatusAndSendI);
         }
 
         private void InitI()
@@ -280,6 +283,8 @@ namespace AdjustSdk.Pcl
                 PausedI(),
                 _Config.HasDelegate);
 
+            _SdkClickHandler = AdjustFactory.GetSdkClickHandler(PausedI());
+
             _Timer = new TimerCycle(_ActionQueue, TimerFiredI, timeInterval: timerInterval, timeStart: timerStart);
 
             StartI();
@@ -287,14 +292,15 @@ namespace AdjustSdk.Pcl
 
         private void StartI()
         {
+            // it shouldn't start if it was disabled after a first session
             if (_ActivityState != null
                 && !_ActivityState.Enabled)
             {
                 return;
             }
 
-            UpdateStatusI();
-
+            UpdateHandlersStatusAndSendI();
+            
             ProcessSessionI();
 
             CheckAttributionStateI();
@@ -373,9 +379,12 @@ namespace AdjustSdk.Pcl
 
         private void EndI()
         {
-            _PackageHandler.PauseSending();
-            _AttributionHandler.PauseSending();
-            StopTimerI();
+            // pause sending if it's not allowed to send
+            if (PausedI())
+            {
+                PauseSendingI();
+            }
+
             if (UpdateActivityStateI(DateTime.Now))
             {
                 WriteActivityStateI();
@@ -449,8 +458,7 @@ namespace AdjustSdk.Pcl
             if (!hasAdjustTags) { return; }
 
             var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution);
-            _PackageHandler.AddPackage(clickPackage);
-            _PackageHandler.SendFirstPackage();
+            _SdkClickHandler.SendSdkClick(clickPackage);
         }
 
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
@@ -646,41 +654,43 @@ namespace AdjustSdk.Pcl
             _DeviceUtil.LauchDeeplink(deeplinkUri);
         }
 
-        private void UpdateStatusI()
+        private void UpdateHandlersStatusAndSendI()
         {
-            UpdateAttributionHandlerStatusI();
-            UpdatePackageHandlerStatusI();
-        }
-
-        private void UpdateAttributionHandlerStatusI()
-        {
+            // check if it should stop sending
             if (PausedI())
             {
-                _AttributionHandler.PauseSending();
+                PauseSendingI();
+                return;
             }
-            else
+
+            ResumeSendingI();
+
+            // try to send
+            if (!_Config.EventBufferingEnabled)
             {
-                _AttributionHandler.ResumeSending();
+                _PackageHandler.SendFirstPackage();
             }
         }
 
-        private void UpdatePackageHandlerStatusI()
+        private void PauseSendingI()
         {
-            if (PausedI())
-            {
-                _PackageHandler.PauseSending();
-            }
-            else
-            {
-                _PackageHandler.ResumeSending();
-            }
+            _AttributionHandler.PauseSending();
+            _PackageHandler.PauseSending();
+            _SdkClickHandler.PauseSending();
+        }
+
+        private void ResumeSendingI()
+        {
+            _AttributionHandler.ResumeSending();
+            _PackageHandler.ResumeSending();
+            _SdkClickHandler.ResumeSending();
         }
 
         private bool PausedI()
         {
             return _State.IsOffline || !IsEnabledI();
         }
-
+        #endregion
         #region Timer
 
         private void StartTimerI()
