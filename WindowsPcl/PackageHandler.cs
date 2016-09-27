@@ -94,14 +94,7 @@ namespace AdjustSdk.Pcl
 
         private void AddI(ActivityPackage activityPackage)
         {
-            if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && _PackageQueue.Count > 0)
-            {
-                _PackageQueue.Insert(1, activityPackage);
-            }
-            else
-            {
-                _PackageQueue.Add(activityPackage);
-            }
+            _PackageQueue.Add(activityPackage);
 
             _Logger.Debug("Added package {0} ({1})", _PackageQueue.Count, activityPackage);
             _Logger.Verbose("{0}", activityPackage.GetExtendedString());

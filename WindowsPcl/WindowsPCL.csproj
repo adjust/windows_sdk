@@ -52,6 +52,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="IPackageHandler.cs" />
     <Compile Include="IRequestHandler.cs" />
+    <Compile Include="ISdkClickHandler.cs" />
     <Compile Include="LogConfig.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LogLevel.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="RequestHandler.cs" />
     <Compile Include="ActionQueue.cs" />
     <Compile Include="ResponseData.cs" />
+    <Compile Include="SdkClickHandler.cs" />
     <Compile Include="TimerCycle.cs" />
     <Compile Include="DeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

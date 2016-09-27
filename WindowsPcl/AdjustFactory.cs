@@ -10,12 +10,14 @@ namespace AdjustSdk.Pcl
         private static IPackageHandler _IPackageHandler;
         private static IAttributionHandler _IAttributionHandler;
         private static IRequestHandler _IRequestHandler;
+        private static ISdkClickHandler _ISdkClickHandler;
         private static HttpMessageHandler _HttpMessageHandler;
         private static TimeSpan? _SessionInterval;
         private static TimeSpan? _SubsessionInterval;
         private static TimeSpan? _TimerInterval;
         private static TimeSpan? _TimerStart;
         private static BackoffStrategy _PackageHandlerBackoffStrategy;
+        private static BackoffStrategy _SdkClickHandlerBackoffStrategy;
 
         public static ILogger Logger
         {
@@ -71,6 +73,16 @@ namespace AdjustSdk.Pcl
             return _IRequestHandler;
         }
 
+        public static ISdkClickHandler GetSdkClickHandler(bool startPaused)
+        {
+            if (_ISdkClickHandler == null)
+            {
+                return new SdkClickHandler(startPaused);
+            }
+            _ISdkClickHandler.Init(startPaused);
+            return _ISdkClickHandler;
+        }
+
         public static HttpMessageHandler GetHttpMessageHandler()
         {
             if (_HttpMessageHandler == null)
@@ -118,6 +130,15 @@ namespace AdjustSdk.Pcl
                 return BackoffStrategy.LongWait;
             }
             return _PackageHandlerBackoffStrategy;
+        }
+
+        public static BackoffStrategy GetSdkClickHandlerBackoffStrategy()
+        {
+            if (_SdkClickHandlerBackoffStrategy == null)
+            {
+                return BackoffStrategy.ShortWait;
+            }
+            return _SdkClickHandlerBackoffStrategy;
         }
 
         public static void SetActivityHandler(IActivityHandler activityHandler)
@@ -168,6 +189,11 @@ namespace AdjustSdk.Pcl
         public static void SetPackageHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
         {
             _PackageHandlerBackoffStrategy = backoffStrategy;
+        }
+
+        public static void SetSdkClickHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
+        {
+            _SdkClickHandlerBackoffStrategy = backoffStrategy;
         }
     }
 }
