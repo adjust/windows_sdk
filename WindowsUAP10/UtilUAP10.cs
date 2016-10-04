@@ -55,9 +55,9 @@ namespace AdjustSdk
             return DeviceInfo;
         }
 
-        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
+        public Task RunActionInForeground(Action action, Task previousTask = null)
         {
-            UtilUap.runInForeground(Dispatcher, () => attributionChanged(adjustAttribution));
+            return UtilUap.RunInForeground(Dispatcher, () => action(), previousTask);
         }
 
         public void Sleep(int milliseconds)
@@ -65,9 +65,9 @@ namespace AdjustSdk
             UtilUap.SleepAsync(milliseconds).Wait();
         }
 
-        public void LauchDeeplink(Uri deepLinkUri)
+        public Task LauchDeeplink(Uri deepLinkUri, Task previousTask = null)
         {
-            UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
+            return UtilUap.RunInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri), previousTask);
         }
 
         public string ReadWindowsAdvertisingId()

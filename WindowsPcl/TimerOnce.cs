@@ -17,7 +17,7 @@ namespace AdjustSdk.Pcl
             _Action = action;
         }
 
-        internal void StartIn(int milliSecondsDelay)
+        internal void StartIn(TimeSpan delay)
         {
             // reset current timer if active 
             if (_FireDate.HasValue)
@@ -26,10 +26,10 @@ namespace AdjustSdk.Pcl
                 _CancelDelayTokenSource = new CancellationTokenSource();
             }
             // save the next fire date
-            _FireDate = DateTime.Now.AddMilliseconds(milliSecondsDelay);
+            _FireDate = DateTime.Now.Add(delay);
             
             // start/reset timer
-            Task.Delay(milliSecondsDelay, _CancelDelayTokenSource.Token).ContinueWith(t => {
+            Task.Delay(delay, _CancelDelayTokenSource.Token).ContinueWith(t => {
                 if (t.IsCanceled) { 
                     return; 
                 }

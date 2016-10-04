@@ -6,9 +6,9 @@ namespace AdjustSdk.Pcl
     {
         void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate);
 
-        void CheckAttribution(Dictionary<string, string> jsonDict);
+        void CheckSessionResponse(SessionResponseData sessionResponseData);
 
-        void AskAttribution();
+        void GetAttribution();
 
         void PauseSending();
 

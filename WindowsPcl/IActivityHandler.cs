@@ -7,7 +7,7 @@ namespace AdjustSdk.Pcl
     {
         void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil);
 
-        void FinishedTrackingActivity(Dictionary<string, string> jsonDict);
+        void FinishedTrackingActivity(ResponseData responseData);
 
         void TrackEvent(AdjustEvent adjustEvent);
 
@@ -23,7 +23,9 @@ namespace AdjustSdk.Pcl
 
         void OpenUrl(Uri uri);
 
-        bool UpdateAttribution(AdjustAttribution attribution);
+        void LaunchSessionResponseTasks(SessionResponseData sessionResponseData);
+
+        void LaunchAttributionResponseTasks(AttributionResponseData attributionResponseData);
 
         void SetAskingAttribution(bool askingAttribution);
 

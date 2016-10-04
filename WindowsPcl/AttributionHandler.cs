@@ -38,14 +38,14 @@ namespace AdjustSdk.Pcl
             _HasDelegate = hasDelegate;
         }
 
-        public void CheckAttribution(Dictionary<string, string> jsonDict)
+        public void CheckSessionResponse(SessionResponseData responseData)
         {
-            _ActionQueue.Enqueue(() => CheckAttributionI(jsonDict));
+            _ActionQueue.Enqueue(() => CheckSessionResponseI(responseData));
         }
 
-        public void AskAttribution()
+        public void GetAttribution()
         {
-            AskAttribution(0);
+            GetAttribution(TimeSpan.Zero);
         }
 
         public void PauseSending()
@@ -58,39 +58,72 @@ namespace AdjustSdk.Pcl
             _Paused = false;
         }
 
-        private void AskAttribution(int milliSecondsDelay)
+        private void GetAttribution(TimeSpan askIn)
         {
             // don't reset if new time is shorter than the last one
-            if (_Timer.FireIn.Milliseconds > milliSecondsDelay) { return; }
+            if (_Timer.FireIn > askIn) { return; }
 
-            if (milliSecondsDelay > 0)
+            if (askIn.Milliseconds > 0)
             {
-                _Logger.Debug("Waiting to query attribution in {0} milliseconds", milliSecondsDelay);
+                _Logger.Debug("Waiting to query attribution in {0} milliseconds", askIn.Milliseconds);
             }
 
             // set the new time the timer will fire in
-            _Timer.StartIn(milliSecondsDelay);
+            _Timer.StartIn(askIn);
         }
 
-        private void CheckAttributionI(Dictionary<string, string> jsonDict)
+        private void CheckAttributionI(ResponseData responseData)
         {
-            if (jsonDict == null) { return; }
+            if (responseData.JsonResponse == null) { return; }
 
-            var attribution = DeserializeAttributionI(jsonDict);
-            var askIn = DeserializeAskInI(jsonDict);
+            var askInMilliseconds = Util.GetDictionaryInt(responseData.JsonResponse, "ask_in");
 
-            // without ask_in attribute
-            if (!askIn.HasValue)
+            // with ask_in
+            if (askInMilliseconds.HasValue)
             {
-                _ActivityHandler.UpdateAttribution(attribution);
+                _ActivityHandler.SetAskingAttribution(true);
 
-                _ActivityHandler.SetAskingAttribution(false);
-
+                GetAttribution(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
                 return;
             }
-            _ActivityHandler.SetAskingAttribution(true);
+            // without ask_in
+            _ActivityHandler.SetAskingAttribution(false);
 
-            AskAttribution(askIn.Value);
+            var attributionString = Util.GetDictionaryString(responseData.JsonResponse, "attribution");
+            responseData.Attribution = AdjustAttribution.FromJsonString(attributionString);
+        }
+
+        private void CheckSessionResponseI(SessionResponseData sessionResponseData)
+        {
+            CheckAttributionI(sessionResponseData);
+
+            _ActivityHandler.LaunchSessionResponseTasks(sessionResponseData);
+        }
+
+        private void CheckAttributionResponseI(AttributionResponseData attributionResponseData)
+        {
+            CheckAttributionI(attributionResponseData);
+
+            CheckDeeplink(attributionResponseData);
+
+            _ActivityHandler.LaunchAttributionResponseTasks(attributionResponseData);
+        }
+
+        private void CheckDeeplink(AttributionResponseData attributionResponseData)
+        {
+            if (attributionResponseData.Attribution?.Json == null) { return; }
+
+            var deeplink = Util.GetDictionaryString(attributionResponseData.Attribution.Json, "deeplink");
+            
+            if (deeplink == null) { return; }
+
+            if (!Uri.IsWellFormedUriString(deeplink, UriKind.Absolute))
+            {
+                _Logger.Error("Malformed deffered deeplink '{0}'", deeplink);
+                return;
+            }
+
+            attributionResponseData.Deeplink = new Uri(deeplink);
         }
 
         private void GetAttributionI()
@@ -105,13 +138,16 @@ namespace AdjustSdk.Pcl
 
             _Logger.Verbose("{0}", _AttributionPackage.GetExtendedString());
 
-            ResponseData responseData;
             try
             {
+                ResponseData responseData;
                 using (var httpResponseMessage = Util.SendGetRequest(_AttributionPackage, _UrlQuery))
                 {
-                    responseData = Util.ProcessResponse(httpResponseMessage);
-                    CheckAttributionI(responseData.JsonResponse);
+                    responseData = Util.ProcessResponse(httpResponseMessage, _AttributionPackage);
+                }
+                if (responseData is AttributionResponseData)
+                {
+                    CheckAttributionResponseI(responseData as AttributionResponseData);
                 }
             }
             catch (Exception ex)
@@ -141,25 +177,6 @@ namespace AdjustSdk.Pcl
             var query = string.Join("&", queryList);
 
             return query;
-        }
-
-        private AdjustAttribution DeserializeAttributionI(Dictionary<string, string> jsonDict)
-        {
-            string attributionString = Util.GetDictionaryValue(jsonDict, "attribution");
-            if (attributionString == null) { return null; }
-
-            return AdjustAttribution.FromJsonString(attributionString);
-        }
-
-        private int? DeserializeAskInI(Dictionary<string, string> jsonDict)
-        {
-            var askInString = Util.GetDictionaryValue(jsonDict, "ask_in");
-            if (askInString == null) { return null; }
-
-            int askIn;
-            if (!int.TryParse(askInString, out askIn)) { return null; }
-
-            return askIn;
         }
     }
 }

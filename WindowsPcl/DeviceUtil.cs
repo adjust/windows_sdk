@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
@@ -6,11 +7,11 @@ namespace AdjustSdk.Pcl
     {
         DeviceInfo GetDeviceInfo();
 
-        void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution);
+        Task RunActionInForeground(Action action, Task previousTask = null);
 
         void Sleep(int milliseconds);
 
-        void LauchDeeplink(Uri deeplinkUri);
+        Task LauchDeeplink(Uri deeplinkUri, Task previousTask = null);
 
         string ReadWindowsAdvertisingId();
     }

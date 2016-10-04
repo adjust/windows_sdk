@@ -295,14 +295,22 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        internal static string GetDictionaryValue(Dictionary<string, string> dic, string key)
+        internal static string GetDictionaryString(Dictionary<string, string> dict, string key)
         {
-            string value;
-            if (!dic.TryGetValue(key, out value))
-            {
-                return null;
-            }
+            string value = null;
+            dict?.TryGetValue(key, out value);
             return value;
+        }
+
+        internal static int? GetDictionaryInt(Dictionary<string, string> dict, string key)
+        {
+            var stringValue = GetDictionaryString(dict, key);
+            int intValue;
+            if (int.TryParse(stringValue, out intValue))
+            {
+                return intValue;
+            }
+            return null;
         }
 
         internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
@@ -408,26 +416,26 @@ namespace AdjustSdk.Pcl
             return _HttpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
-        public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse)
+        public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
         {
             var jsonDic = Util.ParseJsonResponse(httpWebResponse);
-            return Util.ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode);
+            return Util.ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode, activityPackage);
         }
 
-        public static ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage)
+        public static ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
             var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
-            return Util.ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode);
+            return Util.ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode, activityPackage);
         }
 
-        private static ResponseData ProcessResponse(Dictionary<string, string> jsonResponse, int? statusCode)
+        private static ResponseData ProcessResponse(Dictionary<string, string> jsonResponse, 
+            int? statusCode, 
+            ActivityPackage activityPackage)
         {
-            var responseData = new ResponseData()
-            {
-                JsonResponse = jsonResponse,
-                StatusCode = statusCode,
-                Success = false, // false by default, set to true later
-            };
+            var responseData = ResponseData.BuildResponseData(activityPackage);
+            responseData.JsonResponse = jsonResponse;
+            responseData.StatusCode = statusCode;
+            responseData.Success = false; // false by default, set to true later
 
             if (jsonResponse == null)
             {
@@ -435,9 +443,9 @@ namespace AdjustSdk.Pcl
                 return responseData;
             }
 
-            responseData.Message = Util.ReadJsonProperty(jsonResponse, "message");
-            responseData.Timestamp = Util.ReadJsonProperty(jsonResponse, "timestamp");
-            responseData.Adid = Util.ReadJsonProperty(jsonResponse, "adid");
+            responseData.Message = Util.GetDictionaryString(jsonResponse, "message");
+            responseData.Timestamp = Util.GetDictionaryString(jsonResponse, "timestamp");
+            responseData.Adid = Util.GetDictionaryString(jsonResponse, "adid");
 
             string message = responseData.Message;
             if (message == null)
@@ -470,13 +478,6 @@ namespace AdjustSdk.Pcl
             }
 
             return responseData;
-        }
-
-        private static string ReadJsonProperty(Dictionary<string, string> json, string propertyName)
-        {
-            string value;
-            json.TryGetValue(propertyName, out value);
-            return value;
         }
     }
 
