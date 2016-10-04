@@ -17,15 +17,26 @@ namespace AdjustSdk
         public bool EventBufferingEnabled { get; set; }
         public string DefaultTracker { get; set; }
 
-        private Action<AdjustAttribution> _AttributionChanged;
-        public Action<AdjustAttribution> AttributionChanged {
-            get { return _AttributionChanged; }
-            set { _AttributionChanged = value;
-                HasDelegate = true;
-                HasAttributionDelegate = true;
+        public Action<AdjustAttribution> AttributionChanged { get; set; }
+
+        public Action<AdjustEventSuccess> EventTrackingSucceeded { get; set; }
+        public Action<AdjustEventFailure> EventTrackingFailed { get; set; }
+        
+        public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
+        public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
+
+        public bool HasAttributionDelegate { get { return AttributionChanged != null; } }
+        public bool HasResponseDelegate
+        {
+            get
+            {
+                return HasAttributionDelegate ||
+                    EventTrackingSucceeded != null ||
+                    EventTrackingFailed != null ||
+                    SesssionTrackingSucceeded != null ||
+                    SesssionTrackingFailed != null;
             }
         }
-        public bool HasAttributionDelegate { get; private set; }
 
         public AdjustConfig(string appToken, string environment)
         {

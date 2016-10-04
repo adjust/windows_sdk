@@ -42,8 +42,12 @@
     <Compile Include="AdjustAttribution.cs" />
     <Compile Include="AdjustConfig.cs" />
     <Compile Include="AdjustEvent.cs" />
+    <Compile Include="AdjustEventFailure.cs" />
+    <Compile Include="AdjustEventSuccess.cs" />
     <Compile Include="AdjustFactory.cs" />
     <Compile Include="AdjustInstance.cs" />
+    <Compile Include="AdjustSessionFailure.cs" />
+    <Compile Include="AdjustSessionSuccess.cs" />
     <Compile Include="AttributionHandler.cs" />
     <Compile Include="AttributionResponseData.cs" />
     <Compile Include="BackoffStrategy.cs" />
