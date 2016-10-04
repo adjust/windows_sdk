@@ -16,8 +16,16 @@ namespace AdjustSdk
         public string SdkPrefix { get; set; }
         public bool EventBufferingEnabled { get; set; }
         public string DefaultTracker { get; set; }
-        public Action<AdjustAttribution> AttributionChanged { get; set; }
-        public bool HasDelegate { get { return AttributionChanged != null; } }
+
+        private Action<AdjustAttribution> _AttributionChanged;
+        public Action<AdjustAttribution> AttributionChanged {
+            get { return _AttributionChanged; }
+            set { _AttributionChanged = value;
+                HasDelegate = true;
+                HasAttributionDelegate = true;
+            }
+        }
+        public bool HasAttributionDelegate { get; private set; }
 
         public AdjustConfig(string appToken, string environment)
         {

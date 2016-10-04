@@ -2,10 +2,6 @@
 using Microsoft.Phone.Info;
 using System;
 using System.Globalization;
-using System.IO;
-using System.IO.IsolatedStorage;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
@@ -44,9 +40,12 @@ namespace AdjustSdk
             return DeviceInfo;
         }
 
-        public void RunAttributionChanged(Action<AdjustAttribution> attributionChanged, AdjustAttribution adjustAttribution)
+        public Task RunActionInForeground(Action action, Task previousTask = null)
         {
-            Deployment.Current.Dispatcher.BeginInvoke(() => attributionChanged(adjustAttribution));
+            if (previousTask != null)
+                return previousTask.ContinueWith(_ => Deployment.Current.Dispatcher.InvokeAsync(action));
+            else
+                return Deployment.Current.Dispatcher.InvokeAsync(action);
         }
 
         public void Sleep(int milliseconds)
@@ -54,9 +53,9 @@ namespace AdjustSdk
             System.Threading.Thread.Sleep(milliseconds);
         }
 
-        public void LauchDeeplink(Uri deepLinkUri)
+        public Task LauchDeeplink(Uri deepLinkUri, Task previousTask = null)
         {
-            Windows.System.Launcher.LaunchUriAsync(deepLinkUri);
+            return RunActionInForeground(() => Windows.System.Launcher.LaunchUriAsync(deepLinkUri), previousTask);
         }
 
         public string ReadWindowsAdvertisingId()

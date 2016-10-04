@@ -16,20 +16,25 @@ namespace AdjustSdk
         public string Creative { get; set; }
         public string ClickLabel { get; set; }
 
+        internal Dictionary<string, string> Json { get; set; }
+
         public static AdjustAttribution FromJsonString(string attributionString)
         {
+            if (attributionString == null) { return null; }
+
             try
             {
                 var jsonDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(attributionString);
                 var attribution = new AdjustAttribution
                 {
-                    TrackerToken = Util.GetDictionaryValue(jsonDict, "tracker_token"),
-                    TrackerName = Util.GetDictionaryValue(jsonDict, "tracker_name"),
-                    Network = Util.GetDictionaryValue(jsonDict, "network"),
-                    Campaign = Util.GetDictionaryValue(jsonDict, "campaign"),
-                    Adgroup = Util.GetDictionaryValue(jsonDict, "adgroup"),
-                    Creative = Util.GetDictionaryValue(jsonDict, "creative"),
-                    ClickLabel = Util.GetDictionaryValue(jsonDict, "click_label"),
+                    TrackerToken = Util.GetDictionaryString(jsonDict, "tracker_token"),
+                    TrackerName = Util.GetDictionaryString(jsonDict, "tracker_name"),
+                    Network = Util.GetDictionaryString(jsonDict, "network"),
+                    Campaign = Util.GetDictionaryString(jsonDict, "campaign"),
+                    Adgroup = Util.GetDictionaryString(jsonDict, "adgroup"),
+                    Creative = Util.GetDictionaryString(jsonDict, "creative"),
+                    ClickLabel = Util.GetDictionaryString(jsonDict, "click_label"),
+                    Json = jsonDict,
                 };
                 return attribution;
             }

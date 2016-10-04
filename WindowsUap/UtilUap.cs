@@ -212,12 +212,20 @@ namespace AdjustSdk.Uap
             return adapterId;
         }
 
-        public static void runInForeground(CoreDispatcher Dispatcher, Action actionToRun)
+        public static Task RunInForeground(CoreDispatcher dispatcher, Action action, Task previousTask = null)
         {
-            if (Dispatcher != null)
-                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => actionToRun());
+            if (previousTask != null)
+                return previousTask.ContinueWith(_ => RunInForeground(dispatcher, action));
             else
-                Windows.System.Threading.ThreadPool.RunAsync(handler => actionToRun());
+                return RunInForeground(dispatcher, action);
+        }
+
+        public static Task RunInForeground(CoreDispatcher dispatcher, Action action)
+        {
+            if (dispatcher != null)
+                return dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => action()).AsTask();
+            else
+                return Windows.System.Threading.ThreadPool.RunAsync(handler => action()).AsTask();
         }
 
         public static async Task SleepAsync(int milliseconds)

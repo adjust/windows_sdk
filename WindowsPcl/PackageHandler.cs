@@ -47,12 +47,12 @@ namespace AdjustSdk.Pcl
         {
             _ActionQueue.Enqueue(SendNextI);
 
-            _ActivityHandler.FinishedTrackingActivity(responseData.JsonResponse);
+            _ActivityHandler.FinishedTrackingActivity(responseData);
         }
 
         public void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage)
         {
-            _ActivityHandler.FinishedTrackingActivity(responseData.JsonResponse);
+            _ActivityHandler.FinishedTrackingActivity(responseData);
 
             Action action = () =>
             {

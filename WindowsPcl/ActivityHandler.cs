@@ -90,10 +90,14 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(EndI);
         }
 
-        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
+        public void FinishedTrackingActivity(ResponseData responseData)
         {
-            LaunchDeepLink(jsonDict);
-            _AttributionHandler.CheckAttribution(jsonDict);
+            // redirect session responses to attribution handler to check for attribution information
+            if (responseData is SessionResponseData)
+            {
+                _AttributionHandler.CheckSessionResponse(responseData as SessionResponseData);
+                return;
+            }
         }
 
         public void SetEnabled(bool enabled)
@@ -152,7 +156,7 @@ namespace AdjustSdk.Pcl
                 remainsPausedMessage: "Package and attribution handler remain paused because the SDK is disabled",
                 unPausingMessage: "Resuming package and attribution handler to put in online mode");
         }
-        
+
         private bool HasChangedState(bool previousState, bool newState,
             string trueMessage, string falseMessage)
         {
@@ -200,19 +204,16 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(() => OpenUrlI(uri));
         }
 
-        public bool UpdateAttribution(AdjustAttribution attribution)
+        public void LaunchSessionResponseTasks(SessionResponseData sessionResponseData)
         {
-            if (attribution == null) { return false; }
-
-            if (attribution.Equals(_Attribution)) { return false; }
-
-            _Attribution = attribution;
-            WriteAttribution();
-
-            RunDelegate(attribution);
-            return true;
+            _ActionQueue.Enqueue(() => LaunchSessionResponseTasksI(sessionResponseData));
         }
-        
+
+        public void LaunchAttributionResponseTasks(AttributionResponseData attributionResponseData)
+        {
+            _ActionQueue.Enqueue(() => LaunchAttributionResponseTasksI(attributionResponseData));
+        }
+     
         public void SetAskingAttribution(bool askingAttribution)
         {
             WriteActivityStateS(() => _ActivityState.AskingAttribution = askingAttribution);
@@ -283,7 +284,7 @@ namespace AdjustSdk.Pcl
             _AttributionHandler = AdjustFactory.GetAttributionHandler(this,
                 attributionPackage,
                 PausedI(),
-                _Config.HasDelegate);
+                _Config.HasAttributionDelegate);
 
             _SdkClickHandler = AdjustFactory.GetSdkClickHandler(PausedI());
 
@@ -376,7 +377,7 @@ namespace AdjustSdk.Pcl
             // if there is already an attribution saved and there was no attribution being asked
             if (_Attribution != null && !_ActivityState.AskingAttribution) { return; }
 
-            _AttributionHandler.AskAttribution();
+            _AttributionHandler.GetAttribution();
         }
 
         private void EndI()
@@ -417,6 +418,61 @@ namespace AdjustSdk.Pcl
             }
 
             WriteActivityStateI();
+        }
+
+        private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
+        {
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
+
+            Task task = null;
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                task = LaunchAttributionActionI();
+            }
+        }
+
+        private bool UpdateAttributionI(AdjustAttribution attribution)
+        {
+            if (attribution == null) { return false; }
+
+            if (attribution.Equals(_Attribution)) { return false; }
+
+            _Attribution = attribution;
+            WriteAttributionI();
+
+            return true;
+        }
+
+        private Task LaunchAttributionActionI()
+        {
+            if (_Config.AttributionChanged == null) { return null; }
+            if (_Attribution == null) { return null; }
+
+            return _DeviceUtil.RunActionInForeground(() => _Config.AttributionChanged(_Attribution));
+        }
+
+        private void LaunchAttributionResponseTasksI(AttributionResponseData attributionResponseData)
+        {
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(attributionResponseData.Attribution);
+
+            Task task = null;
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                task = LaunchAttributionActionI();
+            }
+
+            // if there is any, try to launch the deeplink
+            LaunchDeepLink(attributionResponseData.Deeplink, task);
+        }
+
+        private void LaunchDeepLink(Uri deeplink, Task previousTask)
+        {
+            if (deeplink == null) { return; }
+            _DeviceUtil.LauchDeeplink(deeplink, previousTask);
         }
 
         private void OpenUrlI(Uri uri)
@@ -631,33 +687,6 @@ namespace AdjustSdk.Pcl
             // send Session Package
             _PackageHandler.AddPackage(sessionPackage);
             _PackageHandler.SendFirstPackage();
-        }
-
-        private void RunDelegate(AdjustAttribution adjustAttribution)
-        {
-            if (_Config.AttributionChanged == null) return;
-            if (adjustAttribution == null) return;
-
-            _DeviceUtil.RunAttributionChanged(_Config.AttributionChanged, adjustAttribution);
-        }
-
-        private void LaunchDeepLink(Dictionary<string, string> jsonDict)
-        {
-            if (jsonDict == null) { return; }
-
-            string deeplink;
-            if (!jsonDict.TryGetValue("deeplink", out deeplink)) { return; }
-
-            if (!Uri.IsWellFormedUriString(deeplink, UriKind.Absolute))
-            {
-                _Logger.Error("Malformed deeplink '{0}'", deeplink);
-                return;
-            }
-
-            _Logger.Error("Wellformed deeplink '{0}'", deeplink);
-
-            var deeplinkUri = new Uri(deeplink);
-            _DeviceUtil.LauchDeeplink(deeplinkUri);
         }
 
         private void UpdateHandlersStatusAndSendI()

@@ -52,7 +52,7 @@ namespace AdjustSdk.Pcl
             {
                 using (var httpResponseMessage = Util.SendPostRequest(activityPackage))
                 {
-                    responseData = Util.ProcessResponse(httpResponseMessage);
+                    responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
                 }
             }
             catch (HttpRequestException hre)
@@ -60,34 +60,34 @@ namespace AdjustSdk.Pcl
                 var we = hre.InnerException as WebException;
                 if (we == null)
                 {
-                    responseData = ProcessException(hre);
+                    responseData = ProcessException(hre, activityPackage);
                 } else
                 {
-                    responseData = ProcessWebException(we);
+                    responseData = ProcessWebException(we, activityPackage);
                 }
             }
-            catch (WebException we) { responseData = ProcessWebException(we); }
-            catch (Exception ex) { responseData = ProcessException(ex); }
+            catch (WebException we) { responseData = ProcessWebException(we, activityPackage); }
+            catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }
 
             return responseData;
         }
 
-        private ResponseData ProcessWebException(WebException webException)
+        private ResponseData ProcessWebException(WebException webException, ActivityPackage activityPackage)
         {
             using (var response = webException.Response as HttpWebResponse)
             {
-                return Util.ProcessResponse(response);
+                return Util.ProcessResponse(response, activityPackage);
             }
         }
 
-        private ResponseData ProcessException(Exception exception)
+        private ResponseData ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            return new ResponseData()
-            {
-                Success = false,
-                WillRetry = true,
-                Exception = exception,
-            };
+            var responseData = ResponseData.BuildResponseData(activityPackage);
+            responseData.Success = false;
+            responseData.WillRetry = true;
+            responseData.Exception = exception;
+
+            return responseData;
         }
 
         private void PackageSent(Task<ResponseData> responseDataTask, ActivityPackage activityPackage)
@@ -97,7 +97,7 @@ namespace AdjustSdk.Pcl
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
             if (responseDataTask.Status != TaskStatus.RanToCompletion)
             {
-                var responseDataFaulted = ProcessException(responseDataTask.Exception);
+                var responseDataFaulted = ProcessException(responseDataTask.Exception, activityPackage);
                 LogSendErrorI(responseDataFaulted, activityPackage);
                 _RetryCallback?.Invoke(responseDataFaulted, activityPackage);
                 return;
