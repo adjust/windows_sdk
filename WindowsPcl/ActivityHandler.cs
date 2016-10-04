@@ -98,6 +98,11 @@ namespace AdjustSdk.Pcl
                 _AttributionHandler.CheckSessionResponse(responseData as SessionResponseData);
                 return;
             }
+            if (responseData is EventResponseData)
+            {
+                LaunchEventResponseTasksI(responseData as EventResponseData);
+                return;
+            }
         }
 
         public void SetEnabled(bool enabled)
@@ -420,6 +425,22 @@ namespace AdjustSdk.Pcl
             WriteActivityStateI();
         }
 
+        private void LaunchEventResponseTasksI(EventResponseData eventResponseData)
+        {
+            // success callback
+            if (eventResponseData.Success && _Config.EventTrackingSucceeded != null)
+            {
+                _Logger.Debug("Launching success event tracking action");
+                _DeviceUtil.RunActionInForeground(() => _Config.EventTrackingSucceeded(eventResponseData.GetSuccessResponseData()));
+            }
+            // failure callback
+            if (!eventResponseData.Success && _Config.EventTrackingFailed != null)
+            {
+                _Logger.Debug("Launching failed event tracking action");
+                _DeviceUtil.RunActionInForeground(() => _Config.EventTrackingFailed(eventResponseData.GetFailureResponseData()));
+            }
+        }
+
         private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
         {
             // try to update the attribution
@@ -430,6 +451,26 @@ namespace AdjustSdk.Pcl
             if (attributionUpdated)
             {
                 task = LaunchAttributionActionI();
+            }
+            // launch Session tracking listener if available
+            LaunchSessionAction(sessionResponseData, task);
+        }
+
+        private void LaunchSessionAction(SessionResponseData sessionResponseData, Task previousTask)
+        {
+            // success callback
+            if (sessionResponseData.Success && _Config.SesssionTrackingSucceeded != null)
+            {
+                _Logger.Debug("Launching success session tracking action");
+                _DeviceUtil.RunActionInForeground(() => _Config.SesssionTrackingSucceeded(sessionResponseData.GetSessionSuccess()), 
+                    previousTask);
+            }
+            // failure callback
+            if (!sessionResponseData.Success && _Config.SesssionTrackingFailed != null)
+            {
+                _Logger.Debug("Launching failed session tracking action");
+                _DeviceUtil.RunActionInForeground(() => _Config.SesssionTrackingFailed(sessionResponseData.GetFailureResponseData()),
+                    previousTask);
             }
         }
 
