@@ -25,6 +25,8 @@ namespace AdjustSdk
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
+        public bool SendInBackground { get; set; }
+
         public bool HasAttributionDelegate { get { return AttributionChanged != null; } }
         public bool HasResponseDelegate
         {

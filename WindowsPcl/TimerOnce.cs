@@ -22,18 +22,19 @@ namespace AdjustSdk.Pcl
             // reset current timer if active 
             if (_FireDate.HasValue)
             {
-                _CancelDelayTokenSource.Cancel();
-                _CancelDelayTokenSource = new CancellationTokenSource();
+                Cancel();
             }
             // save the next fire date
             _FireDate = DateTime.Now.Add(delay);
             
             // start/reset timer
             Task.Delay(delay, _CancelDelayTokenSource.Token).ContinueWith(t => {
+                _FireDate = null;
+
                 if (t.IsCanceled) { 
                     return; 
                 }
-                TimerCallback(); 
+                _ActionQueue.Enqueue(_Action);
             });
         }
 
@@ -43,7 +44,7 @@ namespace AdjustSdk.Pcl
             {
                 if (_FireDate == null)
                 {
-                    return new TimeSpan(0);
+                    return TimeSpan.Zero;
                 }
                 else
                 {
@@ -52,10 +53,10 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        private void TimerCallback()
+        internal void Cancel()
         {
-            _FireDate = null;
-            _ActionQueue.Enqueue(_Action);
+            _CancelDelayTokenSource.Cancel();
+            _CancelDelayTokenSource = new CancellationTokenSource();
         }
     }
 }

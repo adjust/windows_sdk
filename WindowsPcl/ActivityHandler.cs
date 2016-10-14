@@ -10,8 +10,9 @@ namespace AdjustSdk.Pcl
         private const string ActivityStateName = "Activity state";
         private const string AttributionFileName = "AdjustAttribution";
         private const string AttributionName = "Attribution";
-
         private const string AdjustPrefix = "adjust_";
+
+        private TimeSpan BackgroundTimerInterval;
 
         private ILogger _Logger = AdjustFactory.Logger;
         private ActionQueue _ActionQueue = new ActionQueue("adjust.ActivityHandler");
@@ -26,7 +27,8 @@ namespace AdjustSdk.Pcl
         private TimeSpan _SubsessionInterval;
         private IPackageHandler _PackageHandler;
         private IAttributionHandler _AttributionHandler;
-        private TimerCycle _Timer;
+        private TimerCycle _ForegroundTimer;
+        private TimerOnce _BackgroundTimer;
         private object _ActivityStateLock = new object();
         private ISdkClickHandler _SdkClickHandler;
 
@@ -34,18 +36,26 @@ namespace AdjustSdk.Pcl
         {
             internal bool enabled;
             internal bool offline;
+            internal bool background;
 
             public bool IsEnabled { get { return enabled; } }
             public bool IsDisabled { get { return !enabled; } }
             public bool IsOffline { get { return offline; } }
             public bool IsOnline { get { return !offline; } }
+            public bool IsBackground { get { return background; } }
+            public bool IsForeground { get { return !background; } }
         }
 
         private ActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
             // default values
+
+            // enabled by default
             _State.enabled = true;
+            // online by default
             _State.offline = false;
+            // in the background by default
+            _State.background = true;
 
             Init(adjustConfig, deviceUtil);
             _ActionQueue.Enqueue(InitI);
@@ -82,12 +92,34 @@ namespace AdjustSdk.Pcl
 
         public void TrackSubsessionStart()
         {
-            _ActionQueue.Enqueue(StartI);
+            _State.background = false;
+
+            _ActionQueue.Enqueue(() => 
+            {
+                StopBackgroundTimerI();
+
+                StartForegroundTimerI();
+
+                _Logger.Verbose("Subsession start");
+
+                StartI();
+            });
         }
 
         public void TrackSubsessionEnd()
         {
-            _ActionQueue.Enqueue(EndI);
+            _State.background = true;
+
+            _ActionQueue.Enqueue(() =>
+            {
+                StopForegroundTimerI();
+
+                StartBackgroundTimerI();
+
+                _Logger.Verbose("Subsession end");
+
+                EndI();
+            });
         }
 
         public void FinishedTrackingActivity(ResponseData responseData)
@@ -260,8 +292,10 @@ namespace AdjustSdk.Pcl
             ReadAttributionI();
             ReadActivityStateI();
 
-            TimeSpan timerInterval = AdjustFactory.GetTimerInterval();
-            TimeSpan timerStart = AdjustFactory.GetTimerStart();
+            TimeSpan foregroundTimerInterval = AdjustFactory.GetTimerInterval();
+            TimeSpan foregroundTimerStart = AdjustFactory.GetTimerStart();
+            BackgroundTimerInterval = AdjustFactory.GetTimerInterval();
+
             _SessionInterval = AdjustFactory.GetSessionInterval();
             _SubsessionInterval = AdjustFactory.GetSubsessionInterval();
 
@@ -280,6 +314,15 @@ namespace AdjustSdk.Pcl
                 _Logger.Info("Default tracker: '{0}'", _Config.DefaultTracker);
             }
 
+            _ForegroundTimer = new TimerCycle(_ActionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
+
+            // create background timer
+            if (_Config.SendInBackground)
+            {
+                _Logger.Info("Send in background configured");
+                _BackgroundTimer = new TimerOnce(_ActionQueue, BackgroundTimerFiredI);
+            }
+
             Util.ConfigureHttpClient(_DeviceInfo.ClientSdk);
 
             _PackageHandler = AdjustFactory.GetPackageHandler(this, PausedI());
@@ -292,8 +335,6 @@ namespace AdjustSdk.Pcl
                 _Config.HasAttributionDelegate);
 
             _SdkClickHandler = AdjustFactory.GetSdkClickHandler(PausedI());
-
-            _Timer = new TimerCycle(_ActionQueue, TimerFiredI, timeInterval: timerInterval, timeStart: timerStart);
 
             StartI();
         }
@@ -312,8 +353,6 @@ namespace AdjustSdk.Pcl
             ProcessSessionI();
 
             CheckAttributionStateI();
-
-            StartTimerI();
         }
 
         private void ProcessSessionI()
@@ -388,7 +427,7 @@ namespace AdjustSdk.Pcl
         private void EndI()
         {
             // pause sending if it's not allowed to send
-            if (PausedI())
+            if (!ToSendI())
             {
                 PauseSendingI();
             }
@@ -420,6 +459,12 @@ namespace AdjustSdk.Pcl
             else
             {
                 _PackageHandler.SendFirstPackage();
+            }
+
+            // if it is in the background and it can send, start the background timer
+            if (_Config.SendInBackground && _State.IsBackground)
+            {
+                StartBackgroundTimerI();
             }
 
             WriteActivityStateI();
@@ -733,7 +778,7 @@ namespace AdjustSdk.Pcl
         private void UpdateHandlersStatusAndSendI()
         {
             // check if it should stop sending
-            if (PausedI())
+            if (!ToSendI())
             {
                 PauseSendingI();
                 return;
@@ -766,29 +811,47 @@ namespace AdjustSdk.Pcl
         {
             return _State.IsOffline || !IsEnabledI();
         }
+
+        private bool ToSendI()
+        {
+            // don't send when it's paused
+            if (PausedI())
+            {
+                return false;
+            }
+
+            // has the option to send in the background -> is to send
+            if (_Config.SendInBackground)
+            {
+                return true;
+            }
+
+            // doesn't have the option -> depends on being on the background/foreground
+            return _State.IsForeground;
+        }
         #endregion
         #region Timer
 
-        private void StartTimerI()
+        private void StartForegroundTimerI()
         {
             if (PausedI())
             {
                 return;
             }
 
-            _Timer.Resume();
+            _ForegroundTimer.Resume();
         }
 
-        private void StopTimerI()
+        private void StopForegroundTimerI()
         {
-            _Timer.Suspend();
+            _ForegroundTimer.Suspend();
         }
 
-        private void TimerFiredI()
+        private void ForegroundTimerFiredI()
         {
             if (PausedI())
             {
-                StopTimerI();
+                StopForegroundTimerI();
                 return;
             }
 
@@ -798,6 +861,41 @@ namespace AdjustSdk.Pcl
             if (UpdateActivityStateI(DateTime.Now))
             {
                 WriteActivityStateI();
+            }
+        }
+
+        private void StartBackgroundTimerI()
+        {
+            if (_BackgroundTimer == null)
+            {
+                return;
+            }
+
+            // check if it can send in the background
+            if (!ToSendI())
+            {
+                return;
+            }
+
+            // background timer already started
+            if (_BackgroundTimer.FireIn > TimeSpan.Zero)
+            {
+                return;
+            }
+
+            _BackgroundTimer.StartIn(BackgroundTimerInterval);
+        }
+
+        private void StopBackgroundTimerI()
+        {
+            _BackgroundTimer?.Cancel();
+        }
+
+        private void BackgroundTimerFiredI()
+        {
+            if (ToSendI())
+            {
+                _PackageHandler.SendFirstPackage();
             }
         }
 
