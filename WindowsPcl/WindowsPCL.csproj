@@ -69,6 +69,7 @@
     <Compile Include="ActionQueue.cs" />
     <Compile Include="ResponseData.cs" />
     <Compile Include="SdkClickHandler.cs" />
+    <Compile Include="SessionParameters.cs" />
     <Compile Include="SessionResponseData.cs" />
     <Compile Include="TimerCycle.cs" />
     <Compile Include="DeviceUtil.cs" />

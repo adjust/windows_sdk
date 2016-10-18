@@ -145,5 +145,36 @@ namespace AdjustSdk
         {
             return DeviceUtil.ReadWindowsAdvertisingId();
         }
+
+        public static void AddSessionCallbackParameter(string key, string value)
+        {
+            AdjustInstance.AddSessionCallbackParameter(key, value);
+        }
+
+        public static void AddSessionPartnerParameter(string key, string value)
+        {
+            AdjustInstance.AddSessionPartnerParameter(key, value);
+        }
+
+        public static void RemoveSessionCallbackParameter(string key)
+        {
+            AdjustInstance.RemoveSessionCallbackParameter(key);
+        }
+
+        public static void RemoveSessionPartnerParameter(string key)
+        {
+            AdjustInstance.RemoveSessionPartnerParameter(key);
+        }
+
+        public static void ResetSessionCallbackParameters()
+        {
+            AdjustInstance.ResetSessionCallbackParameters();
+        }
+
+        public static void ResetSessionPartnerParameters()
+        {
+            AdjustInstance.ResetSessionPartnerParameters();
+        }
+
     }
 }
