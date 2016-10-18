@@ -30,8 +30,8 @@ namespace AdjustSdk
 
         public void AddCallbackParameter(string key, string value)
         {
-            if (!CheckParameter(key, "key", "Callback")) { return; }
-            if (!CheckParameter(value, "value", "Callback")) { return; }
+            if (!Util.CheckParameter(key, "key", "Callback")) { return; }
+            if (!Util.CheckParameter(value, "value", "Callback")) { return; }
 
             if (CallbackParameters == null)
             {
@@ -49,8 +49,8 @@ namespace AdjustSdk
 
         public void AddPartnerParameter(string key, string value)
         {
-            if (!CheckParameter(key, "key", "Partner")) { return; }
-            if (!CheckParameter(value, "value", "Partner")) { return; }
+            if (!Util.CheckParameter(key, "key", "Partner")) { return; }
+            if (!Util.CheckParameter(value, "value", "Partner")) { return; }
 
             if (PartnerParameters == null)
             {
@@ -114,23 +114,6 @@ namespace AdjustSdk
             else if (currency != null)
             {
                 _Logger.Error("Revenue must be set with currency");
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool CheckParameter(string attribute, string attributeType, string parameterName)
-        {
-            if (attribute == null)
-            {
-                _Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
-                return false;
-            }
-
-            if (attribute.Length == 0)
-            {
-                _Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
                 return false;
             }
 
