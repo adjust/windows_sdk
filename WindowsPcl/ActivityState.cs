@@ -47,12 +47,6 @@ namespace AdjustSdk.Pcl
             LastInterval = null;
         }
 
-        internal ActivityState Clone()
-        {
-            // TODO check if Timespans and Datetimes are altered by the original activity state
-            return (ActivityState)this.MemberwiseClone();
-        }
-
         public override string ToString()
         {
             return Util.f("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0}",
