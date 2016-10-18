@@ -22,6 +22,18 @@ namespace AdjustSdk.Pcl
         void SetOfflineMode(bool offline);
 
         void OpenUrl(Uri uri);
+        
+        void AddSessionCallbackParameter(string key, string value);
+
+        void AddSessionPartnerParameter(string key, string value);
+
+        void RemoveSessionCallbackParameter(string key);
+
+        void RemoveSessionPartnerParameter(string key);
+
+        void ResetSessionCallbackParameters();
+
+        void ResetSessionPartnerParameters();
 
         void LaunchSessionResponseTasks(SessionResponseData sessionResponseData);
 

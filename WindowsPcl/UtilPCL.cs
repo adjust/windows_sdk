@@ -496,6 +496,39 @@ namespace AdjustSdk.Pcl
 
             return true;
         }
+
+        internal static Dictionary<string, string> MergeParameters(
+            Dictionary<string, string> target,
+            Dictionary<string, string> source,
+            string parametersName)
+        {
+            if (target == null)
+            {
+                return source;
+            }
+            if (source == null)
+            {
+                return target;
+            }
+
+            var mergedParameters = new Dictionary<string, string>(target);
+            foreach (var kvp in source)
+            {
+                var key = kvp.Key;
+                var value = kvp.Value;
+                string oldValue = null;
+                if (mergedParameters.TryGetValue(key, out oldValue))
+                {
+                    _Logger.Warn("Key {0} with value {1} from {2} parameter was replaced by value {3}",
+                        key,
+                        oldValue,
+                        parametersName,
+                        value);
+                }
+                mergedParameters.Add(kvp.Key, kvp.Value);
+            }
+            return mergedParameters;
+        }
     }
 
     // http://stackoverflow.com/a/7689257

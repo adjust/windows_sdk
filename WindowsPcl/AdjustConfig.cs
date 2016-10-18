@@ -40,6 +40,8 @@ namespace AdjustSdk
             }
         }
 
+        internal List<Action<ActivityHandler>> SessionParametersActions;
+
         public AdjustConfig(string appToken, string environment)
         {
             if (!IsValid(appToken, environment)) { return; }

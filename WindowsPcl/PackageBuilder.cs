@@ -10,13 +10,18 @@ namespace AdjustSdk.Pcl
         private DeviceInfo _DeviceInfo;
         private ActivityState _ActivityState;
         private DateTime _CreatedAt;
+        private SessionParameters _SessionParameters;
 
         public Dictionary<string, string> ExtraParameters { get; set; }
         public string Deeplink { get; set; }
         public AdjustAttribution Attribution { get; set; }
         public DateTime ClickTime { get; set;}
 
-        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
+        internal PackageBuilder(AdjustConfig adjustConfig, 
+            DeviceInfo deviceInfo,
+            ActivityState activityState,
+            SessionParameters sessionParameters,
+            DateTime createdAt)
             : this(adjustConfig, deviceInfo, createdAt)
         {
             // no need to copy because all access is made synchronously 
@@ -24,6 +29,7 @@ namespace AdjustSdk.Pcl
             //  only exceptions are ´Enable´ and ´AskingAttribution´
             //  and they are not read here
             _ActivityState = activityState;
+            _SessionParameters = sessionParameters;
         }
 
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
@@ -40,6 +46,8 @@ namespace AdjustSdk.Pcl
 
             AddTimeSpan(parameters, "last_interval", _ActivityState.LastInterval);
             AddString(parameters, "default_tracker", _Config.DefaultTracker);
+            AddDictionaryJson(parameters, "callback_params", _SessionParameters.CallbackParameters);
+            AddDictionaryJson(parameters, "partner_params", _SessionParameters.PartnerParameters);
 
             return new ActivityPackage(ActivityKind.Session, _DeviceInfo.ClientSdk, parameters);
         }
@@ -52,8 +60,14 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "event_token", adjustEvent.EventToken);
             AddDouble(parameters, "revenue", adjustEvent.Revenue);
             AddString(parameters, "currency", adjustEvent.Currency);
-            AddDictionaryJson(parameters, "callback_params", adjustEvent.CallbackParameters);
-            AddDictionaryJson(parameters, "partner_params", adjustEvent.PartnerParameters);
+            AddDictionaryJson(parameters, "callback_params",
+                Util.MergeParameters(target: _SessionParameters.CallbackParameters, 
+                                    source: adjustEvent.CallbackParameters,
+                                    parametersName: "Callback"));
+            AddDictionaryJson(parameters, "partner_params", 
+                Util.MergeParameters(target: _SessionParameters.PartnerParameters,
+                                    source: adjustEvent.PartnerParameters,
+                                    parametersName: "Partner"));
 
             return new ActivityPackage(ActivityKind.Event, _DeviceInfo.ClientSdk, parameters);
         }

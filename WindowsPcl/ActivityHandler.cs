@@ -11,6 +11,10 @@ namespace AdjustSdk.Pcl
         private const string AttributionFileName = "AdjustAttribution";
         private const string AttributionName = "Attribution";
         private const string AdjustPrefix = "adjust_";
+        private const string SessionCallbackParametersFilename = "AdjustSessionCallbackParameters";
+        private const string SessionPartnerParametersFilename = "AdjustSessionPartnerParameters";
+        private const string SessionCallbackParametersName = "Session Callback Parameters";
+        private const string SessionPartnerParametersName = "Session Partner Parameters";
 
         private TimeSpan BackgroundTimerInterval;
 
@@ -31,6 +35,7 @@ namespace AdjustSdk.Pcl
         private TimerOnce _BackgroundTimer;
         private object _ActivityStateLock = new object();
         private ISdkClickHandler _SdkClickHandler;
+        private SessionParameters _SessionParameters;
 
         public class InternalState
         {
@@ -58,7 +63,7 @@ namespace AdjustSdk.Pcl
             _State.background = true;
 
             Init(adjustConfig, deviceUtil);
-            _ActionQueue.Enqueue(InitI);
+            _ActionQueue.Enqueue(() => InitI());
         }
 
         public void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
@@ -67,7 +72,8 @@ namespace AdjustSdk.Pcl
             _DeviceUtil = deviceUtil;
         }
 
-        public static ActivityHandler GetInstance(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        public static ActivityHandler GetInstance(AdjustConfig adjustConfig,
+            DeviceUtil deviceUtil)
         {
             if (adjustConfig == null)
             {
@@ -241,6 +247,36 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(() => OpenUrlI(uri));
         }
 
+        public void AddSessionCallbackParameter(string key, string value)
+        {
+            _ActionQueue.Enqueue(() => AddSessionCallbackParameterI(key, value));
+        }
+
+        public void AddSessionPartnerParameter(string key, string value)
+        {
+            _ActionQueue.Enqueue(() => AddSessionPartnerParameterI(key, value));
+        }
+
+        public void RemoveSessionCallbackParameter(string key)
+        {
+            _ActionQueue.Enqueue(() => RemoveSessionCallbackParameterI(key));
+        }
+
+        public void RemoveSessionPartnerParameter(string key)
+        {
+            _ActionQueue.Enqueue(() => RemoveSessionPartnerParameterI(key));
+        }
+
+        public void ResetSessionCallbackParameters()
+        {
+            _ActionQueue.Enqueue(() => ResetSessionCallbackParametersI());
+        }
+
+        public void ResetSessionPartnerParameters()
+        {
+            _ActionQueue.Enqueue(() => ResetSessionPartnerParametersI());
+        }
+
         public void LaunchSessionResponseTasks(SessionResponseData sessionResponseData)
         {
             _ActionQueue.Enqueue(() => LaunchSessionResponseTasksI(sessionResponseData));
@@ -292,6 +328,10 @@ namespace AdjustSdk.Pcl
             ReadAttributionI();
             ReadActivityStateI();
 
+            _SessionParameters = new SessionParameters();
+            ReadSessionCallbackParametersI();
+            ReadSessionPartnerParametersI();
+
             TimeSpan foregroundTimerInterval = AdjustFactory.GetTimerInterval();
             TimeSpan foregroundTimerStart = AdjustFactory.GetTimerStart();
             BackgroundTimerInterval = AdjustFactory.GetTimerInterval();
@@ -336,7 +376,19 @@ namespace AdjustSdk.Pcl
 
             _SdkClickHandler = AdjustFactory.GetSdkClickHandler(PausedI());
 
+            SessionParametersActionsI(_Config.SessionParametersActions);
+
             StartI();
+        }
+
+        private void SessionParametersActionsI(List<Action<ActivityHandler>> sessionParametersActions)
+        {
+            if (sessionParametersActions == null) { return; }
+
+            foreach(var action in sessionParametersActions)
+            {
+                action(this);
+            }
         }
 
         private void StartI()
@@ -448,7 +500,7 @@ namespace AdjustSdk.Pcl
             _ActivityState.EventCount++;
             UpdateActivityStateI(now);
 
-            var packageBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, now);
+            var packageBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, now);
             ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent);
             _PackageHandler.AddPackage(eventPackage);
 
@@ -604,13 +656,135 @@ namespace AdjustSdk.Pcl
             _SdkClickHandler.SendSdkClick(clickPackage);
         }
 
+        internal void AddSessionCallbackParameterI(string key, string value)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Callback")) { return; }
+            if (!Util.CheckParameter(value, "value", "Session Callback")) { return; }
+
+            if (_SessionParameters.CallbackParameters == null)
+            {
+                _SessionParameters.CallbackParameters = new Dictionary<string, string>();
+            }
+
+            string oldValue = null;
+            if (_SessionParameters.CallbackParameters.TryGetValue(key, out oldValue))
+            {
+                if (value.Equals(oldValue))
+                {
+                    _Logger.Verbose("Key {0} already present with the same value", key);
+                    return;
+                }
+
+                _Logger.Warn("Key {0} will be overwritten");
+                _SessionParameters.CallbackParameters.Remove(key); 
+            }
+
+            _SessionParameters.CallbackParameters.Add(key, value);
+
+            WriteSessionCallbackParametersI();
+        }
+
+        internal void AddSessionPartnerParameterI(string key, string value)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Partner")) { return; }
+            if (!Util.CheckParameter(value, "value", "Session Partner")) { return; }
+
+            if (_SessionParameters.PartnerParameters == null)
+            {
+                _SessionParameters.PartnerParameters = new Dictionary<string, string>();
+            }
+
+            string oldValue = null;
+            if (_SessionParameters.PartnerParameters.TryGetValue(key, out oldValue))
+            {
+                if (value.Equals(oldValue))
+                {
+                    _Logger.Verbose("Key {0} already present with the same value", key);
+                    return;
+                }
+
+                _Logger.Warn("Key {0} will be overwritten");
+                _SessionParameters.PartnerParameters.Remove(key);
+            }
+
+            _SessionParameters.PartnerParameters.Add(key, value);
+
+            WriteSessionPartnerParametersI();
+        }
+
+        internal void RemoveSessionCallbackParameterI(string key)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Callback")) { return; }
+
+            if (_SessionParameters.CallbackParameters == null)
+            {
+                _Logger.Warn("Session Callback parameters are not set");
+                return;
+            }
+            
+            if (!_SessionParameters.CallbackParameters.Remove(key))
+            {
+                _Logger.Warn("Key {0} does not exist", key);
+                return;
+            }
+
+            _Logger.Debug("Key {0} will be removed", key);
+
+            WriteSessionCallbackParametersI();
+        }
+
+        internal void RemoveSessionPartnerParameterI(string key)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Partner")) { return; }
+
+            if (_SessionParameters.PartnerParameters == null)
+            {
+                _Logger.Warn("Session Partner parameters are not set");
+                return;
+            }
+
+            if (!_SessionParameters.PartnerParameters.Remove(key))
+            {
+                _Logger.Warn("Key {0} does not exist", key);
+                return;
+            }
+
+            _Logger.Debug("Key {0} will be removed", key);
+
+            WriteSessionPartnerParametersI();
+        }
+
+        internal void ResetSessionCallbackParametersI()
+        {
+            if (_SessionParameters.CallbackParameters == null)
+            {
+                _Logger.Warn("Session Callback parameters are not set");
+            }
+
+            _SessionParameters.CallbackParameters = null;
+
+            WriteSessionCallbackParametersI();
+        }
+
+        internal void ResetSessionPartnerParametersI()
+        {
+            if (_SessionParameters.PartnerParameters == null)
+            {
+                _Logger.Warn("Session Partner parameters are not set");
+            }
+
+            _SessionParameters.PartnerParameters = null;
+
+            WriteSessionPartnerParametersI();
+        }
+
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, 
             AdjustAttribution attribution,
             string deeplink)
         {
             var now = DateTime.Now;
 
-            var clickBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, now);
+            var clickBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, now);
             clickBuilder.ExtraParameters = extraParameters;
             clickBuilder.Deeplink = deeplink;
             clickBuilder.Attribution = attribution;
@@ -723,6 +897,26 @@ namespace AdjustSdk.Pcl
                 .Wait();
         }
 
+        private void WriteSessionCallbackParametersI()
+        {
+            Util.SerializeToFileAsync(
+                fileName: SessionCallbackParametersFilename,
+                objectWriter: SessionParameters.SerializeDictionaryToStream,
+                input: _SessionParameters.CallbackParameters,
+                objectName: SessionCallbackParametersName)
+                .Wait();
+        }
+
+        private void WriteSessionPartnerParametersI()
+        {
+            Util.SerializeToFileAsync(
+                fileName: SessionPartnerParametersFilename,
+                objectWriter: SessionParameters.SerializeDictionaryToStream,
+                input: _SessionParameters.PartnerParameters,
+                objectName: SessionPartnerParametersName)
+                .Wait();
+        }
+
         private void ReadActivityStateI()
         {
             _ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
@@ -738,6 +932,24 @@ namespace AdjustSdk.Pcl
                 AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
                 () => null, //default value in case of error
                 AttributionName) // attribution name
+                .Result;
+        }
+
+        private void ReadSessionCallbackParametersI()
+        {
+            _SessionParameters.CallbackParameters = Util.DeserializeFromFileAsync(SessionCallbackParametersFilename,
+                SessionParameters.DeserializeDictionaryFromStream, // deserialize function from Stream to Dictionary
+                () => null, // default value in case of error
+                SessionCallbackParametersName) // session callback parameters name
+                .Result;
+        }
+
+        private void ReadSessionPartnerParametersI()
+        {
+            _SessionParameters.PartnerParameters = Util.DeserializeFromFileAsync(SessionPartnerParametersFilename,
+                SessionParameters.DeserializeDictionaryFromStream, // deserialize function from Stream to Dictionary
+                () => null, // default value in case of error
+                SessionPartnerParametersName) // session callback parameters name
                 .Result;
         }
 
@@ -767,7 +979,7 @@ namespace AdjustSdk.Pcl
         private void TransferSessionPackageI()
         {
             // build Session Package
-            var sessionBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, DateTime.Now);
+            var sessionBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, DateTime.Now);
             var sessionPackage = sessionBuilder.BuildSessionPackage();
 
             // send Session Package
