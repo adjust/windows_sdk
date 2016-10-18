@@ -19,7 +19,11 @@ namespace AdjustSdk.Pcl
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
             : this(adjustConfig, deviceInfo, createdAt)
         {
-            _ActivityState = activityState.Clone();
+            // no need to copy because all access is made synchronously 
+            //  in Activity Handler inside internal functions.
+            //  only exceptions are ´Enable´ and ´AskingAttribution´
+            //  and they are not read here
+            _ActivityState = activityState;
         }
 
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
@@ -153,11 +157,11 @@ namespace AdjustSdk.Pcl
 
         private void InjectActivityState(Dictionary<string, string> parameters)
         {
-            AddInt(parameters, "session_count", _ActivityState.SessionCount);
-            AddInt(parameters, "subsession_count", _ActivityState.SubSessionCount);
-            AddTimeSpan(parameters, "session_length", _ActivityState.SessionLenght);
-            AddTimeSpan(parameters, "time_spent", _ActivityState.TimeSpent);
-            AddString(parameters, "win_uuid", _ActivityState.Uuid.ToString());
+            AddInt(parameters, "session_count", _ActivityState?.SessionCount);
+            AddInt(parameters, "subsession_count", _ActivityState?.SubSessionCount);
+            AddTimeSpan(parameters, "session_length", _ActivityState?.SessionLenght);
+            AddTimeSpan(parameters, "time_spent", _ActivityState?.TimeSpent);
+            AddString(parameters, "win_uuid", _ActivityState?.Uuid.ToString());
         }
 
         #region AddParameter
