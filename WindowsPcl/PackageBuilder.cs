@@ -162,14 +162,14 @@ namespace AdjustSdk.Pcl
 
         #region AddParameter
 
-        private void AddString(Dictionary<string, string> parameters, string key, string value)
+        internal static void AddString(Dictionary<string, string> parameters, string key, string value)
         {
-            if (String.IsNullOrEmpty(value)) { return; }
+            if (string.IsNullOrEmpty(value)) { return; }
 
             parameters.Add(key, value);
         }
 
-        private void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
+        internal static void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
         {
             if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
@@ -178,7 +178,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, sDateTime);
         }
 
-        private void AddInt(Dictionary<string, string> parameters, string key, int? value)
+        internal static void AddInt(Dictionary<string, string> parameters, string key, int? value)
         {
             if (!value.HasValue || value.Value < 0) { return; }
 
@@ -186,7 +186,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, sInt);
         }
 
-        private void AddBool(Dictionary<string, string> parameters, string key, bool? value)
+        internal static void AddBool(Dictionary<string, string> parameters, string key, bool? value)
         {
             if (!value.HasValue) { return; }
 
@@ -195,7 +195,7 @@ namespace AdjustSdk.Pcl
             AddInt(parameters, key, iBool);
         }
 
-        private void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
+        internal static void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
         {
             if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
@@ -204,7 +204,7 @@ namespace AdjustSdk.Pcl
             AddInt(parameters, key, (int)roundedSeconds);
         }
 
-        private void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
+        internal static void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
         {
             if (value == null) { return; }
             if (value.Count == 0) { return; }
@@ -214,7 +214,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, json);
         }
 
-        private void AddDouble(Dictionary<string, string> parameters, string key, double? value)
+        internal static void AddDouble(Dictionary<string, string> parameters, string key, double? value)
         {
             if (value == null) { return; }
 
