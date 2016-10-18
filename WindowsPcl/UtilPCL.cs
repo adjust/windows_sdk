@@ -479,6 +479,23 @@ namespace AdjustSdk.Pcl
 
             return responseData;
         }
+
+        internal static bool CheckParameter(string attribute, string attributeType, string parameterName)
+        {
+            if (attribute == null)
+            {
+                _Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
+                return false;
+            }
+
+            if (attribute.Length == 0)
+            {
+                _Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
+                return false;
+            }
+
+            return true;
+        }
     }
 
     // http://stackoverflow.com/a/7689257
