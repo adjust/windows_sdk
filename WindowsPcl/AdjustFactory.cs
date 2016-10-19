@@ -19,6 +19,7 @@ namespace AdjustSdk.Pcl
         private static TimeSpan? _TimerStart;
         private static BackoffStrategy _PackageHandlerBackoffStrategy;
         private static BackoffStrategy _SdkClickHandlerBackoffStrategy;
+        private static TimeSpan? _MaxDelayStart;
 
         public static ILogger Logger
         {
@@ -142,6 +143,15 @@ namespace AdjustSdk.Pcl
             return _SdkClickHandlerBackoffStrategy;
         }
 
+        public static TimeSpan GetMaxDelayStart()
+        {
+            if (_MaxDelayStart == null)
+            {
+                return TimeSpan.FromSeconds(10);
+            }
+            return _MaxDelayStart.Value;
+        }
+
         public static void SetActivityHandler(IActivityHandler activityHandler)
         {
             _IActivityHandler = activityHandler;
@@ -195,6 +205,11 @@ namespace AdjustSdk.Pcl
         public static void SetSdkClickHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
         {
             _SdkClickHandlerBackoffStrategy = backoffStrategy;
+        }
+
+        public static void SetMaxDelayStart(TimeSpan maxDelayStart)
+        {
+            _MaxDelayStart = maxDelayStart;
         }
     }
 }

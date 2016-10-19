@@ -176,5 +176,9 @@ namespace AdjustSdk
             AdjustInstance.ResetSessionPartnerParameters();
         }
 
+        public static void SendFirstPackages()
+        {
+            AdjustInstance.SendFirstPackages();
+        }
     }
 }

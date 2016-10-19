@@ -33,22 +33,28 @@ namespace AdjustSdk.Pcl
         private IAttributionHandler _AttributionHandler;
         private TimerCycle _ForegroundTimer;
         private TimerOnce _BackgroundTimer;
+        private TimerOnce _DelayStartTimer;
         private object _ActivityStateLock = new object();
         private ISdkClickHandler _SdkClickHandler;
         private SessionParameters _SessionParameters;
 
         public class InternalState
         {
-            internal bool enabled;
-            internal bool offline;
-            internal bool background;
+            internal bool Enabled;
+            internal bool Offline;
+            internal bool Background;
+            internal bool DelayStart;
+            internal bool UpdatePackages;
 
-            public bool IsEnabled { get { return enabled; } }
-            public bool IsDisabled { get { return !enabled; } }
-            public bool IsOffline { get { return offline; } }
-            public bool IsOnline { get { return !offline; } }
-            public bool IsBackground { get { return background; } }
-            public bool IsForeground { get { return !background; } }
+            public bool IsEnabled { get { return Enabled; } }
+            public bool IsDisabled { get { return !Enabled; } }
+            public bool IsOffline { get { return Offline; } }
+            public bool IsOnline { get { return !Offline; } }
+            public bool IsBackground { get { return Background; } }
+            public bool IsForeground { get { return !Background; } }
+            public bool IsDelayStart { get { return DelayStart; } }
+            public bool IsToStartNow { get { return !DelayStart; } }
+            public bool IsToUpdatePackages { get { return UpdatePackages; } }
         }
 
         private ActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
@@ -56,11 +62,15 @@ namespace AdjustSdk.Pcl
             // default values
 
             // enabled by default
-            _State.enabled = true;
+            _State.Enabled = true;
             // online by default
-            _State.offline = false;
+            _State.Offline = false;
             // in the background by default
-            _State.background = true;
+            _State.Background = true;
+            // delay start not configured by default
+            _State.DelayStart = false;
+            // does not need to update packages by default
+            _State.UpdatePackages = false;
 
             Init(adjustConfig, deviceUtil);
             _ActionQueue.Enqueue(() => InitI());
@@ -98,10 +108,12 @@ namespace AdjustSdk.Pcl
 
         public void TrackSubsessionStart()
         {
-            _State.background = false;
+            _State.Background = false;
 
-            _ActionQueue.Enqueue(() => 
+            _ActionQueue.Enqueue(() =>
             {
+                DelayStartI();
+
                 StopBackgroundTimerI();
 
                 StartForegroundTimerI();
@@ -114,7 +126,7 @@ namespace AdjustSdk.Pcl
 
         public void TrackSubsessionEnd()
         {
-            _State.background = true;
+            _State.Background = true;
 
             _ActionQueue.Enqueue(() =>
             {
@@ -154,7 +166,7 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            _State.enabled = enabled;
+            _State.Enabled = enabled;
 
             if (_ActivityState != null)
             {
@@ -176,7 +188,7 @@ namespace AdjustSdk.Pcl
             }
             else
             {
-                return _State.enabled;
+                return _State.Enabled;
             }
         }
 
@@ -184,14 +196,14 @@ namespace AdjustSdk.Pcl
         {
             if (!HasChangedState(
                 previousState: _State.IsOffline,
-                newState: offline, 
+                newState: offline,
                 trueMessage: "Adjust already in offline mode",
                 falseMessage: "Adjust already in online mode"))
             {
                 return;
             }
 
-            _State.offline = offline;
+            _State.Offline = offline;
 
             UpdateStatusCondition(
                 pausingState: offline,
@@ -229,9 +241,17 @@ namespace AdjustSdk.Pcl
                 _Logger.Info(pausingMessage);
             }
             // check if it's remaining in a pause state
-            else if (PausedI()) // safe to use internal version of paused (read only), can suffer from phantom read but not an issue
-            {
-                _Logger.Info(remainsPausedMessage);
+            else if (IsPausedI(sdkClickHandlerOnly: false)) // safe to use internal version of paused (read only), can suffer from phantom read but not an issue
+            {                      
+                // including the sdk click handler
+                if (IsPausedI(sdkClickHandlerOnly: true))
+                {
+                    _Logger.Info(remainsPausedMessage);
+                }
+                else
+                {
+                    _Logger.Info(remainsPausedMessage + ", except the Sdk Click Handler");
+                }
             }
             else
             {
@@ -286,7 +306,7 @@ namespace AdjustSdk.Pcl
         {
             _ActionQueue.Enqueue(() => LaunchAttributionResponseTasksI(attributionResponseData));
         }
-     
+
         public void SetAskingAttribution(bool askingAttribution)
         {
             WriteActivityStateS(() => _ActivityState.AskingAttribution = askingAttribution);
@@ -297,11 +317,16 @@ namespace AdjustSdk.Pcl
             return GetAttributionPackageI();
         }
 
-        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, 
-            AdjustAttribution attribution, 
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters,
+            AdjustAttribution attribution,
             string deeplink)
         {
             return GetDeeplinkClickPackageI(extraParameters, attribution, deeplink);
+        }
+
+        public void SendFirstPackages()
+        {
+            _ActionQueue.Enqueue(SendFirstPackagesI);
         }
 
         #region private
@@ -343,7 +368,7 @@ namespace AdjustSdk.Pcl
             {
                 _Logger.LogLevel = LogLevel.Assert;
             }
-            
+
             if (_Config.EventBufferingEnabled)
             {
                 _Logger.Info("Event buffering is enabled");
@@ -363,18 +388,28 @@ namespace AdjustSdk.Pcl
                 _BackgroundTimer = new TimerOnce(_ActionQueue, BackgroundTimerFiredI);
             }
 
+            // configure delay start timer
+            if (_ActivityState == null &&
+                    _Config.DelayStart.HasValue &&
+                    _Config.DelayStart > TimeSpan.Zero)
+            {
+                _Logger.Info("Delay start configured");
+                _State.DelayStart = true;
+                _DelayStartTimer = new TimerOnce(_ActionQueue, SendFirstPackagesI);
+            }
+
             Util.ConfigureHttpClient(_DeviceInfo.ClientSdk);
 
-            _PackageHandler = AdjustFactory.GetPackageHandler(this, PausedI());
+            _PackageHandler = AdjustFactory.GetPackageHandler(this, IsPausedI(sdkClickHandlerOnly: false));
 
             var attributionPackage = GetAttributionPackageI();
 
             _AttributionHandler = AdjustFactory.GetAttributionHandler(this,
                 attributionPackage,
-                PausedI(),
+                IsPausedI(sdkClickHandlerOnly: false),
                 _Config.HasAttributionDelegate);
 
-            _SdkClickHandler = AdjustFactory.GetSdkClickHandler(PausedI());
+            _SdkClickHandler = AdjustFactory.GetSdkClickHandler(IsPausedI(sdkClickHandlerOnly: true));
 
             SessionParametersActionsI(_Config.SessionParametersActions);
 
@@ -385,7 +420,7 @@ namespace AdjustSdk.Pcl
         {
             if (sessionParametersActions == null) { return; }
 
-            foreach(var action in sessionParametersActions)
+            foreach (var action in sessionParametersActions)
             {
                 action(this);
             }
@@ -401,7 +436,7 @@ namespace AdjustSdk.Pcl
             }
 
             UpdateHandlersStatusAndSendI();
-            
+
             ProcessSessionI();
 
             CheckAttributionStateI();
@@ -465,6 +500,17 @@ namespace AdjustSdk.Pcl
             }
         }
 
+        private void TransferSessionPackageI()
+        {
+            // build Session Package
+            var sessionBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, DateTime.Now);
+            var sessionPackage = sessionBuilder.BuildSessionPackage(_State.IsDelayStart);
+
+            // send Session Package
+            _PackageHandler.AddPackage(sessionPackage);
+            _PackageHandler.SendFirstPackage();
+        }
+
         private void CheckAttributionStateI()
         {
             // if it's a new session
@@ -479,7 +525,7 @@ namespace AdjustSdk.Pcl
         private void EndI()
         {
             // pause sending if it's not allowed to send
-            if (!ToSendI())
+            if (!IsToSendI())
             {
                 PauseSendingI();
             }
@@ -501,7 +547,7 @@ namespace AdjustSdk.Pcl
             UpdateActivityStateI(now);
 
             var packageBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, now);
-            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent);
+            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent, _State.IsDelayStart);
             _PackageHandler.AddPackage(eventPackage);
 
             if (_Config.EventBufferingEnabled)
@@ -522,6 +568,7 @@ namespace AdjustSdk.Pcl
             WriteActivityStateI();
         }
 
+        #region post response
         private void LaunchEventResponseTasksI(EventResponseData eventResponseData)
         {
             // success callback
@@ -559,7 +606,7 @@ namespace AdjustSdk.Pcl
             if (sessionResponseData.Success && _Config.SesssionTrackingSucceeded != null)
             {
                 _Logger.Debug("Launching success session tracking action");
-                _DeviceUtil.RunActionInForeground(() => _Config.SesssionTrackingSucceeded(sessionResponseData.GetSessionSuccess()), 
+                _DeviceUtil.RunActionInForeground(() => _Config.SesssionTrackingSucceeded(sessionResponseData.GetSessionSuccess()),
                     previousTask);
             }
             // failure callback
@@ -612,6 +659,7 @@ namespace AdjustSdk.Pcl
             if (deeplink == null) { return; }
             _DeviceUtil.LauchDeeplink(deeplink, previousTask);
         }
+        #endregion post response
 
         private void OpenUrlI(Uri uri)
         {
@@ -656,6 +704,7 @@ namespace AdjustSdk.Pcl
             _SdkClickHandler.SendSdkClick(clickPackage);
         }
 
+        #region session parameters
         internal void AddSessionCallbackParameterI(string key, string value)
         {
             if (!Util.CheckParameter(key, "key", "Session Callback")) { return; }
@@ -721,7 +770,7 @@ namespace AdjustSdk.Pcl
                 _Logger.Warn("Session Callback parameters are not set");
                 return;
             }
-            
+
             if (!_SessionParameters.CallbackParameters.Remove(key))
             {
                 _Logger.Warn("Key {0} does not exist", key);
@@ -777,8 +826,9 @@ namespace AdjustSdk.Pcl
 
             WriteSessionPartnerParametersI();
         }
+        #endregion session parameters
 
-        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters, 
+        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,
             AdjustAttribution attribution,
             string deeplink)
         {
@@ -867,6 +917,7 @@ namespace AdjustSdk.Pcl
             return packageBuilder.BuildAttributionPackage();
         }
 
+        #region read write
         private void WriteActivityStateI()
         {
             WriteActivityStateS(null);
@@ -890,7 +941,7 @@ namespace AdjustSdk.Pcl
         private void WriteAttributionI()
         {
             Util.SerializeToFileAsync(
-                fileName: AttributionFileName, 
+                fileName: AttributionFileName,
                 objectWriter: AdjustAttribution.SerializeToStream,
                 input: _Attribution,
                 objectName: AttributionName)
@@ -952,6 +1003,7 @@ namespace AdjustSdk.Pcl
                 SessionPartnerParametersName) // session callback parameters name
                 .Result;
         }
+        #endregion read write
 
         // return whether or not activity state should be written
         private bool UpdateActivityStateI(DateTime now)
@@ -976,21 +1028,10 @@ namespace AdjustSdk.Pcl
             return true;
         }
 
-        private void TransferSessionPackageI()
-        {
-            // build Session Package
-            var sessionBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, DateTime.Now);
-            var sessionPackage = sessionBuilder.BuildSessionPackage();
-
-            // send Session Package
-            _PackageHandler.AddPackage(sessionPackage);
-            _PackageHandler.SendFirstPackage();
-        }
-
         private void UpdateHandlersStatusAndSendI()
         {
             // check if it should stop sending
-            if (!ToSendI())
+            if (!IsToSendI())
             {
                 PauseSendingI();
                 return;
@@ -1019,15 +1060,34 @@ namespace AdjustSdk.Pcl
             _SdkClickHandler.ResumeSending();
         }
 
-        private bool PausedI()
+        private bool IsPausedI()
         {
-            return _State.IsOffline || !IsEnabledI();
+            return IsPausedI(sdkClickHandlerOnly: false);
         }
 
-        private bool ToSendI()
+        private bool IsPausedI(bool sdkClickHandlerOnly)
+        {
+            if (sdkClickHandlerOnly)
+            {
+                // sdk click handler is paused if either:
+                return _State.IsOffline ||  // it's offline
+                        !IsEnabledI();      // is disabled
+            }
+            // other handlers are paused if either:
+            return _State.IsOffline ||  // it's offline
+                    !IsEnabledI() ||    // is disabled
+                    _State.IsDelayStart;    // is in delayed start
+        }
+
+        private bool IsToSendI()
+        {
+            return IsToSendI(sdkClickHandlerOnly: false);
+        }
+
+        private bool IsToSendI(bool sdkClickHandlerOnly)
         {
             // don't send when it's paused
-            if (PausedI())
+            if (IsPausedI(sdkClickHandlerOnly))
             {
                 return false;
             }
@@ -1041,12 +1101,98 @@ namespace AdjustSdk.Pcl
             // doesn't have the option -> depends on being on the background/foreground
             return _State.IsForeground;
         }
-        #endregion
-        #region Timer
 
+        #region delay start
+        private void DelayStartI()
+        {
+            // it's not configured to start delayed or already finished
+            if (_State.IsToStartNow)
+            {
+                return;
+            }
+
+            // the delay has already started
+            if (isToUpdatePackagesI())
+            {
+                return;
+            }
+
+            // check against max start delay
+            TimeSpan delayStart = _Config.DelayStart.HasValue ? _Config.DelayStart.Value : TimeSpan.Zero;
+            TimeSpan maxDelayStart = AdjustFactory.GetMaxDelayStart();
+
+            if (delayStart > maxDelayStart)
+            {
+                _Logger.Warn("Delay start of {0} seconds bigger than max allowed value of {1} seconds",
+                    Util.SecondDisplayFormat(delayStart),
+                    Util.SecondDisplayFormat(maxDelayStart));
+                delayStart = maxDelayStart;
+            }
+            
+            _Logger.Info("Waiting {0} seconds before starting first session", Util.SecondDisplayFormat(delayStart));
+
+            _DelayStartTimer.StartIn(delayStart);
+
+            _State.UpdatePackages = true;
+
+            if (_ActivityState != null)
+            {
+                _ActivityState.UpdatePackages = true;
+                WriteActivityStateI();
+            }
+        }
+
+        private void SendFirstPackagesI()
+        {
+            if (_State.IsToStartNow)
+            {
+                _Logger.Info("Start delay expired or never configured");
+                return;
+            }
+
+            // update packages in queue
+            UpdatePackagesI();
+            // no longer is in delay start
+            _State.DelayStart = false;
+            // cancel possible still running timer if it was called by user
+            _DelayStartTimer.Cancel();
+            // and release timer
+            _DelayStartTimer = null;
+            // update the status and try to send first package
+            UpdateHandlersStatusAndSendI();
+        }
+
+        private void UpdatePackagesI()
+        {
+            // update activity packages
+            _PackageHandler.UpdatePackages(_SessionParameters);
+            // no longer needs to update packages
+            _State.UpdatePackages = false;
+            if (_ActivityState != null)
+            {
+                _ActivityState.UpdatePackages = false;
+                WriteActivityStateI();
+            }
+        }
+
+        private bool isToUpdatePackagesI()
+        {
+            if (_ActivityState != null)
+            {
+                return _ActivityState.UpdatePackages;
+            }
+            else
+            {
+                return _State.IsToUpdatePackages;
+            }
+        }
+
+        #endregion delay start
+
+        #region timers
         private void StartForegroundTimerI()
         {
-            if (PausedI())
+            if (IsPausedI())
             {
                 return;
             }
@@ -1061,7 +1207,7 @@ namespace AdjustSdk.Pcl
 
         private void ForegroundTimerFiredI()
         {
-            if (PausedI())
+            if (IsPausedI())
             {
                 StopForegroundTimerI();
                 return;
@@ -1084,7 +1230,7 @@ namespace AdjustSdk.Pcl
             }
 
             // check if it can send in the background
-            if (!ToSendI())
+            if (!IsToSendI())
             {
                 return;
             }
@@ -1105,13 +1251,12 @@ namespace AdjustSdk.Pcl
 
         private void BackgroundTimerFiredI()
         {
-            if (ToSendI())
+            if (IsToSendI())
             {
                 _PackageHandler.SendFirstPackage();
             }
         }
-
-        #endregion Timer
+        #endregion timers
 
         private bool CheckEventI(AdjustEvent adjustEvent)
         {
@@ -1129,5 +1274,6 @@ namespace AdjustSdk.Pcl
 
             return true;
         }
+        #endregion private
     }
 }

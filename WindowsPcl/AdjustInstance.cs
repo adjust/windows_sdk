@@ -191,5 +191,11 @@ namespace AdjustSdk.Pcl
                 activityHandler.ResetSessionPartnerParametersI();
             });
         }
+
+        public void SendFirstPackages()
+        {
+            if (!CheckActivityHandler()) { return; }
+            _ActivityHandler.SendFirstPackages();
+        }
     }
 }

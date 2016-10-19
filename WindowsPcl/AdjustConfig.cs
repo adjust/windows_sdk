@@ -16,16 +16,14 @@ namespace AdjustSdk
         public string SdkPrefix { get; set; }
         public bool EventBufferingEnabled { get; set; }
         public string DefaultTracker { get; set; }
+        public bool SendInBackground { get; set; }
+        public TimeSpan? DelayStart { get; set; }
 
         public Action<AdjustAttribution> AttributionChanged { get; set; }
-
         public Action<AdjustEventSuccess> EventTrackingSucceeded { get; set; }
         public Action<AdjustEventFailure> EventTrackingFailed { get; set; }
-        
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
-
-        public bool SendInBackground { get; set; }
 
         public bool HasAttributionDelegate { get { return AttributionChanged != null; } }
         public bool HasResponseDelegate
