@@ -39,5 +39,21 @@ namespace AdjustSdk.Pcl
 
             return dictionary;
         }
+
+        internal SessionParameters Clone()
+        {
+            var copy = new SessionParameters();
+
+            if (CallbackParameters != null)
+            {
+                copy.CallbackParameters = new Dictionary<string, string>(CallbackParameters);
+            }
+
+            if (PartnerParameters != null)
+            {
+                copy.PartnerParameters = new Dictionary<string, string>(PartnerParameters);
+            }
+            return copy;
+        }
     }
 }

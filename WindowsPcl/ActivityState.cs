@@ -21,6 +21,7 @@ namespace AdjustSdk.Pcl
         internal Guid Uuid { get; set; }
         internal bool Enabled { get; set; }
         internal bool AskingAttribution { get; set; }
+        internal bool UpdatePackages { get; set; }
 
         internal ActivityState()
         {
@@ -35,6 +36,7 @@ namespace AdjustSdk.Pcl
             Uuid = Guid.NewGuid();
             Enabled = true;
             AskingAttribution = false;
+            UpdatePackages = false;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -60,7 +62,6 @@ namespace AdjustSdk.Pcl
         }
 
         #region Serialization
-
         // does not close stream received. Caller is responsible to close if it wants it
         internal static void SerializeToStream(Stream stream, ActivityState activity)
         {
@@ -77,6 +78,7 @@ namespace AdjustSdk.Pcl
             writer.Write(activity.Uuid.ToString());
             writer.Write(activity.Enabled);
             writer.Write(activity.AskingAttribution);
+            writer.Write(activity.UpdatePackages);
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -101,10 +103,11 @@ namespace AdjustSdk.Pcl
             activity.Enabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
             // default value for AskingAttribution for migrating devices
             activity.AskingAttribution = Util.TryRead(() => reader.ReadBoolean(), () => false);
+            
+            activity.UpdatePackages = Util.TryRead(() => reader.ReadBoolean(), () => false);
 
             return activity;
         }
-
         #endregion Serialization
     }
 }

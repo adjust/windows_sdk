@@ -13,6 +13,8 @@ namespace AdjustSdk.Pcl
         public string Path { get; private set; }
         public string Suffix { get; set; }
         public int Retries { get; private set; }
+        public Dictionary<string, string> CallbackParameters { get; set; }
+        public Dictionary<string, string> PartnerParameters { get; set; }
 
         private ActivityPackage()
         {
@@ -84,6 +86,22 @@ namespace AdjustSdk.Pcl
                 writer.Write(parametersArray[i].Key);
                 writer.Write(parametersArray[i].Value);
             }
+            
+            int callbackParametersCount = activityPackage.CallbackParameters == null ? 0 : activityPackage.CallbackParameters.Count;
+            writer.Write(callbackParametersCount);
+            foreach(var callbackParameter in activityPackage.CallbackParameters ?? Enumerable.Empty<KeyValuePair<string, string>>())
+            {
+                writer.Write(callbackParameter.Key);
+                writer.Write(callbackParameter.Value);
+            }
+
+            int partnerParametersCount = activityPackage.PartnerParameters == null ? 0 : activityPackage.PartnerParameters.Count;
+            writer.Write(partnerParametersCount);
+            foreach (var partnerParameter in activityPackage.PartnerParameters ?? Enumerable.Empty<KeyValuePair<string, string>>())
+            {
+                writer.Write(partnerParameter.Key);
+                writer.Write(partnerParameter.Value);
+            }
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
@@ -108,6 +126,32 @@ namespace AdjustSdk.Pcl
                     reader.ReadString(),
                     reader.ReadString()
                 );
+            }
+
+            var callbackParametersCount = Util.TryRead(() => reader.ReadInt32(), () => 0);
+            if (callbackParametersCount > 0)
+            {
+                activityPackage.CallbackParameters = new Dictionary<string, string>(callbackParametersCount);
+                for (int i = 0; i < callbackParametersCount; i++)
+                {
+                    activityPackage.CallbackParameters.Add(
+                        reader.ReadString(),
+                        reader.ReadString()
+                    );
+                }
+            }
+
+            var partnerParametersCount = Util.TryRead(() => reader.ReadInt32(), () => 0);
+            if (partnerParametersCount > 0)
+            {
+                activityPackage.PartnerParameters = new Dictionary<string, string>(partnerParametersCount);
+                for (int i = 0; i < partnerParametersCount; i++)
+                {
+                    activityPackage.PartnerParameters.Add(
+                        reader.ReadString(),
+                        reader.ReadString()
+                    );
+                }
             }
 
             return activityPackage;

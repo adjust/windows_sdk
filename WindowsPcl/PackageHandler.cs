@@ -81,11 +81,18 @@ namespace AdjustSdk.Pcl
             IsPaused = false;
         }
 
+        public void UpdatePackages(SessionParameters sessionParameters)
+        {
+            var sessionParametersCopy = sessionParameters.Clone();
+
+            _ActionQueue.Enqueue(() => UpdatePackagesI(sessionParametersCopy));
+        }
+
         private void InitI(IActivityHandler activityHandler, bool startPaused)
         {
             Init(activityHandler, startPaused);
 
-            ReadPackageQueue();
+            ReadPackageQueueI();
 
             InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
@@ -99,7 +106,7 @@ namespace AdjustSdk.Pcl
             _Logger.Debug("Added package {0} ({1})", _PackageQueue.Count, activityPackage);
             _Logger.Verbose("{0}", activityPackage.GetExtendedString());
 
-            WritePackageQueue();
+            WritePackageQueueI();
         }
 
         private void SendFirstI()
@@ -131,7 +138,7 @@ namespace AdjustSdk.Pcl
             try
             {
                 _PackageQueue.RemoveAt(0);
-                WritePackageQueue();
+                WritePackageQueueI();
             }
             finally
             // preventing an exception not signaling the WaitHandle
@@ -141,7 +148,35 @@ namespace AdjustSdk.Pcl
             SendFirstI();
         }
 
-        private void WritePackageQueue()
+        private void UpdatePackagesI(SessionParameters sessionParameters)
+        {
+            _Logger.Debug("Updating package handler queue");
+            _Logger.Verbose("Session Callback parameters: {0}", sessionParameters.CallbackParameters);
+            _Logger.Verbose("Session Partner parameters: {0}", sessionParameters.PartnerParameters);
+
+            foreach (var activityPackage in _PackageQueue)
+            {
+                var parameters = activityPackage.Parameters;
+
+                // callback parameters
+                var mergedCallbackParameters = Util.MergeParameters(
+                    target: sessionParameters.CallbackParameters,
+                    source: activityPackage.CallbackParameters,
+                    parametersName: "Callback");
+                PackageBuilder.AddDictionaryJson(parameters, "callback_params", mergedCallbackParameters);
+
+                // partner parameters
+                var mergedPartnerParameters = Util.MergeParameters(
+                    target: sessionParameters.PartnerParameters,
+                    source: activityPackage.PartnerParameters,
+                    parametersName: "Partner");
+                PackageBuilder.AddDictionaryJson(parameters, "partner_params", mergedPartnerParameters);
+            }
+
+            WritePackageQueueI();
+        }
+
+        private void WritePackageQueueI()
         {
             Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", _PackageQueue.Count);
             Util.SerializeToFileAsync(
@@ -152,7 +187,7 @@ namespace AdjustSdk.Pcl
                 .Wait();
         }
 
-        private void ReadPackageQueue()
+        private void ReadPackageQueueI()
         {
             _PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage

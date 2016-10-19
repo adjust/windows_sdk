@@ -40,19 +40,22 @@ namespace AdjustSdk.Pcl
             _CreatedAt = createdAt;
         }
 
-        internal ActivityPackage BuildSessionPackage()
+        internal ActivityPackage BuildSessionPackage(bool isInDelay)
         {
             var parameters = GetDefaultParameters();
 
             AddTimeSpan(parameters, "last_interval", _ActivityState.LastInterval);
             AddString(parameters, "default_tracker", _Config.DefaultTracker);
-            AddDictionaryJson(parameters, "callback_params", _SessionParameters.CallbackParameters);
-            AddDictionaryJson(parameters, "partner_params", _SessionParameters.PartnerParameters);
+            if (!isInDelay)
+            {
+                AddDictionaryJson(parameters, "callback_params", _SessionParameters.CallbackParameters);
+                AddDictionaryJson(parameters, "partner_params", _SessionParameters.PartnerParameters);
+            }
 
             return new ActivityPackage(ActivityKind.Session, _DeviceInfo.ClientSdk, parameters);
         }
 
-        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent)
+        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent, bool isInDelay)
         {
             var parameters = GetDefaultParameters();
 
@@ -60,16 +63,25 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "event_token", adjustEvent.EventToken);
             AddDouble(parameters, "revenue", adjustEvent.Revenue);
             AddString(parameters, "currency", adjustEvent.Currency);
-            AddDictionaryJson(parameters, "callback_params",
-                Util.MergeParameters(target: _SessionParameters.CallbackParameters, 
+            if (!isInDelay)
+            {
+                AddDictionaryJson(parameters, "callback_params",
+                Util.MergeParameters(target: _SessionParameters.CallbackParameters,
                                     source: adjustEvent.CallbackParameters,
                                     parametersName: "Callback"));
-            AddDictionaryJson(parameters, "partner_params", 
-                Util.MergeParameters(target: _SessionParameters.PartnerParameters,
-                                    source: adjustEvent.PartnerParameters,
-                                    parametersName: "Partner"));
+                AddDictionaryJson(parameters, "partner_params",
+                    Util.MergeParameters(target: _SessionParameters.PartnerParameters,
+                                        source: adjustEvent.PartnerParameters,
+                                        parametersName: "Partner"));
 
-            return new ActivityPackage(ActivityKind.Event, _DeviceInfo.ClientSdk, parameters);
+                return new ActivityPackage(ActivityKind.Event, _DeviceInfo.ClientSdk, parameters);
+            }
+
+            var eventPackage = new ActivityPackage(ActivityKind.Event, _DeviceInfo.ClientSdk, parameters);
+            eventPackage.CallbackParameters = adjustEvent.CallbackParameters;
+            eventPackage.PartnerParameters = adjustEvent.PartnerParameters;
+
+            return eventPackage;
         }
 
         internal ActivityPackage BuildClickPackage(string source)

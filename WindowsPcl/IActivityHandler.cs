@@ -46,5 +46,7 @@ namespace AdjustSdk.Pcl
         ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, 
             AdjustAttribution attribution, 
             string deeplink);
+
+        void SendFirstPackages();
     }
 }

@@ -17,5 +17,7 @@ namespace AdjustSdk.Pcl
         void PauseSending();
 
         void ResumeSending();
+
+        void UpdatePackages(SessionParameters sessionParameters);
     }
 }
