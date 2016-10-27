@@ -106,7 +106,7 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(() => TrackEventI(adjustEvent));
         }
 
-        public void TrackSubsessionStart()
+        public void ApplicationActivated()
         {
             _State.Background = false;
 
@@ -124,7 +124,7 @@ namespace AdjustSdk.Pcl
             });
         }
 
-        public void TrackSubsessionEnd()
+        public void ApplicationDeactivated()
         {
             _State.Background = true;
 
@@ -413,7 +413,7 @@ namespace AdjustSdk.Pcl
 
             SessionParametersActionsI(_Config.SessionParametersActions);
 
-            StartI();
+            //StartI();
         }
 
         private void SessionParametersActionsI(List<Action<ActivityHandler>> sessionParametersActions)

@@ -1,6 +1,5 @@
 using AdjustSdk.Pcl;
 using System;
-using System.Collections.Generic;
 
 namespace AdjustSdk
 {
@@ -21,6 +20,11 @@ namespace AdjustSdk
             LogConfig.SetupLogging(logDelegate, logLevel);
         }
 
+        public static bool ApplicationLaunched
+        {
+            get { return AdjustInstance.ApplicationLaunched; }
+        }
+
         /// <summary>
         ///  Tell Adjust that the application was launched.
         ///
@@ -32,6 +36,7 @@ namespace AdjustSdk
         /// </param>
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
+            if (ApplicationLaunched) { return; }
             AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
         }
         
