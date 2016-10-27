@@ -11,9 +11,9 @@ namespace AdjustSdk.Pcl
 
         void TrackEvent(AdjustEvent adjustEvent);
 
-        void TrackSubsessionEnd();
+        void ApplicationDeactivated();
 
-        void TrackSubsessionStart();
+        void ApplicationActivated();
 
         void SetEnabled(bool enabled);
 

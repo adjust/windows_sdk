@@ -9,18 +9,20 @@ namespace AdjustSdk.Pcl
         private ILogger _Logger = AdjustFactory.Logger;
         private List<Action<ActivityHandler>> _SessionParametersActionsArray;
 
+        public bool ApplicationLaunched
+        {
+            get
+            {
+                return _ActivityHandler != null;
+            }
+        }
+
         public AdjustInstance()
         {
         }
 
         public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
-            if (_ActivityHandler != null)
-            {
-                _Logger.Error("Adjust already initialized");
-                return;
-            }
-
             adjustConfig.SessionParametersActions = _SessionParametersActionsArray;
             _ActivityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
         }
@@ -34,13 +36,13 @@ namespace AdjustSdk.Pcl
         public void ApplicationActivated()
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.TrackSubsessionStart();
+            _ActivityHandler.ApplicationActivated();
         }
 
         public void ApplicationDeactivated()
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.TrackSubsessionEnd();
+            _ActivityHandler.ApplicationDeactivated();
         }
 
         public void SetEnabled(bool enabled)

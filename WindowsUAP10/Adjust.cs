@@ -14,32 +14,15 @@ namespace AdjustSdk
     {
         private static readonly DeviceUtil DeviceUtil = new UtilUAP10();
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
-
-        private static bool firstVisibilityChanged = true;
-
-        /// <summary>
-        ///  Tell Adjust that the application is activated (brought to foreground) or deactivated (sent to background).
-        /// </summary>
-        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
-        {
-            if (firstVisibilityChanged)
-            {
-                firstVisibilityChanged = false;
-                return;
-            }
-            if (args.Visible)
-            {
-                AdjustInstance.ApplicationActivated();
-            }
-            else
-            {
-                AdjustInstance.ApplicationDeactivated();
-            }
-        }
+        private static bool IsApplicationActive = false;
 
         public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);
+        }
+
+        public static bool ApplicationLaunched {
+            get { return AdjustInstance.ApplicationLaunched; }
         }
 
         /// <summary>
@@ -53,16 +36,103 @@ namespace AdjustSdk
         /// </param>
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
+            if (ApplicationLaunched) { return; }
             AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
+            RegisterLifecycleEvents();
+        }
+
+        public static void RegisterLifecycleEvents()
+        {
+            try
+            {
+                Window.Current.VisibilityChanged += VisibilityChanged;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Window.Current.VisibilityChanged for app lifecycle, {0}", ex.Message);
+            }
             try
             {
                 Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                AdjustFactory.Logger.Debug("Not possible to detect automatically if the app goes to the background");
+                AdjustFactory.Logger.Debug("Not possible to register Window.Current.CoreWindow.VisibilityChanged for app lifecycle, {0}", ex.Message);
             }
+            try
+            {
+                Application.Current.Resuming += Resuming;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Application.Current.Resuming for app lifecycle, {0}", ex.Message);
+            }
+            try
+            {
+                Application.Current.LeavingBackground += LeavingBackground;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Application.Current.LeavingBackground for app lifecycle, {0}", ex.Message);
+            }
+            try
+            {
+                Application.Current.Suspending += Suspending;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Application.Current.Suspending for app lifecycle, {0}", ex.Message);
+            }
+            try
+            {
+                Application.Current.EnteredBackground += EnteredBackground;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Application.Current.EnteredBackground for app lifecycle, {0}", ex.Message);
+            }
+        }
 
+        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        {
+            VisibilityChanged(args.Visible);
+        }
+
+        private static void VisibilityChanged(object sender, VisibilityChangedEventArgs e)
+        {
+            VisibilityChanged(e.Visible);
+        }
+
+        private static void VisibilityChanged(bool Visible)
+        {
+            if (Visible)
+            {
+                ApplicationActivated();
+            }
+            else
+            {
+                ApplicationDeactivated();
+            }
+        }
+
+        private static void Resuming(object sender, object e)
+        {
+            ApplicationActivated();
+        }
+
+        private static void LeavingBackground(object sender, Windows.ApplicationModel.LeavingBackgroundEventArgs e)
+        {
+            ApplicationActivated();
+        }
+
+        private static void EnteredBackground(object sender, Windows.ApplicationModel.EnteredBackgroundEventArgs e)
+        {
+            ApplicationDeactivated();
+        }
+
+        private static void Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
+        {
+            ApplicationDeactivated();
         }
 
         /// <summary>
@@ -73,6 +143,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationActivated()
         {
+            if (IsApplicationActive) { return; }
+
+            IsApplicationActive = true;
             AdjustInstance.ApplicationActivated();
         }
 
@@ -84,6 +157,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationDeactivated()
         {
+            if (!IsApplicationActive) { return; }
+
+            IsApplicationActive = false;
             AdjustInstance.ApplicationDeactivated();
         }
 

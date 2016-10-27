@@ -30,12 +30,12 @@ namespace AdjustTest.Pcl
             MockLogger.Test("{0} TrackEvent, {1}", prefix, adjustEvent);
         }
 
-        public void TrackSubsessionEnd()
+        public void ApplicationDeactivated()
         {
             MockLogger.Test("{0} TrackSubsessionEnd", prefix);
         }
 
-        public void TrackSubsessionStart()
+        public void ApplicationActivated()
         {
             MockLogger.Test("{0} TrackSubsessionStart", prefix);
         }
