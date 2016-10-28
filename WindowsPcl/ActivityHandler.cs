@@ -103,7 +103,14 @@ namespace AdjustSdk.Pcl
 
         public void TrackEvent(AdjustEvent adjustEvent)
         {
-            _ActionQueue.Enqueue(() => TrackEventI(adjustEvent));
+            _ActionQueue.Enqueue(() => 
+            {
+                if (_ActivityState == null)
+                {
+                    StartI();
+                }
+                TrackEventI(adjustEvent);
+            });
         }
 
         public void ApplicationActivated()
