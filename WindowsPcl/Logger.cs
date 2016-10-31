@@ -6,14 +6,35 @@ namespace AdjustSdk.Pcl
     {
         private const string LogTag = "Adjust";
 
-        public LogLevel LogLevel { private get; set; }
-
+        private LogLevel _LogLevel;
+        public LogLevel LogLevel {
+            get
+            {
+                return _LogLevel;
+            }
+            set
+            {
+                if (_LogLevelLocked) { return; }
+                _LogLevel = value;
+            }
+        }
         public Action<String> LogDelegate { private get; set; }
+        private bool _LogLevelLocked = false;
 
         internal Logger()
         {
             LogLevel = LogLevel.Info;
             LogDelegate = null;
+        }
+
+        public void LockLogLevel()
+        {
+            _LogLevelLocked = true;
+        }
+
+        public bool IsLocked()
+        {
+            return _LogLevelLocked;
         }
 
         public void Verbose(string message, params object[] parameters)

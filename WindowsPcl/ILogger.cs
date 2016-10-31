@@ -4,7 +4,7 @@ namespace AdjustSdk.Pcl
 {
     public interface ILogger
     {
-        AdjustSdk.LogLevel LogLevel { set; }
+        AdjustSdk.LogLevel LogLevel { get; set; }
 
         Action<String> LogDelegate { set; }
 
@@ -19,5 +19,9 @@ namespace AdjustSdk.Pcl
         void Error(string message, params object[] parameters);
 
         void Assert(string message, params object[] parameters);
+
+        void LockLogLevel();
+
+        bool IsLocked();
     }
 }

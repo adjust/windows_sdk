@@ -11,5 +11,6 @@
         Warn,
         Error,
         Assert,
+        Suppress,
     };
 }

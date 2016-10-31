@@ -40,8 +40,9 @@ namespace AdjustSdk
 
         internal List<Action<ActivityHandler>> SessionParametersActions;
 
-        public AdjustConfig(string appToken, string environment)
+        public AdjustConfig(string appToken, string environment, bool allowSupressLevel = false)
         {
+            ConfigureLogLevel(environment, allowSupressLevel);
             if (!IsValid(appToken, environment)) { return; }
 
             AppToken = appToken;
@@ -49,6 +50,29 @@ namespace AdjustSdk
 
             // default values
             EventBufferingEnabled = false;
+        }
+
+        private void ConfigureLogLevel(string environment, bool allowSupressLevel)
+        {
+            if (AdjustConfig.EnvironmentProduction.Equals(environment))
+            {
+                if (allowSupressLevel)
+                {
+                    _Logger.LogLevel = LogLevel.Suppress;
+                }
+                else
+                {
+                    _Logger.LogLevel = LogLevel.Assert;
+                }
+            }
+            else
+            {
+                if (!allowSupressLevel &&
+                    _Logger.LogLevel == LogLevel.Suppress)
+                {
+                    _Logger.LogLevel = LogLevel.Assert;
+                }
+            }
         }
 
         public bool IsValid()
