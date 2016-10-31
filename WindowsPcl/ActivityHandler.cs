@@ -72,6 +72,8 @@ namespace AdjustSdk.Pcl
             // does not need to update packages by default
             _State.UpdatePackages = false;
 
+            _Logger.LockLogLevel();
+
             Init(adjustConfig, deviceUtil);
             _ActionQueue.Enqueue(() => InitI());
         }
@@ -370,11 +372,6 @@ namespace AdjustSdk.Pcl
 
             _SessionInterval = AdjustFactory.GetSessionInterval();
             _SubsessionInterval = AdjustFactory.GetSubsessionInterval();
-
-            if (_Config.Environment.Equals(AdjustConfig.EnvironmentProduction))
-            {
-                _Logger.LogLevel = LogLevel.Assert;
-            }
 
             if (_Config.EventBufferingEnabled)
             {
