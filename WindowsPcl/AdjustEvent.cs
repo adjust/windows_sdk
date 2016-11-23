@@ -42,9 +42,8 @@ namespace AdjustSdk
             if (CallbackParameters.TryGetValue(key, out previousValue))
             {
                 _Logger.Warn("key {0} was overwritten", key);
-                CallbackParameters.Remove(key);
             }
-            CallbackParameters.Add(key, value);
+            CallbackParameters.AddSafe(key, value);
         }
 
         public void AddPartnerParameter(string key, string value)
@@ -61,10 +60,9 @@ namespace AdjustSdk
             if (PartnerParameters.TryGetValue(key, out previousValue))
             {
                 _Logger.Warn("key {0} was overwritten", key);
-                PartnerParameters.Remove(key);
             }
 
-            PartnerParameters.Add(key, value);
+            PartnerParameters.AddSafe(key, value);
         }
 
         public bool IsValid()
