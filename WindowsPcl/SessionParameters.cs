@@ -34,7 +34,7 @@ namespace AdjustSdk.Pcl
             {
                 var key = reader.ReadString();
                 var value = reader.ReadString();
-                dictionary.Add(key, value);
+                dictionary.AddSafe(key, value);
             }
 
             return dictionary;

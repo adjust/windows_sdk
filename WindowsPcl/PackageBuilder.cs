@@ -196,7 +196,7 @@ namespace AdjustSdk.Pcl
         {
             if (string.IsNullOrEmpty(value)) { return; }
 
-            parameters.Add(key, value);
+            parameters.AddSafe(key, value);
         }
 
         internal static void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)

@@ -525,9 +525,18 @@ namespace AdjustSdk.Pcl
                         parametersName,
                         value);
                 }
-                mergedParameters.Add(kvp.Key, kvp.Value);
+                mergedParameters.AddSafe(kvp.Key, kvp.Value);
             }
             return mergedParameters;
+        }
+
+        internal static void AddSafe<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value)
+        {
+            if (key == null || value == null) {
+                return;
+            }
+            dict.Remove(key);
+            dict.Add(key, value);
         }
     }
 

@@ -729,10 +729,9 @@ namespace AdjustSdk.Pcl
                 }
 
                 _Logger.Warn("Key {0} will be overwritten");
-                _SessionParameters.CallbackParameters.Remove(key); 
             }
 
-            _SessionParameters.CallbackParameters.Add(key, value);
+            _SessionParameters.CallbackParameters.AddSafe(key, value);
 
             WriteSessionCallbackParametersI();
         }
@@ -757,10 +756,9 @@ namespace AdjustSdk.Pcl
                 }
 
                 _Logger.Warn("Key {0} will be overwritten");
-                _SessionParameters.PartnerParameters.Remove(key);
             }
 
-            _SessionParameters.PartnerParameters.Add(key, value);
+            _SessionParameters.PartnerParameters.AddSafe(key, value);
 
             WriteSessionPartnerParametersI();
         }
@@ -867,7 +865,7 @@ namespace AdjustSdk.Pcl
 
             if (!ReadAttributionQueryStringI(attribution, keyWOutPrefix, value))
             {
-                extraParameters.Add(keyWOutPrefix, value);
+                extraParameters.AddSafe(keyWOutPrefix, value);
             }
         }
 

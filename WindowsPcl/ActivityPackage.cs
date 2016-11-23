@@ -122,7 +122,7 @@ namespace AdjustSdk.Pcl
 
             for (int i = 0; i < parameterLength; i++)
             {
-                activityPackage.Parameters.Add(
+                activityPackage.Parameters.AddSafe(
                     reader.ReadString(),
                     reader.ReadString()
                 );
@@ -134,7 +134,7 @@ namespace AdjustSdk.Pcl
                 activityPackage.CallbackParameters = new Dictionary<string, string>(callbackParametersCount);
                 for (int i = 0; i < callbackParametersCount; i++)
                 {
-                    activityPackage.CallbackParameters.Add(
+                    activityPackage.CallbackParameters.AddSafe(
                         reader.ReadString(),
                         reader.ReadString()
                     );
@@ -147,7 +147,7 @@ namespace AdjustSdk.Pcl
                 activityPackage.PartnerParameters = new Dictionary<string, string>(partnerParametersCount);
                 for (int i = 0; i < partnerParametersCount; i++)
                 {
-                    activityPackage.PartnerParameters.Add(
+                    activityPackage.PartnerParameters.AddSafe(
                         reader.ReadString(),
                         reader.ReadString()
                     );
