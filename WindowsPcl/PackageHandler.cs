@@ -7,7 +7,8 @@ namespace AdjustSdk.Pcl
 {
     public class PackageHandler : IPackageHandler
     {
-        private const string PackageQueueFilename = "AdjustIOPackageQueue";
+        private const string PackageQueueLegacyFilename = "AdjustIOPackageQueue";
+        private const string PackageQueueVersionedFilename = "AdjustPackageQueueV";
         private const string PackageQueueName = "Package queue";
 
         private ILogger _Logger = AdjustFactory.Logger;
@@ -180,7 +181,7 @@ namespace AdjustSdk.Pcl
         {
             Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", _PackageQueue.Count);
             Util.SerializeToFileAsync(
-                fileName: PackageQueueFilename,
+                fileName: PackageQueueVersionedFilename,
                 objectWriter: ActivityPackage.SerializeListToStream,
                 input: _PackageQueue,
                 sucessMessage: sucessMessage)
@@ -189,11 +190,13 @@ namespace AdjustSdk.Pcl
 
         private void ReadPackageQueueI()
         {
-            _PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
+            _PackageQueue = Util.DeserializeFromFileAsync(PackageQueueVersionedFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
                 () => null, // default value in case of error
-                PackageQueueName) // package queue name
-                .Result; // wait to finish
+                PackageQueueName, // package queue name
+                ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function old non-versioned file
+                PackageQueueLegacyFilename) // name of old non-versioned file
+                .Result; 
 
             if (_PackageQueue != null)
             {

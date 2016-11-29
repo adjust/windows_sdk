@@ -1,44 +1,12 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
 
 namespace AdjustSdk.Pcl
 {
-    public class SessionParameters
+    public class SessionParameters : VersionedSerializable
     {
-        internal Dictionary<string, string> CallbackParameters;
-        internal Dictionary<string, string> PartnerParameters;
-
-        internal static void SerializeDictionaryToStream(Stream stream, Dictionary<string, string> dictionary)
-        {
-            var writer = new BinaryWriter(stream);
-
-            var dictionaryCopy = new Dictionary<string, string>(dictionary);
-            writer.Write(dictionaryCopy.Count);
-            foreach (KeyValuePair<string, string> kvp in dictionaryCopy)
-            {
-                writer.Write(kvp.Key);
-                writer.Write(kvp.Value);
-            }
-        }
-
-        internal static Dictionary<string, string> DeserializeDictionaryFromStream(Stream stream)
-        {
-            Dictionary<string, string> dictionary = null;
-            
-            var reader = new BinaryReader(stream);
-
-            var dictionaryCount = reader.ReadInt32();
-            dictionary = new Dictionary<string, string>(dictionaryCount);
-
-            for (int i = 0; i < dictionaryCount; i++)
-            {
-                var key = reader.ReadString();
-                var value = reader.ReadString();
-                dictionary.AddSafe(key, value);
-            }
-
-            return dictionary;
-        }
+        internal Dictionary<string, string> CallbackParameters { get; set; }
+        internal Dictionary<string, string> PartnerParameters { get; set; }
 
         internal SessionParameters Clone()
         {
@@ -55,5 +23,23 @@ namespace AdjustSdk.Pcl
             }
             return copy;
         }
+        
+        #region Serialization
+        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
+        {
+            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(2);
+
+            AddField(serializableFields, "CallbackParameters", CallbackParameters);
+            AddField(serializableFields, "PartnerParameters", PartnerParameters);
+
+            return serializableFields;
+        }
+
+        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
+        {
+            CallbackParameters = GetFieldValueDictionaryString(serializedFields, "CallbackParameters");
+            PartnerParameters = GetFieldValueDictionaryString(serializedFields, "PartnerParameters");
+        }
+        #endregion Serialization
     }
 }

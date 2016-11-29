@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace AdjustSdk.Pcl
 {
-    public class ActivityPackage
+    public class ActivityPackage : VersionedSerializable
     {
         public ActivityKind ActivityKind { get; set; }
         public string ClientSdk { get; private set; }
@@ -16,9 +17,8 @@ namespace AdjustSdk.Pcl
         public Dictionary<string, string> CallbackParameters { get; set; }
         public Dictionary<string, string> PartnerParameters { get; set; }
 
-        private ActivityPackage()
-        {
-        }
+        public ActivityPackage()
+        { }
 
         public ActivityPackage(ActivityKind activityKind, string clientSdk, Dictionary<string, string> parameters)
         {
@@ -68,44 +68,34 @@ namespace AdjustSdk.Pcl
 
         #region Serialization
 
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, ActivityPackage activityPackage)
+        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
         {
-            var writer = new BinaryWriter(stream);
+            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
 
-            writer.Write(activityPackage.Path);
-            writer.Write("");
-            writer.Write(activityPackage.ClientSdk);
-            writer.Write(ActivityKindUtil.ToString(activityPackage.ActivityKind));
-            writer.Write(activityPackage.Suffix);
+            AddField(serializableFields, "Path", Path);
+            AddField(serializableFields, "ClientSdk", ClientSdk);
+            AddField(serializableFields, "ActivityKind", ActivityKindUtil.ToString(ActivityKind));
+            AddField(serializableFields, "Suffix", Suffix);
+            AddField(serializableFields, "Parameters", Parameters);
+            AddField(serializableFields, "CallbackParameters", CallbackParameters);
+            AddField(serializableFields, "PartnerParameters", PartnerParameters);
 
-            var parametersArray = activityPackage.Parameters.ToArray();
-            writer.Write(parametersArray.Length);
-            for (int i = 0; i < parametersArray.Length; i++)
-            {
-                writer.Write(parametersArray[i].Key);
-                writer.Write(parametersArray[i].Value);
-            }
-            
-            int callbackParametersCount = activityPackage.CallbackParameters == null ? 0 : activityPackage.CallbackParameters.Count;
-            writer.Write(callbackParametersCount);
-            foreach(var callbackParameter in activityPackage.CallbackParameters ?? Enumerable.Empty<KeyValuePair<string, string>>())
-            {
-                writer.Write(callbackParameter.Key);
-                writer.Write(callbackParameter.Value);
-            }
+            return serializableFields;
+        }
 
-            int partnerParametersCount = activityPackage.PartnerParameters == null ? 0 : activityPackage.PartnerParameters.Count;
-            writer.Write(partnerParametersCount);
-            foreach (var partnerParameter in activityPackage.PartnerParameters ?? Enumerable.Empty<KeyValuePair<string, string>>())
-            {
-                writer.Write(partnerParameter.Key);
-                writer.Write(partnerParameter.Value);
-            }
+        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
+        {
+            Path = GetFieldValueString(serializedFields, "Path");
+            ClientSdk = GetFieldValueString(serializedFields, "ClientSdk");
+            ActivityKind = ActivityKindUtil.FromString(GetFieldValueString(serializedFields, "ActivityKind"));
+            Suffix = GetFieldValueString(serializedFields, "Suffix");
+            Parameters = GetFieldValueDictionaryString(serializedFields, "Parameters");
+            CallbackParameters = GetFieldValueDictionaryString(serializedFields, "CallbackParameters");
+            PartnerParameters = GetFieldValueDictionaryString(serializedFields, "PartnerParameters");
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static ActivityPackage DeserializeFromStream(Stream stream)
+        internal static ActivityPackage DeserializeFromStreamLegacy(Stream stream)
         {
             ActivityPackage activityPackage = null;
             var reader = new BinaryReader(stream);
@@ -128,32 +118,6 @@ namespace AdjustSdk.Pcl
                 );
             }
 
-            var callbackParametersCount = Util.TryRead(() => reader.ReadInt32(), () => 0);
-            if (callbackParametersCount > 0)
-            {
-                activityPackage.CallbackParameters = new Dictionary<string, string>(callbackParametersCount);
-                for (int i = 0; i < callbackParametersCount; i++)
-                {
-                    activityPackage.CallbackParameters.AddSafe(
-                        reader.ReadString(),
-                        reader.ReadString()
-                    );
-                }
-            }
-
-            var partnerParametersCount = Util.TryRead(() => reader.ReadInt32(), () => 0);
-            if (partnerParametersCount > 0)
-            {
-                activityPackage.PartnerParameters = new Dictionary<string, string>(partnerParametersCount);
-                for (int i = 0; i < partnerParametersCount; i++)
-                {
-                    activityPackage.PartnerParameters.AddSafe(
-                        reader.ReadString(),
-                        reader.ReadString()
-                    );
-                }
-            }
-
             return activityPackage;
         }
 
@@ -161,17 +125,37 @@ namespace AdjustSdk.Pcl
         internal static void SerializeListToStream(Stream stream, List<ActivityPackage> activityPackageList)
         {
             var writer = new BinaryWriter(stream);
+            writer.Write(Version);
 
             var activityPackageArray = activityPackageList.ToArray();
             writer.Write(activityPackageArray.Length);
             for (int i = 0; i < activityPackageArray.Length; i++)
             {
-                ActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
+                var activityPackage = activityPackageArray[i];
+                SerializeToStream(writer, activityPackage);
             }
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
         internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
+        {
+            var reader = new BinaryReader(stream);
+            var version = reader.ReadInt32();
+
+            var activityPackageLength = reader.ReadInt32();
+            List<ActivityPackage> activityPackageList = new List<ActivityPackage>(activityPackageLength);
+
+            for (int i = 0; i < activityPackageLength; i++)
+            {
+                activityPackageList.Add(
+                    DeserializeFromStream<ActivityPackage>(reader)
+                );
+            }
+
+            return activityPackageList;
+        }
+
+        internal static List<ActivityPackage> DeserializeListFromStreamLegacy(Stream stream)
         {
             List<ActivityPackage> activityPackageList = null;
             var reader = new BinaryReader(stream);
@@ -182,7 +166,7 @@ namespace AdjustSdk.Pcl
             for (int i = 0; i < activityPackageLength; i++)
             {
                 activityPackageList.Add(
-                    ActivityPackage.DeserializeFromStream(stream)
+                    ActivityPackage.DeserializeFromStreamLegacy(stream)
                 );
             }
 
