@@ -103,12 +103,41 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
-            Func<Stream, T> ObjectReader,
+        internal static async Task<T> DeserializeFromFileAsync<T>(string versionedFileName,
+            Func<Stream, T> objectReader,
             Func<T> defaultReturn,
+            string objectName,
+            Func<Stream, T> legacyObjectReader = null,
+            string legacyFileName = null)
+            where T : class
+        {
+            T valueFromVersionedFile = await TryDeserializeFromFileAsync(
+                versionedFileName, objectReader, objectName);
+            if (valueFromVersionedFile != null)
+            {
+                return valueFromVersionedFile;
+            }
+
+            T valueFromLegacyFile = await TryDeserializeFromFileAsync(
+                legacyFileName, legacyObjectReader, objectName);
+            if (valueFromLegacyFile != null)
+            {
+                return valueFromLegacyFile;
+            }
+
+            // fresh start
+            return defaultReturn();
+        }
+
+        private static async Task<T> TryDeserializeFromFileAsync<T>(string fileName,
+            Func<Stream, T> objectReader,
             string objectName)
             where T : class
         {
+            if (fileName == null || objectReader == null)
+            {
+                return null;
+            }
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -117,13 +146,14 @@ namespace AdjustSdk.Pcl
 
                 if (file == null)
                 {
-                    throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
+                    _Logger.Verbose("{0} file not found", objectName);
+                    return null;
                 }
 
                 T output;
                 using (var stream = await file.OpenAsync(FileAccess.Read))
                 {
-                    output = ObjectReader(stream);
+                    output = objectReader(stream);
                 }
                 _Logger.Debug("Read {0}: {1}", objectName, output);
 
@@ -142,12 +172,10 @@ namespace AdjustSdk.Pcl
                 }
             }
 
-            // fresh start
-            return defaultReturn();
+            return null;
         }
 
         internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
-            where T : class
         {
             try
             {
@@ -167,8 +195,12 @@ namespace AdjustSdk.Pcl
             }
 
         }
+
+        internal static async Task SerializeToFileAsync(string fileName, VersionedSerializable input, string objectName)
+        {
+            await SerializeToFileAsync(fileName, VersionedSerializable.SerializeToStream, input, objectName);
+        }
         internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
-            where T : class
         {
             await SerializeToFileAsync(
                 fileName: fileName,
@@ -222,39 +254,7 @@ namespace AdjustSdk.Pcl
         }
 
         #region Serialization
-
-        internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
-        {
-            if (timeSpan.HasValue)
-                return timeSpan.Value.Ticks;
-            else
-                return -1;
-        }
-
-        internal static Int64 SerializeDatetimeToLong(DateTime? dateTime)
-        {
-            if (dateTime.HasValue)
-                return dateTime.Value.Ticks;
-            else
-                return -1;
-        }
-
-        internal static TimeSpan? DeserializeTimeSpanFromLong(Int64 ticks)
-        {
-            if (ticks == -1)
-                return null;
-            else
-                return new TimeSpan(ticks);
-        }
-
-        internal static DateTime? DeserializeDateTimeFromLong(Int64 ticks)
-        {
-            if (ticks == -1)
-                return null;
-            else
-                return new DateTime(ticks);
-        }
-
+        
         internal static T TryRead<T>(Func<T> readStream, Func<T> defaultValue)
         {
             T result;
@@ -301,7 +301,7 @@ namespace AdjustSdk.Pcl
             dict?.TryGetValue(key, out value);
             return value;
         }
-
+        
         internal static int? GetDictionaryInt(Dictionary<string, string> dict, string key)
         {
             var stringValue = GetDictionaryString(dict, key);

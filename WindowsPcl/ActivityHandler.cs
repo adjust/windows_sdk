@@ -6,15 +6,15 @@ namespace AdjustSdk.Pcl
 {
     public class ActivityHandler : IActivityHandler
     {
-        private const string ActivityStateFileName = "AdjustIOActivityState";
+        private const string ActivityStateLegacyFileName = "AdjustIOActivityState";
+        private const string ActivityStateVersionedFileName = "AdjustActivityStateV";
         private const string ActivityStateName = "Activity state";
-        private const string AttributionFileName = "AdjustAttribution";
+        private const string AttributionLegacyFileName = "AdjustAttribution";
+        private const string AttributionVersionedFileName = "AdjustAttributionV";
         private const string AttributionName = "Attribution";
         private const string AdjustPrefix = "adjust_";
-        private const string SessionCallbackParametersFilename = "AdjustSessionCallbackParameters";
-        private const string SessionPartnerParametersFilename = "AdjustSessionPartnerParameters";
-        private const string SessionCallbackParametersName = "Session Callback Parameters";
-        private const string SessionPartnerParametersName = "Session Partner Parameters";
+        private const string SessionParametersVersionedFilename = "AdjustSessionParametersV";
+        private const string SessionParametersName = "Session Parameters";
 
         private TimeSpan BackgroundTimerInterval;
 
@@ -361,10 +361,7 @@ namespace AdjustSdk.Pcl
 
             ReadAttributionI();
             ReadActivityStateI();
-
-            _SessionParameters = new SessionParameters();
-            ReadSessionCallbackParametersI();
-            ReadSessionPartnerParametersI();
+            ReadSessionParametersI();
 
             TimeSpan foregroundTimerInterval = AdjustFactory.GetTimerInterval();
             TimeSpan foregroundTimerStart = AdjustFactory.GetTimerStart();
@@ -733,7 +730,7 @@ namespace AdjustSdk.Pcl
 
             _SessionParameters.CallbackParameters.AddSafe(key, value);
 
-            WriteSessionCallbackParametersI();
+            WriteSessionParametersI();
         }
 
         internal void AddSessionPartnerParameterI(string key, string value)
@@ -760,7 +757,7 @@ namespace AdjustSdk.Pcl
 
             _SessionParameters.PartnerParameters.AddSafe(key, value);
 
-            WriteSessionPartnerParametersI();
+            WriteSessionParametersI();
         }
 
         internal void RemoveSessionCallbackParameterI(string key)
@@ -781,7 +778,7 @@ namespace AdjustSdk.Pcl
 
             _Logger.Debug("Key {0} will be removed", key);
 
-            WriteSessionCallbackParametersI();
+            WriteSessionParametersI();
         }
 
         internal void RemoveSessionPartnerParameterI(string key)
@@ -802,7 +799,7 @@ namespace AdjustSdk.Pcl
 
             _Logger.Debug("Key {0} will be removed", key);
 
-            WriteSessionPartnerParametersI();
+            WriteSessionParametersI();
         }
 
         internal void ResetSessionCallbackParametersI()
@@ -814,7 +811,7 @@ namespace AdjustSdk.Pcl
 
             _SessionParameters.CallbackParameters = null;
 
-            WriteSessionCallbackParametersI();
+            WriteSessionParametersI();
         }
 
         internal void ResetSessionPartnerParametersI()
@@ -826,7 +823,7 @@ namespace AdjustSdk.Pcl
 
             _SessionParameters.PartnerParameters = null;
 
-            WriteSessionPartnerParametersI();
+            WriteSessionParametersI();
         }
         #endregion session parameters
 
@@ -932,8 +929,7 @@ namespace AdjustSdk.Pcl
                 action?.Invoke();
 
                 Util.SerializeToFileAsync(
-                    fileName: ActivityStateFileName,
-                    objectWriter: ActivityState.SerializeToStream,
+                    fileName: ActivityStateVersionedFileName,
                     input: _ActivityState,
                     objectName: ActivityStateName)
                     .Wait();
@@ -943,67 +939,50 @@ namespace AdjustSdk.Pcl
         private void WriteAttributionI()
         {
             Util.SerializeToFileAsync(
-                fileName: AttributionFileName,
-                objectWriter: AdjustAttribution.SerializeToStream,
+                fileName: AttributionVersionedFileName,
                 input: _Attribution,
                 objectName: AttributionName)
                 .Wait();
         }
 
-        private void WriteSessionCallbackParametersI()
+        private void WriteSessionParametersI()
         {
             Util.SerializeToFileAsync(
-                fileName: SessionCallbackParametersFilename,
-                objectWriter: SessionParameters.SerializeDictionaryToStream,
-                input: _SessionParameters.CallbackParameters,
-                objectName: SessionCallbackParametersName)
-                .Wait();
-        }
-
-        private void WriteSessionPartnerParametersI()
-        {
-            Util.SerializeToFileAsync(
-                fileName: SessionPartnerParametersFilename,
-                objectWriter: SessionParameters.SerializeDictionaryToStream,
-                input: _SessionParameters.PartnerParameters,
-                objectName: SessionPartnerParametersName)
+                fileName: SessionParametersVersionedFilename,
+                input: _SessionParameters,
+                objectName: SessionParametersName)
                 .Wait();
         }
 
         private void ReadActivityStateI()
         {
-            _ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
-                ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
+            _ActivityState = Util.DeserializeFromFileAsync(ActivityStateVersionedFileName,
+                VersionedSerializable.DeserializeFromStream<ActivityState>, //deserialize function from Stream to ActivityState
                 () => null, //default value in case of error
-                ActivityStateName) // activity state name
-                .Result;
+                ActivityStateName, // activity state name
+                ActivityState.DeserializeFromStreamLegacy, // deserialize function to read old non-versioned file
+                ActivityStateLegacyFileName) // name of old non-versioned file
+                .Result; 
         }
 
         private void ReadAttributionI()
         {
-            _Attribution = Util.DeserializeFromFileAsync(AttributionFileName,
-                AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
+            _Attribution = Util.DeserializeFromFileAsync(AttributionVersionedFileName,
+                VersionedSerializable.DeserializeFromStream<AdjustAttribution>, //deserialize function from Stream to Attribution
                 () => null, //default value in case of error
-                AttributionName) // attribution name
-                .Result;
+                AttributionName, // attribution name
+                AdjustAttribution.DeserializeFromStreamLegacy, // deserialize function to read old non-versioned file
+                AttributionLegacyFileName) // name of old non-versioned file
+                .Result; 
         }
-
-        private void ReadSessionCallbackParametersI()
+                
+        private void ReadSessionParametersI()
         {
-            _SessionParameters.CallbackParameters = Util.DeserializeFromFileAsync(SessionCallbackParametersFilename,
-                SessionParameters.DeserializeDictionaryFromStream, // deserialize function from Stream to Dictionary
-                () => null, // default value in case of error
-                SessionCallbackParametersName) // session callback parameters name
-                .Result;
-        }
-
-        private void ReadSessionPartnerParametersI()
-        {
-            _SessionParameters.PartnerParameters = Util.DeserializeFromFileAsync(SessionPartnerParametersFilename,
-                SessionParameters.DeserializeDictionaryFromStream, // deserialize function from Stream to Dictionary
-                () => null, // default value in case of error
-                SessionPartnerParametersName) // session callback parameters name
-                .Result;
+            _SessionParameters = Util.DeserializeFromFileAsync(SessionParametersVersionedFilename,
+                VersionedSerializable.DeserializeFromStream<SessionParameters>, // deserialize function from Stream to Dictionary
+                () => new SessionParameters(), // default value in case of error
+                SessionParametersName) // session callback parameters name
+                .Result; 
         }
         #endregion read write
 

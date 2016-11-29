@@ -6,7 +6,7 @@ using System.IO;
 
 namespace AdjustSdk
 {
-    public class AdjustAttribution
+    public class AdjustAttribution : VersionedSerializable
     {
         public string TrackerToken { get; set; }
         public string TrackerName { get; set; }
@@ -120,33 +120,34 @@ namespace AdjustSdk
         }
 
         #region Serialization
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, AdjustAttribution attribution)
+        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
         {
-            var writer = new BinaryWriter(stream);
+            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
 
-            WriteOptionalString(writer, attribution.TrackerToken);
-            WriteOptionalString(writer, attribution.TrackerName);
-            WriteOptionalString(writer, attribution.Network);
-            WriteOptionalString(writer, attribution.Campaign);
-            WriteOptionalString(writer, attribution.Adgroup);
-            WriteOptionalString(writer, attribution.Creative);
-            WriteOptionalString(writer, attribution.ClickLabel);
+            AddField(serializableFields, "TrackerToken", TrackerToken);
+            AddField(serializableFields, "TrackerName", TrackerName);
+            AddField(serializableFields, "Network", Network);
+            AddField(serializableFields, "Campaign", Campaign);
+            AddField(serializableFields, "Adgroup", Adgroup);
+            AddField(serializableFields, "Creative", Creative);
+            AddField(serializableFields, "ClickLabel", ClickLabel);
+
+            return serializableFields;
         }
 
-        private static void WriteOptionalString(BinaryWriter writer, string value)
+        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
         {
-            var hasValue = value != null;
-            writer.Write(hasValue);
-            if (hasValue)
-            {
-                writer.Write(value);
-            }
+            TrackerToken = GetFieldValueString(serializedFields, "TrackerToken");
+            TrackerName = GetFieldValueString(serializedFields, "TrackerName");
+            Network = GetFieldValueString(serializedFields, "Network");
+            Campaign = GetFieldValueString(serializedFields, "Campaign");
+            Adgroup = GetFieldValueString(serializedFields, "Adgroup");
+            Creative = GetFieldValueString(serializedFields, "Creative");
+            ClickLabel = GetFieldValueString(serializedFields, "ClickLabel");
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static AdjustAttribution DeserializeFromStream(Stream stream)
+        internal static AdjustAttribution DeserializeFromStreamLegacy(Stream stream)
         {
             AdjustAttribution attribution = null;
             var reader = new BinaryReader(stream);

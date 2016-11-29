@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace AdjustSdk.Pcl
 {
-    internal class ActivityState
+    public class ActivityState : VersionedSerializable
     {
         // global counters
         internal int EventCount { get; set; }
@@ -22,8 +23,8 @@ namespace AdjustSdk.Pcl
         internal bool Enabled { get; set; }
         internal bool AskingAttribution { get; set; }
         internal bool UpdatePackages { get; set; }
-
-        internal ActivityState()
+        
+        public ActivityState()
         {
             EventCount = 0;
             SessionCount = 0;
@@ -62,40 +63,60 @@ namespace AdjustSdk.Pcl
         }
 
         #region Serialization
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, ActivityState activity)
+        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
         {
-            var writer = new BinaryWriter(stream);
+            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
 
-            writer.Write(activity.EventCount);
-            writer.Write(activity.SessionCount);
-            writer.Write(activity.SubSessionCount);
-            writer.Write(Util.SerializeTimeSpanToLong(activity.SessionLenght));
-            writer.Write(Util.SerializeTimeSpanToLong(activity.TimeSpent));
-            writer.Write(Util.SerializeDatetimeToLong(activity.LastActivity));
-            writer.Write(Util.SerializeDatetimeToLong(activity.CreatedAt));
-            writer.Write(Util.SerializeTimeSpanToLong(activity.LastInterval));
-            writer.Write(activity.Uuid.ToString());
-            writer.Write(activity.Enabled);
-            writer.Write(activity.AskingAttribution);
-            writer.Write(activity.UpdatePackages);
+            AddField(serializableFields, "EventCount", EventCount);
+            AddField(serializableFields, "SessionCount", SessionCount);
+            AddField(serializableFields, "SubSessionCount", SubSessionCount);
+            AddField(serializableFields, "SessionLenght", SessionLenght);
+            AddField(serializableFields, "TimeSpent", TimeSpent);
+            AddField(serializableFields, "LastActivity", LastActivity);
+            AddField(serializableFields, "CreatedAt", CreatedAt);
+            AddField(serializableFields, "LastInterval", LastInterval);
+            AddField(serializableFields, "Uuid", Uuid.ToString());
+            AddField(serializableFields, "Enabled", Enabled);
+            AddField(serializableFields, "AskingAttribution", AskingAttribution);
+            AddField(serializableFields, "UpdatePackages", UpdatePackages);
+            return serializableFields;
+        }
+
+        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
+        {
+            EventCount = GetFieldValueInt(serializedFields, "EventCount", EventCount);
+            SessionCount = GetFieldValueInt(serializedFields, "SessionCount", SessionCount);
+            SubSessionCount = GetFieldValueInt(serializedFields, "SubSessionCount", SubSessionCount);
+            SessionLenght = GetFieldValueTimeSpan(serializedFields, "SessionLenght");
+            TimeSpent = GetFieldValueTimeSpan(serializedFields, "TimeSpent");
+            LastActivity = GetFieldValueDateTime(serializedFields, "LastActivity");
+            CreatedAt = GetFieldValueDateTime(serializedFields, "CreatedAt");
+            LastInterval = GetFieldValueTimeSpan(serializedFields, "LastInterval");
+
+            var uuidString = GetFieldValueString(serializedFields, "Uuid");
+            Uuid = uuidString != null ? Guid.Parse(uuidString) : Guid.NewGuid();
+
+            Enabled = GetFieldValueBool(serializedFields, "Enabled", defaultValue: true);
+            AskingAttribution = GetFieldValueBool(serializedFields, "AskingAttribution", defaultValue: false);
+            UpdatePackages = GetFieldValueBool(serializedFields, "UpdatePackages", defaultValue: false);
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static ActivityState DeserializeFromStream(Stream stream)
+        internal static ActivityState DeserializeFromStreamLegacy(Stream stream)
         {
             ActivityState activity = null;
             var reader = new BinaryReader(stream);
 
             activity = new ActivityState();
+            
             activity.EventCount = reader.ReadInt32();
             activity.SessionCount = reader.ReadInt32();
             activity.SubSessionCount = reader.ReadInt32();
-            activity.SessionLenght = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-            activity.TimeSpent = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
-            activity.LastActivity = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-            activity.CreatedAt = Util.DeserializeDateTimeFromLong(reader.ReadInt64());
-            activity.LastInterval = Util.DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.SessionLenght = DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.TimeSpent = DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.LastActivity = DeserializeDateTimeFromLong(reader.ReadInt64());
+            activity.CreatedAt = DeserializeDateTimeFromLong(reader.ReadInt64());
+            activity.LastInterval = DeserializeTimeSpanFromLong(reader.ReadInt64());
 
             // create Uuid for migrating devices
             activity.Uuid = Util.TryRead(() => Guid.Parse(reader.ReadString()), () => Guid.NewGuid());
@@ -103,10 +124,24 @@ namespace AdjustSdk.Pcl
             activity.Enabled = Util.TryRead(() => reader.ReadBoolean(), () => true);
             // default value for AskingAttribution for migrating devices
             activity.AskingAttribution = Util.TryRead(() => reader.ReadBoolean(), () => false);
-            
-            activity.UpdatePackages = Util.TryRead(() => reader.ReadBoolean(), () => false);
 
             return activity;
+        }
+
+        private static TimeSpan? DeserializeTimeSpanFromLong(long ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new TimeSpan(ticks);
+        }
+
+        private static DateTime? DeserializeDateTimeFromLong(long ticks)
+        {
+            if (ticks == -1)
+                return null;
+            else
+                return new DateTime(ticks);
         }
         #endregion Serialization
     }
