@@ -178,7 +178,7 @@ namespace AdjustSdk.Pcl
         {
             AddString(parameters, "app_token", _Config.AppToken);
             AddString(parameters, "environment", _Config.Environment);
-            AddBool(parameters, "needs_response_details", _Config.HasResponseDelegate);
+            AddBool(parameters, "needs_response_details", true);
         }
 
         private void InjectActivityState(Dictionary<string, string> parameters)

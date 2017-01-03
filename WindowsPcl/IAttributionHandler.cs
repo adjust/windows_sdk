@@ -4,7 +4,7 @@ namespace AdjustSdk.Pcl
 {
     public interface IAttributionHandler
     {
-        void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate);
+        void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused);
 
         void CheckSessionResponse(SessionResponseData sessionResponseData);
 

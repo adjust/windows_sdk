@@ -407,8 +407,7 @@ namespace AdjustSdk.Pcl
 
             _AttributionHandler = AdjustFactory.GetAttributionHandler(this,
                 attributionPackage,
-                IsPausedI(sdkClickHandlerOnly: false),
-                _Config.HasAttributionDelegate);
+                IsPausedI(sdkClickHandlerOnly: false));
 
             _SdkClickHandler = AdjustFactory.GetSdkClickHandler(IsPausedI(sdkClickHandlerOnly: true));
 
@@ -924,7 +923,7 @@ namespace AdjustSdk.Pcl
 
         private void WriteActivityStateS(Action action)
         {
-            lock (_ActivityStateLock)
+            lock (_ActivityStateLock) // lock prevents sync issues from non internal accesses
             {
                 action?.Invoke();
 

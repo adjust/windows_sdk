@@ -25,18 +25,6 @@ namespace AdjustSdk
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
-        public bool HasAttributionDelegate { get { return AttributionChanged != null; } }
-        public bool HasResponseDelegate
-        {
-            get
-            {
-                return HasAttributionDelegate ||
-                    EventTrackingSucceeded != null ||
-                    EventTrackingFailed != null ||
-                    SesssionTrackingSucceeded != null ||
-                    SesssionTrackingFailed != null;
-            }
-        }
 
         internal List<Action<ActivityHandler>> SessionParametersActions;
 

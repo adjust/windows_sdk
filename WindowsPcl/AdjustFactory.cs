@@ -54,15 +54,14 @@ namespace AdjustSdk.Pcl
 
         public static IAttributionHandler GetAttributionHandler(IActivityHandler activityHandler,
             ActivityPackage attributionPacakage,
-            bool startPaused,
-            bool hasDelegate)
+            bool startPaused)
         {
             if (_IAttributionHandler == null)
             {
-                return new AttributionHandler(activityHandler, attributionPacakage, startPaused, hasDelegate);
+                return new AttributionHandler(activityHandler, attributionPacakage, startPaused);
             }
 
-            _IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused, hasDelegate);
+            _IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused);
             return _IAttributionHandler;
         }
 
