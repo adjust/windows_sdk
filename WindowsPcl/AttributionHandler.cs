@@ -14,28 +14,25 @@ namespace AdjustSdk.Pcl
         private TimerOnce _Timer;
         private ActivityPackage _AttributionPackage;
         private bool _Paused;
-        private bool _HasDelegate;
         private HttpClient _HttpClient;
         private string _UrlQuery;
 
-        public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
+        public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
             Init(activityHandler: activityHandler,
                 attributionPackage: attributionPackage,
-                startPaused: startPaused,
-                hasDelegate: hasDelegate);
+                startPaused: startPaused);
 
             _UrlQuery = BuildUrlQuery();
 
             _Timer = new TimerOnce(actionQueue: _ActionQueue, action: GetAttributionI);
         }
 
-        public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
+        public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
             _ActivityHandler = activityHandler;
             _AttributionPackage = attributionPackage;
             _Paused = startPaused;
-            _HasDelegate = hasDelegate;
         }
 
         public void CheckSessionResponse(SessionResponseData responseData)
@@ -128,8 +125,6 @@ namespace AdjustSdk.Pcl
 
         private void GetAttributionI()
         {
-            if (!_HasDelegate) { return; }
-
             if (_Paused)
             {
                 _Logger.Debug("Attribution handler is paused");
