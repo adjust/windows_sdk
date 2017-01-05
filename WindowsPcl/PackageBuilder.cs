@@ -116,6 +116,7 @@ namespace AdjustSdk.Pcl
 
             InjectDeviceInfoIds(parameters);
             InjectConfig(parameters);
+            InjectWindowsUuid(parameters);
             InjectCreatedAt(parameters);
 
             return parameters;
@@ -183,10 +184,15 @@ namespace AdjustSdk.Pcl
 
         private void InjectActivityState(Dictionary<string, string> parameters)
         {
+            InjectWindowsUuid(parameters);
             AddInt(parameters, "session_count", _ActivityState?.SessionCount);
             AddInt(parameters, "subsession_count", _ActivityState?.SubSessionCount);
             AddTimeSpan(parameters, "session_length", _ActivityState?.SessionLenght);
             AddTimeSpan(parameters, "time_spent", _ActivityState?.TimeSpent);
+        }
+
+        private void InjectWindowsUuid(Dictionary<string, string> parameters)
+        {
             AddString(parameters, "win_uuid", _ActivityState?.Uuid.ToString());
         }
 
