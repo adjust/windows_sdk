@@ -15,7 +15,6 @@ namespace AdjustSdk.Pcl
         internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
         internal TimeSpan? TimeSpent { get; set; }
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
-        internal DateTime? CreatedAt { get; set; }
         internal TimeSpan? LastInterval { get; set; }
 
         // persistent data
@@ -26,14 +25,7 @@ namespace AdjustSdk.Pcl
         
         public ActivityState()
         {
-            EventCount = 0;
-            SessionCount = 0;
             SubSessionCount = -1; // -1 means unknown
-            SessionLenght = null;
-            TimeSpent = null;
-            LastActivity = null;
-            CreatedAt = null;
-            LastInterval = null;
             Uuid = Guid.NewGuid();
             Enabled = true;
             AskingAttribution = false;
@@ -46,7 +38,6 @@ namespace AdjustSdk.Pcl
             SessionLenght = new TimeSpan();
             TimeSpent = new TimeSpan();
             LastActivity = now;
-            CreatedAt = null;
             LastInterval = null;
         }
 
@@ -73,7 +64,6 @@ namespace AdjustSdk.Pcl
             AddField(serializableFields, "SessionLenght", SessionLenght);
             AddField(serializableFields, "TimeSpent", TimeSpent);
             AddField(serializableFields, "LastActivity", LastActivity);
-            AddField(serializableFields, "CreatedAt", CreatedAt);
             AddField(serializableFields, "LastInterval", LastInterval);
             AddField(serializableFields, "Uuid", Uuid.ToString());
             AddField(serializableFields, "Enabled", Enabled);
@@ -90,7 +80,6 @@ namespace AdjustSdk.Pcl
             SessionLenght = GetFieldValueTimeSpan(serializedFields, "SessionLenght");
             TimeSpent = GetFieldValueTimeSpan(serializedFields, "TimeSpent");
             LastActivity = GetFieldValueDateTime(serializedFields, "LastActivity");
-            CreatedAt = GetFieldValueDateTime(serializedFields, "CreatedAt");
             LastInterval = GetFieldValueTimeSpan(serializedFields, "LastInterval");
 
             var uuidString = GetFieldValueString(serializedFields, "Uuid");
@@ -115,7 +104,7 @@ namespace AdjustSdk.Pcl
             activity.SessionLenght = DeserializeTimeSpanFromLong(reader.ReadInt64());
             activity.TimeSpent = DeserializeTimeSpanFromLong(reader.ReadInt64());
             activity.LastActivity = DeserializeDateTimeFromLong(reader.ReadInt64());
-            activity.CreatedAt = DeserializeDateTimeFromLong(reader.ReadInt64());
+            DeserializeDateTimeFromLong(reader.ReadInt64()); // created at
             activity.LastInterval = DeserializeTimeSpanFromLong(reader.ReadInt64());
 
             // create Uuid for migrating devices
