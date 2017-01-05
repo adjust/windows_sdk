@@ -10,6 +10,7 @@ namespace AdjustSdk
         Event,
         Click,
         Attribution,
+        Info,
     }
 
     public static class ActivityKindUtil
@@ -24,6 +25,8 @@ namespace AdjustSdk
                 return ActivityKind.Click;
             else if ("attribution".Equals(activityKindString))
                 return ActivityKind.Attribution;
+            else if ("info".Equals(activityKindString))
+                return ActivityKind.Info;
             else
                 return ActivityKind.Unknown;
         }
@@ -41,6 +44,7 @@ namespace AdjustSdk
                 case ActivityKind.Event: return "/event";
                 case ActivityKind.Click: return "/sdk_click";
                 case ActivityKind.Attribution: return "/attribution";
+                case ActivityKind.Info: return "/sdk_info";
                 default: return null;
             }
         }

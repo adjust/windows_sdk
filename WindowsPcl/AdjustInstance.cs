@@ -8,6 +8,7 @@ namespace AdjustSdk.Pcl
         private IActivityHandler _ActivityHandler;
         private ILogger _Logger = AdjustFactory.Logger;
         private List<Action<ActivityHandler>> _SessionParametersActionsArray;
+        private string _PushToken;
 
         public bool ApplicationLaunched
         {
@@ -23,6 +24,7 @@ namespace AdjustSdk.Pcl
 
         public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
         {
+            adjustConfig.PushToken = _PushToken;
             adjustConfig.SessionParametersActions = _SessionParametersActionsArray;
             _ActivityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
         }
@@ -192,6 +194,17 @@ namespace AdjustSdk.Pcl
             {
                 activityHandler.ResetSessionPartnerParametersI();
             });
+        }
+
+        public void SetPushToken(string pushToken)
+        {
+            if (_ActivityHandler != null)
+            {
+                _ActivityHandler.SetPushToken(pushToken);
+                return;
+            }
+
+            _PushToken = pushToken;
         }
 
         public void SendFirstPackages()

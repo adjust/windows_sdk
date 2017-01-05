@@ -234,5 +234,10 @@ namespace AdjustSdk
         {
             AdjustInstance.SendFirstPackages();
         }
+
+        public static void SetPushToken(string pushToken)
+        {
+            AdjustInstance.SetPushToken(pushToken);
+        }
     }
 }

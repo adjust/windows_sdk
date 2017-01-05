@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using System;
+using System.Collections.Generic;
 
 namespace AdjustSdk
 {
@@ -27,6 +28,7 @@ namespace AdjustSdk
 
 
         internal List<Action<ActivityHandler>> SessionParametersActions;
+        internal string PushToken;
 
         public AdjustConfig(string appToken, string environment, bool allowSupressLevel = false)
         {
