@@ -48,5 +48,7 @@ namespace AdjustSdk.Pcl
             string deeplink);
 
         void SendFirstPackages();
+
+        void SetPushToken(string pushToken);
     }
 }

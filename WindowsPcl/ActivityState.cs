@@ -22,6 +22,7 @@ namespace AdjustSdk.Pcl
         internal bool Enabled { get; set; }
         internal bool AskingAttribution { get; set; }
         internal bool UpdatePackages { get; set; }
+        internal string PushToken { get; set; }
         
         public ActivityState()
         {
@@ -69,6 +70,8 @@ namespace AdjustSdk.Pcl
             AddField(serializableFields, "Enabled", Enabled);
             AddField(serializableFields, "AskingAttribution", AskingAttribution);
             AddField(serializableFields, "UpdatePackages", UpdatePackages);
+            AddField(serializableFields, "PushToken", PushToken);
+
             return serializableFields;
         }
 
@@ -88,6 +91,8 @@ namespace AdjustSdk.Pcl
             Enabled = GetFieldValueBool(serializedFields, "Enabled", defaultValue: true);
             AskingAttribution = GetFieldValueBool(serializedFields, "AskingAttribution", defaultValue: false);
             UpdatePackages = GetFieldValueBool(serializedFields, "UpdatePackages", defaultValue: false);
+
+            PushToken = GetFieldValueString(serializedFields, "PushToken");
         }
 
         // does not close stream received. Caller is responsible to close if it wants it

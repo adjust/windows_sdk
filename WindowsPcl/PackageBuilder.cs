@@ -103,6 +103,16 @@ namespace AdjustSdk.Pcl
             return new ActivityPackage(ActivityKind.Click, _DeviceInfo.ClientSdk, parameters);
         }
 
+        internal ActivityPackage BuildInfoPackage(string source)
+        {
+            var parameters = GetIdsParameters();
+
+            AddString(parameters, "source", source);
+            InjectPushToken(parameters);
+
+            return new ActivityPackage(ActivityKind.Info, _DeviceInfo.ClientSdk, parameters);
+        }
+
         internal ActivityPackage BuildAttributionPackage()
         {
             var parameters = GetIdsParameters();
@@ -185,6 +195,8 @@ namespace AdjustSdk.Pcl
         private void InjectActivityState(Dictionary<string, string> parameters)
         {
             InjectWindowsUuid(parameters);
+            InjectPushToken(parameters);
+
             AddInt(parameters, "session_count", _ActivityState?.SessionCount);
             AddInt(parameters, "subsession_count", _ActivityState?.SubSessionCount);
             AddTimeSpan(parameters, "session_length", _ActivityState?.SessionLenght);
@@ -194,6 +206,11 @@ namespace AdjustSdk.Pcl
         private void InjectWindowsUuid(Dictionary<string, string> parameters)
         {
             AddString(parameters, "win_uuid", _ActivityState?.Uuid.ToString());
+        }
+
+        private void InjectPushToken(Dictionary<string, string> parameters)
+        {
+            AddString(parameters, "push_token", _ActivityState?.PushToken);
         }
 
         #region AddParameter

@@ -305,6 +305,17 @@ namespace AdjustSdk.Pcl
         {
             _ActionQueue.Enqueue(() => ResetSessionPartnerParametersI());
         }
+        
+        public void SetPushToken(string pushToken)
+        {
+            _ActionQueue.Enqueue(() => {
+                if (_ActivityState == null)
+                {
+                    StartI();
+                }
+                SetPushTokenI(pushToken);
+            });
+        }
 
         public void LaunchSessionResponseTasks(SessionResponseData sessionResponseData)
         {
@@ -380,6 +391,15 @@ namespace AdjustSdk.Pcl
                 _Logger.Info("Default tracker: '{0}'", _Config.DefaultTracker);
             }
 
+            if (_Config.PushToken != null)
+            {
+                _Logger.Info("Push token: '{0}'", _Config.PushToken);
+                if (_ActivityState != null)
+                {
+                    SetPushToken(_Config.PushToken);
+                }
+            }
+
             _ForegroundTimer = new TimerCycle(_ActionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
 
             // create background timer
@@ -452,6 +472,7 @@ namespace AdjustSdk.Pcl
                 // create fresh activity state
                 _ActivityState = new ActivityState();
                 _ActivityState.SessionCount = 1; // first session
+                _ActivityState.PushToken = _Config.PushToken;
 
                 TransferSessionPackageI();
 
@@ -825,6 +846,28 @@ namespace AdjustSdk.Pcl
             WriteSessionParametersI();
         }
         #endregion session parameters
+
+        private void SetPushTokenI(string pushToken)
+        {
+            if (pushToken == null) { return; }
+
+            if (pushToken == _ActivityState.PushToken) {
+                return;
+            }
+
+            // save new push token
+            _ActivityState.PushToken = pushToken;
+            WriteActivityStateI();
+
+            // build info package
+            var now = DateTime.Now;
+            var infoBuilder = new PackageBuilder(_Config, _DeviceInfo, now);
+            var infoPackage = infoBuilder.BuildInfoPackage("push");
+
+            // send info package
+            _PackageHandler.AddPackage(infoPackage);
+            _PackageHandler.SendFirstPackage();
+        }
 
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,
             AdjustAttribution attribution,
