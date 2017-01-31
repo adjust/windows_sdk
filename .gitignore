@@ -126,3 +126,6 @@ ClientBin/
 *.publishsettings
 node_modules/
 bower_components/
+
+~# windows generated files
+._.git
