@@ -38,12 +38,12 @@ namespace AdjustSdk.Pcl
             return IActivityHandler;
         }
 
-        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, bool startPaused)
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, bool startPaused, DeviceUtil deviceUtil)
         {
             if (IPackageHandler == null)
-                return new PackageHandler(activityHandler, startPaused);
+                return new PackageHandler(activityHandler, startPaused, deviceUtil);
 
-            IPackageHandler.Init(activityHandler, startPaused);
+            IPackageHandler.Init(activityHandler, startPaused, deviceUtil);
             return IPackageHandler;
         }
 

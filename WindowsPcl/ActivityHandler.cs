@@ -274,7 +274,7 @@ namespace AdjustSdk.Pcl
             ReadAttribution();
             ReadActivityState();
 
-            PackageHandler = AdjustFactory.GetPackageHandler(this, Paused());
+            PackageHandler = AdjustFactory.GetPackageHandler(this, Paused(), DeviceUtil);
 
             var attributionPackage = GetAttributionPackage();
 
@@ -524,6 +524,7 @@ namespace AdjustSdk.Pcl
         private void WriteActivityStateInternal()
         {
             Util.SerializeToFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
                 fileName: ActivityStateFileName,
                 objectWriter: ActivityState.SerializeToStream, 
                 input: ActivityState,
@@ -534,6 +535,7 @@ namespace AdjustSdk.Pcl
         private void WriteAttributionInternal()
         {
             Util.SerializeToFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
                 fileName: AttributionFileName, 
                 objectWriter: AdjustAttribution.SerializeToStream,
                 input: Attribution,
@@ -543,19 +545,23 @@ namespace AdjustSdk.Pcl
 
         private void ReadActivityState()
         {
-            ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
-                ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-                () => null, //default value in case of error
-                ActivityStateName) // activity state name
+            ActivityState = Util.DeserializeFromFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
+                fileName: ActivityStateFileName,
+                objectReader: ActivityState.DeserializeFromStream,
+                defaultReturn: () => null,
+                objectName: ActivityStateName)
                 .Result;
         }
 
         private void ReadAttribution()
         {
-            Attribution = Util.DeserializeFromFileAsync(AttributionFileName,
-                AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
-                () => null, //default value in case of error
-                AttributionName) // attribution name
+            Attribution = Util.DeserializeFromFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
+                fileName: AttributionFileName,
+                objectReader: AdjustAttribution.DeserializeFromStream,
+                defaultReturn: () => null,
+                objectName: AttributionName)
                 .Result;
         }
 

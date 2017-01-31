@@ -2,17 +2,18 @@
 using AdjustSdk.Uap;
 using PCLStorage;
 using System;
+using System.Threading;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.UI.Core;
 
 namespace AdjustSdk
 {
-    public class UtilUAP10 : DeviceUtil
+    public class UtilUW81 : DeviceUtil
     {
         private CoreDispatcher Dispatcher;
-        private Lazy<IFileSystem> _fileSystem = new Lazy<IFileSystem>(() => new UniversalFileSystem(), System.Threading.LazyThreadSafetyMode.PublicationOnly);
+        private Lazy<IFileSystem> _fileSystem = new Lazy<IFileSystem>(() => new UniversalFileSystem(), LazyThreadSafetyMode.PublicationOnly);
 
-        public UtilUAP10()
+        public UtilUW81()
         {
             // must be called from the UI thread
             var coreWindow = CoreWindow.GetForCurrentThread();
@@ -23,7 +24,7 @@ namespace AdjustSdk
         public DeviceInfo GetDeviceInfo()
         {
             var easClientDeviceInformation = new EasClientDeviceInformation();
-            
+
             return new DeviceInfo
             {
                 ClientSdk = GetClientSdk(),
@@ -43,8 +44,6 @@ namespace AdjustSdk
                 EasFriendlyName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.FriendlyName),
                 EasId = UtilUap.ExceptionWrap(() => easClientDeviceInformation.Id.ToString()),
                 EasOperatingSystem = UtilUap.ExceptionWrap(() => easClientDeviceInformation.OperatingSystem),
-                EasSystemFirmwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemFirmwareVersion),
-                EasSystemHardwareVersion = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemHardwareVersion),
                 EasSystemManufacturer = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemManufacturer),
                 EasSystemProductName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemProductName),
                 EasSystemSku = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemSku),
@@ -66,6 +65,8 @@ namespace AdjustSdk
             UtilUap.runInForeground(Dispatcher, () => Windows.System.Launcher.LaunchUriAsync(deepLinkUri));
         }
 
+        private string GetClientSdk() { return "wstore4.0.2"; }
+
         public IFileSystem FileSystem
         {
             get
@@ -74,9 +75,7 @@ namespace AdjustSdk
             }
         }
 
-        private string GetClientSdk() { return "wuap4.0.2"; }
-
-        private static string GetOsName()
+        private string GetOsName()
         {
             return "windows";
         }

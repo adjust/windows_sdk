@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using PCLStorage;
-//using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -34,11 +33,11 @@ namespace AdjustSdk.Pcl
             return stringBuilder.ToString();
         }
 
-        public static bool DeleteFile(string filename)
+        public static bool DeleteFile(IFileSystem fileSystem, string filename)
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
+                var localStorage = fileSystem.LocalStorage;
                 var activityStateFile = localStorage.GetFileAsync(filename).Result;
                 if (activityStateFile != null)
                 {
@@ -74,7 +73,7 @@ namespace AdjustSdk.Pcl
         {
             // check if the exception type is File Not Found (FNF)
             if (ex is PCLStorage.Exceptions.FileNotFoundException
-                || ex is FileNotFoundException)
+                || ex is System.IO.FileNotFoundException)
                 return true;
 
             // if the exception is an aggregate of exceptions
@@ -102,15 +101,17 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
-            Func<Stream, T> ObjectReader,
+        internal static async Task<T> DeserializeFromFileAsync<T>(IFileSystem fileSystem,
+            string fileName,
+            Func<Stream, T> objectReader,
             Func<T> defaultReturn,
-            string objectName)
+            string objectName
+        )
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
+                var localStorage = fileSystem.LocalStorage;
 
                 var file = await localStorage.GetFileAsync(fileName);
 
@@ -122,7 +123,7 @@ namespace AdjustSdk.Pcl
                 T output;
                 using (var stream = await file.OpenAsync(FileAccess.Read))
                 {
-                    output = ObjectReader(stream);
+                    output = objectReader(stream);
                 }
                 Logger.Debug("Read {0}: {1}", objectName, output);
 
@@ -145,12 +146,17 @@ namespace AdjustSdk.Pcl
             return defaultReturn();
         }
 
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
+        internal static async Task SerializeToFileAsync<T>(IFileSystem fileSystem,
+            string fileName,
+            Action<Stream, T> objectWriter,
+            T input,
+            Func<string> sucessMessage
+        )
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
+                var localStorage = fileSystem.LocalStorage;
                 var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
 
                 using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
@@ -166,10 +172,16 @@ namespace AdjustSdk.Pcl
             }
 
         }
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
+        internal static async Task SerializeToFileAsync<T>(IFileSystem fileSystem, 
+            string fileName,
+            Action<Stream, T> objectWriter,
+            T input,
+            string objectName
+        )
             where T : class
         {
             await SerializeToFileAsync(
+                fileSystem: fileSystem,
                 fileName: fileName,
                 objectWriter: objectWriter,
                 input: input,

@@ -15,24 +15,27 @@ namespace AdjustSdk.Pcl
         private IRequestHandler RequestHandler { get; set; }
         private IActivityHandler ActivityHandler { get; set; }
         private ILogger Logger { get; set; }
+        private DeviceUtil DeviceUtil { get; set; }
+
 
         private ManualResetEvent InternalWaitHandle;
 
         private bool IsPaused;
 
-        public PackageHandler(IActivityHandler activityHandler, bool startPaused)
+        public PackageHandler(IActivityHandler activityHandler, bool startPaused, DeviceUtil deviceUtil)
         {
             Logger = AdjustFactory.Logger;
 
             InternalQueue = new ActionQueue("adjust.PackageQueue");
 
-            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused));
+            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused, deviceUtil));
         }
 
-        public void Init(IActivityHandler activityHandler, bool startPaused)
+        public void Init(IActivityHandler activityHandler, bool startPaused, DeviceUtil deviceUtil)
         {
             ActivityHandler = activityHandler;
             IsPaused = startPaused;
+            DeviceUtil = deviceUtil;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
@@ -70,9 +73,9 @@ namespace AdjustSdk.Pcl
             ActivityHandler.FinishedTrackingActivity(jsonDict);
         }
 
-        private void InitInternal(IActivityHandler activityHandler, bool startPaused)
+        private void InitInternal(IActivityHandler activityHandler, bool startPaused, DeviceUtil deviceUtil)
         {
-            Init(activityHandler, startPaused);
+            Init(activityHandler, startPaused, deviceUtil);
 
             ReadPackageQueue();
 
@@ -141,6 +144,7 @@ namespace AdjustSdk.Pcl
         {
             Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
             Util.SerializeToFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
                 fileName: PackageQueueFilename,
                 objectWriter: ActivityPackage.SerializeListToStream,
                 input: PackageQueue,
@@ -150,10 +154,12 @@ namespace AdjustSdk.Pcl
 
         private void ReadPackageQueue()
         {
-            PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
-                ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
-                () => null, // default value in case of error
-                PackageQueueName) // package queue name
+            PackageQueue = Util.DeserializeFromFileAsync(
+                fileSystem: DeviceUtil.FileSystem,
+                fileName: PackageQueueFilename,
+                objectReader: ActivityPackage.DeserializeListFromStream,
+                defaultReturn: () => null,
+                objectName: PackageQueueName)
                 .Result; // wait to finish
 
             if (PackageQueue != null)

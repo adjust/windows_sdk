@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PCLStorage;
+using System;
 
 namespace AdjustSdk.Pcl
 {
@@ -11,5 +12,7 @@ namespace AdjustSdk.Pcl
         void Sleep(int milliseconds);
 
         void LauchDeeplink(Uri deeplinkUri);
+
+        IFileSystem FileSystem { get; }
     }
 }
