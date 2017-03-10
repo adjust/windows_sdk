@@ -445,9 +445,9 @@ parameter. Here is a quick summary of its properties:
 
 ## License
 
-The adjust-sdk is licensed under the MIT License.
+The adjust SDK is licensed under the MIT License.
 
-Copyright (c) 2015 adjust GmbH,
+Copyright (c) 2012-2017 adjust GmbH,
 http://www.adjust.com
 
 Permission is hereby granted, free of charge, to any person obtaining
