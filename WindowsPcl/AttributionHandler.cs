@@ -87,7 +87,7 @@ namespace AdjustSdk.Pcl
             _ActivityHandler.SetAskingAttribution(false);
 
             var attributionString = Util.GetDictionaryString(responseData.JsonResponse, "attribution");
-            responseData.Attribution = AdjustAttribution.FromJsonString(attributionString);
+            responseData.Attribution = AdjustAttribution.FromJsonString(attributionString, responseData.Adid);
         }
 
         private void CheckSessionResponseI(SessionResponseData sessionResponseData)
