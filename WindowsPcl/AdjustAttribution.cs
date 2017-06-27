@@ -15,10 +15,11 @@ namespace AdjustSdk
         public string Adgroup { get; set; }
         public string Creative { get; set; }
         public string ClickLabel { get; set; }
+        public string Adid { get; set; }
 
         internal Dictionary<string, string> Json { get; set; }
 
-        public static AdjustAttribution FromJsonString(string attributionString)
+        public static AdjustAttribution FromJsonString(string attributionString, string adid)
         {
             if (attributionString == null) { return null; }
 
@@ -34,6 +35,7 @@ namespace AdjustSdk
                     Adgroup = Util.GetDictionaryString(jsonDict, "adgroup"),
                     Creative = Util.GetDictionaryString(jsonDict, "creative"),
                     ClickLabel = Util.GetDictionaryString(jsonDict, "click_label"),
+                    Adid = adid,
                     Json = jsonDict,
                 };
                 return attribution;
@@ -58,6 +60,7 @@ namespace AdjustSdk
             if (!EqualString(Adgroup, other.Adgroup)) { return false; }
             if (!EqualString(Creative, other.Creative)) { return false; }
             if (!EqualString(ClickLabel, other.ClickLabel)) { return false; }
+            if (!EqualString(Adid, other.Adid)) { return false; }
 
             return true;
         }
@@ -72,20 +75,22 @@ namespace AdjustSdk
             hashCode = 37 * hashCode + HashString(Adgroup);
             hashCode = 37 * hashCode + HashString(Creative);
             hashCode = 37 * hashCode + HashString(ClickLabel);
+            hashCode = 37 * hashCode + HashString(Adid);
 
             return hashCode;
         }
 
         public override string ToString()
         {
-            return Util.f("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6}",
+            return Util.f("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6} adid:{7}",
                 TrackerToken, 
                 TrackerName, 
                 Network, 
                 Campaign, 
                 Adgroup, 
                 Creative, 
-                ClickLabel);
+                ClickLabel,
+                Adid);
         }
 
         public Dictionary<string, string> ToDictionary()
@@ -99,6 +104,7 @@ namespace AdjustSdk
                 {"adgroup", Adgroup},
                 {"creative", Creative},
                 {"clickLabel", ClickLabel},
+                {"adid", Adid}
             };
         }
 
@@ -131,6 +137,7 @@ namespace AdjustSdk
             AddField(serializableFields, "Adgroup", Adgroup);
             AddField(serializableFields, "Creative", Creative);
             AddField(serializableFields, "ClickLabel", ClickLabel);
+            AddField(serializableFields, "Adid", Adid);
 
             return serializableFields;
         }
@@ -144,6 +151,7 @@ namespace AdjustSdk
             Adgroup = GetFieldValueString(serializedFields, "Adgroup");
             Creative = GetFieldValueString(serializedFields, "Creative");
             ClickLabel = GetFieldValueString(serializedFields, "ClickLabel");
+            Adid = GetFieldValueString(serializedFields, "Adid");
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
