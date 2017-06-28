@@ -212,5 +212,11 @@ namespace AdjustSdk.Pcl
             if (!CheckActivityHandler()) { return; }
             _ActivityHandler.SendFirstPackages();
         }
+
+        public string GetAdid()
+        {
+            if (!CheckActivityHandler()) { return null; }
+            return _ActivityHandler.GetAdid();
+        }
     }
 }

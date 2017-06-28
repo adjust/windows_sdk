@@ -23,6 +23,8 @@ namespace AdjustSdk.Pcl
         internal bool AskingAttribution { get; set; }
         internal bool UpdatePackages { get; set; }
         internal string PushToken { get; set; }
+
+        internal string Adid { get; set; }
         
         public ActivityState()
         {
@@ -31,6 +33,7 @@ namespace AdjustSdk.Pcl
             Enabled = true;
             AskingAttribution = false;
             UpdatePackages = false;
+            Adid = null;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -44,13 +47,14 @@ namespace AdjustSdk.Pcl
 
         public override string ToString()
         {
-            return Util.f("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0}",
+            return Util.f("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0} adid:{6}",
                 EventCount,
                 SessionCount,
                 SubSessionCount,
                 SessionLenght.SecondsFormat(),
                 TimeSpent.SecondsFormat(),
-                LastActivity.SecondsFormat()
+                LastActivity.SecondsFormat(),
+                Adid
             );
         }
 
@@ -71,6 +75,7 @@ namespace AdjustSdk.Pcl
             AddField(serializableFields, "AskingAttribution", AskingAttribution);
             AddField(serializableFields, "UpdatePackages", UpdatePackages);
             AddField(serializableFields, "PushToken", PushToken);
+            AddField(serializableFields, "Adid", Adid);
 
             return serializableFields;
         }
@@ -93,6 +98,8 @@ namespace AdjustSdk.Pcl
             UpdatePackages = GetFieldValueBool(serializedFields, "UpdatePackages", defaultValue: false);
 
             PushToken = GetFieldValueString(serializedFields, "PushToken");
+
+            Adid = GetFieldValueString(serializedFields, "Adid");
         }
 
         // does not close stream received. Caller is responsible to close if it wants it
