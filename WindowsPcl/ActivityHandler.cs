@@ -592,6 +592,9 @@ namespace AdjustSdk.Pcl
         #region post response
         private void LaunchEventResponseTasksI(EventResponseData eventResponseData)
         {
+            // try to update adid from response
+            UpdateAdidI(eventResponseData.Adid);
+
             // success callback
             if (eventResponseData.Success && _Config.EventTrackingSucceeded != null)
             {
@@ -608,6 +611,9 @@ namespace AdjustSdk.Pcl
 
         private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
         {
+            // try to update adid from response
+            UpdateAdidI(sessionResponseData.Adid);
+
             // try to update the attribution
             var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
 
@@ -639,6 +645,22 @@ namespace AdjustSdk.Pcl
             }
         }
 
+        private void UpdateAdidI(string adid)
+        {
+            if (adid == null)
+            {
+                return;
+            }
+
+            if (adid == _ActivityState.Adid)
+            {
+                return;
+            }
+
+            _ActivityState.Adid = adid;
+            WriteActivityStateI();
+        }
+
         private bool UpdateAttributionI(AdjustAttribution attribution)
         {
             if (attribution == null) { return false; }
@@ -661,6 +683,9 @@ namespace AdjustSdk.Pcl
 
         private void LaunchAttributionResponseTasksI(AttributionResponseData attributionResponseData)
         {
+            // try to update adid from response
+            UpdateAdidI(attributionResponseData.Adid);
+
             // try to update the attribution
             var attributionUpdated = UpdateAttributionI(attributionResponseData.Attribution);
 
@@ -949,6 +974,11 @@ namespace AdjustSdk.Pcl
             {
                 return _State.IsEnabled;
             }
+        }
+
+        public string GetAdid()
+        {
+            return _ActivityState?.Adid;
         }
 
         private ActivityPackage GetAttributionPackageI()

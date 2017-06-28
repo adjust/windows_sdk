@@ -50,5 +50,7 @@ namespace AdjustSdk.Pcl
         void SendFirstPackages();
 
         void SetPushToken(string pushToken);
+
+        string GetAdid();
     }
 }

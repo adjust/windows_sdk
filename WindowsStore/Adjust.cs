@@ -239,5 +239,10 @@ namespace AdjustSdk
         {
             AdjustInstance.SetPushToken(pushToken);
         }
+
+        public static string GetAdid()
+        {
+            return AdjustInstance.GetAdid();
+        }
     }
 }

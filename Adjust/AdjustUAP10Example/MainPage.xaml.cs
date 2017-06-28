@@ -54,5 +54,14 @@ namespace AdjustUAP10Example
             partnerEvent.AddPartnerParameter("foo", "bar");
             Adjust.TrackEvent(partnerEvent);
         }
+
+        private void btnGetAdid_Click(object sender, RoutedEventArgs e)
+        {
+            var adid = Adjust.GetAdid();
+            if(adid != null)
+            {
+                tblReceivedAdid.Text = adid;
+            }
+        }
     }
 }
