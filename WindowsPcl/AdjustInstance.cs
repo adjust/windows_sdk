@@ -71,6 +71,12 @@ namespace AdjustSdk.Pcl
             _ActivityHandler.OpenUrl(uri);
         }
 
+        public AdjustAttribution GetAttribution()
+        {
+            if (!CheckActivityHandler()) { return null; }
+            return _ActivityHandler.GetAttribution();
+        }
+
         private bool CheckActivityHandler()
         {
             if (_ActivityHandler == null)
