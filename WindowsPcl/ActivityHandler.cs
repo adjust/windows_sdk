@@ -159,7 +159,7 @@ namespace AdjustSdk.Pcl
             }
             if (responseData is EventResponseData)
             {
-                LaunchEventResponseTasksI(responseData as EventResponseData);
+                LaunchEventResponseTasks(responseData as EventResponseData);
                 return;
             }
         }
@@ -315,6 +315,11 @@ namespace AdjustSdk.Pcl
                 }
                 SetPushTokenI(pushToken);
             });
+        }
+
+        public void LaunchEventResponseTasks(EventResponseData eventResponseData)
+        {
+            _ActionQueue.Enqueue(() => LaunchEventResponseTasksI(eventResponseData));
         }
 
         public void LaunchSessionResponseTasks(SessionResponseData sessionResponseData)
