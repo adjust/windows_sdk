@@ -986,6 +986,11 @@ namespace AdjustSdk.Pcl
             return _ActivityState?.Adid;
         }
 
+        public AdjustAttribution GetAttribution()
+        {
+            return _Attribution;
+        }
+
         private ActivityPackage GetAttributionPackageI()
         {
             var now = DateTime.Now;

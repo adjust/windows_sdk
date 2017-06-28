@@ -58,10 +58,27 @@ namespace AdjustUAP10Example
         private void btnGetAdid_Click(object sender, RoutedEventArgs e)
         {
             var adid = Adjust.GetAdid();
-            if(adid != null)
+            tblReceivedAdid.Text = adid != null ? adid : "received null";
+        }
+
+        private void btnGetAttribution_Click(object sender, RoutedEventArgs e)
+        {
+            var attribution = Adjust.GetAttributon();
+            ShowSimpleMessage(
+                title: "Get Attribution Result",
+                message: attribution != null ? attribution.ToString() : "Received null!");
+        }
+
+        private async void ShowSimpleMessage(string title, string message)
+        {
+            var contentDialog = new ContentDialog
             {
-                tblReceivedAdid.Text = adid;
-            }
+                Title = title,
+                Content = message,
+                PrimaryButtonText = "OK"
+            };
+
+            await contentDialog.ShowAsync();
         }
     }
 }

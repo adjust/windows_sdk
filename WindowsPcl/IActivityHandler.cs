@@ -52,5 +52,7 @@ namespace AdjustSdk.Pcl
         void SetPushToken(string pushToken);
 
         string GetAdid();
+
+        AdjustAttribution GetAttribution();
     }
 }

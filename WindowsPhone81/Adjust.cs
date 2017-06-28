@@ -241,5 +241,10 @@ namespace AdjustSdk
         {
             return AdjustInstance.GetAdid();
         }
+
+        public static AdjustAttribution GetAttributon()
+        {
+            return AdjustInstance.GetAttribution();
+        }
     }
 }
