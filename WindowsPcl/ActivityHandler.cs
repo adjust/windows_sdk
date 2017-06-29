@@ -46,6 +46,9 @@ namespace AdjustSdk.Pcl
             internal bool DelayStart;
             internal bool UpdatePackages;
 
+            internal bool IsFirstLaunch;
+            internal bool IsSessionResponseProcessed;
+
             public bool IsEnabled { get { return Enabled; } }
             public bool IsDisabled { get { return !Enabled; } }
             public bool IsOffline { get { return Offline; } }
@@ -71,6 +74,8 @@ namespace AdjustSdk.Pcl
             _State.DelayStart = false;
             // does not need to update packages by default
             _State.UpdatePackages = false;
+            // does not have the session response by default
+            _State.IsSessionResponseProcessed = false;
 
             _Logger.LockLogLevel();
 
@@ -379,6 +384,18 @@ namespace AdjustSdk.Pcl
             ReadActivityStateI();
             ReadSessionParametersI();
 
+            // first launch if activity state is null
+            if (_ActivityState != null)
+            {
+                _State.Enabled = _ActivityState.Enabled;
+                _State.UpdatePackages = _ActivityState.UpdatePackages;
+                _State.IsFirstLaunch = false;
+            }
+            else
+            {
+                _State.IsFirstLaunch = true;
+            }
+
             TimeSpan foregroundTimerInterval = AdjustFactory.GetTimerInterval();
             TimeSpan foregroundTimerStart = AdjustFactory.GetTimerStart();
             BackgroundTimerInterval = AdjustFactory.GetTimerInterval();
@@ -542,6 +559,16 @@ namespace AdjustSdk.Pcl
             // if it's a new session
             if (_ActivityState.SubSessionCount <= 1) { return; }
 
+            // if it's the first launch
+            if (_State.IsFirstLaunch)
+            {
+                // and it hasn't received the session response
+                if (!_State.IsSessionResponseProcessed)
+                {
+                    return;
+                }
+            }
+
             // if there is already an attribution saved and there was no attribution being asked
             if (_Attribution != null && !_ActivityState.AskingAttribution) { return; }
 
@@ -630,6 +657,9 @@ namespace AdjustSdk.Pcl
             }
             // launch Session tracking listener if available
             LaunchSessionAction(sessionResponseData, task);
+
+            // mark session response has been proccessed
+            _State.IsSessionResponseProcessed = true;
         }
 
         private void LaunchSessionAction(SessionResponseData sessionResponseData, Task previousTask)
