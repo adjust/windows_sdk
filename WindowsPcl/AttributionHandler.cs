@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 
 namespace AdjustSdk.Pcl
 {
@@ -14,7 +12,6 @@ namespace AdjustSdk.Pcl
         private TimerOnce _Timer;
         private ActivityPackage _AttributionPackage;
         private bool _Paused;
-        private HttpClient _HttpClient;
         private string _UrlQuery;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
@@ -25,7 +22,7 @@ namespace AdjustSdk.Pcl
 
             _UrlQuery = BuildUrlQuery();
 
-            _Timer = new TimerOnce(actionQueue: _ActionQueue, action: GetAttributionI);
+            _Timer = new TimerOnce(actionQueue: _ActionQueue, action: SendAttributionRequestI);
         }
 
         public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
@@ -42,7 +39,7 @@ namespace AdjustSdk.Pcl
 
         public void GetAttribution()
         {
-            GetAttribution(TimeSpan.Zero);
+            _ActionQueue.Enqueue(() => GetAttributionI(TimeSpan.Zero));
         }
 
         public void PauseSending()
@@ -55,7 +52,7 @@ namespace AdjustSdk.Pcl
             _Paused = false;
         }
 
-        private void GetAttribution(TimeSpan askIn)
+        private void GetAttributionI(TimeSpan askIn)
         {
             // don't reset if new time is shorter than the last one
             if (_Timer.FireIn > askIn) { return; }
@@ -80,9 +77,10 @@ namespace AdjustSdk.Pcl
             {
                 _ActivityHandler.SetAskingAttribution(true);
 
-                GetAttribution(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
+                GetAttributionI(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
                 return;
             }
+
             // without ask_in
             _ActivityHandler.SetAskingAttribution(false);
 
@@ -123,7 +121,7 @@ namespace AdjustSdk.Pcl
             attributionResponseData.Deeplink = new Uri(deeplink);
         }
 
-        private void GetAttributionI()
+        private void SendAttributionRequestI()
         {
             if (_Paused)
             {
