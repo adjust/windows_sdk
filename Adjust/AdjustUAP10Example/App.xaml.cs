@@ -40,11 +40,17 @@ namespace AdjustUAP10Example
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
-    logLevel: LogLevel.Verbose);
+            // deprecated way of logging setup
+            Adjust.SetupLogging(
+                logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
+                logLevel: LogLevel.Verbose);
 
-            // configure Adjust
-            var config = new AdjustConfig("{YourAppToken}", AdjustConfig.EnvironmentSandbox);
+            // configure Adjust - without logging
+            //var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox);
+
+            // configure Adjust - with logging (Sandox env & Verbose log level)
+            var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox, 
+                msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
 
             // enable event buffering
             //config.EventBufferingEnabled = true;

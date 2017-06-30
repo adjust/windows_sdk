@@ -9,7 +9,7 @@ namespace AdjustSdk
         public const string EnvironmentSandbox = "sandbox";
         public const string EnvironmentProduction = "production";
 
-        private ILogger _Logger = AdjustFactory.Logger;
+        private readonly ILogger _logger = AdjustFactory.Logger;
 
         internal string AppToken { get; private set; }
         internal string Environment { get; private set; }
@@ -26,13 +26,13 @@ namespace AdjustSdk
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
-
         internal List<Action<ActivityHandler>> SessionParametersActions;
         internal string PushToken;
 
-        public AdjustConfig(string appToken, string environment, bool allowSupressLevel = false)
+        public AdjustConfig(string appToken, string environment, Action<string> logDelegate = null, LogLevel? logLevel = null)
         {
-            ConfigureLogLevel(environment, allowSupressLevel);
+            ConfigureLogger(environment, logDelegate, logLevel);
+
             if (!IsValid(appToken, environment)) { return; }
 
             AppToken = appToken;
@@ -41,28 +41,13 @@ namespace AdjustSdk
             // default values
             EventBufferingEnabled = false;
         }
-
-        private void ConfigureLogLevel(string environment, bool allowSupressLevel)
+        
+        private void ConfigureLogger(string environment, Action<string> logDelegate, LogLevel? logLevel)
         {
-            if (AdjustConfig.EnvironmentProduction.Equals(environment))
-            {
-                if (allowSupressLevel)
-                {
-                    _Logger.LogLevel = LogLevel.Suppress;
-                }
-                else
-                {
-                    _Logger.LogLevel = LogLevel.Assert;
-                }
-            }
-            else
-            {
-                if (!allowSupressLevel &&
-                    _Logger.LogLevel == LogLevel.Suppress)
-                {
-                    _Logger.LogLevel = LogLevel.Assert;
-                }
-            }
+            _logger.LogDelegate = logDelegate;
+            _logger.LogLevel = logLevel ?? LogLevel.Info;
+            _logger.IsProductionEnvironment = EnvironmentProduction.Equals(environment);
+            _logger.IsLocked = logDelegate != null;
         }
 
         public bool IsValid()
@@ -82,13 +67,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(appToken))
             {
-                _Logger.Error("Missing App Token");
+                _logger.Error("Missing App Token");
                 return false;
             }
 
             if (appToken.Length != 12)
             {
-                _Logger.Error("Malformed App Token '{0}'", appToken);
+                _logger.Error("Malformed App Token '{0}'", appToken);
                 return false;
             }
 
@@ -99,13 +84,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(environment))
             {
-                _Logger.Error("Missing environment");
+                _logger.Error("Missing environment");
                 return false;
             }
 
             if (environment.Equals(EnvironmentSandbox))
             {
-                _Logger.Assert("SANDBOX: Adjust is running in Sandbox mode. " +
+                _logger.WarnInProduction("SANDBOX: Adjust is running in Sandbox mode. " +
                    "Use this setting for testing. " +
                    "Don't forget to set the environment to `production` before publishing!");
 
@@ -113,13 +98,13 @@ namespace AdjustSdk
             }
             else if (environment.Equals(EnvironmentProduction))
             {
-                _Logger.Assert("PRODUCTION: Adjust is running in Production mode. " +
+                _logger.WarnInProduction("PRODUCTION: Adjust is running in Production mode. " +
                            "Use this setting only for the build that you want to publish. " +
                            "Set the environment to `sandbox` if you want to test your app!");
                 return true;
             }
 
-            _Logger.Error("Unknown environment '{0}'", environment);
+            _logger.Error("Unknown environment '{0}'", environment);
             return false;
         }
     }
