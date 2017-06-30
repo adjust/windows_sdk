@@ -940,9 +940,7 @@ namespace AdjustSdk.Pcl
             clickBuilder.Deeplink = deeplink;
             clickBuilder.Attribution = attribution;
             clickBuilder.ClickTime = now;
-
-            var clickPackage = clickBuilder.BuildClickPackage("deeplink");
-
+            
             return clickBuilder.BuildClickPackage("deeplink");
         }
 
