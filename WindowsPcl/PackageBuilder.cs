@@ -42,15 +42,7 @@ namespace AdjustSdk.Pcl
 
         internal ActivityPackage BuildSessionPackage(bool isInDelay)
         {
-            var parameters = GetDefaultParameters();
-
-            AddTimeSpan(parameters, "last_interval", _ActivityState.LastInterval);
-            AddString(parameters, "default_tracker", _Config.DefaultTracker);
-            if (!isInDelay)
-            {
-                AddDictionaryJson(parameters, "callback_params", _SessionParameters.CallbackParameters);
-                AddDictionaryJson(parameters, "partner_params", _SessionParameters.PartnerParameters);
-            }
+            Dictionary<string, string> parameters = GetAttributableParameters(!isInDelay ? _SessionParameters : null);
 
             return new ActivityPackage(ActivityKind.Session, _DeviceInfo.ClientSdk, parameters);
         }
@@ -86,7 +78,7 @@ namespace AdjustSdk.Pcl
 
         internal ActivityPackage BuildClickPackage(string source)
         {
-            var parameters = GetIdsParameters();
+            var parameters = GetAttributableParameters(_SessionParameters);
 
             AddString(parameters, "source", source);
             AddDateTime(parameters, "click_time", ClickTime);
@@ -128,6 +120,22 @@ namespace AdjustSdk.Pcl
             InjectConfig(parameters);
             InjectWindowsUuid(parameters);
             InjectCreatedAt(parameters);
+
+            return parameters;
+        }
+
+        private Dictionary<string, string> GetAttributableParameters(SessionParameters sessionParameters)
+        {
+            Dictionary<string, string> parameters = GetDefaultParameters();
+
+            AddTimeSpan(parameters, "last_interval", _ActivityState.LastInterval);
+            AddString(parameters, "default_tracker", _Config.DefaultTracker);
+
+            if (sessionParameters != null)
+            {
+                AddDictionaryJson(parameters, "callback_params", sessionParameters.CallbackParameters);
+                AddDictionaryJson(parameters, "partner_params", sessionParameters.PartnerParameters);
+            }
 
             return parameters;
         }
@@ -275,7 +283,7 @@ namespace AdjustSdk.Pcl
 
             AddString(parameters, key, sDouble);
         }
-
+        
         #endregion AddParameter
     }
 }
