@@ -4,9 +4,13 @@ namespace AdjustSdk.Pcl
 {
     public interface ILogger
     {
-        AdjustSdk.LogLevel LogLevel { get; set; }
+        LogLevel LogLevel { get; set; }
+
+        bool IsProductionEnvironment { get; set; }
 
         Action<String> LogDelegate { set; }
+
+        bool IsLocked { get; set; }
 
         void Verbose(string message, params object[] parameters);
 
@@ -16,12 +20,10 @@ namespace AdjustSdk.Pcl
 
         void Warn(string message, params object[] parameters);
 
+        void WarnInProduction(string message, params object[] parameters);
+
         void Error(string message, params object[] parameters);
 
-        void Assert(string message, params object[] parameters);
-
-        void LockLogLevel();
-
-        bool IsLocked();
+        void Assert(string message, params object[] parameters);        
     }
 }

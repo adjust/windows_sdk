@@ -16,6 +16,7 @@ namespace AdjustSdk
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
         private static bool IsApplicationActive = false;
 
+        [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
         public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);

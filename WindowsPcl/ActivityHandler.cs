@@ -77,7 +77,7 @@ namespace AdjustSdk.Pcl
             // does not have the session response by default
             _State.IsSessionResponseProcessed = false;
 
-            _Logger.LockLogLevel();
+            _Logger.IsLocked = true;
 
             Init(adjustConfig, deviceUtil);
             _ActionQueue.Enqueue(() => InitI());
@@ -103,7 +103,7 @@ namespace AdjustSdk.Pcl
                 AdjustFactory.Logger.Error("AdjustConfig not initialized correctly");
                 return null;
             }
-
+            
             ActivityHandler activityHandler = new ActivityHandler(adjustConfig, deviceUtil);
             return activityHandler;
         }

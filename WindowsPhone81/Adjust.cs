@@ -19,6 +19,7 @@ namespace AdjustSdk
 
         private Adjust() { }
 
+        [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
         public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);
