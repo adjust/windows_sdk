@@ -935,6 +935,11 @@ namespace AdjustSdk.Pcl
         {
             var now = DateTime.Now;
 
+            if (_ActivityState.LastActivity.HasValue)
+            {
+                _ActivityState.LastInterval = now - _ActivityState.LastActivity.Value;
+            }
+
             var clickBuilder = new PackageBuilder(_Config, _DeviceInfo, _ActivityState, _SessionParameters, now);
             clickBuilder.ExtraParameters = extraParameters;
             clickBuilder.Deeplink = deeplink;
