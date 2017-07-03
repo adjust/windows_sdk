@@ -2,7 +2,7 @@
 {
     public interface ISdkClickHandler
     {
-        void Init(bool startPaused);
+        void Init(IActivityHandler activityHandler, bool startPaused);
 
         void PauseSending();
 

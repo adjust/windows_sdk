@@ -74,13 +74,13 @@ namespace AdjustSdk.Pcl
             return _IRequestHandler;
         }
 
-        public static ISdkClickHandler GetSdkClickHandler(bool startPaused)
+        public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused)
         {
             if (_ISdkClickHandler == null)
             {
-                return new SdkClickHandler(startPaused);
+                return new SdkClickHandler(activityHandler, startPaused);
             }
-            _ISdkClickHandler.Init(startPaused);
+            _ISdkClickHandler.Init(activityHandler, startPaused);
             return _ISdkClickHandler;
         }
 

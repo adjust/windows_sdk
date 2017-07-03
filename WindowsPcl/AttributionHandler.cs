@@ -37,6 +37,11 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(() => CheckSessionResponseI(responseData));
         }
 
+        public void CheckSdkClickResponse(SdkClickResponseData sdkClickResponseData)
+        {
+            _ActionQueue.Enqueue(() => CheckSdkClickResponseI(sdkClickResponseData));
+        }
+
         public void GetAttribution()
         {
             _ActionQueue.Enqueue(() => GetAttributionI(TimeSpan.Zero));
@@ -93,6 +98,13 @@ namespace AdjustSdk.Pcl
             CheckAttributionI(sessionResponseData);
 
             _ActivityHandler.LaunchSessionResponseTasks(sessionResponseData);
+        }
+
+        private void CheckSdkClickResponseI(SdkClickResponseData sdkClickResponseData)
+        {
+            CheckAttributionI(sdkClickResponseData);
+
+            _ActivityHandler.LaunchSdkClickResponseTasks(sdkClickResponseData);
         }
 
         private void CheckAttributionResponseI(AttributionResponseData attributionResponseData)

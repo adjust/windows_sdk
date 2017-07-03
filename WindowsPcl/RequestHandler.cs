@@ -9,20 +9,20 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private ILogger _Logger = AdjustFactory.Logger;
+        private ILogger _logger = AdjustFactory.Logger;
 
-        private Action<ResponseData> _SendNextCallback;
-        private Action<ResponseData, ActivityPackage> _RetryCallback;
+        private Action<ResponseData> _successCallback;
+        private Action<ResponseData, ActivityPackage> _failureCallback;
         
-        public RequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
+        public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
-            Init(sendNextCallback, retryCallback);
+            Init(successCallbac, failureCallback);
         }
 
-        public void Init(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
+        public void Init(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
-            _SendNextCallback = sendNextCallback;
-            _RetryCallback = retryCallback;
+            _successCallback = successCallbac;
+            _failureCallback = failureCallback;
         }
 
         public void SendPackage(ActivityPackage activityPackage)
@@ -99,7 +99,7 @@ namespace AdjustSdk.Pcl
             {
                 var responseDataFaulted = ProcessException(responseDataTask.Exception, activityPackage);
                 LogSendErrorI(responseDataFaulted, activityPackage);
-                _RetryCallback?.Invoke(responseDataFaulted, activityPackage);
+                _failureCallback?.Invoke(responseDataFaulted, activityPackage);
                 return;
             }
 
@@ -112,11 +112,11 @@ namespace AdjustSdk.Pcl
 
             if (responseData.WillRetry)
             {
-                _RetryCallback?.Invoke(responseData, activityPackage);
+                _failureCallback?.Invoke(responseData, activityPackage);
             }
             else
             {
-                _SendNextCallback?.Invoke(responseData);
+                _successCallback?.Invoke(responseData);
             }
         }
 
@@ -137,7 +137,7 @@ namespace AdjustSdk.Pcl
                 errorMessagBuilder.Append(" Will retry later");
             }
 
-            _Logger.Error("{0}", errorMessagBuilder.ToString());
+            _logger.Error("{0}", errorMessagBuilder.ToString());
         }
     }
 }

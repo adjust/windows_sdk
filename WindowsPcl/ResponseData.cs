@@ -32,7 +32,7 @@ namespace AdjustSdk.Pcl
                     responseData = new EventResponseData(activityPackage);
                     break;
                 case ActivityKind.Click:
-                    responseData = new ClickResponseData();
+                    responseData = new SdkClickResponseData();
                     break;
                 default:
                     responseData = new UnknowResponseData();

@@ -8,6 +8,8 @@ namespace AdjustSdk.Pcl
 
         void CheckSessionResponse(SessionResponseData sessionResponseData);
 
+        void CheckSdkClickResponse(SdkClickResponseData sdkClickResponseData);
+
         void GetAttribution();
 
         void PauseSending();
