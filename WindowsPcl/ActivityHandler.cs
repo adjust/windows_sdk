@@ -160,12 +160,14 @@ namespace AdjustSdk.Pcl
             if (responseData is SessionResponseData)
             {
                 _AttributionHandler.CheckSessionResponse(responseData as SessionResponseData);
-                return;
             }
-            if (responseData is EventResponseData)
+            else if (responseData is SdkClickResponseData)
+            {
+                _AttributionHandler.CheckSdkClickResponse(responseData as SdkClickResponseData);
+            }
+            else if (responseData is EventResponseData)
             {
                 LaunchEventResponseTasks(responseData as EventResponseData);
-                return;
             }
         }
 
@@ -332,6 +334,11 @@ namespace AdjustSdk.Pcl
             _ActionQueue.Enqueue(() => LaunchSessionResponseTasksI(sessionResponseData));
         }
 
+        public void LaunchSdkClickResponseTasks(SdkClickResponseData sdkClickResponseData)
+        {
+            _ActionQueue.Enqueue(() => LaunchSdkClickResponseTasksI(sdkClickResponseData));
+        }
+
         public void LaunchAttributionResponseTasks(AttributionResponseData attributionResponseData)
         {
             _ActionQueue.Enqueue(() => LaunchAttributionResponseTasksI(attributionResponseData));
@@ -451,7 +458,7 @@ namespace AdjustSdk.Pcl
                 attributionPackage,
                 IsPausedI(sdkClickHandlerOnly: false));
 
-            _SdkClickHandler = AdjustFactory.GetSdkClickHandler(IsPausedI(sdkClickHandlerOnly: true));
+            _SdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
 
             SessionParametersActionsI(_Config.SessionParametersActions);
 
@@ -660,6 +667,21 @@ namespace AdjustSdk.Pcl
 
             // mark session response has been proccessed
             _State.IsSessionResponseProcessed = true;
+        }
+
+        private void LaunchSdkClickResponseTasksI(SdkClickResponseData sdkClickResponseData)
+        {
+            // try to update adid from response
+            UpdateAdidI(sdkClickResponseData.Adid);
+
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(sdkClickResponseData.Attribution);
+
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                LaunchAttributionActionI();
+            }
         }
 
         private void LaunchSessionAction(SessionResponseData sessionResponseData, Task previousTask)

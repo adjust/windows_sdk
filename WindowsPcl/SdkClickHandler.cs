@@ -5,46 +5,49 @@ namespace AdjustSdk.Pcl
 {
     public class SdkClickHandler : ISdkClickHandler
     {
-        private ILogger _Logger = AdjustFactory.Logger;
-        private ActionQueue _ActionQueue = new ActionQueue("adjust.SdkClickHandler");
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.SdkClickHandler");
         private BackoffStrategy _backoffStrategy = AdjustFactory.GetSdkClickHandlerBackoffStrategy();
-        private Queue<ActivityPackage> _PackageQueue = new Queue<ActivityPackage>();
-        private IRequestHandler _RequestHandler;
+        private Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
+        private IRequestHandler _requestHandler;
+        private WeakReference<IActivityHandler> _activityHandlerWeakReference;
 
-        private bool _IsPaused;
+        private bool _isPaused;
 
-        public SdkClickHandler(bool startPaused)
+        public SdkClickHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            Init(startPaused);
-            _RequestHandler = new RequestHandler(sendNextCallback: null,
-                retryCallback: (_, sdkClickPackage) => RetrySendingI(sdkClickPackage));
+            Init(activityHandler, startPaused);
+            _requestHandler = new RequestHandler(
+                successCallbac: (responseData) => ProcessSdkClickResponseData(responseData),
+                failureCallback: (_, sdkClickPackage) => RetrySendingI(sdkClickPackage));
         }
 
-        public void Init(bool startPaused)
+        public void Init(IActivityHandler activityHandler, bool startPaused)
         {
-            _IsPaused = startPaused;
+            _isPaused = startPaused;
+            _activityHandlerWeakReference = new WeakReference<IActivityHandler>(activityHandler);
         }
 
         public void PauseSending()
         {
-            _IsPaused = true;
+            _isPaused = true;
         }
 
         public void ResumeSending()
         {
-            _IsPaused = false;
+            _isPaused = false;
 
             SendNextSdkClick();
         }
 
         public void SendSdkClick(ActivityPackage sdkClickPackage)
         {
-            _ActionQueue.Enqueue(() =>
+            _actionQueue.Enqueue(() =>
             {
-                _PackageQueue.Enqueue(sdkClickPackage);
+                _packageQueue.Enqueue(sdkClickPackage);
 
-                _Logger.Debug("Added sdk_click {0}", _PackageQueue.Count);
-                _Logger.Verbose("{0}", sdkClickPackage.GetExtendedString());
+                _logger.Debug("Added sdk_click {0}", _packageQueue.Count);
+                _logger.Verbose("{0}", sdkClickPackage.GetExtendedString());
 
                 SendNextSdkClick();
             });
@@ -52,20 +55,20 @@ namespace AdjustSdk.Pcl
 
         private void SendNextSdkClick()
         {
-            _ActionQueue.Enqueue(() => SendNextSdkClickI());
+            _actionQueue.Enqueue(() => SendNextSdkClickI());
         }
 
         private void SendNextSdkClickI()
         {
-            if (_IsPaused) { return; }
-            if (_PackageQueue.Count == 0) { return; }
+            if (_isPaused) { return; }
+            if (_packageQueue.Count == 0) { return; }
 
-            var sdkClickPackage = _PackageQueue.Dequeue();
+            var sdkClickPackage = _packageQueue.Dequeue();
             int retries = sdkClickPackage.Retries;
 
             Action action = () =>
             {
-                _RequestHandler.SendPackageSync(sdkClickPackage);
+                _requestHandler.SendPackageSync(sdkClickPackage);
                 SendNextSdkClick();
             };
 
@@ -77,16 +80,25 @@ namespace AdjustSdk.Pcl
 
             var waitTime = Util.WaitingTime(retries, _backoffStrategy);
 
-            _Logger.Verbose("Waiting for {0} seconds before retrying sdk_click for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
+            _logger.Verbose("Waiting for {0} seconds before retrying sdk_click for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
 
-            _ActionQueue.Delay(waitTime, action);
+            _actionQueue.Delay(waitTime, action);
+        }
+
+        private void ProcessSdkClickResponseData(ResponseData responseData)
+        {
+            IActivityHandler activityHandler;
+            if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
+            {
+                activityHandler.FinishedTrackingActivity(responseData);
+            }
         }
 
         private void RetrySendingI(ActivityPackage sdkClickPackage)
         {
             var retries = sdkClickPackage.IncreaseRetries();
 
-            _Logger.Error("Retrying sdk_click package for the {0} time", retries);
+            _logger.Error("Retrying sdk_click package for the {0} time", retries);
             SendSdkClick(sdkClickPackage);
         }
     }

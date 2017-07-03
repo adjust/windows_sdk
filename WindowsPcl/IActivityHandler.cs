@@ -37,6 +37,8 @@ namespace AdjustSdk.Pcl
 
         void LaunchSessionResponseTasks(SessionResponseData sessionResponseData);
 
+        void LaunchSdkClickResponseTasks(SdkClickResponseData sdkClickResponseData);
+
         void LaunchAttributionResponseTasks(AttributionResponseData attributionResponseData);
 
         void SetAskingAttribution(bool askingAttribution);

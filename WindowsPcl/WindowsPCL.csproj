@@ -51,7 +51,7 @@
     <Compile Include="AttributionHandler.cs" />
     <Compile Include="AttributionResponseData.cs" />
     <Compile Include="BackoffStrategy.cs" />
-    <Compile Include="ClickResponseData.cs" />
+    <Compile Include="SdkClickResponseData.cs" />
     <Compile Include="VersionedSerializable.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="EventResponseData.cs" />
