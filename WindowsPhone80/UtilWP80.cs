@@ -1,43 +1,48 @@
 ﻿using AdjustSdk.Pcl;
 using Microsoft.Phone.Info;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Xml.Linq;
+using Windows.Storage;
 
 namespace AdjustSdk
 {
-    public class UtilWP80 : DeviceUtil
+    public class UtilWP80 : IDeviceUtil
     {
-        private DeviceInfo DeviceInfo;
+        private DeviceInfo _deviceInfo;
+        private readonly ApplicationDataContainer _localSettings;
 
         public UtilWP80()
-        { }
+        {
+            _localSettings = ApplicationData.Current.LocalSettings;
+        }
 
         public DeviceInfo GetDeviceInfo()
         {
-            if (DeviceInfo == null)
+            if (_deviceInfo != null) return _deviceInfo;
+
+            _deviceInfo = new DeviceInfo
             {
-                DeviceInfo = new DeviceInfo
-                {
-                    ClientSdk = GetClientSdk(),
-                    DeviceUniqueId = GetDeviceUniqueId(),
-                    AppName = GetAppName(),
-                    AppVersion = GetAppVersion(),
-                    AppAuthor = GetAppAuthor(),
-                    AppPublisher = GetAppPublisher(),
-                    DeviceType = GetDeviceType(),
-                    DeviceName = GetDeviceName(),
-                    DeviceManufacturer = getDeviceManufacturer(),
-                    OsName = getOsName(),
-                    OsVersion = getOsVersion(),
-                    Language = getLanguage(),
-                    Country = getCountry(),
-                    ReadWindowsAdvertisingId = ReadWindowsAdvertisingId
-                };
-            }
-            return DeviceInfo;
+                ClientSdk = GetClientSdk(),
+                DeviceUniqueId = GetDeviceUniqueId(),
+                AppName = GetAppName(),
+                AppVersion = GetAppVersion(),
+                AppAuthor = GetAppAuthor(),
+                AppPublisher = GetAppPublisher(),
+                DeviceType = GetDeviceType(),
+                DeviceName = GetDeviceName(),
+                DeviceManufacturer = GetDeviceManufacturer(),
+                OsName = GetOsName(),
+                OsVersion = GetOsVersion(),
+                Language = GetLanguage(),
+                Country = GetCountry(),
+                ReadWindowsAdvertisingId = ReadWindowsAdvertisingId
+            };
+
+            return _deviceInfo;
         }
 
         public Task RunActionInForeground(Action action, Task previousTask = null)
@@ -81,12 +86,12 @@ namespace AdjustSdk
 
         private static string GetAppName()
         {
-            return getAppAttributeValue("Title");
+            return GetAppAttributeValue("Title");
         }
 
         private static string GetAppVersion()
         {
-            var version = getAppAttributeValue("Version");
+            var version = GetAppAttributeValue("Version");
             if (version == null) { return null; }
 
             string[] splits = version.Split('.');
@@ -100,12 +105,12 @@ namespace AdjustSdk
 
         private static string GetAppAuthor()
         {
-            return getAppAttributeValue("Author");
+            return GetAppAttributeValue("Author");
         }
 
         private static string GetAppPublisher()
         {
-            return getAppAttributeValue("Publisher");
+            return GetAppAttributeValue("Publisher");
         }
 
         private static string GetDeviceType()
@@ -124,23 +129,23 @@ namespace AdjustSdk
             return DeviceStatus.DeviceName;
         }
 
-        private static string getDeviceManufacturer()
+        private static string GetDeviceManufacturer()
         {
             return DeviceStatus.DeviceManufacturer;
         }
 
-        private static string getOsName()
+        private static string GetOsName()
         {
             return "windows-phone";
         }
 
-        private static string getOsVersion()
+        private static string GetOsVersion()
         {
             Version v = System.Environment.OSVersion.Version;
             return Util.f("{0}.{1}", v.Major, v.Minor);
         }
 
-        private static string getLanguage()
+        private static string GetLanguage()
         {
             CultureInfo currentCulture = CultureInfo.CurrentUICulture;
             string cultureName = currentCulture.Name;
@@ -153,7 +158,7 @@ namespace AdjustSdk
             return language;
         }
 
-        private static string getCountry()
+        private static string GetCountry()
         {
             var currentCulture = CultureInfo.CurrentCulture;
             var cultureName = currentCulture.Name;
@@ -168,11 +173,10 @@ namespace AdjustSdk
             return country;
         }
 
-        private static string getAppAttributeValue(string attributeName)
+        private static string GetAppAttributeValue(string attributeName)
         {
             var manifest = XDocument.Load("WMAppManifest.xml");
-            if (manifest == null) { return null; }
-
+            
             var appElement = manifest.Root.Element("App");
             if (appElement == null) { return null; }
 
@@ -186,6 +190,24 @@ namespace AdjustSdk
         {
             var type = Type.GetType("Windows.System.UserProfile.AdvertisingManager, Windows, Version = 255.255.255.255, Culture = neutral, PublicKeyToken = null, ContentType = WindowsRuntime");
             return type != null ? (string) type.GetProperty("AdvertisingId").GetValue(null, null) : "";
+        }
+
+        public void PersistObject(string key, Dictionary<string, object> objectValuesMap)
+        {
+            var objectValue = new ApplicationDataCompositeValue();
+            foreach (var objectValueKvp in objectValuesMap)
+                objectValue.Add(objectValueKvp);
+            _localSettings.Values[key] = objectValue;
+        }
+
+        public object TakeObject(string key)
+        {
+            return _localSettings.Values[key];
+        }
+
+        public bool TryTakeObject(string key, out object objectValuesMap)
+        {
+            return _localSettings.Values.TryGetValue(key, out objectValuesMap);
         }
     }
 }

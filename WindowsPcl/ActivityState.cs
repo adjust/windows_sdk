@@ -58,27 +58,53 @@ namespace AdjustSdk.Pcl
             );
         }
 
-        #region Serialization
-        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
+        public static Dictionary<string, object> ToDictionary(ActivityState activityState)
         {
-            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
-
-            AddField(serializableFields, "EventCount", EventCount);
-            AddField(serializableFields, "SessionCount", SessionCount);
-            AddField(serializableFields, "SubSessionCount", SubSessionCount);
-            AddField(serializableFields, "SessionLenght", SessionLenght);
-            AddField(serializableFields, "TimeSpent", TimeSpent);
-            AddField(serializableFields, "LastActivity", LastActivity);
-            AddField(serializableFields, "LastInterval", LastInterval);
-            AddField(serializableFields, "Uuid", Uuid.ToString());
-            AddField(serializableFields, "Enabled", Enabled);
-            AddField(serializableFields, "AskingAttribution", AskingAttribution);
-            AddField(serializableFields, "UpdatePackages", UpdatePackages);
-            AddField(serializableFields, "PushToken", PushToken);
-            AddField(serializableFields, "Adid", Adid);
-
-            return serializableFields;
+            return new Dictionary<string, object>
+            {
+                {"EventCount", activityState.EventCount},
+                {"SessionCount", activityState.SessionCount},
+                {"SubSessionCount", activityState.SubSessionCount},
+                {"SessionLenght", activityState.SessionLenght},
+                {"TimeSpent", activityState.TimeSpent},
+                {"LastActivity", activityState.LastActivity?.Ticks ?? DateTime.MinValue.Ticks},
+                {"LastInterval", activityState.LastInterval},
+                {"Uuid", activityState.Uuid},
+                {"Enabled", activityState.Enabled},
+                {"AskingAttribution", activityState.AskingAttribution},
+                {"UpdatePackages", activityState.UpdatePackages},
+                {"PushToken", activityState.PushToken},
+                {"Adid", activityState.Adid}
+            };
         }
+        
+        public static ActivityState FromDictionary(Dictionary<string, object> activityStateObjectMap)
+        {
+            var activityState = new ActivityState
+            {
+                EventCount = activityStateObjectMap.ContainsKey("EventCount") ? (int) activityStateObjectMap["EventCount"] : 0,
+                SessionCount = activityStateObjectMap.ContainsKey("SessionCount") ? (int) activityStateObjectMap["SessionCount"] : 0,
+                SubSessionCount = activityStateObjectMap.ContainsKey("SubSessionCount") ? (int) activityStateObjectMap["SubSessionCount"] : 0,
+                SessionLenght = activityStateObjectMap.ContainsKey("SessionLenght") ? activityStateObjectMap["SessionLenght"] as TimeSpan? : TimeSpan.Zero,
+                TimeSpent = activityStateObjectMap.ContainsKey("TimeSpent") ? activityStateObjectMap["TimeSpent"] as TimeSpan? : TimeSpan.Zero,
+                LastInterval = activityStateObjectMap.ContainsKey("LastInterval") ? activityStateObjectMap["LastInterval"] as TimeSpan? : null,
+                Uuid = activityStateObjectMap.ContainsKey("Uuid") ? (Guid) activityStateObjectMap["Uuid"] : default(Guid),
+                Enabled = activityStateObjectMap.ContainsKey("Enabled") ? (bool) activityStateObjectMap["Enabled"] : false,
+                AskingAttribution = activityStateObjectMap.ContainsKey("AskingAttribution") ? (bool) activityStateObjectMap["AskingAttribution"] : false,
+                UpdatePackages = activityStateObjectMap.ContainsKey("UpdatePackages") ? (bool) activityStateObjectMap["UpdatePackages"] : false,
+                PushToken = activityStateObjectMap.ContainsKey("PushToken") ? activityStateObjectMap["PushToken"] as string : null,
+                Adid = activityStateObjectMap.ContainsKey("Adid") ? activityStateObjectMap["Adid"] as string : null
+            };
+
+            var lastActivityTicks = (long)activityStateObjectMap["LastActivity"];
+            var lastActivity = new DateTime(lastActivityTicks);
+            if (lastActivity != DateTime.MinValue)
+                activityState.LastActivity = lastActivity;
+
+            return activityState;
+        }
+
+        #region Serialization
 
         internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
         {

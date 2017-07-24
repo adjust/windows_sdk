@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
@@ -66,23 +65,62 @@ namespace AdjustSdk.Pcl
             return Retries;
         }
 
-        #region Serialization
-
-        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
+        public static Dictionary<string, string> ToDictionary(ActivityPackage activityPackage)
         {
-            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
+            var callbackParamsJson = JsonConvert.SerializeObject(activityPackage.CallbackParameters);
+            var partnerParamsJson = JsonConvert.SerializeObject(activityPackage.PartnerParameters);
+            var parametersJson = JsonConvert.SerializeObject(activityPackage.Parameters);
 
-            AddField(serializableFields, "Path", Path);
-            AddField(serializableFields, "ClientSdk", ClientSdk);
-            AddField(serializableFields, "ActivityKind", ActivityKindUtil.ToString(ActivityKind));
-            AddField(serializableFields, "Suffix", Suffix);
-            AddField(serializableFields, "Parameters", Parameters);
-            AddField(serializableFields, "CallbackParameters", CallbackParameters);
-            AddField(serializableFields, "PartnerParameters", PartnerParameters);
-
-            return serializableFields;
+            return new Dictionary<string, string>
+            {
+                {"Path", activityPackage.Path},
+                {"ClientSdk", activityPackage.ClientSdk},
+                {"ActivityKind", ActivityKindUtil.ToString(activityPackage.ActivityKind)},
+                {"Suffix", activityPackage.Suffix},
+                {"Parameters", parametersJson},
+                {"CallbackParameters", callbackParamsJson},
+                {"PartnerParameters", partnerParamsJson}
+            };
         }
 
+        public static ActivityPackage FromDictionary(Dictionary<string, string> activityPackageObjectMap)
+        {
+            var activityPackage = new ActivityPackage();
+
+            string parametersJson;
+            if (activityPackageObjectMap.TryGetValue("Parameters", out parametersJson))
+            {
+                activityPackage.Parameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(parametersJson);
+            }
+
+            string callbackParamsJson;
+            if (activityPackageObjectMap.TryGetValue("CallbackParameters", out callbackParamsJson))
+            {
+                activityPackage.CallbackParameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(callbackParamsJson);
+            }
+
+            string partnerParamsJson;
+            if (activityPackageObjectMap.TryGetValue("PartnerParameters", out partnerParamsJson))
+            {
+                activityPackage.PartnerParameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(partnerParamsJson);
+            }
+
+            activityPackage.Path = activityPackageObjectMap.ContainsKey("Path") ? activityPackageObjectMap["Path"] : null;
+            activityPackage.ClientSdk = activityPackageObjectMap.ContainsKey("ClientSdk") ? activityPackageObjectMap["ClientSdk"] : null;
+            activityPackage.Suffix = activityPackageObjectMap.ContainsKey("Suffix") ? activityPackageObjectMap["Suffix"] : null;
+
+            string activityKindString = activityPackageObjectMap.ContainsKey("ActivityKind") ? activityPackageObjectMap["ActivityKind"] : null;
+            if (activityKindString != null)
+                activityPackage.ActivityKind = ActivityKindUtil.FromString(activityKindString);
+
+            return activityPackage;
+        }
+
+        #region Serialization
+        
         internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
         {
             Path = GetFieldValueString(serializedFields, "Path");
@@ -120,22 +158,7 @@ namespace AdjustSdk.Pcl
 
             return activityPackage;
         }
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeListToStream(Stream stream, List<ActivityPackage> activityPackageList)
-        {
-            var writer = new BinaryWriter(stream);
-            writer.Write(Version);
-
-            var activityPackageArray = activityPackageList.ToArray();
-            writer.Write(activityPackageArray.Length);
-            for (int i = 0; i < activityPackageArray.Length; i++)
-            {
-                var activityPackage = activityPackageArray[i];
-                SerializeToStream(writer, activityPackage);
-            }
-        }
-
+        
         // does not close stream received. Caller is responsible to close if it wants it
         internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
         {

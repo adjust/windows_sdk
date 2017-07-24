@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
@@ -11,54 +12,57 @@ namespace AdjustSdk.Pcl
         private const string PackageQueueVersionedFilename = "AdjustPackageQueueV";
         private const string PackageQueueName = "Package queue";
 
-        private ILogger _Logger = AdjustFactory.Logger;
-        private ActionQueue _ActionQueue = new ActionQueue("adjust.PackageHandler");
-        private BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
+        private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
-        private List<ActivityPackage> _PackageQueue;
-        private IRequestHandler _RequestHandler;
-        private IActivityHandler _ActivityHandler;
+        private List<ActivityPackage> _packageQueue;
+        private IRequestHandler _requestHandler;
+        private IActivityHandler _activityHandler;
 
-        private ManualResetEvent InternalWaitHandle;
+        private ManualResetEvent _internalWaitHandle;
 
-        private bool IsPaused;
+        private IDeviceUtil _deviceUtil;
 
-        public PackageHandler(IActivityHandler activityHandler, bool startPaused)
+        private bool _isPaused;
+
+        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            _ActionQueue.Enqueue(() => InitI(activityHandler, startPaused));
+            _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
         }
 
-        public void Init(IActivityHandler activityHandler, bool startPaused)
+        public void Init(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            _ActivityHandler = activityHandler;
-            IsPaused = startPaused;
+            _activityHandler = activityHandler;
+            _deviceUtil = deviceUtil;
+            _isPaused = startPaused;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
         {
-            _ActionQueue.Enqueue(() => AddI(activityPackage));
+            _actionQueue.Enqueue(() => AddI(activityPackage));
         }
 
         public void SendFirstPackage()
         {
-            _ActionQueue.Enqueue(SendFirstI);
+            _actionQueue.Enqueue(SendFirstI);
         }
 
         public void SendNextPackage(ResponseData responseData)
         {
-            _ActionQueue.Enqueue(SendNextI);
+            _actionQueue.Enqueue(SendNextI);
 
-            _ActivityHandler.FinishedTrackingActivity(responseData);
+            _activityHandler.FinishedTrackingActivity(responseData);
         }
 
         public void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage)
         {
-            _ActivityHandler.FinishedTrackingActivity(responseData);
+            _activityHandler.FinishedTrackingActivity(responseData);
 
             Action action = () =>
             {
-                _Logger.Verbose("Package handler can send");
-                InternalWaitHandle.Set(); // open the door (signals the wait handle)
+                _logger.Verbose("Package handler can send");
+                _internalWaitHandle.Set(); // open the door (signals the wait handle)
 
                 SendFirstPackage();
             };
@@ -67,70 +71,70 @@ namespace AdjustSdk.Pcl
 
             var waitTime = Util.WaitingTime(retries, _backoffStrategy);
 
-            _Logger.Verbose("Waiting for {0} seconds before retrying for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
+            _logger.Verbose("Waiting for {0} seconds before retrying for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
 
-            _ActionQueue.Delay(waitTime, action);
+            _actionQueue.Delay(waitTime, action);
         }
 
         public void PauseSending()
         {
-            IsPaused = true;
+            _isPaused = true;
         }
 
         public void ResumeSending()
         {
-            IsPaused = false;
+            _isPaused = false;
         }
 
         public void UpdatePackages(SessionParameters sessionParameters)
         {
             var sessionParametersCopy = sessionParameters.Clone();
 
-            _ActionQueue.Enqueue(() => UpdatePackagesI(sessionParametersCopy));
+            _actionQueue.Enqueue(() => UpdatePackagesI(sessionParametersCopy));
         }
 
-        private void InitI(IActivityHandler activityHandler, bool startPaused)
+        private void InitI(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            Init(activityHandler, startPaused);
+            Init(activityHandler, deviceUtil, startPaused);
 
             ReadPackageQueueI();
 
-            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
+            _internalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            _RequestHandler = AdjustFactory.GetRequestHandler(SendNextPackage, CloseFirstPackage);
+            _requestHandler = AdjustFactory.GetRequestHandler(SendNextPackage, CloseFirstPackage);
         }
 
         private void AddI(ActivityPackage activityPackage)
         {
-            _PackageQueue.Add(activityPackage);
+            _packageQueue.Add(activityPackage);
 
-            _Logger.Debug("Added package {0} ({1})", _PackageQueue.Count, activityPackage);
-            _Logger.Verbose("{0}", activityPackage.GetExtendedString());
+            _logger.Debug("Added package {0} ({1})", _packageQueue.Count, activityPackage);
+            _logger.Verbose("{0}", activityPackage.GetExtendedString());
 
             WritePackageQueueI();
         }
 
         private void SendFirstI()
         {
-            if (_PackageQueue.Count == 0) return;
+            if (_packageQueue.Count == 0) return;
 
-            if (IsPaused)
+            if (_isPaused)
             {
-                _Logger.Debug("Package handler is paused");
+                _logger.Debug("Package handler is paused");
                 return;
             }
 
             // no need to lock InternalWaitHandle between WaitOne(0) call and Reset()
             // because all Internal methods of PackageHandler can be only executed by 1 thread at a time
 
-            if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
+            if (_internalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
-                InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                _RequestHandler.SendPackage(_PackageQueue.First());
+                _internalWaitHandle.Reset(); // close the door (non-signals the wait handle)
+                _requestHandler.SendPackage(_packageQueue.First());
             }
             else
             {
-                _Logger.Verbose("Package handler is already sending");
+                _logger.Verbose("Package handler is already sending");
             }
         }
 
@@ -138,24 +142,24 @@ namespace AdjustSdk.Pcl
         {
             try
             {
-                _PackageQueue.RemoveAt(0);
+                _packageQueue.RemoveAt(0);
                 WritePackageQueueI();
             }
             finally
             // preventing an exception not signaling the WaitHandle
             {
-                InternalWaitHandle.Set(); // open the door (signals the wait handle)
+                _internalWaitHandle.Set(); // open the door (signals the wait handle)
             }
             SendFirstI();
         }
 
         private void UpdatePackagesI(SessionParameters sessionParameters)
         {
-            _Logger.Debug("Updating package handler queue");
-            _Logger.Verbose("Session Callback parameters: {0}", sessionParameters.CallbackParameters);
-            _Logger.Verbose("Session Partner parameters: {0}", sessionParameters.PartnerParameters);
+            _logger.Debug("Updating package handler queue");
+            _logger.Verbose("Session Callback parameters: {0}", sessionParameters.CallbackParameters);
+            _logger.Verbose("Session Partner parameters: {0}", sessionParameters.PartnerParameters);
 
-            foreach (var activityPackage in _PackageQueue)
+            foreach (var activityPackage in _packageQueue)
             {
                 var parameters = activityPackage.Parameters;
 
@@ -179,32 +183,54 @@ namespace AdjustSdk.Pcl
 
         private void WritePackageQueueI()
         {
-            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", _PackageQueue.Count);
-            Util.SerializeToFileAsync(
-                fileName: PackageQueueVersionedFilename,
-                objectWriter: ActivityPackage.SerializeListToStream,
-                input: _PackageQueue,
-                sucessMessage: sucessMessage)
-                .Wait();
+            List<string> packageQueueStringList = new List<string>(_packageQueue.Count);
+            foreach (var activityPackage in _packageQueue)
+            {
+                var activityPackageMap = ActivityPackage.ToDictionary(activityPackage);
+                packageQueueStringList.Add(JsonConvert.SerializeObject(activityPackageMap));
+            }
+
+            string packageQueueString = JsonConvert.SerializeObject(packageQueueStringList);
+
+            _deviceUtil.PersistValue(PackageQueueName, packageQueueString);
         }
 
         private void ReadPackageQueueI()
         {
-            _PackageQueue = Util.DeserializeFromFileAsync(PackageQueueVersionedFilename,
+            _packageQueue = Util.DeserializeFromFileAsync(PackageQueueVersionedFilename,
                 ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
                 () => null, // default value in case of error
                 PackageQueueName, // package queue name
                 ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function old non-versioned file
                 PackageQueueLegacyFilename) // name of old non-versioned file
-                .Result; 
+                .Result;
 
-            if (_PackageQueue != null)
+            if (_packageQueue == null)
             {
-                _Logger.Debug("Package handler read {0} packages", _PackageQueue.Count);
+                string packageQueueString;
+                if (_deviceUtil.TryTakeValue(PackageQueueName, out packageQueueString))
+                {
+                    _packageQueue = new List<ActivityPackage>();
+
+                    List<string> packageQueueStringList =
+                        JsonConvert.DeserializeObject<List<string>>(packageQueueString);
+                    foreach (var activityPackageMapString in packageQueueStringList)
+                    {
+                        var activityPackageMap =
+                            JsonConvert.DeserializeObject<Dictionary<string, string>>(activityPackageMapString);
+                        var activityPackage = ActivityPackage.FromDictionary(activityPackageMap);
+                        _packageQueue.Add(activityPackage);
+                    }
+                }
+            }
+
+            if (_packageQueue != null)
+            {
+                _logger.Debug("Package handler read {0} packages", _packageQueue.Count);
             } 
             else
             {
-                _PackageQueue = new List<ActivityPackage>();
+                _packageQueue = new List<ActivityPackage>();
             }
         }
     }

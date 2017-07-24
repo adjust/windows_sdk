@@ -5,7 +5,7 @@ namespace AdjustSdk.Pcl
 {
     public interface IActivityHandler
     {
-        void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil);
+        void Init(AdjustConfig adjustConfig, IDeviceUtil deviceUtil);
 
         void FinishedTrackingActivity(ResponseData responseData);
 

@@ -4,7 +4,7 @@ namespace AdjustSdk.Pcl
 {
     public interface IPackageHandler
     {
-        void Init(IActivityHandler activityHandler, bool startPaused);
+        void Init(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused);
 
         void AddPackage(ActivityPackage activityPackage);
 

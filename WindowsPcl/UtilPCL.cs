@@ -174,41 +174,7 @@ namespace AdjustSdk.Pcl
 
             return null;
         }
-
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
-        {
-            try
-            {
-                var localStorage = FileSystem.Current.LocalStorage;
-                var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-
-                using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
-                {
-                    stream.Seek(0, SeekOrigin.Begin);
-                    objectWriter(stream, input);
-                }
-                _Logger.Debug(sucessMessage());
-            }
-            catch (Exception ex)
-            {
-                _Logger.Error("Failed to write to file {0} ({1})", fileName, Util.ExtractExceptionMessage(ex));
-            }
-
-        }
-
-        internal static async Task SerializeToFileAsync(string fileName, VersionedSerializable input, string objectName)
-        {
-            await SerializeToFileAsync(fileName, VersionedSerializable.SerializeToStream, input, objectName);
-        }
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
-        {
-            await SerializeToFileAsync(
-                fileName: fileName,
-                objectWriter: objectWriter,
-                input: input,
-                sucessMessage: () => Util.f("Wrote {0}: {1}", objectName, input));
-        }
-
+        
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
