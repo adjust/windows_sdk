@@ -34,7 +34,7 @@ namespace AdjustSdk.Pcl
             set { _Logger = value; }
         }
 
-        public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             if (_IActivityHandler == null)
                 return ActivityHandler.GetInstance(adjustConfig, deviceUtil);
@@ -43,12 +43,12 @@ namespace AdjustSdk.Pcl
             return _IActivityHandler;
         }
 
-        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, bool startPaused)
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
             if (_IPackageHandler == null)
-                return new PackageHandler(activityHandler, startPaused);
+                return new PackageHandler(activityHandler, deviceUtil, startPaused);
 
-            _IPackageHandler.Init(activityHandler, startPaused);
+            _IPackageHandler.Init(activityHandler, deviceUtil, startPaused);
             return _IPackageHandler;
         }
 

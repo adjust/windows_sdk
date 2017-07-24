@@ -26,50 +26,8 @@ namespace AdjustSdk.Pcl
             UInt64,
             DictionaryStringString,
         }
-
-        private static Dictionary<SerializableType, Action<BinaryWriter, object>> _FieldWriters = new Dictionary<SerializableType, Action<BinaryWriter,object>>
-        {
-            { SerializableType.Boolean, (writer, value) => writer.Write((bool)value) },
-            { SerializableType.Byte, (writer, value) => writer.Write((byte)value) },
-            { SerializableType.Bytes, (writer, value) => {
-                var byteArray = value as byte[];
-                writer.Write(byteArray.Length);
-                writer.Write((byte[])value);
-            } },
-            { SerializableType.Char, (writer, value) => writer.Write((char)value) },
-            { SerializableType.Chars, (writer, value) => {
-                var charArray = value as char[];
-                writer.Write(charArray.Length);
-                writer.Write((char[])value);
-            } },
-            { SerializableType.Decimal, (writer, value) => writer.Write((decimal)value) },
-            { SerializableType.Double, (writer, value) => writer.Write((double)value) },
-            { SerializableType.Int16, (writer, value) => writer.Write((short)value) },
-            { SerializableType.Int32, (writer, value) => writer.Write((int)value) },
-            { SerializableType.Int64, (writer, value) => writer.Write((long)value) },
-            { SerializableType.SByte, (writer, value) => writer.Write((sbyte)value) },
-            { SerializableType.Single, (writer, value) => writer.Write((float)value) },
-            { SerializableType.String, (writer, value) => {
-                var stringValue = value as string;
-                if (stringValue == null) { return; }
-                writer.Write(stringValue);
-            } },
-            { SerializableType.UInt16, (writer, value) => writer.Write((ushort)value) },
-            { SerializableType.UInt32, (writer, value) => writer.Write((uint)value) },
-            { SerializableType.UInt64, (writer, value) => writer.Write((ulong)value) },
-            { SerializableType.DictionaryStringString, (writer, value) => {
-                var dictionary = value as Dictionary<string, string>;
-                if (dictionary == null) { return; }
-                writer.Write(dictionary.Count);
-                foreach(var kvp in dictionary)
-                {
-                    writer.Write(kvp.Key);
-                    writer.Write(kvp.Value);
-                }
-            } },
-        };
-
-        private static Dictionary<SerializableType, Func<BinaryReader, object>> _FieldReaders= new Dictionary<SerializableType, Func<BinaryReader, object>>
+        
+        private static readonly Dictionary<SerializableType, Func<BinaryReader, object>> FieldReaders= new Dictionary<SerializableType, Func<BinaryReader, object>>
         {
             { SerializableType.Boolean, (reader) => reader.ReadBoolean() },
             { SerializableType.Byte, (reader) => reader.ReadByte() },
@@ -108,41 +66,7 @@ namespace AdjustSdk.Pcl
 
         public static int Version = 4100;
 
-        abstract internal Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields();
-        abstract internal void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields);
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, VersionedSerializable instance)
-        {
-            SerializeToStream(new BinaryWriter(stream), instance);
-        }
-        internal static void SerializeToStream(BinaryWriter writer, VersionedSerializable instance)
-        {
-            // write version of the sdk and objects
-            writer.Write(Version);
-            // the mapping specific for the implementation object
-            var fields = instance.GetSerializableFields();
-            // number of fields
-            writer.Write(fields.Count);
-
-            foreach (var fieldKVP in fields)
-            {
-                string fieldName = fieldKVP.Key;
-                SerializableType fieldType = fieldKVP.Value.Item1;
-
-                Action<BinaryWriter, object> fieldWriter;
-                if (_FieldWriters.TryGetValue(fieldType, out fieldWriter))
-                {
-                    writer.Write(fieldName);
-                    writer.Write((short)fieldType); // write field type so that unknown/deleted fields can be read in the future
-                    fieldWriter(writer, fieldKVP.Value.Item2);
-                }
-                else
-                {
-                    AdjustFactory.Logger.Error("Could not write field {0} of type {1}", fieldName, fieldType);
-                }
-            }
-        }
+        internal abstract void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields);
 
         // does not close stream received. Caller is responsible to close if it wants it
         internal static T DeserializeFromStream<T>(Stream stream) where T : VersionedSerializable, new()
@@ -164,7 +88,7 @@ namespace AdjustSdk.Pcl
                 string fieldName = reader.ReadString();
                 SerializableType fieldType = (SerializableType) reader.ReadInt16();
                 Func<BinaryReader, object> fieldReader;
-                if (_FieldReaders.TryGetValue(fieldType, out fieldReader))
+                if (FieldReaders.TryGetValue(fieldType, out fieldReader))
                 {
                     var fieldValue = fieldReader(reader);
                     fields.Add(fieldName, fieldValue);

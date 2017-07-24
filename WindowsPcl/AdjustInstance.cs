@@ -22,7 +22,7 @@ namespace AdjustSdk.Pcl
         {
         }
 
-        public void ApplicationLaunching(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        public void ApplicationLaunching(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             adjustConfig.PushToken = _PushToken;
             adjustConfig.SessionParametersActions = _SessionParametersActionsArray;

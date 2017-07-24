@@ -93,18 +93,33 @@ namespace AdjustSdk
                 Adid);
         }
 
-        public Dictionary<string, string> ToDictionary()
+        public static Dictionary<string, object> ToDictionary(AdjustAttribution attribution)
         {
-            return new Dictionary<string, string>
+            return new Dictionary<string, object>
             {
-                {"trackerName", TrackerName},
-                {"trackerToken", TrackerToken},
-                {"network", Network},
-                {"campaign", Campaign},
-                {"adgroup", Adgroup},
-                {"creative", Creative},
-                {"clickLabel", ClickLabel},
-                {"adid", Adid}
+                {"TrackerName", attribution.TrackerName},
+                {"TrackerToken", attribution.TrackerToken},
+                {"Network", attribution.Network},
+                {"Campaign", attribution.Campaign},
+                {"Adgroup", attribution.Adgroup},
+                {"Creative", attribution.Creative},
+                {"ClickLabel", attribution.ClickLabel},
+                {"Adid", attribution.Adid}
+            };
+        }
+
+        public static AdjustAttribution FromDictionary(Dictionary<string, object> attributionObjectMap)
+        {
+            return new AdjustAttribution
+            {
+                TrackerName = attributionObjectMap.ContainsKey("TrackerName") ? attributionObjectMap["TrackerName"] as string : null,
+                TrackerToken = attributionObjectMap.ContainsKey("TrackerToken") ? attributionObjectMap["TrackerToken"] as string : null,
+                Network = attributionObjectMap.ContainsKey("Network") ? attributionObjectMap["Network"] as string : null,
+                Campaign = attributionObjectMap.ContainsKey("Campaign") ? attributionObjectMap["Campaign"] as string : null,
+                Adgroup = attributionObjectMap.ContainsKey("Adgroup") ? attributionObjectMap["Adgroup"] as string : null,
+                Creative = attributionObjectMap.ContainsKey("Creative") ? attributionObjectMap["Creative"] as string : null,
+                ClickLabel = attributionObjectMap.ContainsKey("ClickLabel") ? attributionObjectMap["ClickLabel"] as string : null,
+                Adid = attributionObjectMap.ContainsKey("Adid") ? attributionObjectMap["Adid"] as string : null
             };
         }
 
@@ -126,22 +141,7 @@ namespace AdjustSdk
         }
 
         #region Serialization
-        internal override Dictionary<string, Tuple<SerializableType, object>> GetSerializableFields()
-        {
-            var serializableFields = new Dictionary<string, Tuple<SerializableType, object>>(7);
-
-            AddField(serializableFields, "TrackerToken", TrackerToken);
-            AddField(serializableFields, "TrackerName", TrackerName);
-            AddField(serializableFields, "Network", Network);
-            AddField(serializableFields, "Campaign", Campaign);
-            AddField(serializableFields, "Adgroup", Adgroup);
-            AddField(serializableFields, "Creative", Creative);
-            AddField(serializableFields, "ClickLabel", ClickLabel);
-            AddField(serializableFields, "Adid", Adid);
-
-            return serializableFields;
-        }
-
+        
         internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
         {
             TrackerToken = GetFieldValueString(serializedFields, "TrackerToken");

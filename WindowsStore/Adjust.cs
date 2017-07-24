@@ -27,7 +27,7 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly DeviceUtil DeviceUtil = new UtilWS();
+        private static readonly IDeviceUtil DeviceUtil = new UtilWS();
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
         private static bool IsApplicationActive = false;
 

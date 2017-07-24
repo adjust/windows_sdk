@@ -10,7 +10,7 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly DeviceUtil DeviceUtil = new UtilWP80();
+        private static readonly IDeviceUtil DeviceUtil = new UtilWP80();
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
 
         private Adjust() { }

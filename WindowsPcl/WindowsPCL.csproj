@@ -73,7 +73,7 @@
     <Compile Include="SessionParameters.cs" />
     <Compile Include="SessionResponseData.cs" />
     <Compile Include="TimerCycle.cs" />
-    <Compile Include="DeviceUtil.cs" />
+    <Compile Include="IDeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TimerOnce.cs" />
     <Compile Include="UnknowResponseData.cs" />
