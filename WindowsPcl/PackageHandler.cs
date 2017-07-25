@@ -196,33 +196,37 @@ namespace AdjustSdk.Pcl
 
         private void ReadPackageQueueI()
         {
-            // first - read (and then remove) legacy file
-            if ((_packageQueue = Util.DeserializeFromFileAsync(
+            string packageQueueString;
+            if (_deviceUtil.TryTakeValue(PackageQueueName, out packageQueueString))
+            {
+                _packageQueue = new List<ActivityPackage>();
+
+                List<string> packageQueueStringList =
+                    JsonConvert.DeserializeObject<List<string>>(packageQueueString);
+                foreach (var activityPackageMapString in packageQueueStringList)
+                {
+                    var activityPackageMap =
+                        JsonConvert.DeserializeObject<Dictionary<string, string>>(activityPackageMapString);
+                    var activityPackage = ActivityPackage.FromDictionary(activityPackageMap);
+                    _packageQueue.Add(activityPackage);
+                }
+            }
+            else
+            {
+                // if package queue is not found, try to read it from the legacy file
+                _packageQueue = Util.DeserializeFromFileAsync(
                         fileName: PackageQueueLegacyFilename,
                         objectReader: ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function from Stream to List of ActivityPackage
                         defaultReturn: () => null, // default value in case of error
                         objectName: PackageQueueName,
                         deleteAfterRead: true) // package queue name
-                    .Result) == null)
-            {
-                // if legacy file not present, try read new settings data version
-                string packageQueueString;
-                if (_deviceUtil.TryTakeValue(PackageQueueName, out packageQueueString))
-                {
-                    _packageQueue = new List<ActivityPackage>();
+                    .Result;
 
-                    List<string> packageQueueStringList =
-                        JsonConvert.DeserializeObject<List<string>>(packageQueueString);
-                    foreach (var activityPackageMapString in packageQueueStringList)
-                    {
-                        var activityPackageMap =
-                            JsonConvert.DeserializeObject<Dictionary<string, string>>(activityPackageMapString);
-                        var activityPackage = ActivityPackage.FromDictionary(activityPackageMap);
-                        _packageQueue.Add(activityPackage);
-                    }
-                }
+                // if it's successfully read from legacy source, store it using new persistance
+                if (_packageQueue != null)
+                    WritePackageQueueI();
             }
-
+            
             if (_packageQueue != null)
             {
                 _logger.Debug("Package handler read {0} packages", _packageQueue.Count);
