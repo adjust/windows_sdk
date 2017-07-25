@@ -6,7 +6,7 @@ using System.IO;
 
 namespace AdjustSdk
 {
-    public class AdjustAttribution : VersionedSerializable
+    public class AdjustAttribution
     {
         public string TrackerToken { get; set; }
         public string TrackerName { get; set; }
@@ -139,21 +139,7 @@ namespace AdjustSdk
 
             return value.GetHashCode();
         }
-
-        #region Serialization
         
-        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
-        {
-            TrackerToken = GetFieldValueString(serializedFields, "TrackerToken");
-            TrackerName = GetFieldValueString(serializedFields, "TrackerName");
-            Network = GetFieldValueString(serializedFields, "Network");
-            Campaign = GetFieldValueString(serializedFields, "Campaign");
-            Adgroup = GetFieldValueString(serializedFields, "Adgroup");
-            Creative = GetFieldValueString(serializedFields, "Creative");
-            ClickLabel = GetFieldValueString(serializedFields, "ClickLabel");
-            Adid = GetFieldValueString(serializedFields, "Adid");
-        }
-
         // does not close stream received. Caller is responsible to close if it wants it
         internal static AdjustAttribution DeserializeFromStreamLegacy(Stream stream)
         {
@@ -179,7 +165,5 @@ namespace AdjustSdk
 
             return reader.ReadString();
         }
-
-        #endregion Serialization
     }
 }

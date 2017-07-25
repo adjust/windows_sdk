@@ -9,7 +9,6 @@ namespace AdjustSdk.Pcl
     public class PackageHandler : IPackageHandler
     {
         private const string PackageQueueLegacyFilename = "AdjustIOPackageQueue";
-        private const string PackageQueueVersionedFilename = "AdjustPackageQueueV";
         private const string PackageQueueName = "Package queue";
 
         private readonly ILogger _logger = AdjustFactory.Logger;
@@ -197,16 +196,16 @@ namespace AdjustSdk.Pcl
 
         private void ReadPackageQueueI()
         {
-            _packageQueue = Util.DeserializeFromFileAsync(PackageQueueVersionedFilename,
-                ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
-                () => null, // default value in case of error
-                PackageQueueName, // package queue name
-                ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function old non-versioned file
-                PackageQueueLegacyFilename) // name of old non-versioned file
-                .Result;
-
-            if (_packageQueue == null)
+            // first - read (and then remove) legacy file
+            if ((_packageQueue = Util.DeserializeFromFileAsync(
+                        fileName: PackageQueueLegacyFilename,
+                        objectReader: ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function from Stream to List of ActivityPackage
+                        defaultReturn: () => null, // default value in case of error
+                        objectName: PackageQueueName,
+                        deleteAfterRead: true) // package queue name
+                    .Result) == null)
             {
+                // if legacy file not present, try read new settings data version
                 string packageQueueString;
                 if (_deviceUtil.TryTakeValue(PackageQueueName, out packageQueueString))
                 {

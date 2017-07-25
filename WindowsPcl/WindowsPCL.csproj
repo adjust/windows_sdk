@@ -52,7 +52,6 @@
     <Compile Include="AttributionResponseData.cs" />
     <Compile Include="BackoffStrategy.cs" />
     <Compile Include="SdkClickResponseData.cs" />
-    <Compile Include="VersionedSerializable.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="EventResponseData.cs" />
     <Compile Include="IActivityHandler.cs" />
