@@ -1048,7 +1048,7 @@ namespace AdjustSdk.Pcl
 
         private void WriteAttributionI()
         {
-            _deviceUtil.PersistObject(AttributionName, AdjustAttribution.ToDictionary(_attribution));            
+            _deviceUtil.PersistObject(AttributionName, AdjustAttribution.ToDictionary(_attribution));
         }
 
         private void WriteSessionParametersI()
@@ -1058,41 +1058,49 @@ namespace AdjustSdk.Pcl
 
         private void ReadActivityStateI()
         {
-            // first - read (and then remove) legacy file
-            if ((_activityState = Util.DeserializeFromFileAsync(
+            Dictionary<string, object> activityStateObjectMap;
+            if (_deviceUtil.TryTakeObject(ActivityStateName, out activityStateObjectMap))
+            {
+                _activityState = ActivityState.FromDictionary(activityStateObjectMap);
+            }
+            else
+            {
+                // if activity state is not found, try to read it from the legacy file
+                _activityState = Util.DeserializeFromFileAsync(
                         fileName: ActivityStateLegacyFileName,
                         objectReader: ActivityState.DeserializeFromStreamLegacy, //deserialize function from Stream to ActivityState
                         defaultReturn: () => null, //default value in case of error
-                        objectName: ActivityStateName, 
+                        objectName: ActivityStateName,
                         deleteAfterRead: true) // activity state name
-                    .Result) == null)
-            {
-                // if legacy file not present, try read new settings data version
-                Dictionary<string, object> activityStateObjectMap;
-                if (_deviceUtil.TryTakeObject(ActivityStateName, out activityStateObjectMap))
-                {
-                    _activityState = ActivityState.FromDictionary(activityStateObjectMap);
-                }
+                    .Result;
+
+                // if it's successfully read from legacy source, store it using new persistance
+                if(_activityState != null)
+                    WriteActivityStateS(null);
             }
         }
 
         private void ReadAttributionI()
         {
-            // first - read (and then remove) legacy file
-            if ((_attribution = Util.DeserializeFromFileAsync(
+            Dictionary<string, object> attributionObjectMap;
+            if (_deviceUtil.TryTakeObject(AttributionName, out attributionObjectMap))
+            {
+                _attribution = AdjustAttribution.FromDictionary(attributionObjectMap);
+            }
+            else
+            {
+                // if attribution is not found, try to read it from the legacy file
+                _attribution = Util.DeserializeFromFileAsync(
                         fileName: AttributionLegacyFileName,
                         objectReader: AdjustAttribution.DeserializeFromStreamLegacy, //deserialize function from Stream to Attribution
                         defaultReturn: () => null, //default value in case of error
                         objectName: AttributionName,
                         deleteAfterRead: true) // attribution name
-                    .Result) == null)
-            {
-                // if legacy file not present, try read new settings data version
-                Dictionary<string, object> attributionObjectMap;
-                if (_deviceUtil.TryTakeObject(AttributionName, out attributionObjectMap))
-                {
-                    _attribution = AdjustAttribution.FromDictionary(attributionObjectMap);
-                }
+                    .Result;
+
+                // if it's successfully read from legacy source, store it using new persistance
+                if (_attribution != null)
+                    WriteAttributionI();
             }
         }
 
