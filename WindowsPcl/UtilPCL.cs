@@ -34,38 +34,7 @@ namespace AdjustSdk.Pcl
 
             return stringBuilder.ToString();
         }
-
-        public static bool DeleteFile(string filename)
-        {
-            try
-            {
-                var localStorage = FileSystem.Current.LocalStorage;
-                var activityStateFile = localStorage.GetFileAsync(filename).Result;
-                if (activityStateFile != null)
-                {
-                    activityStateFile.DeleteAsync().Wait();
-
-                    //Logger.Debug("File {0} deleted", filename);
-                    return true;
-                }
-                else
-                {
-                    //Logger.Debug("File {0} doesn't exist to delete", filename);
-                    return false;
-                }
-            }
-            catch (PCLStorage.Exceptions.FileNotFoundException)
-            {
-                //Logger.Debug("File {0} doesn't exist to delete", filename);
-                return false;
-            }
-            catch (Exception)
-            {
-                //Logger.Error("Error deleting {0} file", filename);
-                return false;
-            }
-        }
-
+        
         public static string f(string message, params object[] parameters)
         {
             return String.Format(NullFormat, message, parameters);
@@ -103,41 +72,13 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string versionedFileName,
+        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
             Func<Stream, T> objectReader,
             Func<T> defaultReturn,
             string objectName,
-            Func<Stream, T> legacyObjectReader = null,
-            string legacyFileName = null)
+            bool deleteAfterRead)
             where T : class
         {
-            T valueFromVersionedFile = await TryDeserializeFromFileAsync(
-                versionedFileName, objectReader, objectName);
-            if (valueFromVersionedFile != null)
-            {
-                return valueFromVersionedFile;
-            }
-
-            T valueFromLegacyFile = await TryDeserializeFromFileAsync(
-                legacyFileName, legacyObjectReader, objectName);
-            if (valueFromLegacyFile != null)
-            {
-                return valueFromLegacyFile;
-            }
-
-            // fresh start
-            return defaultReturn();
-        }
-
-        private static async Task<T> TryDeserializeFromFileAsync<T>(string fileName,
-            Func<Stream, T> objectReader,
-            string objectName)
-            where T : class
-        {
-            if (fileName == null || objectReader == null)
-            {
-                return null;
-            }
             try
             {
                 var localStorage = FileSystem.Current.LocalStorage;
@@ -146,8 +87,7 @@ namespace AdjustSdk.Pcl
 
                 if (file == null)
                 {
-                    _Logger.Verbose("{0} file not found", objectName);
-                    return null;
+                    throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
                 }
 
                 T output;
@@ -156,6 +96,9 @@ namespace AdjustSdk.Pcl
                     output = objectReader(stream);
                 }
                 _Logger.Debug("Read {0}: {1}", objectName, output);
+
+                if (deleteAfterRead)
+                    await file.DeleteAsync();
 
                 // successful read
                 return output;
@@ -172,7 +115,8 @@ namespace AdjustSdk.Pcl
                 }
             }
 
-            return null;
+            // fresh start
+            return defaultReturn();
         }
         
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)

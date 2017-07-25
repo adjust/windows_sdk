@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
-    public class ActivityPackage : VersionedSerializable
+    public class ActivityPackage
     {
         public ActivityKind ActivityKind { get; set; }
         public string ClientSdk { get; private set; }
@@ -118,20 +118,7 @@ namespace AdjustSdk.Pcl
 
             return activityPackage;
         }
-
-        #region Serialization
         
-        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
-        {
-            Path = GetFieldValueString(serializedFields, "Path");
-            ClientSdk = GetFieldValueString(serializedFields, "ClientSdk");
-            ActivityKind = ActivityKindUtil.FromString(GetFieldValueString(serializedFields, "ActivityKind"));
-            Suffix = GetFieldValueString(serializedFields, "Suffix");
-            Parameters = GetFieldValueDictionaryString(serializedFields, "Parameters");
-            CallbackParameters = GetFieldValueDictionaryString(serializedFields, "CallbackParameters");
-            PartnerParameters = GetFieldValueDictionaryString(serializedFields, "PartnerParameters");
-        }
-
         // does not close stream received. Caller is responsible to close if it wants it
         internal static ActivityPackage DeserializeFromStreamLegacy(Stream stream)
         {
@@ -159,25 +146,6 @@ namespace AdjustSdk.Pcl
             return activityPackage;
         }
         
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
-        {
-            var reader = new BinaryReader(stream);
-            var version = reader.ReadInt32();
-
-            var activityPackageLength = reader.ReadInt32();
-            List<ActivityPackage> activityPackageList = new List<ActivityPackage>(activityPackageLength);
-
-            for (int i = 0; i < activityPackageLength; i++)
-            {
-                activityPackageList.Add(
-                    DeserializeFromStream<ActivityPackage>(reader)
-                );
-            }
-
-            return activityPackageList;
-        }
-
         internal static List<ActivityPackage> DeserializeListFromStreamLegacy(Stream stream)
         {
             List<ActivityPackage> activityPackageList = null;
@@ -195,7 +163,6 @@ namespace AdjustSdk.Pcl
 
             return activityPackageList;
         }
-
-        #endregion Serialization
+        
     }
 }

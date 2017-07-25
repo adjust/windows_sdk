@@ -7,13 +7,10 @@ namespace AdjustSdk.Pcl
     public class ActivityHandler : IActivityHandler
     {
         private const string ActivityStateLegacyFileName = "AdjustIOActivityState";
-        private const string ActivityStateVersionedFileName = "AdjustActivityStateV";
         private const string ActivityStateName = "Activity state";
         private const string AttributionLegacyFileName = "AdjustAttribution";
-        private const string AttributionVersionedFileName = "AdjustAttributionV";
         private const string AttributionName = "Attribution";
         private const string AdjustPrefix = "adjust_";
-        private const string SessionParametersVersionedFilename = "AdjustSessionParametersV";
         private const string SessionParametersName = "Session Parameters";
 
         private TimeSpan _backgroundTimerInterval;
@@ -441,7 +438,7 @@ namespace AdjustSdk.Pcl
             }
 
             Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
-            
+
             _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));
 
             var attributionPackage = GetAttributionPackageI();
@@ -1061,17 +1058,16 @@ namespace AdjustSdk.Pcl
 
         private void ReadActivityStateI()
         {
-            _activityState = Util.DeserializeFromFileAsync(
-                versionedFileName: ActivityStateVersionedFileName,
-                objectReader: VersionedSerializable.DeserializeFromStream<ActivityState>, //deserialize function from Stream to ActivityState
-                defaultReturn: () => null, //default value in case of error
-                objectName: ActivityStateName, // activity state name
-                legacyObjectReader: ActivityState.DeserializeFromStreamLegacy, // deserialize function to read old non-versioned file
-                legacyFileName: ActivityStateLegacyFileName) // name of old non-versioned file
-                .Result;
-
-            if (_activityState == null)
+            // first - read (and then remove) legacy file
+            if ((_activityState = Util.DeserializeFromFileAsync(
+                        fileName: ActivityStateLegacyFileName,
+                        objectReader: ActivityState.DeserializeFromStreamLegacy, //deserialize function from Stream to ActivityState
+                        defaultReturn: () => null, //default value in case of error
+                        objectName: ActivityStateName, 
+                        deleteAfterRead: true) // activity state name
+                    .Result) == null)
             {
+                // if legacy file not present, try read new settings data version
                 Dictionary<string, object> activityStateObjectMap;
                 if (_deviceUtil.TryTakeObject(ActivityStateName, out activityStateObjectMap))
                 {
@@ -1082,16 +1078,16 @@ namespace AdjustSdk.Pcl
 
         private void ReadAttributionI()
         {
-            _attribution = Util.DeserializeFromFileAsync(AttributionVersionedFileName,
-                VersionedSerializable.DeserializeFromStream<AdjustAttribution>, //deserialize function from Stream to Attribution
-                () => null, //default value in case of error
-                AttributionName, // attribution name
-                AdjustAttribution.DeserializeFromStreamLegacy, // deserialize function to read old non-versioned file
-                AttributionLegacyFileName) // name of old non-versioned file
-                .Result;
-
-            if (_attribution == null)
+            // first - read (and then remove) legacy file
+            if ((_attribution = Util.DeserializeFromFileAsync(
+                        fileName: AttributionLegacyFileName,
+                        objectReader: AdjustAttribution.DeserializeFromStreamLegacy, //deserialize function from Stream to Attribution
+                        defaultReturn: () => null, //default value in case of error
+                        objectName: AttributionName,
+                        deleteAfterRead: true) // attribution name
+                    .Result) == null)
             {
+                // if legacy file not present, try read new settings data version
                 Dictionary<string, object> attributionObjectMap;
                 if (_deviceUtil.TryTakeObject(AttributionName, out attributionObjectMap))
                 {
@@ -1099,24 +1095,15 @@ namespace AdjustSdk.Pcl
                 }
             }
         }
-                
+
         private void ReadSessionParametersI()
         {
-            _sessionParameters = Util.DeserializeFromFileAsync(SessionParametersVersionedFilename,
-                VersionedSerializable.DeserializeFromStream<SessionParameters>, // deserialize function from Stream to Dictionary
-                () => new SessionParameters(), // default value in case of error
-                SessionParametersName) // session callback parameters name
-                .Result;
-
-            if (_sessionParameters == null || (_sessionParameters.CallbackParameters == null && _sessionParameters.PartnerParameters == null))
-            {
-                Dictionary<string, object> attributionObjectMap;
-                if (_deviceUtil.TryTakeObject(SessionParametersName, out attributionObjectMap))
-                {
-                    _sessionParameters = SessionParameters.FromDictionary(attributionObjectMap);
-                }
-            }
+            Dictionary<string, object> attributionObjectMap;
+            _sessionParameters = _deviceUtil.TryTakeObject(SessionParametersName, out attributionObjectMap) ? 
+                SessionParameters.FromDictionary(attributionObjectMap) : 
+                new SessionParameters();
         }
+
         #endregion read write
 
         // return whether or not activity state should be written

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AdjustSdk.Pcl
 {
-    public class ActivityState : VersionedSerializable
+    public class ActivityState
     {
         // global counters
         internal int EventCount { get; set; }
@@ -104,30 +104,6 @@ namespace AdjustSdk.Pcl
             return activityState;
         }
 
-        #region Serialization
-
-        internal override void InitWithSerializedFields(int version, Dictionary<string, object> serializedFields)
-        {
-            EventCount = GetFieldValueInt(serializedFields, "EventCount", EventCount);
-            SessionCount = GetFieldValueInt(serializedFields, "SessionCount", SessionCount);
-            SubSessionCount = GetFieldValueInt(serializedFields, "SubSessionCount", SubSessionCount);
-            SessionLenght = GetFieldValueTimeSpan(serializedFields, "SessionLenght");
-            TimeSpent = GetFieldValueTimeSpan(serializedFields, "TimeSpent");
-            LastActivity = GetFieldValueDateTime(serializedFields, "LastActivity");
-            LastInterval = GetFieldValueTimeSpan(serializedFields, "LastInterval");
-
-            var uuidString = GetFieldValueString(serializedFields, "Uuid");
-            Uuid = uuidString != null ? Guid.Parse(uuidString) : Guid.NewGuid();
-
-            Enabled = GetFieldValueBool(serializedFields, "Enabled", defaultValue: true);
-            AskingAttribution = GetFieldValueBool(serializedFields, "AskingAttribution", defaultValue: false);
-            UpdatePackages = GetFieldValueBool(serializedFields, "UpdatePackages", defaultValue: false);
-
-            PushToken = GetFieldValueString(serializedFields, "PushToken");
-
-            Adid = GetFieldValueString(serializedFields, "Adid");
-        }
-
         // does not close stream received. Caller is responsible to close if it wants it
         internal static ActivityState DeserializeFromStreamLegacy(Stream stream)
         {
@@ -159,17 +135,14 @@ namespace AdjustSdk.Pcl
         {
             if (ticks == -1)
                 return null;
-            else
-                return new TimeSpan(ticks);
+            return new TimeSpan(ticks);
         }
 
         private static DateTime? DeserializeDateTimeFromLong(long ticks)
         {
             if (ticks == -1)
                 return null;
-            else
-                return new DateTime(ticks);
+            return new DateTime(ticks);
         }
-        #endregion Serialization
     }
 }
