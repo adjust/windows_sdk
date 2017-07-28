@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
     public class ActivityHandler : IActivityHandler
     {
         private const string ActivityStateLegacyFileName = "AdjustIOActivityState";
-        private const string ActivityStateName = "Activity state";
+        private const string ActivityStateLegacyName = "Activity state";
+        private const string ActivityStateStorageName = "adjust_activity_state";
         private const string AttributionLegacyFileName = "AdjustAttribution";
-        private const string AttributionName = "Attribution";
+        private const string AttributionLegacyName = "Attribution";
+        private const string AttributionStorageName = "adjust_attribution";
         private const string AdjustPrefix = "adjust_";
-        private const string SessionParametersName = "Session Parameters";
+        private const string SessionParametersStorageName = "adjust_session_params";
 
         private TimeSpan _backgroundTimerInterval;
 
@@ -375,7 +378,7 @@ namespace AdjustSdk.Pcl
         {
             _deviceInfo = _deviceUtil.GetDeviceInfo();
             _deviceInfo.SdkPrefix = _config.SdkPrefix;
-
+            
             ReadAttributionI();
             ReadActivityStateI();
             ReadSessionParametersI();
@@ -816,7 +819,7 @@ namespace AdjustSdk.Pcl
                     return;
                 }
 
-                _logger.Warn("Key {0} will be overwritten");
+                _logger.Warn("Key {0} will be overwritten", key);
             }
 
             _sessionParameters.CallbackParameters.AddSafe(key, value);
@@ -1029,8 +1032,7 @@ namespace AdjustSdk.Pcl
             var packageBuilder = new PackageBuilder(_config, _deviceInfo, now);
             return packageBuilder.BuildAttributionPackage();
         }
-
-        #region read write
+        
         private void WriteActivityStateI()
         {
             WriteActivityStateS(null);
@@ -1042,78 +1044,94 @@ namespace AdjustSdk.Pcl
             {
                 action?.Invoke();
 
-                _deviceUtil.PersistObject(ActivityStateName, ActivityState.ToDictionary(_activityState));                
+                _deviceUtil.PersistObject(ActivityStateStorageName, ActivityState.ToDictionary(_activityState));                
             }
         }
 
         private void WriteAttributionI()
         {
-            _deviceUtil.PersistObject(AttributionName, AdjustAttribution.ToDictionary(_attribution));
+            _deviceUtil.PersistObject(AttributionStorageName, AdjustAttribution.ToDictionary(_attribution));
         }
 
         private void WriteSessionParametersI()
         {
-            _deviceUtil.PersistObject(SessionParametersName, SessionParameters.ToDictionary(_sessionParameters));            
+            //_deviceUtil.PersistObject(SessionParametersStorageName, SessionParameters.ToDictionary(_sessionParameters));
+            var sessionParamsMap = SessionParameters.ToDictionary(_sessionParameters);
+            string sessionParamsJson = JsonConvert.SerializeObject(sessionParamsMap);
+
+            bool sessionParamsPersisted = _deviceUtil.PersistValue(SessionParametersStorageName, sessionParamsJson);
+            if (!sessionParamsPersisted)
+                _logger.Error("Error. Session Parameters not persisted on device within specific time frame (60 seconds default).");
         }
 
         private void ReadActivityStateI()
         {
             Dictionary<string, object> activityStateObjectMap;
-            if (_deviceUtil.TryTakeObject(ActivityStateName, out activityStateObjectMap))
+            if (_deviceUtil.TryTakeObject(ActivityStateStorageName, out activityStateObjectMap))
             {
                 _activityState = ActivityState.FromDictionary(activityStateObjectMap);
             }
             else
             {
+                var activityStateLegacyFile = _deviceUtil.GetLegacyStorageFile(ActivityStateLegacyFileName).Result;
+
                 // if activity state is not found, try to read it from the legacy file
                 _activityState = Util.DeserializeFromFileAsync(
-                        fileName: ActivityStateLegacyFileName,
+                        file: activityStateLegacyFile,
                         objectReader: ActivityState.DeserializeFromStreamLegacy, //deserialize function from Stream to ActivityState
                         defaultReturn: () => null, //default value in case of error
-                        objectName: ActivityStateName,
-                        deleteAfterRead: true) // activity state name
+                        objectName: ActivityStateLegacyName) // activity state name
                     .Result;
 
                 // if it's successfully read from legacy source, store it using new persistance
-                if(_activityState != null)
+                // and then delete the old file
+                if (_activityState != null)
+                {
                     WriteActivityStateS(null);
+                    activityStateLegacyFile.DeleteAsync();
+                    _logger.Info("Legacy ActivityState File found and successfully read, then deleted afterwards.");
+                }
             }
         }
 
         private void ReadAttributionI()
         {
             Dictionary<string, object> attributionObjectMap;
-            if (_deviceUtil.TryTakeObject(AttributionName, out attributionObjectMap))
+            if (_deviceUtil.TryTakeObject(AttributionStorageName, out attributionObjectMap))
             {
                 _attribution = AdjustAttribution.FromDictionary(attributionObjectMap);
             }
             else
             {
+                var attributionLegacyFile = _deviceUtil.GetLegacyStorageFile(AttributionLegacyFileName).Result;
+
                 // if attribution is not found, try to read it from the legacy file
                 _attribution = Util.DeserializeFromFileAsync(
-                        fileName: AttributionLegacyFileName,
+                        file: attributionLegacyFile,
                         objectReader: AdjustAttribution.DeserializeFromStreamLegacy, //deserialize function from Stream to Attribution
                         defaultReturn: () => null, //default value in case of error
-                        objectName: AttributionName,
-                        deleteAfterRead: true) // attribution name
+                        objectName: AttributionLegacyName) // attribution name
                     .Result;
 
                 // if it's successfully read from legacy source, store it using new persistance
+                // and then delete the old file
                 if (_attribution != null)
+                {
                     WriteAttributionI();
+                    attributionLegacyFile.DeleteAsync();
+                    _logger.Info("Legacy Attribution File found and successfully read, then deleted afterwards.");
+                }
             }
         }
 
         private void ReadSessionParametersI()
         {
-            Dictionary<string, object> attributionObjectMap;
-            _sessionParameters = _deviceUtil.TryTakeObject(SessionParametersName, out attributionObjectMap) ? 
-                SessionParameters.FromDictionary(attributionObjectMap) : 
+            string sessionParamsJson;
+            _sessionParameters = _deviceUtil.TryTakeValue(SessionParametersStorageName, out sessionParamsJson) ? 
+                SessionParameters.FromDictionary(JsonConvert.DeserializeObject<Dictionary<string, object>>(sessionParamsJson)) : 
                 new SessionParameters();
         }
-
-        #endregion read write
-
+        
         // return whether or not activity state should be written
         private bool UpdateActivityStateI(DateTime now)
         {

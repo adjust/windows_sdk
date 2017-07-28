@@ -3,9 +3,13 @@ using AdjustSdk.Uap;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Windows.Security.Cryptography;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI.Core;
+using AdjustSdk.FileSystem;
+using AdjustSdk.Pcl.FileSystem;
 
 namespace AdjustSdk
 {
@@ -14,6 +18,9 @@ namespace AdjustSdk
         private readonly CoreDispatcher _dispatcher;
         private DeviceInfo _deviceInfo;
         private readonly ApplicationDataContainer _localSettings;
+        private readonly StorageFolder _localFolder;
+
+        private const double PersistValueMaxWaitSeconds = 60;
 
         public UtilWS()
         {
@@ -23,6 +30,7 @@ namespace AdjustSdk
                 _dispatcher = coreWindow.Dispatcher;
 
             _localSettings = ApplicationData.Current.LocalSettings;
+            _localFolder = ApplicationData.Current.LocalFolder;
         }
 
         public DeviceInfo GetDeviceInfo()
@@ -85,13 +93,13 @@ namespace AdjustSdk
             _localSettings.Values[key] = objectValue;
         }
 
-        public void PersistValue(string key, string value)
+        public bool PersistValue(string key, string value)
         {
-            // reason to use ApplicationDataCompositeValue:
-            // each setting can be up to 8K bytes in size and each composite setting (ApplicationDataCompositeValue) can be up to 64K bytes in size
-            var compositeValue = new ApplicationDataCompositeValue
-                {new KeyValuePair<string, object>(key, value)};
-            _localSettings.Values[key] = compositeValue;
+            var valueFile = _localFolder.CreateFileAsync(key, CreationCollisionOption.ReplaceExisting).AsTask().Result;
+            var valueBuffer = CryptographicBuffer.ConvertStringToBinary(value, BinaryStringEncoding.Utf8);
+
+            return FileIO.WriteBufferAsync(valueFile, valueBuffer)
+                .AsTask().Wait(TimeSpan.FromSeconds(PersistValueMaxWaitSeconds));
         }
 
         public bool TryTakeObject(string key, out Dictionary<string, object> objectValuesMap)
@@ -115,19 +123,45 @@ namespace AdjustSdk
 
         public bool TryTakeValue(string key, out string value)
         {
-            object takenValue;
-            if (_localSettings.Values.TryGetValue(key, out takenValue))
+            try
             {
-                var compositeValue = takenValue as ApplicationDataCompositeValue;
-                if (compositeValue != null)
+                // may throw FileNotFoundException, UnauthorizedAccessException and ArgumentException
+                var valueFile = _localFolder.GetFileAsync(key).AsTask().Result;
+                var valueBuffer = FileIO.ReadBufferAsync(valueFile).AsTask().Result;
+                using (var dataReader = DataReader.FromBuffer(valueBuffer))
                 {
-                    value = compositeValue[key] as string;
+                    value = dataReader.ReadString(valueBuffer.Length);
                     return true;
                 }
             }
+            catch
+            {
+                value = null;
+                return false;
+            }
+        }
 
-            value = null;
-            return false;
+        public async Task<IFile> GetLegacyStorageFile(string fileName)
+        {
+            if (fileName == null)
+                return null;
+
+            var currentAppData = ApplicationData.Current;
+            var wrappedFolder = currentAppData.LocalFolder;
+
+            try
+            {
+                //  make sure the storage folder exists
+                await StorageFolder.GetFolderFromPathAsync(wrappedFolder.Path).AsTask().ConfigureAwait(false);
+
+                var wrtFile = await wrappedFolder.GetFileAsync(fileName).AsTask().ConfigureAwait(false);
+                return new WinRTFile(wrtFile);
+            }
+            catch// (FileNotFoundException ex)
+            {
+                //throw new FileNotFoundException(ex.Message, ex);
+                return null;
+            }
         }
 
         private string GetClientSdk()
