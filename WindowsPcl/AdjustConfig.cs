@@ -44,7 +44,9 @@ namespace AdjustSdk
         
         private void ConfigureLogger(string environment, Action<string> logDelegate, LogLevel? logLevel)
         {
-            _logger.LogDelegate = logDelegate;
+            if (logDelegate != null)
+                _logger.LogDelegate = logDelegate;
+
             _logger.LogLevel = logLevel ?? LogLevel.Info;
             _logger.IsProductionEnvironment = EnvironmentProduction.Equals(environment);
             _logger.IsLocked = logDelegate != null;
