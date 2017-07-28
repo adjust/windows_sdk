@@ -1,6 +1,4 @@
 ﻿using Newtonsoft.Json;
-using PCLStorage;
-//using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,6 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using AdjustSdk.Pcl.FileSystem;
 
 namespace AdjustSdk.Pcl
 {
@@ -43,8 +42,7 @@ namespace AdjustSdk.Pcl
         internal static bool IsFileNotFound(this Exception ex)
         {
             // check if the exception type is File Not Found (FNF)
-            if (ex is PCLStorage.Exceptions.FileNotFoundException
-                || ex is FileNotFoundException)
+            if (ex is FileNotFoundException)
                 return true;
 
             // if the exception is an aggregate of exceptions
@@ -72,33 +70,32 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
+        internal static async Task<T> DeserializeFromFileAsync<T>(IFile file,
             Func<Stream, T> objectReader,
             Func<T> defaultReturn,
-            string objectName,
-            bool deleteAfterRead)
+            string objectName)
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
+                //IFolder localStorage = FileSystem.Current.LocalStorage;
 
-                var file = await localStorage.GetFileAsync(fileName);
+                //IFile file = await localStorage.GetFileAsync(fileName);
 
                 if (file == null)
                 {
-                    throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
+                    //throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
+                    _Logger.Verbose("{0} file not found", objectName);
+                    return defaultReturn();
                 }
 
                 T output;
-                using (var stream = await file.OpenAsync(FileAccess.Read))
+                using (var stream = await file.OpenAsync())
                 {
                     output = objectReader(stream);
                 }
-                _Logger.Debug("Read {0}: {1}", objectName, output);
 
-                if (deleteAfterRead)
-                    await file.DeleteAsync();
+                _Logger.Debug("Read {0}: {1}", objectName, output);
 
                 // successful read
                 return output;
@@ -111,7 +108,7 @@ namespace AdjustSdk.Pcl
                 }
                 else
                 {
-                    _Logger.Error("Failed to read file {0} ({1})", objectName, Util.ExtractExceptionMessage(ex));
+                    _Logger.Error("Failed to read file {0} ({1})", objectName, ExtractExceptionMessage(ex));
                 }
             }
 

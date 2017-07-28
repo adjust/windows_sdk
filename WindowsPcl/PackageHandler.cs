@@ -9,7 +9,8 @@ namespace AdjustSdk.Pcl
     public class PackageHandler : IPackageHandler
     {
         private const string PackageQueueLegacyFilename = "AdjustIOPackageQueue";
-        private const string PackageQueueName = "Package queue";
+        private const string PackageQueueLegacyName = "Package queue";
+        private const string PackageQueueStorageName = "adjust_package_queue";
 
         private readonly ILogger _logger = AdjustFactory.Logger;
         private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
@@ -191,13 +192,15 @@ namespace AdjustSdk.Pcl
 
             string packageQueueString = JsonConvert.SerializeObject(packageQueueStringList);
 
-            _deviceUtil.PersistValue(PackageQueueName, packageQueueString);
+            bool packageQueuePersisted = _deviceUtil.PersistValue(PackageQueueStorageName, packageQueueString);
+            if (!packageQueuePersisted)
+                _logger.Verbose("Error. Package queue not persisted on device within specific time frame (60 seconds default).");
         }
 
         private void ReadPackageQueueI()
         {
             string packageQueueString;
-            if (_deviceUtil.TryTakeValue(PackageQueueName, out packageQueueString))
+            if (_deviceUtil.TryTakeValue(PackageQueueStorageName, out packageQueueString))
             {
                 _packageQueue = new List<ActivityPackage>();
 
@@ -213,18 +216,24 @@ namespace AdjustSdk.Pcl
             }
             else
             {
+                var packageQueueLegacyFile = _deviceUtil.GetLegacyStorageFile(PackageQueueLegacyFilename).Result;
+
                 // if package queue is not found, try to read it from the legacy file
                 _packageQueue = Util.DeserializeFromFileAsync(
-                        fileName: PackageQueueLegacyFilename,
+                        file: packageQueueLegacyFile,
                         objectReader: ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function from Stream to List of ActivityPackage
                         defaultReturn: () => null, // default value in case of error
-                        objectName: PackageQueueName,
-                        deleteAfterRead: true) // package queue name
+                        objectName: PackageQueueLegacyName) // package queue name
                     .Result;
 
                 // if it's successfully read from legacy source, store it using new persistance
+                // and then delete the old file
                 if (_packageQueue != null)
+                {
                     WritePackageQueueI();
+                    packageQueueLegacyFile.DeleteAsync();
+                    _logger.Info("Legacy PackageQueue File found and successfully read, then deleted afterwards.");
+                }
             }
             
             if (_packageQueue != null)

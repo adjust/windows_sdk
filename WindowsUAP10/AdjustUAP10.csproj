@@ -115,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Adjust.cs" />
+    <Compile Include="FileSystem\WinRTFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UtilUAP10.cs" />
     <Content Include="Properties\AdjustUAP10.rd.xml" />
