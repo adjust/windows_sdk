@@ -11,7 +11,7 @@ namespace AdjustTest.Pcl
         private ActivityPackage AttributionPackage { get; set; }
         private TargetPlatform TargetPlatform { get; set; }
 
-        public TestAttributionHandler(DeviceUtil deviceUtil, IAssert assert, TargetPlatform targetPlatform)
+        public TestAttributionHandler(IDeviceUtil deviceUtil, IAssert assert, TargetPlatform targetPlatform)
             : base(deviceUtil, assert)
         {
             TargetPlatform = targetPlatform;
@@ -49,7 +49,7 @@ namespace AdjustTest.Pcl
             AdjustFactory.SetPackageHandler(mockPackageHandler);
 
             // start activity handler with config
-            ActivityHandler activityHandler = UtilTest.GetActivityHandler(MockLogger, DeviceUtil);
+            ActivityHandler activityHandler = UtilTest.GetActivityHandler(MockLogger, IDeviceUtil);
             
             ActivityPackage attributionPackage = activityHandler.GetAttributionPackage();
             

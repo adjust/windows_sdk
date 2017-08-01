@@ -4,15 +4,15 @@ using System.Collections.Generic;
 
 namespace AdjustSdk
 {
-    public class AdjustConfig
+    public class AdjustConfig : IAdjustConfig
     {
         public const string EnvironmentSandbox = "sandbox";
         public const string EnvironmentProduction = "production";
 
         private readonly ILogger _logger = AdjustFactory.Logger;
 
-        internal string AppToken { get; private set; }
-        internal string Environment { get; private set; }
+        public string AppToken { get; }
+        public string Environment { get; }
 
         public string SdkPrefix { get; set; }
         public bool EventBufferingEnabled { get; set; }
@@ -26,8 +26,10 @@ namespace AdjustSdk
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
-        internal List<Action<ActivityHandler>> SessionParametersActions;
-        internal string PushToken;
+        //internal List<Action<ActivityHandler>> SessionParametersActions;
+        //internal string PushToken;
+        public List<Action<ActivityHandler>> SessionParametersActions { get; set; }
+        public string PushToken { get; set; }
 
         public AdjustConfig(string appToken, string environment, Action<string> logDelegate = null, LogLevel? logLevel = null)
         {

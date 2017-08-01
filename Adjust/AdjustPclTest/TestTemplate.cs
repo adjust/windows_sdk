@@ -6,9 +6,9 @@ namespace AdjustTest.Pcl
     {
         protected IAssert Assert { get; set; }
         protected MockLogger MockLogger { get; set; }
-        protected DeviceUtil DeviceUtil { get; set; }
+        protected IDeviceUtil DeviceUtil { get; set; }
 
-        protected TestTemplate(DeviceUtil deviceUtil, IAssert assert)
+        protected TestTemplate(IDeviceUtil deviceUtil, IAssert assert)
         {
             DeviceUtil = deviceUtil;
             Assert = assert;

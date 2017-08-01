@@ -11,8 +11,8 @@ namespace AdjustTest.Pcl
         public HttpRequestMessage HttpRequestMessage { get; set; }
         public ResponseType ResponseType { get; set; }
 
-        private MockLogger MockLogger { get; set; }
-        private const string prefix = "HttpMessageHandler";
+        private MockLogger MockLogger { get; }
+        private const string Prefix = "HttpMessageHandler";
 
         public MockHttpMessageHandler(MockLogger mockLogger)
         {
@@ -21,7 +21,7 @@ namespace AdjustTest.Pcl
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            MockLogger.Test("{0} SendAsync, responseType: {1}", prefix, ResponseType);
+            MockLogger.Test("{0} SendAsync, responseType: {1}", Prefix, ResponseType);
 
             HttpRequestMessage = request;
 

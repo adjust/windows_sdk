@@ -6,209 +6,209 @@ namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
-        private static ILogger _Logger;
-        private static IActivityHandler _IActivityHandler;
-        private static IPackageHandler _IPackageHandler;
-        private static IAttributionHandler _IAttributionHandler;
-        private static IRequestHandler _IRequestHandler;
-        private static ISdkClickHandler _ISdkClickHandler;
-        private static HttpMessageHandler _HttpMessageHandler;
-        private static TimeSpan? _SessionInterval;
-        private static TimeSpan? _SubsessionInterval;
-        private static TimeSpan? _TimerInterval;
-        private static TimeSpan? _TimerStart;
-        private static BackoffStrategy _PackageHandlerBackoffStrategy;
-        private static BackoffStrategy _SdkClickHandlerBackoffStrategy;
-        private static TimeSpan? _MaxDelayStart;
+        private static ILogger _logger;
+        private static IActivityHandler _iActivityHandler;
+        private static IPackageHandler _iPackageHandler;
+        private static IAttributionHandler _iAttributionHandler;
+        private static IRequestHandler _iRequestHandler;
+        private static ISdkClickHandler _iSdkClickHandler;
+        private static HttpMessageHandler _httpMessageHandler;
+        private static TimeSpan? _sessionInterval;
+        private static TimeSpan? _subsessionInterval;
+        private static TimeSpan? _timerInterval;
+        private static TimeSpan? _timerStart;
+        private static BackoffStrategy _packageHandlerBackoffStrategy;
+        private static BackoffStrategy _sdkClickHandlerBackoffStrategy;
+        private static TimeSpan? _maxDelayStart;
 
         public static ILogger Logger
         {
             get
             {
                 // same instance of logger for all calls
-                if (_Logger == null)
-                    _Logger = new Logger();
-                return _Logger;
+                if (_logger == null)
+                    _logger = new Logger();
+                return _logger;
             }
 
-            set { _Logger = value; }
+            set { _logger = value; }
         }
 
         public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
-            if (_IActivityHandler == null)
-                return ActivityHandler.GetInstance(adjustConfig, deviceUtil);
+            if (_iActivityHandler == null)
+                return ActivityHandler.GetInstance(adjustConfig, deviceUtil, new ActionQueue("adjust.ActivityHandler", Logger), Logger);
 
-            _IActivityHandler.Init(adjustConfig, deviceUtil);
-            return _IActivityHandler;
+            _iActivityHandler.Init(adjustConfig, deviceUtil);
+            return _iActivityHandler;
         }
 
         public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            if (_IPackageHandler == null)
-                return new PackageHandler(activityHandler, deviceUtil, startPaused);
+            if (_iPackageHandler == null)
+                return new PackageHandler(activityHandler, deviceUtil, new ActionQueue("adjust.PackageHandler", _logger), startPaused);
 
-            _IPackageHandler.Init(activityHandler, deviceUtil, startPaused);
-            return _IPackageHandler;
+            _iPackageHandler.Init(activityHandler, deviceUtil, startPaused);
+            return _iPackageHandler;
         }
 
         public static IAttributionHandler GetAttributionHandler(IActivityHandler activityHandler,
             ActivityPackage attributionPacakage,
             bool startPaused)
         {
-            if (_IAttributionHandler == null)
+            if (_iAttributionHandler == null)
             {
-                return new AttributionHandler(activityHandler, attributionPacakage, startPaused);
+                return new AttributionHandler(activityHandler, attributionPacakage, new ActionQueue("adjust.AttributionHandler", _logger), startPaused);
             }
 
-            _IAttributionHandler.Init(activityHandler, attributionPacakage, startPaused);
-            return _IAttributionHandler;
+            _iAttributionHandler.Init(activityHandler, attributionPacakage, startPaused);
+            return _iAttributionHandler;
         }
 
         public static IRequestHandler GetRequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
-            if (_IRequestHandler == null)
+            if (_iRequestHandler == null)
                 return new RequestHandler(sendNextCallback, retryCallback);
 
-            _IRequestHandler.Init(sendNextCallback, retryCallback);
-            return _IRequestHandler;
+            _iRequestHandler.Init(sendNextCallback, retryCallback);
+            return _iRequestHandler;
         }
 
         public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            if (_ISdkClickHandler == null)
+            if (_iSdkClickHandler == null)
             {
-                return new SdkClickHandler(activityHandler, startPaused);
+                return new SdkClickHandler(activityHandler, new ActionQueue("adjust.SdkClickHandler", _logger), startPaused);
             }
-            _ISdkClickHandler.Init(activityHandler, startPaused);
-            return _ISdkClickHandler;
+            _iSdkClickHandler.Init(activityHandler, startPaused);
+            return _iSdkClickHandler;
         }
 
         public static HttpMessageHandler GetHttpMessageHandler()
         {
-            if (_HttpMessageHandler == null)
+            if (_httpMessageHandler == null)
                 return new HttpClientHandler();
             else
-                return _HttpMessageHandler;
+                return _httpMessageHandler;
         }
 
         public static TimeSpan GetSessionInterval()
         {
-            if (!_SessionInterval.HasValue)
+            if (!_sessionInterval.HasValue)
                 return new TimeSpan(0, 30, 0); // 30 minutes
             else
-                return _SessionInterval.Value;
+                return _sessionInterval.Value;
         }
 
         public static TimeSpan GetSubsessionInterval()
         {
-            if (!_SubsessionInterval.HasValue)
+            if (!_subsessionInterval.HasValue)
                 return new TimeSpan(0, 0, 1); // 1 second
             else
-                return _SubsessionInterval.Value;
+                return _subsessionInterval.Value;
         }
 
         public static TimeSpan GetTimerInterval()
         {
-            if (!_TimerInterval.HasValue)
+            if (!_timerInterval.HasValue)
                 return new TimeSpan(0, 1, 0); // 1 minute
             else
-                return _TimerInterval.Value;
+                return _timerInterval.Value;
         }
 
         public static TimeSpan GetTimerStart()
         {
-            if (!_TimerStart.HasValue)
+            if (!_timerStart.HasValue)
                 return new TimeSpan(0, 0, 0); // 0 seconds
             else
-                return _TimerStart.Value;
+                return _timerStart.Value;
         }
 
         public static BackoffStrategy GetPackageHandlerBackoffStrategy()
         {
-            if (_PackageHandlerBackoffStrategy == null)
+            if (_packageHandlerBackoffStrategy == null)
             {
                 return BackoffStrategy.LongWait;
             }
-            return _PackageHandlerBackoffStrategy;
+            return _packageHandlerBackoffStrategy;
         }
 
         public static BackoffStrategy GetSdkClickHandlerBackoffStrategy()
         {
-            if (_SdkClickHandlerBackoffStrategy == null)
+            if (_sdkClickHandlerBackoffStrategy == null)
             {
                 return BackoffStrategy.ShortWait;
             }
-            return _SdkClickHandlerBackoffStrategy;
+            return _sdkClickHandlerBackoffStrategy;
         }
 
         public static TimeSpan GetMaxDelayStart()
         {
-            if (_MaxDelayStart == null)
+            if (_maxDelayStart == null)
             {
                 return TimeSpan.FromSeconds(10);
             }
-            return _MaxDelayStart.Value;
+            return _maxDelayStart.Value;
         }
 
         public static void SetActivityHandler(IActivityHandler activityHandler)
         {
-            _IActivityHandler = activityHandler;
+            _iActivityHandler = activityHandler;
         }
 
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
-            _IPackageHandler = packageHandler;
+            _iPackageHandler = packageHandler;
         }
 
         public static void SetAttributionHandler(IAttributionHandler attributionHandler)
         {
-            _IAttributionHandler = attributionHandler;
+            _iAttributionHandler = attributionHandler;
         }
 
         public static void SetRequestHandler(IRequestHandler requestHandler)
         {
-            _IRequestHandler = requestHandler;
+            _iRequestHandler = requestHandler;
         }
 
         public static void SetHttpMessageHandler(HttpMessageHandler httpMessageHandler)
         {
-            _HttpMessageHandler = httpMessageHandler;
+            _httpMessageHandler = httpMessageHandler;
         }
 
         public static void SetSessionInterval(TimeSpan? sessionInterval)
         {
-            _SessionInterval = sessionInterval;
+            _sessionInterval = sessionInterval;
         }
 
         public static void SetSubsessionInterval(TimeSpan? subsessionInterval)
         {
-            _SubsessionInterval = subsessionInterval;
+            _subsessionInterval = subsessionInterval;
         }
 
         public static void SetTimerInterval(TimeSpan? timerInterval)
         {
-            _TimerInterval = timerInterval;
+            _timerInterval = timerInterval;
         }
 
         public static void SetTimerStart(TimeSpan? timerStart)
         {
-            _TimerStart = timerStart;
+            _timerStart = timerStart;
         }
 
         public static void SetPackageHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
         {
-            _PackageHandlerBackoffStrategy = backoffStrategy;
+            _packageHandlerBackoffStrategy = backoffStrategy;
         }
 
         public static void SetSdkClickHandlerBackoffStrategy(BackoffStrategy backoffStrategy)
         {
-            _SdkClickHandlerBackoffStrategy = backoffStrategy;
+            _sdkClickHandlerBackoffStrategy = backoffStrategy;
         }
 
         public static void SetMaxDelayStart(TimeSpan maxDelayStart)
         {
-            _MaxDelayStart = maxDelayStart;
+            _maxDelayStart = maxDelayStart;
         }
     }
 }

@@ -5,83 +5,77 @@ namespace AdjustSdk.Pcl
 {
     public class AdjustInstance
     {
-        private IActivityHandler _ActivityHandler;
-        private ILogger _Logger = AdjustFactory.Logger;
-        private List<Action<ActivityHandler>> _SessionParametersActionsArray;
-        private string _PushToken;
+        private IActivityHandler _activityHandler;
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private List<Action<ActivityHandler>> _sessionParametersActionsArray;
+        private string _pushToken;
 
-        public bool ApplicationLaunched
-        {
-            get
-            {
-                return _ActivityHandler != null;
-            }
-        }
+        public bool ApplicationLaunched => _activityHandler != null;
 
         public AdjustInstance()
         {
         }
 
-        public void ApplicationLaunching(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
+        public void ApplicationLaunching(IAdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
-            adjustConfig.PushToken = _PushToken;
-            adjustConfig.SessionParametersActions = _SessionParametersActionsArray;
-            _ActivityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
+            adjustConfig.PushToken = _pushToken;
+            adjustConfig.SessionParametersActions = _sessionParametersActionsArray;
+            _activityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil, new ActionQueue("adjust.ActivityHandler", _logger), _logger);
         }
 
         public void TrackEvent(AdjustEvent adjustEvent)
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.TrackEvent(adjustEvent);
+            _activityHandler.TrackEvent(adjustEvent);
         }
 
         public void ApplicationActivated()
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.ApplicationActivated();
+            _activityHandler.ApplicationActivated();
         }
 
         public void ApplicationDeactivated()
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.ApplicationDeactivated();
+            _activityHandler.ApplicationDeactivated();
         }
 
         public void SetEnabled(bool enabled)
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.SetEnabled(enabled);
+            _activityHandler.SetEnabled(enabled);
         }
 
         public bool IsEnabled()
         {
             if (!CheckActivityHandler()) { return false; }
-            return _ActivityHandler.IsEnabled();
+            return _activityHandler.IsEnabled();
         }
 
         public void SetOfflineMode(bool offlineMode)
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.SetOfflineMode(offlineMode);
+            _activityHandler.SetOfflineMode(offlineMode);
         }
 
         public void AppWillOpenUrl(Uri uri)
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.OpenUrl(uri);
+            _activityHandler.OpenUrl(uri);
         }
 
         public AdjustAttribution GetAttribution()
         {
             if (!CheckActivityHandler()) { return null; }
-            return _ActivityHandler.GetAttribution();
+            return _activityHandler.GetAttribution();
         }
 
         private bool CheckActivityHandler()
         {
-            if (_ActivityHandler == null)
+            if (_activityHandler == null)
             {
-                _Logger.Error("Please initialize Adjust by calling 'ApplicationLaunching' before");
+                _logger.Error("Please initialize Adjust by calling 'ApplicationLaunching' before");
                 return false;
             }
 
@@ -90,18 +84,18 @@ namespace AdjustSdk.Pcl
 
         public void AddSessionCallbackParameter(string key, string value)
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.AddSessionCallbackParameter(key, value);
+                _activityHandler.AddSessionCallbackParameter(key, value);
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.AddSessionCallbackParameterI(key, value);
             });
@@ -109,18 +103,18 @@ namespace AdjustSdk.Pcl
 
         public void AddSessionPartnerParameter(string key, string value)
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.AddSessionPartnerParameter(key, value);
+                _activityHandler.AddSessionPartnerParameter(key, value);
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.AddSessionPartnerParameterI(key, value);
             });
@@ -128,18 +122,18 @@ namespace AdjustSdk.Pcl
 
         public void RemoveSessionCallbackParameter(string key)
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.RemoveSessionCallbackParameter(key);
+                _activityHandler.RemoveSessionCallbackParameter(key);
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.RemoveSessionCallbackParameterI(key);
             });
@@ -147,18 +141,18 @@ namespace AdjustSdk.Pcl
 
         public void RemoveSessionPartnerParameter(string key)
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.RemoveSessionPartnerParameter(key);
+                _activityHandler.RemoveSessionPartnerParameter(key);
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.RemoveSessionPartnerParameterI(key);
             });
@@ -166,18 +160,18 @@ namespace AdjustSdk.Pcl
 
         public void ResetSessionCallbackParameters()
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.ResetSessionCallbackParameters();
+                _activityHandler.ResetSessionCallbackParameters();
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.ResetSessionCallbackParametersI();
             });
@@ -185,18 +179,18 @@ namespace AdjustSdk.Pcl
 
         public void ResetSessionPartnerParameters()
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.ResetSessionPartnerParameters();
+                _activityHandler.ResetSessionPartnerParameters();
                 return;
             }
 
-            if (_SessionParametersActionsArray == null)
+            if (_sessionParametersActionsArray == null)
             {
-                _SessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
             }
 
-            _SessionParametersActionsArray.Add((activityHandler) =>
+            _sessionParametersActionsArray.Add((activityHandler) =>
             {
                 activityHandler.ResetSessionPartnerParametersI();
             });
@@ -204,25 +198,25 @@ namespace AdjustSdk.Pcl
 
         public void SetPushToken(string pushToken)
         {
-            if (_ActivityHandler != null)
+            if (_activityHandler != null)
             {
-                _ActivityHandler.SetPushToken(pushToken);
+                _activityHandler.SetPushToken(pushToken);
                 return;
             }
 
-            _PushToken = pushToken;
+            _pushToken = pushToken;
         }
 
         public void SendFirstPackages()
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.SendFirstPackages();
+            _activityHandler.SendFirstPackages();
         }
 
         public string GetAdid()
         {
             if (!CheckActivityHandler()) { return null; }
-            return _ActivityHandler.GetAdid();
+            return _activityHandler.GetAdid();
         }
     }
 }

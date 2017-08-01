@@ -6,7 +6,7 @@ namespace AdjustSdk.Pcl
 {
     internal class PackageBuilder
     {
-        private AdjustConfig _Config;
+        private IAdjustConfig _Config;
         private DeviceInfo _DeviceInfo;
         private ActivityState _ActivityState;
         private DateTime _CreatedAt;
@@ -17,7 +17,7 @@ namespace AdjustSdk.Pcl
         public AdjustAttribution Attribution { get; set; }
         public DateTime ClickTime { get; set;}
 
-        internal PackageBuilder(AdjustConfig adjustConfig, 
+        internal PackageBuilder(IAdjustConfig adjustConfig, 
             DeviceInfo deviceInfo,
             ActivityState activityState,
             SessionParameters sessionParameters,
@@ -32,7 +32,7 @@ namespace AdjustSdk.Pcl
             _SessionParameters = sessionParameters;
         }
 
-        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
+        internal PackageBuilder(IAdjustConfig adjustConfig, DeviceInfo deviceInfo,
             DateTime createdAt)
         {
             _Config = adjustConfig;

@@ -43,7 +43,7 @@ namespace AdjustTest.Pcl
             return true;
         }
 
-        public static ActivityHandler GetActivityHandler(MockLogger mocklogger, DeviceUtil deviceUtil)
+        public static ActivityHandler GetActivityHandler(MockLogger mocklogger, IDeviceUtil deviceUtil)
         {
             MockAttributionHandler mockAttributionHandler = new MockAttributionHandler(mocklogger);
             MockPackageHandler mockPackageHandler = new MockPackageHandler(mocklogger);

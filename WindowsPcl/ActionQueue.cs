@@ -4,39 +4,40 @@ using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
-    internal class ActionQueue
+    internal class ActionQueue : IActionQueue
     {
-        private ILogger _Logger = AdjustFactory.Logger;
-        private Queue<Action> _ActionQueue = new Queue<Action>();
+        private readonly ILogger _logger;
+        private readonly Queue<Action> _actionQueue = new Queue<Action>();
 
-        private bool _IsTaskWorkerProcessing = false; // protected by lock(InternalQueue)
+        private bool _isTaskWorkerProcessing = false; // protected by lock(InternalQueue)
 
-        internal string Name { get; private set; }
+        public string Name { get; }
 
-        internal ActionQueue(string name)
+        internal ActionQueue(string name, ILogger logger)
         {
+            _logger = logger;
             Name = name;
         }
 
-        internal void Delay(TimeSpan timeSpan, Action action)
+        public void Delay(TimeSpan timeSpan, Action action)
         {
             Task.Delay(timeSpan).ContinueWith(_ => Enqueue(action));
         }
 
-        internal void Enqueue(Action action)
+        public void Enqueue(Action action)
         {
-            lock (_ActionQueue)
+            lock (_actionQueue)
             {
-                if (!_IsTaskWorkerProcessing)
+                if (!_isTaskWorkerProcessing)
                 {
                     //_Logger.Verbose("TaskScheduler {0} start thread", Name);
-                    _IsTaskWorkerProcessing = true;
+                    _isTaskWorkerProcessing = true;
                     ProcessActionQueue(action);
                 }
                 else
                 {
                     //_Logger.Verbose("TaskScheduler {0} enqued", Name);
-                    _ActionQueue.Enqueue(action);
+                    _actionQueue.Enqueue(action);
                 }
             }
         }
@@ -54,15 +55,15 @@ namespace AdjustSdk.Pcl
                 while (true)
                 {
                     Action action;
-                    lock (_ActionQueue)
+                    lock (_actionQueue)
                     {
                         //_Logger.Verbose("ActionQueue {0} got {1} action to process", Name, _ActionQueue.Count);
-                        if (_ActionQueue.Count == 0)
+                        if (_actionQueue.Count == 0)
                         {
-                            _IsTaskWorkerProcessing = false;
+                            _isTaskWorkerProcessing = false;
                             break;
                         }
-                        action = _ActionQueue.Dequeue();
+                        action = _actionQueue.Dequeue();
                         //_Logger.Verbose("ActionQueue {0} dequeued", Name);
                     }
                     TryExecuteAction(action);
@@ -78,7 +79,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception ex)
             {
-                _Logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
+                _logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
             }
         }
     }

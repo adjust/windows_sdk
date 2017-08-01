@@ -2,7 +2,6 @@
 using AdjustSdk.Pcl;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace AdjustTest.Pcl
@@ -13,11 +12,14 @@ namespace AdjustTest.Pcl
         private const int LogLevelCheck = 8;
         private const string LogTag = "Adjust";
 
-        private StringBuilder LogBuffer;
-        private Dictionary<int, List<string>> LogMap;
-        private List<string> ReverseLog;
+        private StringBuilder _logBuffer;
+        private Dictionary<int, List<string>> _logMap;
+        private List<string> _reverseLog;
 
+        LogLevel ILogger.LogLevel { get; set; }
+        public bool IsProductionEnvironment { get; set; }
         public Action<String> LogDelegate { private get; set; }
+        public bool IsLocked { get; set; }
 
         public MockLogger()
         {
@@ -26,8 +28,8 @@ namespace AdjustTest.Pcl
 
         public void Reset()
         {
-            LogBuffer = new StringBuilder();
-            LogMap = new Dictionary<int, List<string>>(8)
+            _logBuffer = new StringBuilder();
+            _logMap = new Dictionary<int, List<string>>(8)
             {
                 { (int)LogLevel.Verbose, new List<string>() },
                 { (int)LogLevel.Debug, new List<string>() },
@@ -38,7 +40,7 @@ namespace AdjustTest.Pcl
                 { LogLevelTest, new List<string>() },
                 { LogLevelCheck, new List<string>() },
             };
-            ReverseLog = new List<string>();
+            _reverseLog = new List<string>();
 
             Check("MockLogger Reset");
         }
@@ -64,6 +66,11 @@ namespace AdjustTest.Pcl
         }
 
         public void Warn(string message, params object[] parameters)
+        {
+            LoggingLevel(LogLevel.Warn, message, parameters);
+        }
+
+        public void WarnInProduction(string message, params object[] parameters)
         {
             LoggingLevel(LogLevel.Warn, message, parameters);
         }
@@ -100,7 +107,7 @@ namespace AdjustTest.Pcl
 
         private bool DeleteLevelUntil(int logLevel, string beginsWith)
         {
-            var logList = LogMap[logLevel];
+            var logList = _logMap[logLevel];
             for (int i = 0; i < logList.Count; i++)
             {
                 var logMessage = logList[i];
@@ -119,7 +126,7 @@ namespace AdjustTest.Pcl
         public override string ToString()
         {
             //return LogBuffer.ToString();
-            return string.Join("\n", ReverseLog);
+            return string.Join("\n", _reverseLog);
         }
 
         private void LoggingLevel(LogLevel logLevel, string message, object[] parameters)
@@ -136,12 +143,12 @@ namespace AdjustTest.Pcl
             {
                 var formattedLine = Util.f("\t[{0}]{1} {2}", LogTag, logLevelString, line);
 
-                LogBuffer.AppendLine(formattedLine);
+                _logBuffer.AppendLine(formattedLine);
                 System.Diagnostics.Debug.WriteLine(formattedLine);
-                ReverseLog.Insert(0, formattedLine);
+                _reverseLog.Insert(0, formattedLine);
             }
 
-            var logList = LogMap[logLevelInt];
+            var logList = _logMap[logLevelInt];
             logList.Add(formattedMessage);
         }
     }

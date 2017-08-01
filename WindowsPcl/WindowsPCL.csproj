@@ -52,6 +52,8 @@
     <Compile Include="AttributionResponseData.cs" />
     <Compile Include="BackoffStrategy.cs" />
     <Compile Include="FileSystem\IFile.cs" />
+    <Compile Include="IActionQueue.cs" />
+    <Compile Include="IAdjustConfig.cs" />
     <Compile Include="SdkClickResponseData.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="EventResponseData.cs" />

@@ -13,7 +13,7 @@ namespace AdjustSdk.Pcl
         private const string PackageQueueStorageName = "adjust_package_queue";
 
         private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
+        private readonly IActionQueue _actionQueue;
         private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
         private List<ActivityPackage> _packageQueue;
@@ -26,8 +26,10 @@ namespace AdjustSdk.Pcl
 
         private bool _isPaused;
 
-        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
+        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, IActionQueue actionQueue, bool startPaused)
         {
+            _actionQueue = actionQueue;
+
             _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
         }
 

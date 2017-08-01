@@ -6,23 +6,28 @@ namespace AdjustTest.Pcl
 {
     public class MockRequestHandler : IRequestHandler
     {
-        private MockLogger MockLogger;
+        private readonly MockLogger _mockLogger;
 
-        private const string prefix = "RequestHandler";
+        private const string Prefix = "RequestHandler";
 
         public MockRequestHandler(MockLogger mockLogger)
         {
-            MockLogger = mockLogger;
+            _mockLogger = mockLogger;
         }
-
-        public void Init(IPackageHandler packageHandler)
+        
+        public void Init(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
-            MockLogger.Test("{0} Init", prefix);
+            _mockLogger.Test("{0} Init", Prefix);
         }
 
         public void SendPackage(ActivityPackage package)
         {
-            MockLogger.Test("{0} SendPackage, {1}", prefix, package);
+            _mockLogger.Test("{0} SendPackage, {1}", Prefix, package);
+        }
+
+        public void SendPackageSync(ActivityPackage activityPackage)
+        {
+            _mockLogger.Test("{0} SendPackage, {1}", Prefix, activityPackage);
         }
     }
 }

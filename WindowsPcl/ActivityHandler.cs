@@ -18,12 +18,12 @@ namespace AdjustSdk.Pcl
 
         private TimeSpan _backgroundTimerInterval;
 
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
+        private readonly ILogger _logger;// = AdjustFactory.Logger;
+        private readonly IActionQueue _actionQueue;
         private readonly InternalState _state = new InternalState();
 
         private IDeviceUtil _deviceUtil;
-        private AdjustConfig _config;
+        private IAdjustConfig _config;
         private DeviceInfo _deviceInfo;
         private ActivityState _activityState;
         private AdjustAttribution _attribution;
@@ -53,8 +53,11 @@ namespace AdjustSdk.Pcl
             public bool IsSessionResponseProcessed { get; internal set; }
         }
 
-        private ActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
+        private ActivityHandler(IAdjustConfig adjustConfig, IDeviceUtil deviceUtil, IActionQueue actionQueue, ILogger logger)
         {
+            _actionQueue = actionQueue;
+            _logger = logger;
+
             // default values
 
             // enabled by default
@@ -73,32 +76,32 @@ namespace AdjustSdk.Pcl
             _logger.IsLocked = true;
 
             Init(adjustConfig, deviceUtil);
+            
             _actionQueue.Enqueue(InitI);
         }
 
-        public void Init(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
+        public void Init(IAdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             _config = adjustConfig;
             _deviceUtil = deviceUtil;
         }
 
-        public static ActivityHandler GetInstance(AdjustConfig adjustConfig,
-            IDeviceUtil deviceUtil)
+        public static ActivityHandler GetInstance(IAdjustConfig adjustConfig,
+            IDeviceUtil deviceUtil, IActionQueue actionQueue, ILogger logger)
         {
             if (adjustConfig == null)
             {
-                AdjustFactory.Logger.Error("AdjustConfig missing");
+                logger.Error("AdjustConfig missing");
                 return null;
             }
 
             if (!adjustConfig.IsValid())
             {
-                AdjustFactory.Logger.Error("AdjustConfig not initialized correctly");
+                logger.Error("AdjustConfig not initialized correctly");
                 return null;
             }
             
-            ActivityHandler activityHandler = new ActivityHandler(adjustConfig, deviceUtil);
-            return activityHandler;
+            return new ActivityHandler(adjustConfig, deviceUtil, actionQueue, logger);
         }
 
         public void ApplicationActivated()
