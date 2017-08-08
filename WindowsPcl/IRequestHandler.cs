@@ -9,5 +9,7 @@ namespace AdjustSdk.Pcl
         void SendPackage(ActivityPackage package, int queueSize);
 
         void SendPackageSync(ActivityPackage activityPackage, int queueSize);
+
+        void Teardown();
     }
 }

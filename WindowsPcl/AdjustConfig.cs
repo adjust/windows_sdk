@@ -39,6 +39,10 @@ namespace AdjustSdk
         internal static Func<string, string> String2Sha512Func { get; set; }
         internal static Func<string, string> String2Md5Func { get; set; }
 
+        ///////// ADDED FOR INTEGRATION TESTING /////////////////////
+        public string BasePath { get; set; }
+        ////////////////////////////////////////////////////////////
+
         public AdjustConfig(string appToken, string environment, Action<string> logDelegate = null, LogLevel? logLevel = null)
         {
             ConfigureLogger(environment, logDelegate, logLevel);

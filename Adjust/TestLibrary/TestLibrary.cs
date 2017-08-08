@@ -1,0 +1,283 @@
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using TestLibrary.Networking;
+
+namespace TestLibrary
+{
+    public class TestLibrary
+    {
+        private const string DATE_TIME_FORMAT = @"MM\/dd\/yyyy HH:mm";
+        internal static string BaseUrl;
+
+        private readonly string _localIp;
+        internal ICommandListener CommandListener;
+        internal ControlChannel ControlChannel;
+        internal string CurrentBasePath;
+        internal string CurrentTest;
+        internal bool ExitAfterEnd = true;
+        internal Dictionary<string, string> InfoToServer;
+
+        internal string TestNames;
+
+        //https://docs.microsoft.com/en-us/dotnet/standard/collections/thread-safe/blockingcollection-overview
+        internal BlockingCollection<string> WaitControlQueue;
+
+        public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp)
+        {
+            BaseUrl = baseUrl;
+            _localIp = localIp;
+            Log.Debug("base url: {0}", baseUrl);
+            CommandListener = commandListener;
+        }
+
+        public event EventHandler ExitAppEvent;
+
+        // resets test library to initial state
+        public void ResetTestLibrary()
+        {
+            Teardown(true);
+
+            WaitControlQueue = new BlockingCollection<string>(new ConcurrentQueue<string>());
+        }
+
+        // clears test library
+        private void Teardown(bool shutdownNow)
+        {
+            // shutdown executor not needed in win sdk version
+
+            ClearTest();
+        }
+
+        // clear for each test
+        private void ClearTest()
+        {
+            WaitControlQueue?.Clear();
+            WaitControlQueue = null;
+
+            ControlChannel?.Teardown();
+            ControlChannel = null;
+
+            InfoToServer = null;
+        }
+
+        // reset for each test
+        private void ResetTest()
+        {
+            ClearTest();
+
+            WaitControlQueue = new BlockingCollection<string>(new ConcurrentQueue<string>());
+            ControlChannel = new ControlChannel(this);
+        }
+
+        public void SetTests(string testNames)
+        {
+            TestNames = testNames;
+        }
+
+        public void DoNotExitAfterEnd()
+        {
+            ExitAfterEnd = false;
+        }
+
+        public void InitTestSession(string clientSdk)
+        {
+            ResetTestLibrary();
+            
+            Task.Run(() => { SendTestSessionI(clientSdk); });
+        }
+
+        public void AddInfoToSend(string key, string value)
+        {
+            if (InfoToServer == null)
+                InfoToServer = new Dictionary<string, string>();
+
+            InfoToServer.Add(key, value);
+        }
+
+        public void SendInfoToServer()
+        {
+            Task.Run(() => { SendInfoToServerI(); });
+        }
+
+        internal void ReadHeaders(HttpResponse httpResponse)
+        {
+            Task.Run(() => { ReadHeadersI(httpResponse); });
+        }
+
+        private void SendTestSessionI(string clientSdk)
+        {
+            var httpResponse = UtilsNetworking
+                .SendPostI("/init_session", clientSdk, _localIp, TestNames).Result;
+            if (httpResponse == null)
+                return;
+
+            ReadHeadersI(httpResponse);
+        }
+
+        private void SendInfoToServerI()
+        {
+            Log.Debug("sendInfoToServerI called");
+            var httpResponse = UtilsNetworking
+                .SendPostI(CurrentBasePath + "/test_info", null, _localIp, InfoToServer).Result;
+            InfoToServer = null;
+            if (httpResponse == null)
+                return;
+
+            ReadHeadersI(httpResponse);
+        }
+
+        public void ReadHeadersI(HttpResponse httpResponse)
+        {
+            if (httpResponse.HeaderFields.ContainsKey(Constants.TEST_SESSION_END_HEADER))
+            {
+                Teardown(false);
+                Log.Debug("TestSessionEnd received");
+                if (ExitAfterEnd)
+                    Exit();
+
+                return;
+            }
+
+            if (httpResponse.HeaderFields.ContainsKey(Constants.BASE_PATH_HEADER))
+                CurrentBasePath = httpResponse.HeaderFields[Constants.BASE_PATH_HEADER][0];
+
+            if (httpResponse.HeaderFields.ContainsKey(Constants.TEST_SCRIPT_HEADER))
+            {
+                CurrentTest = httpResponse.HeaderFields[Constants.TEST_SCRIPT_HEADER][0];
+                ResetTest();
+
+                var testCommandsArray = JsonConvert.DeserializeObject<TestCommand[]>(httpResponse.Response);
+                var testCommands = testCommandsArray.ToList();
+
+                try
+                {
+                    ExecTestCommandsI(testCommands);
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error while executing test commands: {0}", e.ToString());
+                    throw;
+                }
+            }
+        }
+
+        private void Exit()
+        {
+            ExitAppEvent?.Invoke(this, null);
+        }
+
+        private void ExecTestCommandsI(List<TestCommand> testCommands)
+        {
+            Log.Debug("testCommands: {0}", testCommands);
+
+            var stopwatch = new Stopwatch();
+            foreach (var testCommand in testCommands)
+            {
+                //TODO: check this with Pedro
+                //if (Thread.interrupted())
+                //{
+                //    debug("Thread interrupted");
+                //    return;
+                //}
+
+                stopwatch.Restart();
+
+                Log.Debug("ClassName: {0}", testCommand.ClassName);
+                Log.Debug("FunctionName: {0}", testCommand.FunctionName);
+                Log.Debug("Params:");
+                if (testCommand.Params != null && testCommand.Params.Count > 0)
+                    foreach (var entry in testCommand.Params)
+                        Log.Debug("\t{0}: {1}", entry.Key, entry.Value);
+
+                Log.Debug("time before {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                    DateTime.Now.ToString(DATE_TIME_FORMAT));
+
+                if (Constants.TEST_LIBRARY_CLASSNAME == testCommand.ClassName)
+                {
+                    ExecuteTestLibraryCommandI(testCommand);
+                    Log.Debug("time after {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                        DateTime.Now.ToString(DATE_TIME_FORMAT));
+                    Log.Debug("time elapsed {0} {1} in milli seconds: {2}", testCommand.ClassName,
+                        testCommand.FunctionName, stopwatch.ElapsedMilliseconds);
+
+                    continue;
+                }
+
+                if (CommandListener != null)
+                    CommandListener.ExecuteCommand(testCommand.ClassName, testCommand.FunctionName,
+                        testCommand.Params);
+                //else if (commandJsonListener != null)
+                //{
+                //    commandJsonListener.executeCommand(testCommand.ClassName, testCommand.FunctionName, gson.toJson(testCommand.Params));
+                //}
+                //else if (commandRawJsonListener != null)
+                //{
+                //    commandRawJsonListener.executeCommand(gson.toJson(testCommand));
+                //}
+
+                Log.Debug("time after {0}.{1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                    DateTime.Now.ToString(DATE_TIME_FORMAT));
+                Log.Debug("time elapsed {0}.{1} in milli seconds: {2}", testCommand.ClassName, testCommand.FunctionName,
+                    stopwatch.ElapsedMilliseconds);
+            }
+        }
+
+        private void ExecuteTestLibraryCommandI(TestCommand testCommand)
+        {
+            switch (testCommand.FunctionName)
+            {
+                case "end_test":
+                    EndTestI();
+                    break;
+                case "wait":
+                    WaitI(testCommand.Params);
+                    break;
+                case "exit":
+                    Exit();
+                    break;
+            }
+        }
+
+        private void EndTestI()
+        {
+            var httpResponse = UtilsNetworking.SendPostI(CurrentBasePath + "/end_test", _localIp).Result;
+            if (httpResponse == null)
+            {
+                if (ExitAfterEnd)
+                    Exit();
+
+                return;
+            }
+
+            ReadHeadersI(httpResponse);
+        }
+
+        private void WaitI(Dictionary<string, List<string>> parameters)
+        {
+            if (parameters.ContainsKey(Constants.WAIT_FOR_CONTROL))
+            {
+                var waitExpectedReason = parameters[Constants.WAIT_FOR_CONTROL][0];
+                Log.Debug("wait for {0}", waitExpectedReason);
+
+                //A call to Take may block until an item is available to be removed.
+                //https://msdn.microsoft.com/en-us/library/dd287085(v=vs.110).aspx
+                var endReason = WaitControlQueue.Take();
+                Log.Debug("wait ended due to %s", endReason);
+            }
+
+            if (parameters.ContainsKey(Constants.WAIT_FOR_SLEEP))
+            {
+                var millisToSleep = long.Parse(parameters[Constants.WAIT_FOR_SLEEP][0]);
+                Log.Debug("sleep for {0}", millisToSleep);
+
+                Task.Delay(TimeSpan.FromMilliseconds(millisToSleep)).Wait();
+                Log.Debug("sleep ended");
+            }
+        }
+    }
+}

@@ -11,11 +11,14 @@ namespace AdjustSdk.Pcl
         private readonly Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
         private readonly IRequestHandler _requestHandler;
         private WeakReference<IActivityHandler> _activityHandlerWeakReference;
+        private readonly string _userAgent;
 
         private bool _isPaused;
 
-        public SdkClickHandler(IActivityHandler activityHandler, bool startPaused)
+        public SdkClickHandler(IActivityHandler activityHandler, bool startPaused, string userAgent)
         {
+            _userAgent = userAgent;
+
             Init(activityHandler, startPaused);
             _requestHandler = new RequestHandler(
                 successCallbac: (responseData) => ProcessSdkClickResponseData(responseData),
@@ -26,6 +29,16 @@ namespace AdjustSdk.Pcl
         {
             _isPaused = startPaused;
             _activityHandlerWeakReference = new WeakReference<IActivityHandler>(activityHandler);
+        }
+
+        public void Teardown()
+        {
+            _actionQueue?.Teardown();
+            _backoffStrategy = null;
+            _packageQueue.Clear();
+            _packageQueue = null;
+            _requestHandler.Teardown();
+            _activityHandlerWeakReference = null;
         }
 
         public void PauseSending()
@@ -69,6 +82,7 @@ namespace AdjustSdk.Pcl
             Action action = () =>
             {
                 _requestHandler.SendPackageSync(sdkClickPackage, _packageQueue.Count - 1);
+
                 SendNextSdkClick();
             };
 

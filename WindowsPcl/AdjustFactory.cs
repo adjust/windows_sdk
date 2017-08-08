@@ -20,6 +20,12 @@ namespace AdjustSdk.Pcl
         private static BackoffStrategy _packageHandlerBackoffStrategy;
         private static BackoffStrategy _sdkClickHandlerBackoffStrategy;
         private static TimeSpan? _maxDelayStart;
+        public static string BaseUrl { get; set; }
+
+        static AdjustFactory()
+        {
+            BaseUrl = "https://app.adjust.com";
+        }
 
         public static ILogger Logger
         {
@@ -34,6 +40,25 @@ namespace AdjustSdk.Pcl
             set { _logger = value; }
         }
 
+        public static void Teardown(bool deleteState)
+        {
+            _iPackageHandler?.Teardown();
+            _iPackageHandler = null;
+            _iRequestHandler?.Teardown();
+            _iRequestHandler = null;
+            _iAttributionHandler?.Teardown();
+            _iAttributionHandler = null;
+            _iActivityHandler?.Teardown(deleteState);
+            _iActivityHandler = null;
+            _iSdkClickHandler?.Teardown();
+            _iSdkClickHandler = null;
+            _logger = null;
+            _httpMessageHandler?.Dispose();
+            _httpMessageHandler = null;
+            _packageHandlerBackoffStrategy = null;
+            _sdkClickHandlerBackoffStrategy = null;
+        }
+
         public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             if (_iActivityHandler == null)
@@ -43,10 +68,10 @@ namespace AdjustSdk.Pcl
             return _iActivityHandler;
         }
 
-        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused, string userAgent)
         {
             if (_iPackageHandler == null)
-                return new PackageHandler(activityHandler, deviceUtil, startPaused);
+                return new PackageHandler(activityHandler, deviceUtil, startPaused, userAgent);
 
             _iPackageHandler.Init(activityHandler, deviceUtil, startPaused);
             return _iPackageHandler;
@@ -74,11 +99,11 @@ namespace AdjustSdk.Pcl
             return _iRequestHandler;
         }
 
-        public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused)
+        public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused, string userAgent)
         {
             if (_iSdkClickHandler == null)
             {
-                return new SdkClickHandler(activityHandler, startPaused);
+                return new SdkClickHandler(activityHandler, startPaused, userAgent);
             }
             _iSdkClickHandler.Init(activityHandler, startPaused);
             return _iSdkClickHandler;

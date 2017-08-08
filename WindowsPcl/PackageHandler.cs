@@ -14,7 +14,7 @@ namespace AdjustSdk.Pcl
 
         private readonly ILogger _logger = AdjustFactory.Logger;
         private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
-        private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
+        private BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
         private List<ActivityPackage> _packageQueue;
         private IRequestHandler _requestHandler;
@@ -26,11 +26,24 @@ namespace AdjustSdk.Pcl
 
         private bool _isPaused;
 
-        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
+        private readonly string _userAgent;
+
+        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused, string userAgent)
         {
             Init(activityHandler, deviceUtil, startPaused);
 
+            _userAgent = userAgent;
+
             _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
+        }
+
+        public void Teardown()
+        {
+            _actionQueue?.Teardown();
+            _packageQueue.Clear();
+            _packageQueue = null;
+            _requestHandler.Teardown();
+            _backoffStrategy = null;
         }
 
         public void Init(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
@@ -130,6 +143,7 @@ namespace AdjustSdk.Pcl
             if (_internalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
                 _internalWaitHandle.Reset(); // close the door (non-signals the wait handle)
+				
                 _requestHandler.SendPackage(_packageQueue.First(), _packageQueue.Count - 1);
             }
             else

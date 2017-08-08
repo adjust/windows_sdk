@@ -94,5 +94,13 @@ namespace AdjustSdk.Pcl
 
             return now;
         }
+
+        public void Teardown()
+        {
+            Suspend();
+            _Action = null;
+            _ActionQueue.Teardown();
+            _ActionQueue = null;
+        }
     }
 }

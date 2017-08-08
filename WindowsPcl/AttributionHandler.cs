@@ -22,7 +22,6 @@ namespace AdjustSdk.Pcl
                 startPaused: startPaused);
 
             _urlQuery = BuildUrlQuery();
-
             _timer = new TimerOnce(actionQueue: _actionQueue, action: SendAttributionRequestI);
         }
 
@@ -31,6 +30,13 @@ namespace AdjustSdk.Pcl
             _activityHandler = activityHandler;
             _attributionPackage = attributionPackage;
             _paused = startPaused;
+        }
+
+        public void Teardown()
+        {
+            _timer.Teardown();
+            _actionQueue.Teardown();
+            _attributionPackage = null;
         }
 
         public void CheckSessionResponse(SessionResponseData responseData)

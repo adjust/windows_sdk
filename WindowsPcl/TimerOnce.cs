@@ -56,5 +56,13 @@ namespace AdjustSdk.Pcl
             _cancelDelayTokenSource.Cancel();
             _cancelDelayTokenSource = new CancellationTokenSource();
         }
+
+        public void Teardown()
+        {
+            Cancel();
+            _Action = null;
+            _ActionQueue.Teardown();
+            _ActionQueue = null;
+        }
     }
 }

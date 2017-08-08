@@ -81,5 +81,11 @@ namespace AdjustSdk.Pcl
                 _logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
             }
         }
+
+        public void Teardown()
+        {
+            this._ActionQueue.Clear();
+            this._ActionQueue = null;
+        }
     }
 }

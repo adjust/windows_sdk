@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -15,6 +14,7 @@ namespace AdjustSdk.Pcl
 {
     public static class Util
     {
+        //public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
         private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
@@ -297,7 +297,7 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, int queueSize)
         {
-            var url = BASE_URL + activityPackage.Path;
+            var url = AdjustFactory.BaseUrl + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters[SENT_AT] = sNow;
@@ -334,7 +334,7 @@ namespace AdjustSdk.Pcl
             string authorizationHeader =
                 BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
-            var uriBuilder = new UriBuilder(BASE_URL);
+            var uriBuilder = new UriBuilder(AdjustFactory.BaseUrl);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
 

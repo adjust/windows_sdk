@@ -55,5 +55,9 @@ namespace AdjustSdk.Pcl
         string GetAdid();
 
         AdjustAttribution GetAttribution();
+
+        string GetBasePath();
+
+        void Teardown(bool deleteState);
     }
 }

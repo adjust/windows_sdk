@@ -40,6 +40,11 @@ namespace AdjustSdk
             RegisterLifecycleEvents();
         }
 
+        public void Teardown(bool deleteState)
+        {
+            AdjustInstance.Teardown(deleteState);
+        }
+
         public static void RegisterLifecycleEvents()
         {
             try

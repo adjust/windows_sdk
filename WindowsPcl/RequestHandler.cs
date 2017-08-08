@@ -36,12 +36,19 @@ namespace AdjustSdk.Pcl
         public void SendPackageSync(ActivityPackage activityPackage, int queueSize)
         {
             var sendTask = new Task<ResponseData>(() => SendI(activityPackage, queueSize));
+
             // continuation used to prevent unhandled exceptions in SendI
             sendTask.ContinueWith((responseData) => {
                 PackageSent(responseData, activityPackage);
             }, TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI ->
 
             sendTask.RunSynchronously();
+        }
+
+        public void Teardown()
+        {
+            _successCallback = null;
+            _failureCallback = null;
         }
 
         private ResponseData SendI(ActivityPackage activityPackage, int queueSize)

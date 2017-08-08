@@ -9,6 +9,7 @@ using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
+using Windows.Storage.Search;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
 using AdjustSdk.FileSystem;
@@ -117,6 +118,19 @@ namespace AdjustSdk
         public void PersistSimpleValue(string key, string value)
         {
             _localSettings.Values[key] = value;
+        }
+
+        public void ClearAllPersistedObjects()
+        {
+            _localSettings.Values.Clear();
+        }
+
+        public void ClearAllPeristedValues()
+        {
+            foreach (var file in _localFolder.GetFilesAsync(CommonFileQuery.OrderByName).AsTask().Result)
+            {
+                file.DeleteAsync(StorageDeleteOption.PermanentDelete).AsTask().RunSynchronously();
+            }
         }
 
         public bool TryTakeObject(string key, out Dictionary<string, object> objectValuesMap)

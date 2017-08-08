@@ -19,7 +19,7 @@ namespace AdjustSdk.Pcl
 
         private TimeSpan _backgroundTimerInterval;
 
-        private readonly ILogger _logger = AdjustFactory.Logger;
+        private ILogger _logger = AdjustFactory.Logger;
         private readonly ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
         private readonly InternalState _state = new InternalState();
 
@@ -37,6 +37,8 @@ namespace AdjustSdk.Pcl
         private TimerOnce _delayStartTimer;
         private ISdkClickHandler _sdkClickHandler;
         private SessionParameters _sessionParameters;
+
+        private string _basePath;
 
         public class InternalState
         {
@@ -80,6 +82,36 @@ namespace AdjustSdk.Pcl
         {
             _config = adjustConfig;
             _deviceUtil = deviceUtil;
+            _basePath = adjustConfig.BasePath;
+        }
+
+        public void Teardown(bool deleteState)
+        {
+            if (deleteState)
+            {
+                _deviceUtil.ClearAllPeristedValues();
+                _deviceUtil.ClearAllPersistedObjects();
+            }
+
+            _backgroundTimer?.Teardown();
+            _foregroundTimer?.Teardown();
+            _delayStartTimer?.Teardown();
+            _actionQueue?.Teardown();
+            _packageHandler.Teardown();
+            _attributionHandler.Teardown();
+            _sdkClickHandler.Teardown();
+            _sessionParameters?.CallbackParameters?.Clear();
+            _sessionParameters?.PartnerParameters?.Clear();
+            _sessionParameters = null;
+            _packageHandler = null;
+            _logger = null;
+            _backgroundTimer = null;
+            _foregroundTimer = null;
+            _delayStartTimer = null;
+            _deviceInfo = null;
+            _sdkClickHandler = null;
+            _attributionHandler = null;
+            _config = null;
         }
 
         public static ActivityHandler GetInstance(AdjustConfig adjustConfig,
@@ -415,6 +447,11 @@ namespace AdjustSdk.Pcl
             _actionQueue.Enqueue(SendFirstPackagesI);
         }
 
+        public string GetBasePath()
+        {
+            return _basePath;
+        }
+
         #region private
         private void WriteActivityState()
         {
@@ -512,7 +549,7 @@ namespace AdjustSdk.Pcl
 
             Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
 
-            _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));
+            _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false), _config.UserAgent);
 
             var attributionPackage = GetAttributionPackageI();
 
@@ -520,7 +557,7 @@ namespace AdjustSdk.Pcl
                 attributionPackage,
                 IsPausedI(sdkClickHandlerOnly: false));
 
-            _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
+            _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true), _config.UserAgent);
 
             // fail-safe check if app crashed during delay state, to update packages in queue
             if (IsToUpdatePackagesI())

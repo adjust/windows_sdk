@@ -19,6 +19,10 @@ namespace AdjustSdk.Pcl
 
         bool ClearSimpleValue(string key);
 
+        void ClearAllPeristedValues();
+
+        void ClearAllPersistedObjects();
+
         void PersistObject(string key, Dictionary<string, object> objectValuesMap);
 
         bool PersistValue(string key, string value);
