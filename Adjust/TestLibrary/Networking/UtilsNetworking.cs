@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace TestLibrary.Networking
 {
@@ -46,8 +45,8 @@ namespace TestLibrary.Networking
             try
             {
                 var requestContent = postBody != null
-                    ? new StringContent(JsonConvert.SerializeObject(postBody))
-                    : new StringContent(JsonConvert.SerializeObject(new Dictionary<string, string>(0)));
+                    ? new FormUrlEncodedContent(postBody)
+                    : new FormUrlEncodedContent(new Dictionary<string, string>(0));
 
                 if (!string.IsNullOrEmpty(clientSdk))
                     requestContent.Headers.Add(CLIENT_SDK, clientSdk);
@@ -61,6 +60,8 @@ namespace TestLibrary.Networking
                 //TODO: SSL/TSL??
 
                 //TODO: set cache?
+
+                Log.Debug(nameof(UtilsNetworking), "----- EXECUTING POST REQUEST [{0}]", targetUrl);
 
                 var httpResponse = await _httpClient.PostAsync(targetUrl, requestContent);
                 response.ResponseCode = (int) httpResponse.StatusCode;
@@ -80,7 +81,7 @@ namespace TestLibrary.Networking
             }
             catch (Exception e)
             {
-                Log.Error("Error while executing POST request to [{0}]. {1}", targetUrl, e.ToString());
+                Log.Error(nameof(UtilsNetworking), "Error while executing POST request to [{0}]. {1}", targetUrl, e.ToString());
             }
 
             return null;

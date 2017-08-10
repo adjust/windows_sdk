@@ -82,7 +82,7 @@ namespace AdjustSdk.Pcl
         {
             _config = adjustConfig;
             _deviceUtil = deviceUtil;
-            _basePath = adjustConfig.BasePath;
+            _basePath = AdjustConfig.BasePath;
         }
 
         public void Teardown(bool deleteState)
@@ -99,7 +99,7 @@ namespace AdjustSdk.Pcl
             _actionQueue?.Teardown();
             _packageHandler.Teardown();
             _attributionHandler.Teardown();
-            _sdkClickHandler.Teardown();
+            _sdkClickHandler?.Teardown();
             _sessionParameters?.CallbackParameters?.Clear();
             _sessionParameters?.PartnerParameters?.Clear();
             _sessionParameters = null;

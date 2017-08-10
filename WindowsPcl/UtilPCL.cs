@@ -297,7 +297,9 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, int queueSize)
         {
-            var url = AdjustFactory.BaseUrl + activityPackage.Path;
+            string url = AdjustConfig.BasePath != null
+                ? AdjustFactory.BaseUrl + AdjustConfig.BasePath + activityPackage.Path
+                : AdjustFactory.BaseUrl + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters[SENT_AT] = sNow;

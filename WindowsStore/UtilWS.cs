@@ -3,6 +3,7 @@ using AdjustSdk.Uap;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Windows.Networking.Connectivity;
 using Windows.Security.Cryptography;
@@ -122,15 +123,28 @@ namespace AdjustSdk
 
         public void ClearAllPersistedObjects()
         {
-            _localSettings.Values.Clear();
+            Task.Run(() =>
+            {
+                Debug.WriteLine("About to delete local settings. Count: {0}", _localSettings.Values.Count);
+                _localSettings.Values.Clear();
+            });
         }
 
         public void ClearAllPeristedValues()
         {
-            foreach (var file in _localFolder.GetFilesAsync(CommonFileQuery.OrderByName).AsTask().Result)
+            if (_localFolder == null)
+                return;
+
+            Task.Run(async () =>
             {
-                file.DeleteAsync(StorageDeleteOption.PermanentDelete).AsTask().RunSynchronously();
-            }
+                int filesDeletedCount = 0;
+                foreach (var file in await _localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    filesDeletedCount++;
+                }
+                Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
+            });
         }
 
         public bool TryTakeObject(string key, out Dictionary<string, object> objectValuesMap)

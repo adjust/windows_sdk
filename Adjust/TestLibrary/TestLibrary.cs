@@ -14,7 +14,7 @@ namespace TestLibrary
         private const string DATE_TIME_FORMAT = @"MM\/dd\/yyyy HH:mm";
         internal static string BaseUrl;
 
-        private readonly string _localIp;
+        public string LocalIp { get; set; }
         internal ICommandListener CommandListener;
         internal ControlChannel ControlChannel;
         internal string CurrentBasePath;
@@ -30,8 +30,8 @@ namespace TestLibrary
         public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp)
         {
             BaseUrl = baseUrl;
-            _localIp = localIp;
-            Log.Debug("base url: {0}", baseUrl);
+            LocalIp = localIp;
+            DebugLog("base url: {0}", baseUrl);
             CommandListener = commandListener;
         }
 
@@ -112,7 +112,7 @@ namespace TestLibrary
         private void SendTestSessionI(string clientSdk)
         {
             var httpResponse = UtilsNetworking
-                .SendPostI("/init_session", clientSdk, _localIp, TestNames).Result;
+                .SendPostI("/init_session", clientSdk, LocalIp, TestNames).Result;
             if (httpResponse == null)
                 return;
 
@@ -121,9 +121,9 @@ namespace TestLibrary
 
         private void SendInfoToServerI()
         {
-            Log.Debug("sendInfoToServerI called");
+            DebugLog("sendInfoToServerI called");
             var httpResponse = UtilsNetworking
-                .SendPostI(CurrentBasePath + "/test_info", null, _localIp, InfoToServer).Result;
+                .SendPostI(CurrentBasePath + "/test_info", null, LocalIp, InfoToServer).Result;
             InfoToServer = null;
             if (httpResponse == null)
                 return;
@@ -136,7 +136,7 @@ namespace TestLibrary
             if (httpResponse.HeaderFields.ContainsKey(Constants.TEST_SESSION_END_HEADER))
             {
                 Teardown(false);
-                Log.Debug("TestSessionEnd received");
+                DebugLog("TestSessionEnd received");
                 if (ExitAfterEnd)
                     Exit();
 
@@ -173,7 +173,7 @@ namespace TestLibrary
 
         private void ExecTestCommandsI(List<TestCommand> testCommands)
         {
-            Log.Debug("testCommands: {0}", testCommands);
+            DebugLog("testCommands: {0}", testCommands);
 
             var stopwatch = new Stopwatch();
             foreach (var testCommand in testCommands)
@@ -187,22 +187,22 @@ namespace TestLibrary
 
                 stopwatch.Restart();
 
-                Log.Debug("ClassName: {0}", testCommand.ClassName);
-                Log.Debug("FunctionName: {0}", testCommand.FunctionName);
-                Log.Debug("Params:");
+                DebugLog("ClassName: {0}", testCommand.ClassName);
+                DebugLog("FunctionName: {0}", testCommand.FunctionName);
+                DebugLog("Params:");
                 if (testCommand.Params != null && testCommand.Params.Count > 0)
                     foreach (var entry in testCommand.Params)
-                        Log.Debug("\t{0}: {1}", entry.Key, entry.Value);
+                        DebugLog("\t{0}: {1}", entry.Key, entry.Value);
 
-                Log.Debug("time before {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                DebugLog("time before {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));
 
                 if (Constants.TEST_LIBRARY_CLASSNAME == testCommand.ClassName)
                 {
                     ExecuteTestLibraryCommandI(testCommand);
-                    Log.Debug("time after {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                    DebugLog("time after {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                         DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    Log.Debug("time elapsed {0} {1} in milli seconds: {2}", testCommand.ClassName,
+                    DebugLog("time elapsed {0} {1} in milli seconds: {2}", testCommand.ClassName,
                         testCommand.FunctionName, stopwatch.ElapsedMilliseconds);
 
                     continue;
@@ -245,7 +245,7 @@ namespace TestLibrary
 
         private void EndTestI()
         {
-            var httpResponse = UtilsNetworking.SendPostI(CurrentBasePath + "/end_test", _localIp).Result;
+            var httpResponse = UtilsNetworking.SendPostI(CurrentBasePath + "/end_test", LocalIp).Result;
             if (httpResponse == null)
             {
                 if (ExitAfterEnd)
@@ -273,11 +273,16 @@ namespace TestLibrary
             if (parameters.ContainsKey(Constants.WAIT_FOR_SLEEP))
             {
                 var millisToSleep = long.Parse(parameters[Constants.WAIT_FOR_SLEEP][0]);
-                Log.Debug("sleep for {0}", millisToSleep);
+                DebugLog("sleep for {0}", millisToSleep);
 
                 Task.Delay(TimeSpan.FromMilliseconds(millisToSleep)).Wait();
-                Log.Debug("sleep ended");
+                DebugLog("sleep ended");
             }
+        }
+
+        private void DebugLog(string message, params object[] parameters)
+        {
+            Log.Debug(nameof(TestLibrary), message, parameters);
         }
     }
 }

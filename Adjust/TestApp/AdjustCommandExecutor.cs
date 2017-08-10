@@ -272,7 +272,7 @@ namespace TestApp
 
             var adjustConfig = _savedConfigs[configNumber];
 
-            adjustConfig.BasePath = BasePath;
+            AdjustConfig.BasePath = BasePath;
             Adjust.ApplicationLaunching(adjustConfig);
 
             _savedConfigs.Remove(0);

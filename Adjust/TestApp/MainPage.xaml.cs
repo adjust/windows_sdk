@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -18,7 +19,7 @@ namespace TestApp
             InitializeComponent();
 
             //string baseUrl = "https://10.0.2.2:8443";
-            var baseUrl = "http://192.168.8.208:8080";
+            var baseUrl = "http://192.168.8.215:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
@@ -27,6 +28,7 @@ namespace TestApp
             var commandListener = new CommandListener();
             AdjustFactory.BaseUrl = baseUrl;
             _testLibrary = new TestLibrary.TestLibrary(baseUrl, commandListener, localIp);
+            _testLibrary.SetTests("current/Test_Event_Revenue");
             _testLibrary.ExitAppEvent += (sender, args) => { Exit(); };
             commandListener.SetTestLibrary(_testLibrary);
 
@@ -35,7 +37,7 @@ namespace TestApp
 
         private void StartTestSession()
         {
-            _testLibrary.InitTestSession("windows4.11.0");
+            _testLibrary.InitTestSession("wuap4.0.3");
         }
 
         private string GetLocalIp()

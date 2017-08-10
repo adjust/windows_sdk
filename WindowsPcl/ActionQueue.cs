@@ -7,7 +7,7 @@ namespace AdjustSdk.Pcl
     internal class ActionQueue
     {
         private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly Queue<Action> _actionQueue = new Queue<Action>();
+        private Queue<Action> _actionQueue = new Queue<Action>();
 
         private bool _isTaskWorkerProcessing = false; // protected by lock(InternalQueue)
 
@@ -84,8 +84,8 @@ namespace AdjustSdk.Pcl
 
         public void Teardown()
         {
-            this._ActionQueue.Clear();
-            this._ActionQueue = null;
+            _actionQueue?.Clear();
+            _actionQueue = null;
         }
     }
 }

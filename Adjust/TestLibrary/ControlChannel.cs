@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using TestLibrary.Networking;
 
@@ -28,15 +29,15 @@ namespace TestLibrary
             Task.Run(() =>
             {
                 var ticksBefore = DateTime.Now.Ticks;
-                Log.Debug("time (ticks) before wait: {0}", ticksBefore);
+                DebugLog("time (ticks) before wait: {0}", ticksBefore);
 
                 var response = UtilsNetworking
-                    .SendPostI(_testLibrary.CurrentBasePath + controlPath, null).Result;
+                    .SendPostI(_testLibrary.CurrentBasePath + controlPath, _testLibrary.LocalIp).Result;               
 
                 var ticksAfter = DateTime.Now.Ticks;
                 var elapsedMillisenconds = TimeSpan.FromTicks(ticksAfter - ticksBefore).TotalMilliseconds;
-                Log.Debug("time (ticks) after wait: {0}", ticksAfter);
-                Log.Debug("time elapsed waiting in milliseconds: {0}", elapsedMillisenconds);
+                DebugLog("time (ticks) after wait: {0}", ticksAfter);
+                DebugLog("time elapsed waiting in milliseconds: {0}", elapsedMillisenconds);
 
                 ReadControlHeaders(response);
             });
@@ -46,12 +47,12 @@ namespace TestLibrary
         {
             if (_isClosed)
             {
-                Log.Debug("control channel already closed");
+                DebugLog("control channel already closed");
                 return;
             }
             if (httpResponse.HeaderFields.ContainsKey(Constants.TEST_CANCELTEST_HEADER))
             {
-                Log.Debug("Test canceled due to {0}", httpResponse.HeaderFields[Constants.TEST_CANCELTEST_HEADER][0]);
+                DebugLog("Test canceled due to {0}", httpResponse.HeaderFields[Constants.TEST_CANCELTEST_HEADER][0]);
                 _testLibrary.ResetTestLibrary();
                 _testLibrary.ReadHeaders(httpResponse);
             }
@@ -65,13 +66,23 @@ namespace TestLibrary
 
         private void EndWait(string waitEndReason)
         {
-            Log.Debug("End wait from control channel due to {0}", waitEndReason);
+            DebugLog("End wait from control channel due to {0}", waitEndReason);
 
             var waitReasonAdded = _testLibrary.WaitControlQueue.TryAdd(waitEndReason);
             if (!waitReasonAdded)
-                Log.Debug("ControlChannel.EndWait - failed to add waitEndReason = [{0}] to queue", waitEndReason);
+                DebugLog("ControlChannel.EndWait - failed to add waitEndReason = [{0}] to queue", waitEndReason);
 
-            Log.Debug("Wait ended from control channel due to {0}", waitEndReason);
+            DebugLog("Wait ended from control channel due to {0}", waitEndReason);
+        }
+
+        private void DebugLog(string message, params object[] parameters)
+        {
+            Log.Debug(nameof(ControlChannel), message, parameters);
+        }
+
+        private void ErrorLog(string message, params object[] parameters)
+        {
+            Log.Error(nameof(ControlChannel), message, parameters);
         }
     }
 }
