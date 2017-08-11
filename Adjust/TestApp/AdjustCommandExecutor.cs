@@ -160,7 +160,6 @@ namespace TestApp
             {
                 var deviceKnownS = Command.GetFirstParameterValue("deviceKnown");
                 var deviceKnown = deviceKnownS.ToLower() == "true";
-                Log.Debug("Cannot set DeviceKnown ({0})", deviceKnown);
                 adjustConfig.DeviceKnown = deviceKnown;
             }
 
@@ -181,7 +180,6 @@ namespace TestApp
             if (Command.ContainsParameter("userAgent"))
             {
                 var userAgent = Command.GetFirstParameterValue("userAgent");
-                Log.Debug("Cannot set UserAgent ({0})", userAgent);
                 adjustConfig.UserAgent = userAgent;
             }
 
