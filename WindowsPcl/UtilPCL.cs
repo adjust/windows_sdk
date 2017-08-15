@@ -17,8 +17,24 @@ namespace AdjustSdk.Pcl
         //public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
-        private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
-        internal static string UserAgent { get; set; }
+        private static HttpClient _httpClient;
+		internal static string UserAgent { get; set; }
+
+        public static void Teardown()
+        {
+            _httpClient?.Dispose();
+            _httpClient = null;
+        }
+
+        public static void Recreate(string clientSdk)
+        {
+            if (_httpClient != null)
+                return;
+
+            _httpClient = new HttpClient {Timeout = new TimeSpan(0, 1, 0)};
+            if (clientSdk != null)
+                _httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
+        }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -321,7 +337,7 @@ namespace AdjustSdk.Pcl
 
             using (var postParams = new FormUrlEncodedContent(postParamsMap))
             {
-                return HttpClient.PostAsync(url, postParams).Result;
+                return _httpClient.PostAsync(url, postParams).Result;
             }
         }
 
@@ -339,11 +355,11 @@ namespace AdjustSdk.Pcl
             var uriBuilder = new UriBuilder(AdjustFactory.BaseUrl);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
-
+			
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            return HttpClient.GetAsync(uriBuilder.Uri).Result;
+            return _httpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
         private static string ExtractAppSecret(Dictionary<string, string> parameters)

@@ -6,8 +6,8 @@ namespace AdjustSdk.Pcl
 {
     internal class TimerOnce
     {
-        private readonly ActionQueue _actionQueue;
-        private readonly Action _action;
+        private ActionQueue _actionQueue;
+        private Action _action;
         private DateTime? _fireDate;
         private CancellationTokenSource _cancelDelayTokenSource = new CancellationTokenSource();
 
@@ -60,9 +60,9 @@ namespace AdjustSdk.Pcl
         public void Teardown()
         {
             Cancel();
-            _Action = null;
-            _ActionQueue.Teardown();
-            _ActionQueue = null;
+            _action = null;
+            _actionQueue.Teardown();
+            _actionQueue = null;
         }
     }
 }

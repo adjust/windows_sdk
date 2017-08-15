@@ -108,15 +108,7 @@ namespace AdjustSdk.Pcl
             _iSdkClickHandler.Init(activityHandler, startPaused);
             return _iSdkClickHandler;
         }
-
-        public static HttpMessageHandler GetHttpMessageHandler()
-        {
-            if (_httpMessageHandler == null)
-                return new HttpClientHandler();
-            else
-                return _httpMessageHandler;
-        }
-
+        
         public static TimeSpan GetSessionInterval()
         {
             if (!_sessionInterval.HasValue)

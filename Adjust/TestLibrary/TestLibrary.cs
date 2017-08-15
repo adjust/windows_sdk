@@ -267,7 +267,7 @@ namespace TestLibrary
                 //A call to Take may block until an item is available to be removed.
                 //https://msdn.microsoft.com/en-us/library/dd287085(v=vs.110).aspx
                 var endReason = WaitControlQueue.Take();
-                Log.Debug("wait ended due to %s", endReason);
+                Log.Debug("wait ended due to {0}", endReason);
             }
 
             if (parameters.ContainsKey(Constants.WAIT_FOR_SLEEP))

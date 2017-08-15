@@ -453,6 +453,8 @@ namespace TestApp
             Log.Debug("TestApp {0}", "calling teardown with delete state");
             Adjust.AdjustInstance.Teardown(deleteState);
             AdjustFactory.Teardown(deleteState);
+
+            GC.Collect();
         }
 
         private void OpenDeeplink()

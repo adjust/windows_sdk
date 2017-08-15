@@ -112,6 +112,8 @@ namespace AdjustSdk.Pcl
             _sdkClickHandler = null;
             _attributionHandler = null;
             _config = null;
+
+            Util.Teardown();
         }
 
         public static ActivityHandler GetInstance(AdjustConfig adjustConfig,
@@ -548,6 +550,8 @@ namespace AdjustSdk.Pcl
             Util.UserAgent = _config.UserAgent;
 
             Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
+
+            Util.Recreate(_deviceInfo.ClientSdk);
 
             _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false), _config.UserAgent);
 

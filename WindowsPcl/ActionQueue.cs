@@ -53,6 +53,10 @@ namespace AdjustSdk.Pcl
                 // Process all available items in the queue.
                 while (true)
                 {
+                    // possible teardown happened meanwhile
+                    if(_actionQueue == null)
+                        break;
+
                     Action action;
                     lock (_actionQueue)
                     {
@@ -78,7 +82,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception ex)
             {
-                _logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
+                _logger.Error("ActionQueue [{0}] with exception ({1})", Name, ex);
             }
         }
 
