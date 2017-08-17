@@ -187,12 +187,11 @@ namespace TestLibrary
 
                 stopwatch.Restart();
 
-                DebugLog("ClassName: {0}", testCommand.ClassName);
-                DebugLog("FunctionName: {0}", testCommand.FunctionName);
+                DebugLog("ClassName: {0}, FunctionName: {1}", testCommand.ClassName, testCommand.FunctionName);
                 DebugLog("Params:");
                 if (testCommand.Params != null && testCommand.Params.Count > 0)
                     foreach (var entry in testCommand.Params)
-                        DebugLog("\t{0}: {1}", entry.Key, entry.Value);
+                        DebugLog("\t{0}: {1}", entry.Key, string.Join(", ", entry.Value));
 
                 DebugLog("time before {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));
@@ -220,9 +219,9 @@ namespace TestLibrary
                 //    commandRawJsonListener.executeCommand(gson.toJson(testCommand));
                 //}
 
-                Log.Debug("time after {0}.{1}: {2}", testCommand.ClassName, testCommand.FunctionName,
+                DebugLog("time after {0}.{1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));
-                Log.Debug("time elapsed {0}.{1} in milli seconds: {2}", testCommand.ClassName, testCommand.FunctionName,
+                DebugLog("time elapsed {0}.{1} in milli seconds: {2}", testCommand.ClassName, testCommand.FunctionName,
                     stopwatch.ElapsedMilliseconds);
             }
         }
@@ -262,12 +261,12 @@ namespace TestLibrary
             if (parameters.ContainsKey(Constants.WAIT_FOR_CONTROL))
             {
                 var waitExpectedReason = parameters[Constants.WAIT_FOR_CONTROL][0];
-                Log.Debug("wait for {0}", waitExpectedReason);
+                DebugLog("wait for {0}", waitExpectedReason);
 
                 //A call to Take may block until an item is available to be removed.
                 //https://msdn.microsoft.com/en-us/library/dd287085(v=vs.110).aspx
                 var endReason = WaitControlQueue.Take();
-                Log.Debug("wait ended due to {0}", endReason);
+                DebugLog("wait ended due to {0}", endReason);
             }
 
             if (parameters.ContainsKey(Constants.WAIT_FOR_SLEEP))

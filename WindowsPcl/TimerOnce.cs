@@ -26,13 +26,15 @@ namespace AdjustSdk.Pcl
             }
             // save the next fire date
             _fireDate = DateTime.Now.Add(delay);
-            
+
             // start/reset timer
-            Task.Delay(delay, _cancelDelayTokenSource.Token).ContinueWith(t => {
+            Task.Delay(delay, _cancelDelayTokenSource.Token).ContinueWith(t =>
+            {
                 _fireDate = null;
 
-                if (t.IsCanceled) { 
-                    return; 
+                if (t.IsCanceled)
+                {
+                    return;
                 }
                 _actionQueue.Enqueue(_action);
             });
@@ -59,7 +61,8 @@ namespace AdjustSdk.Pcl
 
         public void Teardown()
         {
-            Cancel();
+            _cancelDelayTokenSource.Cancel();
+
             _action = null;
             _actionQueue.Teardown();
             _actionQueue = null;

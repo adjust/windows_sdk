@@ -26,6 +26,8 @@ namespace TestApp
             this.Command = command;
             try
             {
+                Log.Debug(" \t>>> EXECUTING METHOD: {0}.{1} <<<", command.ClassName, command.MethodName);
+                
                 switch (command.MethodName)
                 {
                     case "factory": Factory(); break;
@@ -269,7 +271,7 @@ namespace TestApp
             }
 
             var adjustConfig = _savedConfigs[configNumber];
-
+            
             AdjustConfig.BasePath = BasePath;
             Adjust.ApplicationLaunching(adjustConfig);
 
@@ -451,10 +453,7 @@ namespace TestApp
             var deleteState = bool.Parse(deleteStateString);
 
             Log.Debug("TestApp {0}", "calling teardown with delete state");
-            Adjust.AdjustInstance.Teardown(deleteState);
-            AdjustFactory.Teardown(deleteState);
-
-            GC.Collect();
+            TeardownAll(deleteState);
         }
 
         private void OpenDeeplink()
@@ -468,8 +467,7 @@ namespace TestApp
             if (Command.ContainsParameter("basePath"))
                 BasePath = Command.GetFirstParameterValue("basePath");
 
-            Adjust.AdjustInstance.Teardown(true);
-            AdjustFactory.Teardown(true);
+            TeardownAll(true);
             AdjustFactory.SetTimerInterval(TimeSpan.FromMinutes(1));
             AdjustFactory.SetTimerStart(TimeSpan.FromMinutes(1));
             AdjustFactory.SetSessionInterval(TimeSpan.FromMinutes(1));
@@ -480,8 +478,20 @@ namespace TestApp
 
         private void TestEnd()
         {
-            Adjust.AdjustInstance.Teardown(true);
-            AdjustFactory.Teardown(true);
+            TeardownAll(true);
+        }
+
+        private void TeardownAll(bool deleteState)
+        {
+            Log.Debug(" --- trying to teardown all ---");
+
+            var adjustInstance = Adjust.GetAdjustInstance();
+            adjustInstance?.Teardown(deleteState);
+
+            Adjust.SetAdjustInstance(null);
+            Adjust.Teardown();
+
+            AdjustFactory.Teardown(deleteState);
         }
     }
 }

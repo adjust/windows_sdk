@@ -20,14 +20,21 @@ namespace TestLibrary
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[{0}]" + LOGTAG + "[{1}]: " + string.Format(message, parameters), logLevel, location);
+                System.Diagnostics.Debug.WriteLine("[{0}][{1}]" + LOGTAG + "[{2}]: " + string.Format(message, parameters),
+                    GetTimeNow(), logLevel, location);
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Error formating log message: {0}, with params: {1}", 
-                    message, string.Join(",", parameters.Select(p => p.ToString())));
+                System.Diagnostics.Debug.WriteLine("[{0}] Error formating log message: {1}, with params: {2}",
+                    GetTimeNow(), message, string.Join(",", parameters.Select(p => p.ToString())));
                 System.Diagnostics.Debug.WriteLine(e);
             }
+        }
+
+        private static string GetTimeNow()
+        {
+            var n = DateTime.Now;
+            return $"{n.Hour}:{n.Minute}:{n.Second}::{n.Millisecond}";
         }
     }
 }

@@ -7,7 +7,6 @@ namespace AdjustSdk.Pcl
     public static class AdjustFactory
     {
         private static ILogger _logger;
-        private static IActivityHandler _iActivityHandler;
         private static IPackageHandler _iPackageHandler;
         private static IAttributionHandler _iAttributionHandler;
         private static IRequestHandler _iRequestHandler;
@@ -42,32 +41,16 @@ namespace AdjustSdk.Pcl
 
         public static void Teardown(bool deleteState)
         {
-            _iPackageHandler?.Teardown();
             _iPackageHandler = null;
-            _iRequestHandler?.Teardown();
             _iRequestHandler = null;
-            _iAttributionHandler?.Teardown();
             _iAttributionHandler = null;
-            _iActivityHandler?.Teardown(deleteState);
-            _iActivityHandler = null;
-            _iSdkClickHandler?.Teardown();
-            _iSdkClickHandler = null;
             _logger = null;
             _httpMessageHandler?.Dispose();
             _httpMessageHandler = null;
             _packageHandlerBackoffStrategy = null;
             _sdkClickHandlerBackoffStrategy = null;
         }
-
-        public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
-        {
-            if (_iActivityHandler == null)
-                return ActivityHandler.GetInstance(adjustConfig, deviceUtil);
-
-            _iActivityHandler.Init(adjustConfig, deviceUtil);
-            return _iActivityHandler;
-        }
-
+        
         public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused, string userAgent)
         {
             if (_iPackageHandler == null)
@@ -167,12 +150,7 @@ namespace AdjustSdk.Pcl
             }
             return _maxDelayStart.Value;
         }
-
-        public static void SetActivityHandler(IActivityHandler activityHandler)
-        {
-            _iActivityHandler = activityHandler;
-        }
-
+        
         public static void SetPackageHandler(IPackageHandler packageHandler)
         {
             _iPackageHandler = packageHandler;
@@ -231,6 +209,11 @@ namespace AdjustSdk.Pcl
         public static void SetMaxDelayStart(TimeSpan maxDelayStart)
         {
             _maxDelayStart = maxDelayStart;
+        }
+
+        public static void SetSdkClickHandler(SdkClickHandler sdkClickHandler)
+        {
+            _iSdkClickHandler = sdkClickHandler;
         }
     }
 }

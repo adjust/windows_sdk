@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
@@ -13,9 +14,12 @@ namespace AdjustSdk.Pcl
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;
-        
+
+        private CancellationTokenSource _sendPackageTaskCancelToken;
+
         public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
+            _sendPackageTaskCancelToken = new CancellationTokenSource();
             Init(successCallbac, failureCallback);
         }
 
@@ -49,6 +53,7 @@ namespace AdjustSdk.Pcl
         {
             _successCallback = null;
             _failureCallback = null;
+            _logger = null;
         }
 
         private ResponseData SendI(ActivityPackage activityPackage, int queueSize)
@@ -110,6 +115,11 @@ namespace AdjustSdk.Pcl
             if (!responseData.Success)
             {
                 LogSendErrorI(responseData, activityPackage);
+            }
+
+            if (_sendPackageTaskCancelToken.IsCancellationRequested)
+            {
+                return;
             }
 
             if (responseData.WillRetry)

@@ -19,15 +19,21 @@ namespace TestApp
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[{0}] TEST-APP" + ": " + string.Format(message, parameters),
-                    logLevel);
+                System.Diagnostics.Debug.WriteLine("[{0}][{1}] TEST-APP" + ": " + string.Format(message, parameters),
+                    GetTimeNow(), logLevel);
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Error formating log message: {0}, with params: {1}",
-                    message, string.Join(",", parameters.Select(p => p.ToString())));
+                System.Diagnostics.Debug.WriteLine("[{2}] Error formating log message: {0}, with params: {1}",
+                    message, string.Join(",", parameters.Select(p => p.ToString())), GetTimeNow());
                 System.Diagnostics.Debug.WriteLine(e);
             }
+        }
+
+        private static string GetTimeNow()
+        {
+            var n = DateTime.Now;
+            return $"{n.Hour}:{n.Minute}:{n.Second}::{n.Millisecond}";
         }
     }
 }

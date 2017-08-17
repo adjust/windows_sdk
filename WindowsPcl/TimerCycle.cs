@@ -97,7 +97,8 @@ namespace AdjustSdk.Pcl
 
         public void Teardown()
         {
-            Suspend();
+            _CancelDelayTokenSource.Cancel();
+
             _Action = null;
             _ActionQueue.Teardown();
             _ActionQueue = null;

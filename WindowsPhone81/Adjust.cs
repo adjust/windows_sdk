@@ -13,7 +13,7 @@ namespace AdjustSdk
     public class Adjust
     {
         private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
-        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
+        private static AdjustInstance _adjustInstance;
         private static bool _isApplicationActive = false;
 
         private Adjust() { }
@@ -24,7 +24,19 @@ namespace AdjustSdk
             LogConfig.SetupLogging(logDelegate, logLevel);
         }
 
-        public static bool ApplicationLaunched => AdjustInstance.ApplicationLaunched;
+        public static bool ApplicationLaunched => GetAdjustInstance().ApplicationLaunched;
+
+        public static AdjustInstance GetAdjustInstance()
+        {
+            if (_adjustInstance == null)
+                _adjustInstance = new AdjustInstance();
+            return _adjustInstance;
+        }
+
+        public static void SetAdjustInstance(AdjustInstance adjustInstance)
+        {
+            _adjustInstance = adjustInstance;
+        }
 
         /// <summary>
         ///  Tell Adjust that the application was launched.
@@ -38,8 +50,13 @@ namespace AdjustSdk
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
             if (ApplicationLaunched) { return; }
-            AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
+            GetAdjustInstance().ApplicationLaunching(adjustConfig, DeviceUtil);
             RegisterLifecycleEvents();
+        }
+
+        public static void Teardown()
+        {
+            _isApplicationActive = false;
         }
 
         public static void RegisterLifecycleEvents()
@@ -121,7 +138,7 @@ namespace AdjustSdk
             if (_isApplicationActive) { return; }
 
             _isApplicationActive = true;
-            AdjustInstance.ApplicationActivated();
+            GetAdjustInstance().ApplicationActivated();
         }
 
         /// <summary>
@@ -135,7 +152,7 @@ namespace AdjustSdk
             if (!_isApplicationActive) { return; }
 
             _isApplicationActive = false;
-            AdjustInstance.ApplicationDeactivated();
+            GetAdjustInstance().ApplicationDeactivated();
         }
 
         /// <summary>
@@ -146,7 +163,7 @@ namespace AdjustSdk
         /// </param>
         public static void TrackEvent(AdjustEvent adjustEvent)
         {
-            AdjustInstance.TrackEvent(adjustEvent);
+            GetAdjustInstance().TrackEvent(adjustEvent);
         }
 
         /// <summary>
@@ -155,7 +172,7 @@ namespace AdjustSdk
         /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
         public static void SetEnabled(bool enabled)
         {
-            AdjustInstance.SetEnabled(enabled);
+            GetAdjustInstance().SetEnabled(enabled);
         }
 
         /// <summary>
@@ -164,7 +181,7 @@ namespace AdjustSdk
         /// <returns>true if the SDK is enabled, false otherwise</returns>
         public static bool IsEnabled()
         {
-            return AdjustInstance.IsEnabled();
+            return GetAdjustInstance().IsEnabled();
         }
 
         /// <summary>
@@ -173,7 +190,7 @@ namespace AdjustSdk
         /// <param name="offlineMode">The flag to enable or disable offline mode</param>
         public static void SetOfflineMode(bool offlineMode)
         {
-            AdjustInstance.SetOfflineMode(offlineMode);
+            GetAdjustInstance().SetOfflineMode(offlineMode);
         }
 
         /// <summary>
@@ -183,7 +200,7 @@ namespace AdjustSdk
         /// <param name="url">The url that open the application</param>
         public static void AppWillOpenUrl(Uri url)
         {
-            AdjustInstance.AppWillOpenUrl(url);
+            GetAdjustInstance().AppWillOpenUrl(uri);
         }
 
         /// <summary>
@@ -196,52 +213,52 @@ namespace AdjustSdk
 
         public static void AddSessionCallbackParameter(string key, string value)
         {
-            AdjustInstance.AddSessionCallbackParameter(key, value);
+            GetAdjustInstance().AddSessionCallbackParameter(key, value);
         }
 
         public static void AddSessionPartnerParameter(string key, string value)
         {
-            AdjustInstance.AddSessionPartnerParameter(key, value);
+            GetAdjustInstance().AddSessionPartnerParameter(key, value);
         }
 
         public static void RemoveSessionCallbackParameter(string key)
         {
-            AdjustInstance.RemoveSessionCallbackParameter(key);
+            GetAdjustInstance().RemoveSessionCallbackParameter(key);
         }
 
         public static void RemoveSessionPartnerParameter(string key)
         {
-            AdjustInstance.RemoveSessionPartnerParameter(key);
+            GetAdjustInstance().RemoveSessionPartnerParameter(key);
         }
 
         public static void ResetSessionCallbackParameters()
         {
-            AdjustInstance.ResetSessionCallbackParameters();
+            GetAdjustInstance().ResetSessionCallbackParameters();
         }
 
         public static void ResetSessionPartnerParameters()
         {
-            AdjustInstance.ResetSessionPartnerParameters();
+            GetAdjustInstance().ResetSessionPartnerParameters();
         }
 
         public static void SendFirstPackages()
         {
-            AdjustInstance.SendFirstPackages();
+            GetAdjustInstance().SendFirstPackages();
         }
 
         public static void SetPushToken(string pushToken)
         {
-            AdjustInstance.SetPushToken(pushToken, DeviceUtil);
+            GetAdjustInstance().SetPushToken(pushToken, DeviceUtil);
         }
 
         public static string GetAdid()
         {
-            return AdjustInstance.GetAdid();
+            return GetAdjustInstance().GetAdid();
         }
 
         public static AdjustAttribution GetAttributon()
         {
-            return AdjustInstance.GetAttribution();
+            return GetAdjustInstance().GetAttribution();
         }
     }
 }

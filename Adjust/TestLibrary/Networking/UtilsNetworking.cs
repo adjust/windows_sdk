@@ -67,6 +67,8 @@ namespace TestLibrary.Networking
                 response.ResponseCode = (int) httpResponse.StatusCode;
                 response.HeaderFields = new Dictionary<string, List<string>>();
 
+                Log.Debug(nameof(UtilsNetworking), "----- POST REQUEST [{0}] RECEIVED", targetUrl);
+
                 if (httpResponse.Headers != null)
                     using (var headersEnumerator = httpResponse.Headers?.GetEnumerator())
                     {

@@ -20,8 +20,8 @@ namespace AdjustSdk.Pcl
         private TimeSpan _backgroundTimerInterval;
 
         private ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
-        private readonly InternalState _state = new InternalState();
+        private ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
+        private InternalState _state;
 
         private IDeviceUtil _deviceUtil;
         private AdjustConfig _config;
@@ -61,6 +61,8 @@ namespace AdjustSdk.Pcl
 
             _logger.IsLocked = true;
 
+            _state = new InternalState();
+
             // enabled by default
             _state.IsEnabled = adjustConfig.StartEnabled ?? true;
 
@@ -96,23 +98,28 @@ namespace AdjustSdk.Pcl
             _backgroundTimer?.Teardown();
             _foregroundTimer?.Teardown();
             _delayStartTimer?.Teardown();
+
             _actionQueue?.Teardown();
-            _packageHandler.Teardown();
-            _attributionHandler.Teardown();
+
+            _packageHandler?.Teardown();
+            _attributionHandler?.Teardown();
             _sdkClickHandler?.Teardown();
             _sessionParameters?.CallbackParameters?.Clear();
             _sessionParameters?.PartnerParameters?.Clear();
-            _sessionParameters = null;
+            
             _packageHandler = null;
             _logger = null;
             _backgroundTimer = null;
             _foregroundTimer = null;
             _delayStartTimer = null;
+            _actionQueue = null;
+            _state = null;
             _deviceInfo = null;
-            _sdkClickHandler = null;
-            _attributionHandler = null;
             _config = null;
-
+            _attributionHandler = null;
+            _sdkClickHandler = null;
+            _sessionParameters = null;
+            
             Util.Teardown();
         }
 
@@ -779,29 +786,37 @@ namespace AdjustSdk.Pcl
 
         private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
         {
-            // try to update adid from response
-            UpdateAdidI(sessionResponseData.Adid);
-
-            // try to update the attribution
-            var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
-
-            Task task = null;
-            // if attribution changed, launch attribution changed delegate
-            if (attributionUpdated)
+            try
             {
-                task = LaunchAttributionActionI();
-            }
+                // try to update adid from response
+                UpdateAdidI(sessionResponseData.Adid);
 
-            if (sessionResponseData.Success)
+                // try to update the attribution
+                var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
+
+                Task task = null;
+                // if attribution changed, launch attribution changed delegate
+                if (attributionUpdated)
+                {
+                    task = LaunchAttributionActionI();
+                }
+
+                if (sessionResponseData.Success)
+                {
+                    _deviceUtil.SetInstallTracked();
+                }
+
+                // launch Session tracking listener if available
+                LaunchSessionAction(sessionResponseData, task);
+
+                // mark session response has been proccessed
+                _state.HasSessionResponseNotBeenProcessed = true;
+            }
+            catch (Exception e)
             {
-                _deviceUtil.SetInstallTracked();
+                System.Diagnostics.Debug.WriteLine(e);
+                throw;
             }
-
-            // launch Session tracking listener if available
-            LaunchSessionAction(sessionResponseData, task);
-
-            // mark session response has been proccessed
-            _state.HasSessionResponseNotBeenProcessed = true;
         }
 
         private void LaunchSdkClickResponseTasksI(SdkClickResponseData sdkClickResponseData)
@@ -867,10 +882,18 @@ namespace AdjustSdk.Pcl
 
         private Task LaunchAttributionActionI()
         {
-            if (_config.AttributionChanged == null) { return null; }
-            if (_attribution == null) { return null; }
+            try
+            {
+                if (_config.AttributionChanged == null) { return null; }
+                if (_attribution == null) { return null; }
 
-            return _deviceUtil.RunActionInForeground(() => _config.AttributionChanged(_attribution));
+                return _deviceUtil.RunActionInForeground(() => _config.AttributionChanged(_attribution));
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine(e);
+                throw;
+            }
         }
 
         private void LaunchAttributionResponseTasksI(AttributionResponseData attributionResponseData)
@@ -1432,20 +1455,28 @@ namespace AdjustSdk.Pcl
 
         private bool IsToSendI(bool sdkClickHandlerOnly)
         {
-            // don't send when it's paused
-            if (IsPausedI(sdkClickHandlerOnly))
+            try
             {
-                return false;
-            }
+                // don't send when it's paused
+                if (IsPausedI(sdkClickHandlerOnly))
+                {
+                    return false;
+                }
 
-            // has the option to send in the background -> is to send
-            if (_config.SendInBackground)
+                // has the option to send in the background -> is to send
+                if (_config.SendInBackground)
+                {
+                    return true;
+                }
+
+                // doesn't have the option -> depends on being on the background/foreground
+                return _state.IsInForeground;
+            }
+            catch (Exception e)
             {
-                return true;
+                System.Diagnostics.Debug.WriteLine(e);
+                throw;
             }
-
-            // doesn't have the option -> depends on being on the background/foreground
-            return _state.IsInForeground;
         }
 
         #region delay start

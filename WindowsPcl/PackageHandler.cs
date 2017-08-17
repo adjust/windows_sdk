@@ -12,8 +12,8 @@ namespace AdjustSdk.Pcl
         private const string PackageQueueLegacyName = "Package queue";
         private const string PackageQueueStorageName = "adjust_package_queue";
 
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
         private BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
         private List<ActivityPackage> _packageQueue;
@@ -40,9 +40,14 @@ namespace AdjustSdk.Pcl
         public void Teardown()
         {
             _actionQueue?.Teardown();
-            _packageQueue.Clear();
-            _packageQueue = null;
             _requestHandler.Teardown();
+            _packageQueue.Clear();
+
+            _actionQueue = null;
+            _requestHandler = null;
+            _activityHandler = null;
+            _packageQueue = null;
+            _logger = null;
             _backoffStrategy = null;
         }
 

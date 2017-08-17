@@ -34,10 +34,15 @@ namespace AdjustSdk.Pcl
         public void Teardown()
         {
             _actionQueue?.Teardown();
-            _backoffStrategy = null;
-            _packageQueue.Clear();
-            _packageQueue = null;
+            _packageQueue?.Clear();
+            _activityHandlerWeakReference.SetTarget(null);
             _requestHandler.Teardown();
+
+            _actionQueue = null;
+            _logger = null;
+            _packageQueue = null;
+            _backoffStrategy = null;
+            _requestHandler = null;
             _activityHandlerWeakReference = null;
         }
 

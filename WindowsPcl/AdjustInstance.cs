@@ -36,10 +36,10 @@ namespace AdjustSdk.Pcl
         public void Teardown(bool deleteState)
         {
             _activityHandler?.Teardown(deleteState);
+
+            _activityHandler = null;
             _sessionParametersActionsArray?.Clear();
             _sessionParametersActionsArray = null;
-            _activityHandler = null;
-            _logger = null;
             _pushToken = null;
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
@@ -8,6 +9,7 @@ namespace AdjustSdk.Pcl
     {
         private readonly ILogger _logger = AdjustFactory.Logger;
         private Queue<Action> _actionQueue = new Queue<Action>();
+        private CancellationTokenSource _processActionQueueCancelToken;
 
         private bool _isTaskWorkerProcessing = false; // protected by lock(InternalQueue)
 
@@ -15,6 +17,7 @@ namespace AdjustSdk.Pcl
 
         internal ActionQueue(string name)
         {
+            _processActionQueueCancelToken = new CancellationTokenSource();
             Name = name;
         }
 
@@ -54,8 +57,8 @@ namespace AdjustSdk.Pcl
                 while (true)
                 {
                     // possible teardown happened meanwhile
-                    if(_actionQueue == null)
-                        break;
+                    if (IsTeardownInitiated())
+                        return;
 
                     Action action;
                     lock (_actionQueue)
@@ -71,13 +74,16 @@ namespace AdjustSdk.Pcl
                     }
                     TryExecuteAction(action);
                 }
-            });
+            }, _processActionQueueCancelToken.Token);
         }
 
         private void TryExecuteAction(Action action)
         {
             try
             {
+                if (IsTeardownInitiated())
+                    return;
+
                 action();
             }
             catch (Exception ex)
@@ -86,9 +92,22 @@ namespace AdjustSdk.Pcl
             }
         }
 
+        private bool IsTeardownInitiated()
+        {
+            if (_processActionQueueCancelToken == null || _processActionQueueCancelToken.Token.IsCancellationRequested)
+            {
+                _processActionQueueCancelToken?.Dispose();
+                _processActionQueueCancelToken = null;
+                return true;
+            }
+
+            return false;
+        }
+
         public void Teardown()
         {
-            _actionQueue?.Clear();
+            _processActionQueueCancelToken?.Cancel();
+            _actionQueue?.Clear();            
             _actionQueue = null;
         }
     }

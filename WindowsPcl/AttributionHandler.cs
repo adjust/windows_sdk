@@ -6,11 +6,11 @@ namespace AdjustSdk.Pcl
 {
     public class AttributionHandler : IAttributionHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
 
         private IActivityHandler _activityHandler;
-        private readonly TimerOnce _timer;
+        private TimerOnce _timer;
         private ActivityPackage _attributionPackage;
         private bool _paused;
         private readonly string _urlQuery;
@@ -34,9 +34,14 @@ namespace AdjustSdk.Pcl
 
         public void Teardown()
         {
-            _timer.Teardown();
-            _actionQueue.Teardown();
+            _timer?.Teardown();
+            _actionQueue?.Teardown();
+
+            _actionQueue = null;
+            _activityHandler = null;
+            _logger = null;
             _attributionPackage = null;
+            _timer = null;
         }
 
         public void CheckSessionResponse(SessionResponseData responseData)
