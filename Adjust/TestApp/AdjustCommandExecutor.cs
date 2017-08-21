@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.Search;
 using AdjustSdk;
 using AdjustSdk.Pcl;
 using static TestApp.MainPage;
@@ -494,6 +497,9 @@ namespace TestApp
         {
             Log.Debug(" --- trying to teardown all ---");
 
+            ClearAllPersistedObjects();
+            ClearAllPeristedValues();
+
             var adjustInstance = Adjust.GetAdjustInstance();
             adjustInstance?.Teardown(deleteState);
 
@@ -501,6 +507,35 @@ namespace TestApp
             Adjust.Teardown();
 
             AdjustFactory.Teardown();
+        }
+
+        public static void ClearAllPersistedObjects()
+        {
+            var localSettings = ApplicationData.Current.LocalSettings;
+            Task.Run(() =>
+            {
+                Debug.WriteLine("About to delete local settings. Count: {0}", localSettings.Values.Count);
+                localSettings.Values.Clear();
+            });
+        }
+
+        public static void ClearAllPeristedValues()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+
+            if (localFolder == null)
+                return;
+
+            Task.Run(async () =>
+            {
+                int filesDeletedCount = 0;
+                foreach (var file in await localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    filesDeletedCount++;
+                }
+                Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
+            });
         }
     }
 }
