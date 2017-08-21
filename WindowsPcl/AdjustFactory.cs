@@ -39,7 +39,7 @@ namespace AdjustSdk.Pcl
             set { _logger = value; }
         }
 
-        public static void Teardown(bool deleteState)
+        public static void Teardown()
         {
             _iPackageHandler = null;
             _iRequestHandler = null;

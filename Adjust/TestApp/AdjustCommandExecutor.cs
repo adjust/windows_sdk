@@ -51,6 +51,7 @@ namespace TestApp
                     case "teardown": Teardown(); break;
                     case "openDeeplink": OpenDeeplink(); break;
                     case "sendReferrer": { Log.Debug("NO REFFERER (sendReferrer) IN WIN SDK!"); /*sendReferrer();*/ break; }
+                    case "sendTestInfo": SendTestInfo(); break;
                     case "testBegin": TestBegin(); break;
                     case "testEnd": TestEnd(); break;
                 }
@@ -59,6 +60,13 @@ namespace TestApp
             {
                 Log.Error(TAG + "{0} ---- {1}", "executeCommand: failed to parse command. Check commands' syntax", ex.ToString());
             }
+        }
+
+        private void SendTestInfo()
+        {
+            string testInfo = Command.GetFirstParameterValue("testInfo");
+            _testLibrary.AddInfoToSend("testInfo", testInfo);
+            _testLibrary.SendInfoToServer();
         }
 
         private void Factory()
@@ -155,6 +163,7 @@ namespace TestApp
             {
                 var delayStartStr = Command.GetFirstParameterValue("delayStart");
                 var delayStart = long.Parse(delayStartStr);
+                Log.Debug("delay start set to: " + delayStart);
                 adjustConfig.DelayStart = new TimeSpan(delayStart);
             }
 
@@ -491,7 +500,7 @@ namespace TestApp
             Adjust.SetAdjustInstance(null);
             Adjust.Teardown();
 
-            AdjustFactory.Teardown(deleteState);
+            AdjustFactory.Teardown();
         }
     }
 }
