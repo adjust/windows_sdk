@@ -846,7 +846,7 @@ namespace AdjustSdk.Pcl
                     return;
                 }
 
-                _logger.Warn("Key {0} will be overwritten");
+                _logger.Warn("Key {0} will be overwritten", key);
             }
 
             _sessionParameters.PartnerParameters.AddSafe(key, value);
