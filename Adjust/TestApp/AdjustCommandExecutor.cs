@@ -162,9 +162,9 @@ namespace TestApp
             if (Command.ContainsParameter("delayStart"))
             {
                 var delayStartStr = Command.GetFirstParameterValue("delayStart");
-                var delayStart = long.Parse(delayStartStr);
+                var delayStart = int.Parse(delayStartStr);
                 Log.Debug("delay start set to: " + delayStart);
-                adjustConfig.DelayStart = new TimeSpan(delayStart);
+                adjustConfig.DelayStart = new TimeSpan(0, 0, 0, delayStart);
             }
 
             if (Command.ContainsParameter("deviceKnown"))
