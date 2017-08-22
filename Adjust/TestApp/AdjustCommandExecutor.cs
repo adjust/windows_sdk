@@ -480,10 +480,10 @@ namespace TestApp
                 BasePath = Command.GetFirstParameterValue("basePath");
 
             TeardownAll(true);
-            AdjustFactory.SetTimerInterval(TimeSpan.FromMinutes(1));
-            AdjustFactory.SetTimerStart(TimeSpan.FromMinutes(1));
-            AdjustFactory.SetSessionInterval(TimeSpan.FromMinutes(1));
-            AdjustFactory.SetSubsessionInterval(TimeSpan.FromMinutes(1));
+            AdjustFactory.SetTimerInterval(null);
+            AdjustFactory.SetTimerStart(null);
+            AdjustFactory.SetSessionInterval(null);
+            AdjustFactory.SetSubsessionInterval(null);
             _savedEvents = new Dictionary<int, AdjustEvent>();
             _savedConfigs = new Dictionary<int, AdjustConfig>();
         }
