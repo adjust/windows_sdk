@@ -181,10 +181,12 @@ namespace TestLibrary
                 stopwatch.Restart();
                 
                 DebugLog("ClassName: {0}, FunctionName: {1}", testCommand.ClassName, testCommand.FunctionName);
-                DebugLog("Params:");
                 if (testCommand.Params != null && testCommand.Params.Count > 0)
+                {
+                    DebugLog("Params:");
                     foreach (var entry in testCommand.Params)
                         DebugLog("\t{0}: {1}", entry.Key, string.Join(", ", entry.Value));
+                }
 
                 DebugLog("time before {0} {1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));

@@ -162,7 +162,8 @@ namespace AdjustSdk
             if (_isApplicationActive) { return; }
 
             _isApplicationActive = true;
-            GetAdjustInstance().ApplicationActivated();
+            var adjustInstance = GetAdjustInstance();
+            adjustInstance.ApplicationActivated();
         }
 
         /// <summary>
@@ -176,7 +177,8 @@ namespace AdjustSdk
             if (!_isApplicationActive) { return; }
 
             _isApplicationActive = false;
-            GetAdjustInstance().ApplicationDeactivated();
+            var adjustInstance = GetAdjustInstance();
+            adjustInstance.ApplicationDeactivated();
         }
 
         /// <summary>

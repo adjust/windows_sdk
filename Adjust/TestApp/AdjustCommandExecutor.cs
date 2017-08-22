@@ -89,7 +89,7 @@ namespace TestApp
             if (Command.ContainsParameter("sessionInterval"))
             {
                 var sessionInterval = long.Parse(Command.GetFirstParameterValue("sessionInterval"));
-                AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(sessionInterval));
+                AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionInterval));
             }
             if (Command.ContainsParameter("subsessionInterval"))
             {

@@ -52,11 +52,11 @@ namespace TestApp
                 //testsDir + "Event_Params",
                 //testsDir + "Init_Malformed",
                 //testsDir + "SessionParams",
+                //testsDir + "SessionCount",
 
-                testsDir + "SessionCount",
+                testsDir + "SubsessionCount",
 
                 // NOT PASSING
-                //testsDir + "SubsessionCount",
                 //testsDir + "SessionEventCallbacks",
                 //testsDir + "Event_OrderId"
                 //testsDir + "Deeplink",
