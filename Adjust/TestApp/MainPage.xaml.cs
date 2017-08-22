@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
@@ -20,7 +19,7 @@ namespace TestApp
             InitializeComponent();
 
             //string baseUrl = "https://10.0.2.2:8443";
-            var baseUrl = "http://192.168.8.209:8080";
+            var baseUrl = "http://192.168.8.212:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
@@ -41,16 +40,38 @@ namespace TestApp
 
         private string GetTestNames()
         {
-            string testsDir = "current";
+            string testsDir = "current/Test_";
             var testNamesList = new List<string>
             {
-                testsDir + "/Test_Event_Count",
-                testsDir + "/Test_Event_Revenue",
-                //testsDir + "/Test_DefaultTracker",
-                //testsDir + "/Test_DelayStart",
-                //testsDir + "/Test_Deeplink",
-                //testsDir + "/Test_AppSecret",
-                //testsDir + "/Test_AttributionCallback",
+                // PASSING
+                //testsDir + "DelayStart",
+                //testsDir + "Event_Count",
+                //testsDir + "Event_Revenue",
+                //testsDir + "DefaultTracker",
+                //testsDir + "Event_EventToken_Malformed",
+                //testsDir + "Event_Params",
+                //testsDir + "Init_Malformed",
+                //testsDir + "SessionParams",
+
+                testsDir + "SessionCount",
+
+                // NOT PASSING
+                //testsDir + "SubsessionCount",
+                //testsDir + "SessionEventCallbacks",
+                //testsDir + "Event_OrderId"
+                //testsDir + "Deeplink",
+                //testsDir + "AttributionCallback",
+                //testsDir + "SdkPrefix",
+                //testsDir + "SendInBackground",
+                //testsDir + "SdkInfo",
+                //testsDir + "UserAgent",
+
+                // NOT PASSING - 4.12.0
+                //testsDir + "OfflineMode",
+                //testsDir + "ExternalDeviceId"
+                //testsDir + "Disable_Enable"
+                //testsDir + "EventBuffering"
+                //testsDir + "AppSecret",
             };
 
             return string.Join(";", testNamesList);

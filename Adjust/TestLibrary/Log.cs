@@ -20,8 +20,8 @@ namespace TestLibrary
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("[{0}][{1}]" + LOGTAG + "[{2}]: " + string.Format(message, parameters),
-                    GetTimeNow(), logLevel, location);
+                string logInfo = string.Format("[{0}][{1}]" + LOGTAG + "[{2}]: ", GetTimeNow(), logLevel, location);
+                System.Diagnostics.Debug.WriteLine(logInfo + string.Format(message, parameters));
             }
             catch (Exception e)
             {

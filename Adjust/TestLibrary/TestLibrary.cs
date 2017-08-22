@@ -178,15 +178,8 @@ namespace TestLibrary
             var stopwatch = new Stopwatch();
             foreach (var testCommand in testCommands)
             {
-                //TODO: check this with Pedro
-                //if (Thread.interrupted())
-                //{
-                //    debug("Thread interrupted");
-                //    return;
-                //}
-
                 stopwatch.Restart();
-
+                
                 DebugLog("ClassName: {0}, FunctionName: {1}", testCommand.ClassName, testCommand.FunctionName);
                 DebugLog("Params:");
                 if (testCommand.Params != null && testCommand.Params.Count > 0)

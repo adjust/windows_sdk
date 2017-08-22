@@ -79,22 +79,22 @@ namespace TestApp
             if (Command.ContainsParameter("timerInterval"))
             {
                 var timerInterval = long.Parse(Command.GetFirstParameterValue("timerInterval"));
-                AdjustFactory.SetTimerInterval(new TimeSpan(timerInterval));
+                AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(timerInterval));
             }
             if (Command.ContainsParameter("timerStart"))
             {
                 var timerStart = long.Parse(Command.GetFirstParameterValue("timerStart"));
-                AdjustFactory.SetTimerStart(new TimeSpan(timerStart));
+                AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStart));
             }
             if (Command.ContainsParameter("sessionInterval"))
             {
                 var sessionInterval = long.Parse(Command.GetFirstParameterValue("sessionInterval"));
-                AdjustFactory.SetSubsessionInterval(new TimeSpan(sessionInterval));
+                AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(sessionInterval));
             }
             if (Command.ContainsParameter("subsessionInterval"))
             {
                 var subsessionInterval = long.Parse(Command.GetFirstParameterValue("subsessionInterval"));
-                AdjustFactory.SetSubsessionInterval(new TimeSpan(subsessionInterval));
+                AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subsessionInterval));
             }
         }
 
@@ -167,7 +167,7 @@ namespace TestApp
                 var delayStartStr = Command.GetFirstParameterValue("delayStart");
                 var delayStart = int.Parse(delayStartStr);
                 Log.Debug("delay start set to: " + delayStart);
-                adjustConfig.DelayStart = new TimeSpan(0, 0, 0, delayStart);
+                adjustConfig.DelayStart = TimeSpan.FromSeconds(delayStart);
             }
 
             if (Command.ContainsParameter("deviceKnown"))
