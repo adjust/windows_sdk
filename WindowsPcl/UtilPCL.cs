@@ -352,8 +352,12 @@ namespace AdjustSdk.Pcl
             string authorizationHeader =
                 BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
+            string path = AdjustConfig.BasePath != null
+                ? AdjustConfig.BasePath + activityPackage.Path
+                : activityPackage.Path;
+
             var uriBuilder = new UriBuilder(AdjustFactory.BaseUrl);
-            uriBuilder.Path = activityPackage.Path;
+            uriBuilder.Path = path;
             uriBuilder.Query = finalQuery;
 			
             SetUserAgent();
