@@ -344,8 +344,8 @@ namespace TestApp
 
             if (Command.ContainsParameter("orderId"))
             {
-                var orderId = Command.GetFirstParameterValue("orderId");
-                adjustEvent.OrderId = orderId;
+                var purchaseId = Command.GetFirstParameterValue("orderId");
+                adjustEvent.PurchaseId = purchaseId;
             }
         }
 

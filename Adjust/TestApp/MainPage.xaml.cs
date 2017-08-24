@@ -55,10 +55,10 @@ namespace TestApp
                 //testsDir + "SessionParams",
                 //testsDir + "SessionCount",
                 //testsDir + "SubsessionCount",
-                testsDir + "SessionEventCallbacks",
+                //testsDir + "SessionEventCallbacks",
+                testsDir + "Event_OrderId"
 
                 // NOT PASSING
-                //testsDir + "Event_OrderId"
                 //testsDir + "Deeplink",
                 //testsDir + "AttributionCallback",
                 //testsDir + "SdkPrefix",
