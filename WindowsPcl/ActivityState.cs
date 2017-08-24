@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
@@ -25,7 +26,10 @@ namespace AdjustSdk.Pcl
         internal string PushToken { get; set; }
 
         internal string Adid { get; set; }
-        
+
+        internal LinkedList<string> PurchaseIds { get; private set; }
+        private static int PURCHASE_ID_MAXCOUNT = 10;
+
         public ActivityState()
         {
             SubSessionCount = -1; // -1 means unknown
@@ -34,6 +38,7 @@ namespace AdjustSdk.Pcl
             AskingAttribution = false;
             UpdatePackages = false;
             Adid = null;
+            PurchaseIds = null;
         }
 
         internal void ResetSessionAttributes(DateTime now)
@@ -43,6 +48,25 @@ namespace AdjustSdk.Pcl
             TimeSpent = new TimeSpan();
             LastActivity = now;
             LastInterval = null;
+        }
+
+        public void AddPurchaseId(string purchaseId)
+        {
+            if (PurchaseIds == null)
+                PurchaseIds = new LinkedList<string>();
+
+            if (PurchaseIds.Count >= PURCHASE_ID_MAXCOUNT)
+                PurchaseIds.RemoveLast();
+
+            PurchaseIds.AddFirst(purchaseId);
+        }
+
+        public bool FindPurchaseId(string purchaseId)
+        {
+            if (PurchaseIds == null)
+                return false;
+
+            return PurchaseIds.Contains(purchaseId);
         }
 
         public override string ToString()
@@ -60,6 +84,10 @@ namespace AdjustSdk.Pcl
 
         public static Dictionary<string, object> ToDictionary(ActivityState activityState)
         {
+            string purchaseIdsString = null;
+            if (activityState.PurchaseIds != null)
+                purchaseIdsString = JsonConvert.SerializeObject(activityState.PurchaseIds);
+
             return new Dictionary<string, object>
             {
                 {"EventCount", activityState.EventCount},
@@ -74,7 +102,8 @@ namespace AdjustSdk.Pcl
                 {"AskingAttribution", activityState.AskingAttribution},
                 {"UpdatePackages", activityState.UpdatePackages},
                 {"PushToken", activityState.PushToken},
-                {"Adid", activityState.Adid}
+                {"Adid", activityState.Adid},
+                {"PurchaseIds", purchaseIdsString }
             };
         }
         
@@ -100,6 +129,11 @@ namespace AdjustSdk.Pcl
             var lastActivity = new DateTime(lastActivityTicks);
             if (lastActivity != DateTime.MinValue)
                 activityState.LastActivity = lastActivity;
+
+            object purchaseIdsJson;
+            if (activityStateObjectMap.TryGetValue("PurchaseIds", out purchaseIdsJson))
+                activityState.PurchaseIds =
+                    JsonConvert.DeserializeObject<LinkedList<string>>(purchaseIdsJson.ToString());
 
             return activityState;
         }

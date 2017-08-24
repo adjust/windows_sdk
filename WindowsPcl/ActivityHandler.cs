@@ -592,6 +592,7 @@ namespace AdjustSdk.Pcl
         {
             if (!IsEnabledI()) { return; }
             if (!CheckEventI(adjustEvent)) { return; }
+            if (!CheckPurchaseIdI(adjustEvent.PurchaseId)) { return; }
 
             var now = DateTime.Now;
 
@@ -1185,6 +1186,23 @@ namespace AdjustSdk.Pcl
             _attributionHandler.ResumeSending();
             _packageHandler.ResumeSending();
             _sdkClickHandler.ResumeSending();
+        }
+
+        private bool CheckPurchaseIdI(string purchaseId)
+        {
+            if (string.IsNullOrEmpty(purchaseId))
+                return true;  // no purchase ID given
+
+            if (_activityState.FindPurchaseId(purchaseId))
+            {
+                _logger.Info("Skipping duplicated purchase ID '{0}'", purchaseId);
+                return false; // purchase ID found -> used already
+            }
+
+            _activityState.AddPurchaseId(purchaseId);
+            _logger.Verbose("Added purchase ID '{0}'", purchaseId);
+            // activity state will get written by caller
+            return true;
         }
 
         private bool IsPausedI()
