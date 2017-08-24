@@ -41,6 +41,7 @@ namespace TestApp
         private string GetTestNames()
         {
             string testsDir = "current/Test_";
+            string testDirWin = "current/windows/Test_";
             var testNamesList = new List<string>
             {
                 // PASSING
@@ -53,18 +54,18 @@ namespace TestApp
                 //testsDir + "Init_Malformed",
                 //testsDir + "SessionParams",
                 //testsDir + "SessionCount",
-
-                testsDir + "SubsessionCount",
+                //testsDir + "SubsessionCount",
+                testsDir + "SessionEventCallbacks",
 
                 // NOT PASSING
-                //testsDir + "SessionEventCallbacks",
                 //testsDir + "Event_OrderId"
                 //testsDir + "Deeplink",
                 //testsDir + "AttributionCallback",
                 //testsDir + "SdkPrefix",
                 //testsDir + "SendInBackground",
-                //testsDir + "SdkInfo",
                 //testsDir + "UserAgent",
+
+                //testDirWin + "SdkInfo",
 
                 // NOT PASSING - 4.12.0
                 //testsDir + "OfflineMode",

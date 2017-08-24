@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AdjustSdk.Pcl.FileSystem;
 using static AdjustSdk.Pcl.Constants;
+using Newtonsoft.Json.Linq;
 
 namespace AdjustSdk.Pcl
 {
@@ -251,8 +252,14 @@ namespace AdjustSdk.Pcl
             if (jsonDicObj == null) { return null; }
 
             // convert to a string,string dictionary
-            Dictionary<string, string> jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
-                ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
+            Dictionary<string, string> jsonDic = jsonDicObj
+                .Where(kvp => kvp.Value != null)
+                .ToDictionary(kvp => kvp.Key, kvp =>
+                {
+                    if (kvp.Value is JObject)
+                        return JsonConvert.SerializeObject(kvp.Value);
+                    return kvp.Value.ToString();
+                });
 
             return jsonDic;
         }

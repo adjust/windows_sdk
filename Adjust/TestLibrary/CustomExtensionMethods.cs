@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace TestLibrary
 {
@@ -15,6 +17,15 @@ namespace TestLibrary
                 T item;
                 blockingCollection.TryTake(out item);
             }
+        }
+
+        public static string ToJson(this Dictionary<string, string> dictionaryData)
+        {
+            var dictionaryDataString = JsonConvert.SerializeObject(dictionaryData);
+            return dictionaryDataString
+                .Replace("\\\"", "\"")
+                .Replace(":\"{", ":{")
+                .Replace("}\",", "},");
         }
     }
 }

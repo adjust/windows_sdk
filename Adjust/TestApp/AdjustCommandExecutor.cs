@@ -6,6 +6,7 @@ using Windows.Storage;
 using Windows.Storage.Search;
 using AdjustSdk;
 using AdjustSdk.Pcl;
+using TestLibrary;
 using static TestApp.MainPage;
 
 namespace TestApp
@@ -223,7 +224,7 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", sessionSuccessResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", sessionSuccessResponseData.Adid);
                     if (sessionSuccessResponseData.JsonResponse != null)
-                        _testLibrary.AddInfoToSend("jsonResponse", sessionSuccessResponseData.JsonResponse.ToString());
+                        _testLibrary.AddInfoToSend("jsonResponse", sessionSuccessResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer();
                 };
 
@@ -235,9 +236,9 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("message", sessionFailureResponseData.Message);
                     _testLibrary.AddInfoToSend("timestamp", sessionFailureResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", sessionFailureResponseData.Adid);
-                    _testLibrary.AddInfoToSend("willRetry", sessionFailureResponseData.WillRetry.ToString());
+                    _testLibrary.AddInfoToSend("willRetry", sessionFailureResponseData.WillRetry.ToString().ToLower());
                     if (sessionFailureResponseData.JsonResponse != null)
-                        _testLibrary.AddInfoToSend("jsonResponse", sessionFailureResponseData.JsonResponse.ToString());
+                        _testLibrary.AddInfoToSend("jsonResponse", sessionFailureResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer();
                 };
 
@@ -251,7 +252,7 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("adid", eventSuccessResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventSuccessResponseData.EventToken);
                     if (eventSuccessResponseData.JsonResponse != null)
-                        _testLibrary.AddInfoToSend("jsonResponse", eventSuccessResponseData.JsonResponse.ToString());
+                        _testLibrary.AddInfoToSend("jsonResponse", eventSuccessResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer();
                 };
 
@@ -264,9 +265,9 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", eventFailureResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", eventFailureResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventFailureResponseData.EventToken);
-                    _testLibrary.AddInfoToSend("willRetry", eventFailureResponseData.WillRetry.ToString());
+                    _testLibrary.AddInfoToSend("willRetry", eventFailureResponseData.WillRetry.ToString().ToLower());
                     if (eventFailureResponseData.JsonResponse != null)
-                        _testLibrary.AddInfoToSend("jsonResponse", eventFailureResponseData.JsonResponse.ToString());
+                        _testLibrary.AddInfoToSend("jsonResponse", eventFailureResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer();
                 };
         }
