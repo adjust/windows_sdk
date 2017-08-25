@@ -21,7 +21,7 @@ namespace AdjustSdk.Pcl
 
         void SetOfflineMode(bool offline);
 
-        void OpenUrl(Uri uri);
+        void OpenUrl(Uri uri, DateTime clickTime);
         
         void AddSessionCallbackParameter(string key, string value);
 
@@ -46,8 +46,7 @@ namespace AdjustSdk.Pcl
         ActivityPackage GetAttributionPackage();
 
         ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, 
-            AdjustAttribution attribution, 
-            string deeplink);
+            AdjustAttribution attribution, string deeplink, DateTime clickTime);
 
         void SendFirstPackages();
 

@@ -270,9 +270,9 @@ namespace AdjustSdk.Pcl
                 unPausingMessage: "Resuming package and attribution handler to put in online mode");
         }
 
-        public void OpenUrl(Uri uri)
+        public void OpenUrl(Uri uri, DateTime clickTime)
         {
-            _actionQueue.Enqueue(() => OpenUrlI(uri));
+            _actionQueue.Enqueue(() => OpenUrlI(uri, clickTime));
         }
 
         public void AddSessionCallbackParameter(string key, string value)
@@ -347,10 +347,9 @@ namespace AdjustSdk.Pcl
         }
 
         public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters,
-            AdjustAttribution attribution,
-            string deeplink)
+            AdjustAttribution attribution, string deeplink, DateTime clickTime)
         {
-            return GetDeeplinkClickPackageI(extraParameters, attribution, deeplink);
+            return GetDeeplinkClickPackageI(extraParameters, attribution, deeplink, clickTime);
         }
 
         public void SendFirstPackages()
@@ -757,7 +756,7 @@ namespace AdjustSdk.Pcl
         }
         #endregion post response
 
-        private void OpenUrlI(Uri uri)
+        private void OpenUrlI(Uri uri, DateTime clickTime)
         {
             if (uri == null) { return; }
 
@@ -795,7 +794,7 @@ namespace AdjustSdk.Pcl
                 ReadQueryStringI(pair, extraParameters, attribution);
             }
 
-            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution, deeplink);
+            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution, deeplink, clickTime);
 
             _sdkClickHandler.SendSdkClick(clickPackage);
         }
@@ -945,21 +944,18 @@ namespace AdjustSdk.Pcl
         }
 
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,
-            AdjustAttribution attribution,
-            string deeplink)
+            AdjustAttribution attribution, string deeplink, DateTime clickTime)
         {
-            var now = DateTime.Now;
+            //if (_activityState.LastActivity.HasValue)
+            //{
+            //    _activityState.LastInterval = clickTime - _activityState.LastActivity.Value;
+            //}
 
-            if (_activityState.LastActivity.HasValue)
-            {
-                _activityState.LastInterval = now - _activityState.LastActivity.Value;
-            }
-
-            var clickBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, now);
+            var clickBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, clickTime);
             clickBuilder.ExtraParameters = extraParameters;
             clickBuilder.Deeplink = deeplink;
             clickBuilder.Attribution = attribution;
-            clickBuilder.ClickTime = now;
+            clickBuilder.ClickTime = clickTime;
             
             return clickBuilder.BuildClickPackage("deeplink");
         }

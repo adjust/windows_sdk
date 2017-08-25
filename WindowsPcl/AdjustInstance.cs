@@ -68,7 +68,8 @@ namespace AdjustSdk.Pcl
         public void AppWillOpenUrl(Uri uri)
         {
             if (!CheckActivityHandler()) { return; }
-            _ActivityHandler.OpenUrl(uri);
+            var clickTime = DateTime.Now;
+            _ActivityHandler.OpenUrl(uri, clickTime);
         }
 
         public AdjustAttribution GetAttribution()
