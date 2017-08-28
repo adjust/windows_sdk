@@ -17,9 +17,8 @@ namespace TestApp
         public MainPage()
         {
             InitializeComponent();
-
-            //string baseUrl = "https://10.0.2.2:8443";
-            var baseUrl = "http://192.168.8.212:8080";
+            
+            var baseUrl = "http://192.168.8.215:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
