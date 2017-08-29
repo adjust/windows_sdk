@@ -935,7 +935,7 @@ namespace AdjustSdk.Pcl
 
             // build info package
             var now = DateTime.Now;
-            var infoBuilder = new PackageBuilder(_config, _deviceInfo, now);
+            var infoBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, now);
             var infoPackage = infoBuilder.BuildInfoPackage("push");
 
             // send info package
@@ -1026,7 +1026,7 @@ namespace AdjustSdk.Pcl
         private ActivityPackage GetAttributionPackageI()
         {
             var now = DateTime.Now;
-            var packageBuilder = new PackageBuilder(_config, _deviceInfo, now);
+            var packageBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, now);
             return packageBuilder.BuildAttributionPackage();
         }
         
