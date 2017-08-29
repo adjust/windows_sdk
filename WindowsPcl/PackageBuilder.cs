@@ -119,7 +119,7 @@ namespace AdjustSdk.Pcl
             InjectDeviceInfoIds(parameters);
             InjectConfig(parameters);
             InjectWindowsUuid(parameters);
-            InjectCreatedAt(parameters);
+            InjectCommonParameters(parameters);
 
             return parameters;
         }
@@ -147,14 +147,15 @@ namespace AdjustSdk.Pcl
             InjectDeviceInfo(parameters);
             InjectConfig(parameters);
             InjectActivityState(parameters);
-            InjectCreatedAt(parameters);
+            InjectCommonParameters(parameters);
 
             return parameters;
         }
 
-        private void InjectCreatedAt(Dictionary<string, string> parameters)
+        private void InjectCommonParameters(Dictionary<string, string> parameters)
         {
             AddDateTime(parameters, "created_at", _CreatedAt);
+            AddBool(parameters, "attribution_deeplink", true);
         }
 
         private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
