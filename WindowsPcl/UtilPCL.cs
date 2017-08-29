@@ -314,7 +314,7 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
         {
-            var finalQuery = Util.f("{0}&send_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
+            var finalQuery = Util.f("{0}&sent_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
 
             var uriBuilder = new UriBuilder(Util.BaseUrl);
             uriBuilder.Path = activityPackage.Path;
