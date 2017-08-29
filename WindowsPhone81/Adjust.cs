@@ -12,14 +12,14 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
+        private static IDeviceUtil _deviceUtil;
         private static AdjustInstance _adjustInstance;
         private static bool _isApplicationActive = false;
 
         private Adjust() { }
 
         [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
-        public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
+        public static void SetupLogging(Action<string> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);
         }
@@ -50,13 +50,16 @@ namespace AdjustSdk
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
             if (ApplicationLaunched) { return; }
-            GetAdjustInstance().ApplicationLaunching(adjustConfig, DeviceUtil);
+            if (_deviceUtil == null)
+                _deviceUtil = new UtilWP81();
+            GetAdjustInstance().ApplicationLaunching(adjustConfig, _deviceUtil);
             RegisterLifecycleEvents();
         }
 
         public static void Teardown()
         {
             _isApplicationActive = false;
+            _deviceUtil = null;
         }
 
         public static void RegisterLifecycleEvents()
@@ -208,7 +211,7 @@ namespace AdjustSdk
         /// </summary>
         public static string GetWindowsAdId()
         {
-            return DeviceUtil.ReadWindowsAdvertisingId();
+            return _deviceUtil.ReadWindowsAdvertisingId();
         }
 
         public static void AddSessionCallbackParameter(string key, string value)

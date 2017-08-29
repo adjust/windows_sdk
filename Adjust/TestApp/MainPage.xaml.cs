@@ -18,7 +18,7 @@ namespace TestApp
         {
             InitializeComponent();
             
-            var baseUrl = "http://192.168.8.215:8080";
+            var baseUrl = "http://192.168.8.236:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
@@ -43,7 +43,8 @@ namespace TestApp
             string testDirWin = "current/windows/Test_";
             var testNamesList = new List<string>
             {
-                // PASSING
+                // PASSING ////////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////
                 //testsDir + "DelayStart",
                 //testsDir + "Event_Count",
                 //testsDir + "Event_Revenue",
@@ -55,23 +56,30 @@ namespace TestApp
                 //testsDir + "SessionCount",
                 //testsDir + "SubsessionCount",
                 //testsDir + "SessionEventCallbacks",
-                testsDir + "Event_OrderId"
-
-                // NOT PASSING
-                //testsDir + "Deeplink",
+                //testsDir + "Event_OrderId"
                 //testsDir + "AttributionCallback",
-                //testsDir + "SdkPrefix",
+                testDirWin + "SdkPrefix",
+
+
+                // NOT PASSING ////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////
                 //testsDir + "SendInBackground",
                 //testsDir + "UserAgent",
 
-                //testDirWin + "SdkInfo",
+                // not working because of Scenario #4. the deepling gets sent in win, and not in android
+                // deep link on win gets sent because of the SdkClickHandler line #81
+                // that flag (_isPaused) on win is false, so the depp link gets sent
+                //testsDir + "Deeplink",
 
-                // NOT PASSING - 4.12.0
+
+                // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////
                 //testsDir + "OfflineMode",
                 //testsDir + "ExternalDeviceId"
                 //testsDir + "Disable_Enable"
                 //testsDir + "EventBuffering"
                 //testsDir + "AppSecret",
+                //testDirWin + "SdkInfo",
             };
 
             return string.Join(";", testNamesList);

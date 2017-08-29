@@ -12,7 +12,7 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly IDeviceUtil DeviceUtil = new UtilUAP10();
+        private static IDeviceUtil _deviceUtil;
         private static AdjustInstance _adjustInstance;
         private static bool _isApplicationActive = false;
 
@@ -48,13 +48,16 @@ namespace AdjustSdk
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
             if (ApplicationLaunched) { return; }
-            GetAdjustInstance().ApplicationLaunching(adjustConfig, DeviceUtil);
+            if(_deviceUtil == null)
+                _deviceUtil = new UtilUAP10();
+            GetAdjustInstance().ApplicationLaunching(adjustConfig, _deviceUtil);
             RegisterLifecycleEvents();
         }
 
         public static void Teardown()
         {
             _isApplicationActive = false;
+            _deviceUtil = null;
         }
 
         public static void RegisterLifecycleEvents()
@@ -234,7 +237,7 @@ namespace AdjustSdk
         /// </summary>
         public static string GetWindowsAdId()
         {
-            return DeviceUtil.ReadWindowsAdvertisingId();
+            return _deviceUtil.ReadWindowsAdvertisingId();
         }
 
         public static void AddSessionCallbackParameter(string key, string value)
