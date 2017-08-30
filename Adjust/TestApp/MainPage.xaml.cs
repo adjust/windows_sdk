@@ -18,7 +18,7 @@ namespace TestApp
         {
             InitializeComponent();
             
-            var baseUrl = "http://192.168.8.236:8080";
+            var baseUrl = "http://192.168.8.223:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
@@ -58,12 +58,12 @@ namespace TestApp
                 //testsDir + "SessionEventCallbacks",
                 //testsDir + "Event_OrderId"
                 //testsDir + "AttributionCallback",
-                testDirWin + "SdkPrefix",
+                //testDirWin + "SdkPrefix",
 
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                //testsDir + "SendInBackground",
+                testsDir + "SendInBackground",
                 //testsDir + "UserAgent",
 
                 // not working because of Scenario #4. the deepling gets sent in win, and not in android
