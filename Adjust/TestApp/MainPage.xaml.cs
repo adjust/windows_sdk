@@ -59,12 +59,12 @@ namespace TestApp
                 //testsDir + "Event_OrderId"
                 //testsDir + "AttributionCallback",
                 //testDirWin + "SdkPrefix",
+                //testDirWin + "SendInBackground",
 
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                testsDir + "SendInBackground",
-                //testsDir + "UserAgent",
+                testDirWin + "UserAgent",
 
                 // not working because of Scenario #4. the deepling gets sent in win, and not in android
                 // deep link on win gets sent because of the SdkClickHandler line #81
