@@ -82,7 +82,7 @@ namespace AdjustSdk
 
         public override string ToString()
         {
-            return Util.f("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6} adid:{7}",
+            return Util.F("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6} adid:{7}",
                 TrackerToken, 
                 TrackerName, 
                 Network, 

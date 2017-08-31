@@ -96,7 +96,7 @@ namespace AdjustSdk.Pcl
 
         private void LogMessage(string message, string logLevelString, object[] parameters)
         {
-            var formattedMessage = Util.f(message, parameters);
+            var formattedMessage = Util.F(message, parameters);
             // write to Debug by new line '\n'
             foreach (var formattedLine in formattedMessage.Split('\n'))
             {

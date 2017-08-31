@@ -38,7 +38,7 @@ namespace AdjustSdk.Pcl
             set
             {
                 if (value == null) { return; }
-                ClientSdk = Util.f("{0}@{1}", value, ClientSdk);
+                ClientSdk = Util.F("{0}@{1}", value, ClientSdk);
             }
         }
     }

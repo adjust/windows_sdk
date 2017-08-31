@@ -11,7 +11,7 @@ namespace AdjustSdk
 
         public override string ToString()
         {
-            return Pcl.Util.f("Session Success msg:{0} time:{1} adid:{2} json:{3}",
+            return Pcl.Util.F("Session Success msg:{0} time:{1} adid:{2} json:{3}",
                 Message,
                 Timestamp,
                 Adid,

@@ -46,7 +46,7 @@ namespace AdjustSdk.Pcl
 
         public override string ToString()
         {
-            return Util.f("message:{0} timestamp:{1} json:{2}", Message, Timestamp, JsonResponse);
+            return Util.F("message:{0} timestamp:{1} json:{2}", Message, Timestamp, JsonResponse);
         }
     }
 }

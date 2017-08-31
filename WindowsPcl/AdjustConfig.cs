@@ -19,6 +19,7 @@ namespace AdjustSdk
         public string DefaultTracker { get; set; }
         public bool SendInBackground { get; set; }
         public TimeSpan? DelayStart { get; set; }
+        internal string UserAgent { get; set; }
 
         public Action<AdjustAttribution> AttributionChanged { get; set; }
         public Action<AdjustEventSuccess> EventTrackingSucceeded { get; set; }

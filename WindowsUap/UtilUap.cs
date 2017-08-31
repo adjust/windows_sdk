@@ -34,7 +34,7 @@ namespace AdjustSdk.Uap
         {
             PackageId package = GetPackage();
             PackageVersion pv = package.Version;
-            return Util.f("{0}.{1}", pv.Major, pv.Minor);
+            return Util.F("{0}.{1}", pv.Major, pv.Minor);
         }
 
         public static string GetAppPublisher()

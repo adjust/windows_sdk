@@ -61,11 +61,11 @@ namespace AdjustSdk
 
             if (!parameters.TryGetValue("revenue", out sRevenue))
             {
-                return Util.f("'{0}'", eventToken);
+                return Util.F("'{0}'", eventToken);
             }
             else
             {
-                return Util.f("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
+                return Util.F("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
             }
         }
     }

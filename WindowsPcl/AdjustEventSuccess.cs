@@ -12,7 +12,7 @@ namespace AdjustSdk
 
         public override string ToString()
         {
-            return Pcl.Util.f("Event Success msg:{0} time:{1} adid:{2} event:{3} json:{4}",
+            return Pcl.Util.F("Event Success msg:{0} time:{1} adid:{2} event:{3} json:{4}",
                 Message,
                 Timestamp,
                 Adid,

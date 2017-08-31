@@ -15,9 +15,10 @@ namespace AdjustSdk.Pcl
     public static class Util
     {
         public const string BaseUrl = "https://app.adjust.com";
-        private static ILogger _Logger { get { return AdjustFactory.Logger; } }
-        private static NullFormat NullFormat = new NullFormat();
-        private static HttpClient _HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
+        private static ILogger Logger => AdjustFactory.Logger;
+        private static readonly NullFormat NullFormat = new NullFormat();
+        private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
+        internal static string UserAgent { get; set; }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -34,7 +35,7 @@ namespace AdjustSdk.Pcl
             return stringBuilder.ToString();
         }
         
-        public static string f(string message, params object[] parameters)
+        public static string F(string message, params object[] parameters)
         {
             return String.Format(NullFormat, message, parameters);
         }
@@ -85,7 +86,7 @@ namespace AdjustSdk.Pcl
                 if (file == null)
                 {
                     //throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
-                    _Logger.Verbose("{0} file not found", objectName);
+                    Logger.Verbose("{0} file not found", objectName);
                     return defaultReturn();
                 }
 
@@ -95,7 +96,7 @@ namespace AdjustSdk.Pcl
                     output = objectReader(stream);
                 }
 
-                _Logger.Debug("Read {0}: {1}", objectName, output);
+                Logger.Debug("Read {0}: {1}", objectName, output);
 
                 // successful read
                 return output;
@@ -104,11 +105,11 @@ namespace AdjustSdk.Pcl
             {
                 if (ex.IsFileNotFound())
                 {
-                    _Logger.Verbose("{0} file not found", objectName);
+                    Logger.Verbose("{0} file not found", objectName);
                 }
                 else
                 {
-                    _Logger.Error("Failed to read file {0} ({1})", objectName, ExtractExceptionMessage(ex));
+                    Logger.Error("Failed to read file {0} ({1})", objectName, ExtractExceptionMessage(ex));
                 }
             }
 
@@ -119,9 +120,9 @@ namespace AdjustSdk.Pcl
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
-                return Util.f("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.F("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
             else
-                return Util.f("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return Util.F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -147,7 +148,7 @@ namespace AdjustSdk.Pcl
             if (input == null || !input.Contains(" "))
                 return input;
 
-            return Util.f("'{0}'", input);
+            return Util.F("'{0}'", input);
         }
 
         internal static string DateFormat(DateTime value)
@@ -155,7 +156,7 @@ namespace AdjustSdk.Pcl
             var timeZone = value.ToString("zzz");
             var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = Util.F("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
 
             return sDateTime;
         }
@@ -198,7 +199,7 @@ namespace AdjustSdk.Pcl
             using (var streamReader = new StreamReader(streamResponse))
             {
                 var sResponse = streamReader.ReadToEnd();
-                return BuildJsonDict(sResponse: sResponse, IsSuccessStatusCode: false);
+                return BuildJsonDict(sResponse: sResponse, isSuccessStatusCode: false);
             }
         }
 
@@ -220,9 +221,9 @@ namespace AdjustSdk.Pcl
             return null;
         }
 
-        internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
+        internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool isSuccessStatusCode)
         {
-            _Logger.Verbose("Response: {0}", sResponse);
+            Logger.Verbose("Response: {0}", sResponse);
 
             if (sResponse == null) { return null; }
             
@@ -233,7 +234,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception e)
             {
-                _Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
+                Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
             }
 
             if (jsonDicObj == null) { return null; }
@@ -247,8 +248,8 @@ namespace AdjustSdk.Pcl
 
         internal static void ConfigureHttpClient(string clientSdk)
         {
-            _HttpClient.Timeout = new TimeSpan(0, 1, 0);
-            _HttpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
+            HttpClient.Timeout = new TimeSpan(0, 1, 0);
+            HttpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
         }
 
         internal static string ExtractExceptionMessage(Exception e)
@@ -306,21 +307,31 @@ namespace AdjustSdk.Pcl
             var sNow = Util.DateFormat(DateTime.Now);
             activityPackage.Parameters["sent_at"] = sNow;
 
+            SetUserAgent();
+
             using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
             {
-                return _HttpClient.PostAsync(url, parameters).Result;
+                return HttpClient.PostAsync(url, parameters).Result;
             }
         }
 
         public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
         {
-            var finalQuery = Util.f("{0}&sent_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
+            var finalQuery = Util.F("{0}&sent_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
 
             var uriBuilder = new UriBuilder(Util.BaseUrl);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
 
-            return _HttpClient.GetAsync(uriBuilder.Uri).Result;
+            SetUserAgent();
+
+            return HttpClient.GetAsync(uriBuilder.Uri).Result;
+        }
+
+        private static void SetUserAgent()
+        {
+            HttpClient.DefaultRequestHeaders.Remove("user-agent");
+            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent", UserAgent);
         }
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
@@ -362,12 +373,12 @@ namespace AdjustSdk.Pcl
             
             if (statusCode.HasValue && statusCode.Value == 200)
             {
-                _Logger.Info("{0}", message);
+                Logger.Info("{0}", message);
                 responseData.Success = true;
             }
             else
             {
-                _Logger.Error("{0}", message);
+                Logger.Error("{0}", message);
                 responseData.Success = false;
             }
 
@@ -391,13 +402,13 @@ namespace AdjustSdk.Pcl
         {
             if (attribute == null)
             {
-                _Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
+                Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
                 return false;
             }
 
             if (attribute.Length == 0)
             {
-                _Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
+                Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
                 return false;
             }
 
@@ -426,7 +437,7 @@ namespace AdjustSdk.Pcl
                 string oldValue = null;
                 if (mergedParameters.TryGetValue(key, out oldValue))
                 {
-                    _Logger.Warn("Key {0} with value {1} from {2} parameter was replaced by value {3}",
+                    Logger.Warn("Key {0} with value {1} from {2} parameter was replaced by value {3}",
                         key,
                         oldValue,
                         parametersName,

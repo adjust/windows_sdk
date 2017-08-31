@@ -281,7 +281,7 @@ namespace AdjustSdk.Pcl
         {
             if (value == null) { return; }
 
-            string sDouble = Util.f("{0:0.00000}", value);
+            string sDouble = Util.F("{0:0.00000}", value);
 
             AddString(parameters, key, sDouble);
         }

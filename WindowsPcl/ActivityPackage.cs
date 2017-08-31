@@ -31,12 +31,12 @@ namespace AdjustSdk.Pcl
 
         public string FailureMessage()
         {
-            return Util.f("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.F("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public override string ToString()
         {
-            return Util.f("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.F("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public string GetExtendedString()

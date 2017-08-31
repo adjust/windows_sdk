@@ -439,6 +439,8 @@ namespace AdjustSdk.Pcl
                 _delayStartTimer = new TimerOnce(_actionQueue, SendFirstPackagesI);
             }
 
+            Util.UserAgent = _config.UserAgent;
+
             Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
 
             _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));

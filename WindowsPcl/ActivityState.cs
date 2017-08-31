@@ -71,7 +71,7 @@ namespace AdjustSdk.Pcl
 
         public override string ToString()
         {
-            return Util.f("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0} adid:{6}",
+            return Util.F("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0} adid:{6}",
                 EventCount,
                 SessionCount,
                 SubSessionCount,
