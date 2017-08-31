@@ -38,7 +38,7 @@ namespace AdjustSdk
         internal static Func<string, string> String2Sha256Func { get; set; }
         internal static Func<string, string> String2Sha512Func { get; set; }
         internal static Func<string, string> String2Md5Func { get; set; }
-
+       
         ///////// ADDED FOR INTEGRATION TESTING /////////////////////
         public static string BasePath { get; set; }
         ////////////////////////////////////////////////////////////

@@ -479,15 +479,15 @@ namespace AdjustSdk.Pcl
         
         private static void SetUserAgent()
         {
-            HttpClient.DefaultRequestHeaders.Remove(USER_AGENT);
-            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
+            _httpClient.DefaultRequestHeaders.Remove(USER_AGENT);
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
         }
 
         private static void SetAuthorizationParameter(string authHeader)
         {
-            HttpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
+            _httpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
             if(!string.IsNullOrEmpty(authHeader))
-                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
+                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
         }
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)

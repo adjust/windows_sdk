@@ -56,20 +56,19 @@ namespace TestApp
                 //testsDir + "SessionCount",
                 //testsDir + "SubsessionCount",
                 //testsDir + "SessionEventCallbacks",
-                //testsDir + "Event_OrderId"
+                //testsDir + "Event_OrderId",
                 //testsDir + "AttributionCallback",
                 //testDirWin + "SdkPrefix",
                 //testDirWin + "SendInBackground",
-
+                //testDirWin + "UserAgent",
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                testDirWin + "UserAgent",
 
                 // not working because of Scenario #4. the deepling gets sent in win, and not in android
                 // deep link on win gets sent because of the SdkClickHandler line #81
                 // that flag (_isPaused) on win is false, so the depp link gets sent
-                //testsDir + "Deeplink",
+                testsDir + "Deeplink",
 
 
                 // NOT PASSING - 4.12.0 ///////////////////////////////////////////////

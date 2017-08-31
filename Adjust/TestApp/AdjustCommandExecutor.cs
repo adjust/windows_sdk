@@ -175,7 +175,7 @@ namespace TestApp
             {
                 var deviceKnownS = Command.GetFirstParameterValue("deviceKnown");
                 var deviceKnown = deviceKnownS.ToLower() == "true";
-                adjustConfig.DeviceKnown = deviceKnown;
+                adjustConfig.SetDeviceKnown(deviceKnown);
             }
 
             if (Command.ContainsParameter("eventBufferingEnabled"))
@@ -195,7 +195,7 @@ namespace TestApp
             if (Command.ContainsParameter("userAgent"))
             {
                 var userAgent = Command.GetFirstParameterValue("userAgent");
-                adjustConfig.UserAgent = userAgent;
+                adjustConfig.SetUserAgent(userAgent);
             }
 
             if (Command.ContainsParameter("attributionCallbackSendAll"))
