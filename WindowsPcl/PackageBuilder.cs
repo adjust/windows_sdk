@@ -199,6 +199,7 @@ namespace AdjustSdk.Pcl
         {
             AddString(parameters, "app_token", _config.AppToken);
             AddString(parameters, "environment", _config.Environment);
+            AddBool(parameters, "device_known", _config.DeviceKnown);
             AddBool(parameters, "needs_response_details", true);
         }
 

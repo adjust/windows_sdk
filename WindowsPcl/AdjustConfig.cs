@@ -20,6 +20,7 @@ namespace AdjustSdk
         public bool SendInBackground { get; set; }
         public TimeSpan? DelayStart { get; set; }
         internal string UserAgent { get; set; }
+        internal bool DeviceKnown { get; set; }
 
         public Action<AdjustAttribution> AttributionChanged { get; set; }
         public Action<AdjustEventSuccess> EventTrackingSucceeded { get; set; }
@@ -51,6 +52,16 @@ namespace AdjustSdk
             _logger.LogLevel = logLevel ?? LogLevel.Info;
             _logger.IsProductionEnvironment = EnvironmentProduction.Equals(environment);
             _logger.IsLocked = logDelegate != null;
+        }
+
+        public void SetUserAgent(string userAgent)
+        {
+            UserAgent = userAgent;
+        }
+
+        public void SetDeviceKnown(bool deviceKnown)
+        {
+            DeviceKnown = deviceKnown;
         }
 
         public bool IsValid()
