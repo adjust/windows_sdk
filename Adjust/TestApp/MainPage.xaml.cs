@@ -18,7 +18,8 @@ namespace TestApp
         {
             InitializeComponent();
             
-            var baseUrl = "http://192.168.8.223:8080";
+            //var baseUrl = "http://192.168.8.223:8080";
+            var baseUrl = "http://localhost:8080";
 
             //TODO: SSL setup
             //AdjustFactory.SetTestingMode(baseUrl);
@@ -61,15 +62,11 @@ namespace TestApp
                 //testDirWin + "SdkPrefix",
                 //testDirWin + "SendInBackground",
                 //testDirWin + "UserAgent",
+                testDirWin + "Deeplink",
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-
-                // not working because of Scenario #4. the deepling gets sent in win, and not in android
-                // deep link on win gets sent because of the SdkClickHandler line #81
-                // that flag (_isPaused) on win is false, so the depp link gets sent
-                testsDir + "Deeplink",
-
+                
 
                 // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////

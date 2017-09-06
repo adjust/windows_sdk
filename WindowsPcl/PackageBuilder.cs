@@ -130,7 +130,7 @@ namespace AdjustSdk.Pcl
         {
             Dictionary<string, string> parameters = GetDefaultParameters();
 
-            AddTimeSpan(parameters, "last_interval", _activityState.LastInterval);
+            AddTimeSpan(parameters, "last_interval", _activityState?.LastInterval);
             AddString(parameters, "default_tracker", _config.DefaultTracker);
 
             if (sessionParameters != null)
