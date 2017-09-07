@@ -1,3 +1,9 @@
+### Version 4.11.4 (7th September 2017)
+#### Windows SDK Changes (from 4.0.3 to 4.11.4)
+- At this point, Windows SDK is aligned with the 4.11.4 version of Android SDK
+
+---
+
 ### Version 4.0.3 (2nd February 2016)
 #### Added
 - Added access to Windows Advertising Identifier with `GetWindowsAdId` method.
