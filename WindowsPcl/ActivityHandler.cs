@@ -167,30 +167,46 @@ namespace AdjustSdk.Pcl
 
         public void SetEnabled(bool enabled)
         {
-            if (!HasChangedState(
+            _actionQueue.Enqueue(() =>
+            {
+                SetEnabledI(enabled);
+            });
+        }
+
+        private void SetEnabledI(bool enabled)
+        {
+            // compare with the saved or internal state
+            if (!HasChangedStateI(
                 previousState: IsEnabled(),
                 newState: enabled,
-                trueMessage: "Adjust already enabled",
+                trueMessage: "Adjust already enabled", 
                 falseMessage: "Adjust already disabled"))
             {
                 return;
             }
 
+            // save new enabled state in internal state
             _state.IsEnabled = enabled;
 
-            if (_activityState != null)
+            if (_activityState == null)
             {
-                WriteActivityStateS(() => _activityState.Enabled = enabled);
+                UpdateStatusI(pausingState: !enabled,
+                    pausingMessage: "Handlers will start as paused due to the SDK being disabled",
+                    remainsPausedMessage: "Handlers will still start as paused",
+                    unPausingMessage: "Handlers will start as active due to the SDK being enabled");
+                return;
             }
 
-            UpdateStatusCondition(
-                pausingState: !enabled,
-                pausingMessage: "Pausing package and attribution handler to disable the SDK",
-                remainsPausedMessage: "Package and attribution handler remain paused due to the SDK is offline",
-                unPausingMessage: "Resuming package and attribution handler to enabled the SDK");
+            _activityState.Enabled = enabled;
+            WriteActivityStateI();
+
+            UpdateStatusI(pausingState: !enabled,
+                pausingMessage: "Pausing handlers due to SDK being disabled",
+                remainsPausedMessage: "Handlers remain paused",
+                unPausingMessage: "Resuming handlers due to SDK being enabled");
         }
 
-        private void UpdateStatusCondition(bool pausingState, string pausingMessage,
+        private void UpdateStatusI(bool pausingState, string pausingMessage,
             string remainsPausedMessage, string unPausingMessage)
         {
             // it is changing from an active state to a pause state
@@ -220,7 +236,7 @@ namespace AdjustSdk.Pcl
             UpdateHandlersStatusAndSend();
         }
 
-        private bool HasChangedState(bool previousState, bool newState,
+        private bool HasChangedStateI(bool previousState, bool newState,
             string trueMessage, string falseMessage)
         {
             if (previousState != newState)
@@ -228,14 +244,7 @@ namespace AdjustSdk.Pcl
                 return true;
             }
 
-            if (previousState)
-            {
-                _logger.Debug(trueMessage);
-            }
-            else
-            {
-                _logger.Debug(falseMessage);
-            }
+            _logger.Debug(previousState ? trueMessage : falseMessage);
 
             return false;
         }
@@ -252,7 +261,16 @@ namespace AdjustSdk.Pcl
 
         public void SetOfflineMode(bool offline)
         {
-            if (!HasChangedState(
+            _actionQueue.Enqueue(() =>
+            {
+                SetOfflineModeI(offline);
+            });
+        }
+
+        private void SetOfflineModeI(bool offline)
+        {
+            // compare with the internal state
+            if (!HasChangedStateI(
                 previousState: _state.IsOffline,
                 newState: offline,
                 trueMessage: "Adjust already in offline mode",
@@ -263,11 +281,20 @@ namespace AdjustSdk.Pcl
 
             _state.IsOffline = offline;
 
-            UpdateStatusCondition(
+            if (_activityState == null)
+            {
+                UpdateStatusI(pausingState: offline,
+                    pausingMessage: "Handlers will start paused due to SDK being offline",
+                    remainsPausedMessage: "Handlers will still start as paused",
+                    unPausingMessage: "Handlers will start as active due to SDK being online");
+                return;
+            }
+
+            UpdateStatusI(
                 pausingState: offline,
-                pausingMessage: "Pausing package and attribution handler to put in offline mode",
-                remainsPausedMessage: "Package and attribution handler remain paused because the SDK is disabled",
-                unPausingMessage: "Resuming package and attribution handler to put in online mode");
+                pausingMessage: "Pausing handlers to put SDK offline mode",
+                remainsPausedMessage: "Handlers remain paused",
+                unPausingMessage: "Resuming handlers to put SDK in online mode");
         }
 
         public void OpenUrl(Uri uri, DateTime clickTime)
