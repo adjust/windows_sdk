@@ -6,35 +6,35 @@ namespace AdjustSdk.Pcl
 {
     internal class TimerOnce
     {
-        private ActionQueue _ActionQueue;
-        private Action _Action;
-        private DateTime? _FireDate;
-        private CancellationTokenSource _CancelDelayTokenSource = new CancellationTokenSource();
+        private readonly ActionQueue _actionQueue;
+        private readonly Action _action;
+        private DateTime? _fireDate;
+        private CancellationTokenSource _cancelDelayTokenSource = new CancellationTokenSource();
 
         internal TimerOnce(ActionQueue actionQueue, Action action)
         {
-            _ActionQueue = actionQueue;
-            _Action = action;
+            _actionQueue = actionQueue;
+            _action = action;
         }
 
         internal void StartIn(TimeSpan delay)
         {
             // reset current timer if active 
-            if (_FireDate.HasValue)
+            if (_fireDate.HasValue)
             {
                 Cancel();
             }
             // save the next fire date
-            _FireDate = DateTime.Now.Add(delay);
+            _fireDate = DateTime.Now.Add(delay);
             
             // start/reset timer
-            Task.Delay(delay, _CancelDelayTokenSource.Token).ContinueWith(t => {
-                _FireDate = null;
+            Task.Delay(delay, _cancelDelayTokenSource.Token).ContinueWith(t => {
+                _fireDate = null;
 
                 if (t.IsCanceled) { 
                     return; 
                 }
-                _ActionQueue.Enqueue(_Action);
+                _actionQueue.Enqueue(_action);
             });
         }
 
@@ -42,21 +42,19 @@ namespace AdjustSdk.Pcl
         {
             get
             {
-                if (_FireDate == null)
+                if (_fireDate == null)
                 {
                     return TimeSpan.Zero;
                 }
-                else
-                {
-                    return _FireDate.Value - DateTime.Now;
-                }
+
+                return _fireDate.Value - DateTime.Now;
             }
         }
 
         internal void Cancel()
         {
-            _CancelDelayTokenSource.Cancel();
-            _CancelDelayTokenSource = new CancellationTokenSource();
+            _cancelDelayTokenSource.Cancel();
+            _cancelDelayTokenSource = new CancellationTokenSource();
         }
     }
 }

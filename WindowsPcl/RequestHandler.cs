@@ -9,7 +9,7 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private ILogger _logger = AdjustFactory.Logger;
+        private readonly ILogger _logger = AdjustFactory.Logger;
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;

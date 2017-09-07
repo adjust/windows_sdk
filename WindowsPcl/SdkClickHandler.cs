@@ -5,11 +5,11 @@ namespace AdjustSdk.Pcl
 {
     public class SdkClickHandler : ISdkClickHandler
     {
-        private ILogger _logger = AdjustFactory.Logger;
-        private ActionQueue _actionQueue = new ActionQueue("adjust.SdkClickHandler");
-        private BackoffStrategy _backoffStrategy = AdjustFactory.GetSdkClickHandlerBackoffStrategy();
-        private Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
-        private IRequestHandler _requestHandler;
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.SdkClickHandler");
+        private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetSdkClickHandlerBackoffStrategy();
+        private readonly Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
+        private readonly IRequestHandler _requestHandler;
         private WeakReference<IActivityHandler> _activityHandlerWeakReference;
 
         private bool _isPaused;
@@ -55,7 +55,7 @@ namespace AdjustSdk.Pcl
 
         private void SendNextSdkClick()
         {
-            _actionQueue.Enqueue(() => SendNextSdkClickI());
+            _actionQueue.Enqueue(SendNextSdkClickI);
         }
 
         private void SendNextSdkClickI()

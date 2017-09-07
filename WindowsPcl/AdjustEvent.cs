@@ -5,7 +5,7 @@ namespace AdjustSdk
 {
     public class AdjustEvent
     {
-        private ILogger _Logger = AdjustFactory.Logger;
+        private readonly ILogger _logger = AdjustFactory.Logger;
 
         internal string EventToken { get; private set; }
         internal double? Revenue { get; private set; }
@@ -42,7 +42,7 @@ namespace AdjustSdk
             string previousValue;
             if (CallbackParameters.TryGetValue(key, out previousValue))
             {
-                _Logger.Warn("key {0} was overwritten", key);
+                _logger.Warn("key {0} was overwritten", key);
             }
             CallbackParameters.AddSafe(key, value);
         }
@@ -60,7 +60,7 @@ namespace AdjustSdk
             string previousValue;
             if (PartnerParameters.TryGetValue(key, out previousValue))
             {
-                _Logger.Warn("key {0} was overwritten", key);
+                _logger.Warn("key {0} was overwritten", key);
             }
 
             PartnerParameters.AddSafe(key, value);
@@ -75,13 +75,13 @@ namespace AdjustSdk
         {
             if (string.IsNullOrEmpty(eventToken))
             {
-                _Logger.Error("Missing Event Token");
+                _logger.Error("Missing Event Token");
                 return false;
             }
 
             if (eventToken.Length != 6)
             {
-                _Logger.Error("Malformed Event Token '{0}'", eventToken);
+                _logger.Error("Malformed Event Token '{0}'", eventToken);
                 return false;
             }
 
@@ -94,25 +94,25 @@ namespace AdjustSdk
             {
                 if (revenue < 0.0)
                 {
-                    _Logger.Error("Invalid amount {0:0.0000}", revenue);
+                    _logger.Error("Invalid amount {0:0.0000}", revenue);
                     return false;
                 }
 
                 if (currency == null)
                 {
-                    _Logger.Error("Currency must be set with revenue");
+                    _logger.Error("Currency must be set with revenue");
                     return false;
                 }
 
                 if (string.Empty.Equals(currency))
                 {
-                    _Logger.Error("Currency is empty");
+                    _logger.Error("Currency is empty");
                     return false;
                 }
             }
             else if (currency != null)
             {
-                _Logger.Error("Revenue must be set with currency");
+                _logger.Error("Revenue must be set with currency");
                 return false;
             }
 

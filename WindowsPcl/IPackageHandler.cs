@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace AdjustSdk.Pcl
+﻿namespace AdjustSdk.Pcl
 {
     public interface IPackageHandler
     {

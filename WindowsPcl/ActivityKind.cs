@@ -19,16 +19,15 @@ namespace AdjustSdk
         {
             if ("session".Equals(activityKindString))
                 return ActivityKind.Session;
-            else if ("event".Equals(activityKindString))
+            if ("event".Equals(activityKindString))
                 return ActivityKind.Event;
-            else if ("click".Equals(activityKindString))
+            if ("click".Equals(activityKindString))
                 return ActivityKind.Click;
-            else if ("attribution".Equals(activityKindString))
+            if ("attribution".Equals(activityKindString))
                 return ActivityKind.Attribution;
-            else if ("info".Equals(activityKindString))
+            if ("info".Equals(activityKindString))
                 return ActivityKind.Info;
-            else
-                return ActivityKind.Unknown;
+            return ActivityKind.Unknown;
         }
 
         public static string ToString(ActivityKind activityKind)
@@ -63,10 +62,8 @@ namespace AdjustSdk
             {
                 return Util.F("'{0}'", eventToken);
             }
-            else
-            {
-                return Util.F("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
-            }
+
+            return Util.F("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
         }
     }
 }

@@ -157,7 +157,7 @@ namespace AdjustSdk.Pcl
             for (int i = 0; i < activityPackageLength; i++)
             {
                 activityPackageList.Add(
-                    ActivityPackage.DeserializeFromStreamLegacy(stream)
+                    DeserializeFromStreamLegacy(stream)
                 );
             }
 

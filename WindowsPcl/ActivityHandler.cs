@@ -44,13 +44,13 @@ namespace AdjustSdk.Pcl
             public bool IsDisabled => !IsEnabled;
             public bool IsOffline { get; internal set; }
             public bool IsOnline => !IsOffline;
-            public bool IsBackground { get; internal set; }
-            public bool IsForeground => !IsBackground;
-            public bool IsDelayStart { get; internal set; }
-            public bool IsToStartNow => !IsDelayStart;
-            public bool IsToUpdatePackages { get; internal set; }
+            public bool IsInBackground { get; internal set; }
+            public bool IsInForeground => !IsInBackground;
+            public bool IsInDelayStart { get; internal set; }
+            public bool IsNotInDelayedStart => !IsInDelayStart;
+            public bool ItHasToUpdatePackages { get; internal set; }
             public bool IsFirstLaunch { get; internal set; }
-            public bool IsSessionResponseProcessed { get; internal set; }
+            public bool HasSessionResponseNotBeenProcessed { get; internal set; }
         }
 
         private ActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
@@ -62,13 +62,13 @@ namespace AdjustSdk.Pcl
             // online by default
             _state.IsOffline = false;
             // in the background by default
-            _state.IsBackground = true;
+            _state.IsInBackground = true;
             // delay start not configured by default
-            _state.IsDelayStart = false;
+            _state.IsInDelayStart = false;
             // does not need to update packages by default
-            _state.IsToUpdatePackages = false;
+            _state.ItHasToUpdatePackages = false;
             // does not have the session response by default
-            _state.IsSessionResponseProcessed = false;
+            _state.HasSessionResponseNotBeenProcessed = false;
 
             _logger.IsLocked = true;
 
@@ -103,7 +103,7 @@ namespace AdjustSdk.Pcl
 
         public void ApplicationActivated()
         {
-            _state.IsBackground = false;
+            _state.IsInBackground = false;
 
             _actionQueue.Enqueue(() =>
             {
@@ -121,7 +121,7 @@ namespace AdjustSdk.Pcl
 
         public void ApplicationDeactivated()
         {
-            _state.IsBackground = true;
+            _state.IsInBackground = true;
 
             _actionQueue.Enqueue(() =>
             {
@@ -413,7 +413,7 @@ namespace AdjustSdk.Pcl
             if (_activityState != null)
             {
                 _state.IsEnabled = _activityState.Enabled;
-                _state.IsToUpdatePackages = _activityState.UpdatePackages;
+                _state.ItHasToUpdatePackages = _activityState.UpdatePackages;
                 _state.IsFirstLaunch = false;
             }
             else
@@ -462,7 +462,7 @@ namespace AdjustSdk.Pcl
                     _config.DelayStart > TimeSpan.Zero)
             {
                 _logger.Info("Delay start configured");
-                _state.IsDelayStart = true;
+                _state.IsInDelayStart = true;
                 _delayStartTimer = new TimerOnce(_actionQueue, SendFirstPackagesI);
             }
 
@@ -574,7 +574,7 @@ namespace AdjustSdk.Pcl
         {
             // build Session Package
             var sessionBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, DateTime.Now);
-            var sessionPackage = sessionBuilder.BuildSessionPackage(_state.IsDelayStart);
+            var sessionPackage = sessionBuilder.BuildSessionPackage(_state.IsInDelayStart);
 
             // send Session Package
             _packageHandler.AddPackage(sessionPackage);
@@ -590,7 +590,7 @@ namespace AdjustSdk.Pcl
             if (_state.IsFirstLaunch)
             {
                 // and it hasn't received the session response
-                if (!_state.IsSessionResponseProcessed)
+                if (!_state.HasSessionResponseNotBeenProcessed)
                 {
                     return;
                 }
@@ -628,7 +628,7 @@ namespace AdjustSdk.Pcl
             UpdateActivityStateI(now);
 
             var packageBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, now);
-            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent, _state.IsDelayStart);
+            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent, _state.IsInDelayStart);
             _packageHandler.AddPackage(eventPackage);
 
             if (_config.EventBufferingEnabled)
@@ -641,7 +641,7 @@ namespace AdjustSdk.Pcl
             }
 
             // if it is in the background and it can send, start the background timer
-            if (_config.SendInBackground && _state.IsBackground)
+            if (_config.SendInBackground && _state.IsInBackground)
             {
                 StartBackgroundTimerI();
             }
@@ -687,7 +687,7 @@ namespace AdjustSdk.Pcl
             LaunchSessionAction(sessionResponseData, task);
 
             // mark session response has been proccessed
-            _state.IsSessionResponseProcessed = true;
+            _state.HasSessionResponseNotBeenProcessed = true;
         }
 
         private void LaunchSdkClickResponseTasksI(SdkClickResponseData sdkClickResponseData)
@@ -1246,7 +1246,7 @@ namespace AdjustSdk.Pcl
             // other handlers are paused if either:
             return _state.IsOffline ||  // it's offline
                     !IsEnabledI() ||    // is disabled
-                    _state.IsDelayStart;    // is in delayed start
+                    _state.IsInDelayStart;    // is in delayed start
         }
 
         private bool IsToSendI()
@@ -1269,14 +1269,14 @@ namespace AdjustSdk.Pcl
             }
 
             // doesn't have the option -> depends on being on the background/foreground
-            return _state.IsForeground;
+            return _state.IsInForeground;
         }
 
         #region delay start
         private void DelayStartI()
         {
             // it's not configured to start delayed or already finished
-            if (_state.IsToStartNow)
+            if (_state.IsNotInDelayedStart)
             {
                 return;
             }
@@ -1303,7 +1303,7 @@ namespace AdjustSdk.Pcl
 
             _delayStartTimer.StartIn(delayStart);
 
-            _state.IsToUpdatePackages = true;
+            _state.ItHasToUpdatePackages = true;
 
             if (_activityState != null)
             {
@@ -1314,7 +1314,7 @@ namespace AdjustSdk.Pcl
 
         private void SendFirstPackagesI()
         {
-            if (_state.IsToStartNow)
+            if (_state.IsNotInDelayedStart)
             {
                 _logger.Info("Start delay expired or never configured");
                 return;
@@ -1323,7 +1323,7 @@ namespace AdjustSdk.Pcl
             // update packages in queue
             UpdatePackagesI();
             // no longer is in delay start
-            _state.IsDelayStart = false;
+            _state.IsInDelayStart = false;
             // cancel possible still running timer if it was called by user
             _delayStartTimer.Cancel();
             // and release timer
@@ -1337,7 +1337,7 @@ namespace AdjustSdk.Pcl
             // update activity packages
             _packageHandler.UpdatePackages(_sessionParameters);
             // no longer needs to update packages
-            _state.IsToUpdatePackages = false;
+            _state.ItHasToUpdatePackages = false;
             if (_activityState != null)
             {
                 _activityState.UpdatePackages = false;
@@ -1347,7 +1347,7 @@ namespace AdjustSdk.Pcl
 
         private bool IsToUpdatePackagesI()
         {
-            return _activityState?.UpdatePackages ?? _state.IsToUpdatePackages;
+            return _activityState?.UpdatePackages ?? _state.ItHasToUpdatePackages;
         }
 
         #endregion delay start
