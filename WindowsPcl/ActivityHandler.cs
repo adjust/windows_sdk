@@ -1192,6 +1192,13 @@ namespace AdjustSdk.Pcl
 
             ResumeSendingI();
 
+            // try to send if it's the first launch and it hasn't received the session response
+            //  even if event buffering is enabled
+            if (_state.IsFirstLaunch && _state.HasSessionResponseNotBeenProcessed)
+            {
+                _packageHandler.SendFirstPackage();
+            }
+
             // try to send
             if (!_config.EventBufferingEnabled)
             {
