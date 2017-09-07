@@ -46,36 +46,39 @@ namespace TestApp
             {
                 // PASSING ////////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                //testsDir + "DelayStart",
-                //testsDir + "Event_Count",
-                //testsDir + "Event_Revenue",
-                //testsDir + "DefaultTracker",
-                //testsDir + "Event_EventToken_Malformed",
-                //testsDir + "Event_Params",
-                //testsDir + "Init_Malformed",
-                //testsDir + "SessionParams",
-                //testsDir + "SessionCount",
-                //testsDir + "SubsessionCount",
-                //testsDir + "SessionEventCallbacks",
-                //testsDir + "Event_OrderId",
-                //testsDir + "AttributionCallback",
-                //testDirWin + "SdkPrefix",
-                //testDirWin + "SendInBackground",
-                //testDirWin + "UserAgent",
+                testsDir + "Event_Count",
+                testsDir + "Event_Revenue",
+                testsDir + "DefaultTracker",
+                testsDir + "Event_EventToken_Malformed",
+                testsDir + "Event_Params",
+                testsDir + "SessionParams",
+                testsDir + "SessionCount",
+                testsDir + "SubsessionCount",
+                testsDir + "SessionEventCallbacks",
+                testsDir + "Event_OrderId",
+                testsDir + "AttributionCallback",
+                testsDir + "Init_Malformed",
+                testDirWin + "SdkPrefix",
+                testDirWin + "UserAgent",
                 testDirWin + "Deeplink",
+                testDirWin + "DelayStart",
+                testDirWin + "SendInBackground",
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                
+
 
                 // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
                 //testsDir + "OfflineMode",
-                //testsDir + "ExternalDeviceId"
                 //testsDir + "Disable_Enable"
                 //testsDir + "EventBuffering"
                 //testsDir + "AppSecret",
                 //testDirWin + "SdkInfo",
+
+                // EXPELED     ////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////
+                //testsDir + "ExternalDeviceId"
             };
 
             return string.Join(";", testNamesList);
