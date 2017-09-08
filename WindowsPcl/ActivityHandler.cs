@@ -59,8 +59,9 @@ namespace AdjustSdk.Pcl
 
             // enabled by default
             _state.IsEnabled = true;
-            // online by default
-            _state.IsOffline = false;
+
+            _state.IsOffline = adjustConfig.StartOffline;
+
             // in the background by default
             _state.IsInBackground = true;
             // delay start not configured by default
@@ -408,6 +409,11 @@ namespace AdjustSdk.Pcl
             ReadAttributionI();
             ReadActivityStateI();
             ReadSessionParametersI();
+
+            if (_config.StartEnabled.HasValue)
+            {
+                SetEnabledI(_config.StartEnabled.Value);
+            }
 
             // first launch if activity state is null
             if (_activityState != null)

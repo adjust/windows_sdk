@@ -11,8 +11,8 @@ namespace AdjustSdk
 
         private readonly ILogger _logger = AdjustFactory.Logger;
 
-        internal string AppToken { get; private set; }
-        internal string Environment { get; private set; }
+        internal string AppToken { get; }
+        internal string Environment { get; }
 
         public string SdkPrefix { get; set; }
         public bool EventBufferingEnabled { get; set; }
@@ -21,6 +21,8 @@ namespace AdjustSdk
         public TimeSpan? DelayStart { get; set; }
         internal string UserAgent { get; set; }
         internal bool DeviceKnown { get; set; }
+        internal bool? StartEnabled { get; set; }
+        internal bool StartOffline { get; set; }
 
         public Action<AdjustAttribution> AttributionChanged { get; set; }
         public Action<AdjustEventSuccess> EventTrackingSucceeded { get; set; }
@@ -110,7 +112,8 @@ namespace AdjustSdk
 
                 return true;
             }
-            else if (environment.Equals(EnvironmentProduction))
+
+            if (environment.Equals(EnvironmentProduction))
             {
                 _logger.WarnInProduction("PRODUCTION: Adjust is running in Production mode. " +
                            "Use this setting only for the build that you want to publish. " +

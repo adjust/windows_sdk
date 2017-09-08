@@ -9,6 +9,8 @@ namespace AdjustSdk.Pcl
         private readonly ILogger _logger = AdjustFactory.Logger;
         private List<Action<ActivityHandler>> _sessionParametersActionsArray;
         private string _pushToken;
+        private bool? _startEnabled = null;
+        private bool _startOffline = false;
 
         public bool ApplicationLaunched => _activityHandler != null;
 
@@ -20,6 +22,8 @@ namespace AdjustSdk.Pcl
         {
             adjustConfig.PushToken = _pushToken;
             adjustConfig.SessionParametersActions = _sessionParametersActionsArray;
+            adjustConfig.StartEnabled = _startEnabled;
+            adjustConfig.StartOffline = _startOffline;
             _activityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
         }
 
@@ -43,8 +47,14 @@ namespace AdjustSdk.Pcl
 
         public void SetEnabled(bool enabled)
         {
-            if (!CheckActivityHandler()) { return; }
-            _activityHandler.SetEnabled(enabled);
+            if (!CheckActivityHandler())
+            {
+                _startEnabled = enabled;
+            }
+            else
+            {
+                _activityHandler.SetEnabled(enabled);
+            }
         }
 
         public bool IsEnabled()
@@ -55,8 +65,14 @@ namespace AdjustSdk.Pcl
 
         public void SetOfflineMode(bool offlineMode)
         {
-            if (!CheckActivityHandler()) { return; }
-            _activityHandler.SetOfflineMode(offlineMode);
+            if (!CheckActivityHandler())
+            {
+                _startOffline = offlineMode;
+            }
+            else
+            {
+                _activityHandler.SetOfflineMode(offlineMode);
+            }
         }
 
         public void AppWillOpenUrl(Uri uri)
