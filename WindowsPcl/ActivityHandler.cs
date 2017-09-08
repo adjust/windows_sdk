@@ -793,6 +793,7 @@ namespace AdjustSdk.Pcl
 
         private void OpenUrlI(Uri uri, DateTime clickTime)
         {
+            if (!IsEnabledI()) { return; }
             if (uri == null) { return; }
 
             var deeplink = Uri.UnescapeDataString(uri.ToString());
@@ -958,11 +959,11 @@ namespace AdjustSdk.Pcl
 
         private void SetPushTokenI(string pushToken)
         {
-            if (pushToken == null) { return; }
+            if (!CheckActivityStateI(_activityState)) { return; }
+            if (!IsEnabledI()) { return; }
 
-            if (pushToken == _activityState.PushToken) {
-                return;
-            }
+            if (pushToken == null) { return; }
+            if (pushToken == _activityState.PushToken) { return; }
 
             // save new push token
             _activityState.PushToken = pushToken;
@@ -1240,6 +1241,16 @@ namespace AdjustSdk.Pcl
             _activityState.AddPurchaseId(purchaseId);
             _logger.Verbose("Added purchase ID '{0}'", purchaseId);
             // activity state will get written by caller
+            return true;
+        }
+
+        private bool CheckActivityStateI(ActivityState activityState)
+        {
+            if (activityState == null)
+            {
+                _logger.Error("Missing activity state");
+                return false;
+            }
             return true;
         }
 
