@@ -529,7 +529,10 @@ namespace AdjustSdk.Pcl
                 _activityState.SessionCount = 1; // first session
                 _activityState.PushToken = _config.PushToken;
 
-                TransferSessionPackageI();
+                if (_state.IsEnabled)
+                {
+                    TransferSessionPackageI();
+                }
 
                 _activityState.ResetSessionAttributes(now);
                 _activityState.Enabled = _state.IsEnabled;
