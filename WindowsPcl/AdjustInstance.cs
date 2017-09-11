@@ -7,7 +7,7 @@ namespace AdjustSdk.Pcl
     {
         private IActivityHandler _activityHandler;
         private readonly ILogger _logger = AdjustFactory.Logger;
-        private List<Action<ActivityHandler>> _sessionParametersActionsArray;
+        private List<Action<ActivityHandler>> _preLaunchActions;
         private string _pushToken;
         private bool? _startEnabled = null;
         private bool _startOffline = false;
@@ -21,7 +21,7 @@ namespace AdjustSdk.Pcl
         public void ApplicationLaunching(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             adjustConfig.PushToken = _pushToken;
-            adjustConfig.SessionParametersActions = _sessionParametersActionsArray;
+            adjustConfig.PreLaunchActions = _preLaunchActions;
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
             _activityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
@@ -107,12 +107,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.AddSessionCallbackParameterI(key, value);
             });
@@ -126,12 +126,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.AddSessionPartnerParameterI(key, value);
             });
@@ -145,12 +145,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.RemoveSessionCallbackParameterI(key);
             });
@@ -164,12 +164,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.RemoveSessionPartnerParameterI(key);
             });
@@ -183,12 +183,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.ResetSessionCallbackParametersI();
             });
@@ -202,12 +202,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (_sessionParametersActionsArray == null)
+            if (_preLaunchActions == null)
             {
-                _sessionParametersActionsArray = new List<Action<ActivityHandler>>();
+                _preLaunchActions = new List<Action<ActivityHandler>>();
             }
 
-            _sessionParametersActionsArray.Add((activityHandler) =>
+            _preLaunchActions.Add((activityHandler) =>
             {
                 activityHandler.ResetSessionPartnerParametersI();
             });

@@ -412,7 +412,15 @@ namespace AdjustSdk.Pcl
 
             if (_config.StartEnabled.HasValue)
             {
-                SetEnabledI(_config.StartEnabled.Value);
+                if (_config.PreLaunchActions == null)
+                {
+                    _config.PreLaunchActions = new List<Action<ActivityHandler>>();
+                }
+
+                _config.PreLaunchActions.Add(activityHandler =>
+                {
+                    activityHandler.SetEnabledI(_config.StartEnabled.Value);
+                });
             }
 
             // first launch if activity state is null
@@ -486,16 +494,16 @@ namespace AdjustSdk.Pcl
 
             _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
 
-            SessionParametersActionsI(_config.SessionParametersActions);
+            PreLaunchActionsI(_config.PreLaunchActions);
 
             //StartI();
         }
 
-        private void SessionParametersActionsI(List<Action<ActivityHandler>> sessionParametersActions)
+        private void PreLaunchActionsI(List<Action<ActivityHandler>> preLaunchActions)
         {
-            if (sessionParametersActions == null) { return; }
+            if (preLaunchActions == null) { return; }
 
-            foreach (var action in sessionParametersActions)
+            foreach (var action in preLaunchActions)
             {
                 action(this);
             }

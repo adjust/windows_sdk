@@ -30,7 +30,7 @@ namespace AdjustSdk
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
-        internal List<Action<ActivityHandler>> SessionParametersActions;
+        internal List<Action<ActivityHandler>> PreLaunchActions { get; set; }
         internal string PushToken;
 
         public AdjustConfig(string appToken, string environment, Action<string> logDelegate = null, LogLevel? logLevel = null)
