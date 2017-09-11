@@ -166,7 +166,7 @@ namespace AdjustSdk
 
         private string GetClientSdk()
         {
-            return "wstore4.0.3";
+            return "wstore4.12.0";
         }
 
         private string GetOsName()
