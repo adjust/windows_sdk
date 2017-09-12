@@ -3,6 +3,7 @@ using AdjustSdk.Uap;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Windows.Networking.Connectivity;
 using Windows.Security.Cryptography;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
@@ -62,6 +63,8 @@ namespace AdjustSdk
                 EasSystemManufacturer = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemManufacturer),
                 EasSystemProductName = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemProductName),
                 EasSystemSku = UtilUap.ExceptionWrap(() => easClientDeviceInformation.SystemSku),
+                GetConnectivityType = GetConnectivityType,
+                GetNetworkType = GetNetworkType
             };
 
             return _deviceInfo;
@@ -164,6 +167,32 @@ namespace AdjustSdk
                 //throw new FileNotFoundException(ex.Message, ex);
                 return null;
             }
+        }
+
+        private string GetConnectivityType()
+        {
+            var internetConnProfile = NetworkInformation.GetInternetConnectionProfile();
+            if (internetConnProfile == null)
+                return null;
+
+            bool hasNoInternetConnection = internetConnProfile.GetNetworkConnectivityLevel() ==
+                                           NetworkConnectivityLevel.None;
+            if (hasNoInternetConnection)
+                return null;
+
+            if (internetConnProfile.IsWlanConnectionProfile)
+                return "wlan";
+
+            if (internetConnProfile.IsWwanConnectionProfile)
+                return "wwan";
+
+            return null;
+        }
+
+        private string GetNetworkType()
+        {
+            //TODO: investigate whether it's possible to get Network Type information on Windows
+            return "unknown";
         }
 
         private string GetClientSdk()
