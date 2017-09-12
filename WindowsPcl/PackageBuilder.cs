@@ -193,9 +193,12 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "eas_system_manufacturer", _deviceInfo.EasSystemManufacturer);
             AddString(parameters, "eas_product_name", _deviceInfo.EasSystemProductName);
             AddString(parameters, "eas_system_sku", _deviceInfo.EasSystemSku);
-            
-            AddString(parameters, "connectivity_type", _deviceInfo.GetConnectivityType());
-            AddString(parameters, "network_type", _deviceInfo.GetNetworkType());
+
+            string connectivityType = _deviceInfo.GetConnectivityType()?.ToString();
+            string networkType = _deviceInfo.GetNetworkType()?.ToString();
+
+            AddString(parameters, "connectivity_type", connectivityType);
+            AddString(parameters, "network_type", networkType);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)

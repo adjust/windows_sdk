@@ -169,30 +169,44 @@ namespace AdjustSdk
             }
         }
 
-        private string GetConnectivityType()
+        //     No connectivity => None = 0
+        //     Local network access only => LocalAccess = 1
+        //     Limited internet access => ConstrainedInternetAccess = 2
+        //     Local and Internet access => InternetAccess = 3
+        private int? GetConnectivityType()
         {
             var internetConnProfile = NetworkInformation.GetInternetConnectionProfile();
             if (internetConnProfile == null)
                 return null;
 
-            bool hasNoInternetConnection = internetConnProfile.GetNetworkConnectivityLevel() ==
-                                           NetworkConnectivityLevel.None;
-            if (hasNoInternetConnection)
-                return null;
-
-            if (internetConnProfile.IsWlanConnectionProfile)
-                return "wlan";
-
-            if (internetConnProfile.IsWwanConnectionProfile)
-                return "wwan";
-
-            return null;
+            return (int)internetConnProfile.GetNetworkConnectivityLevel();
         }
 
-        private string GetNetworkType()
+        //None = 0,
+        //Gprs = 1,
+        //Edge = 2,
+        //Umts = 4,
+        //Hsdpa = 8,
+        //Hsupa = 16,
+        //LteAdvanced = 32,
+        //Cdma1xRtt = 65536,
+        //Cdma1xEvdo = 131072,
+        //Cdma1xEvdoRevA = 262144,
+        //Cdma1xEvdv = 524288,
+        //Cdma3xRtt = 1048576,
+        //Cdma1xEvdoRevB = 2097152,
+        //CdmaUmb = 4194304,
+        //Custom = 2147483648
+        private int? GetNetworkType()
         {
-            //TODO: investigate whether it's possible to get Network Type information on Windows
-            return "unknown";
+            var internetConnProfile = NetworkInformation.GetInternetConnectionProfile();
+            if (internetConnProfile == null)
+                return null;
+
+            if (!internetConnProfile.IsWwanConnectionProfile)
+                return null;
+
+            return (int)internetConnProfile.WwanConnectionProfileDetails.GetCurrentDataClass();
         }
 
         private string GetClientSdk()

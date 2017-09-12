@@ -33,8 +33,8 @@ namespace AdjustSdk.Pcl
         
         public Func<string> ReadWindowsAdvertisingId { get; set; }
 
-        public Func<string> GetConnectivityType { get; set; }
-        public Func<string> GetNetworkType { get; set; }
+        public Func<int?> GetConnectivityType { get; set; }
+        public Func<int?> GetNetworkType { get; set; }
 
         public string SdkPrefix
         {
