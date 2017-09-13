@@ -8,7 +8,7 @@ namespace AdjustSdk.Pcl
 
         bool IsProductionEnvironment { get; set; }
 
-        Action<String> LogDelegate { set; }
+        Action<string> LogDelegate { set; }
 
         bool IsLocked { get; set; }
 

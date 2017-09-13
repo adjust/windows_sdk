@@ -37,7 +37,7 @@ namespace AdjustSdk.Pcl
         
         public static string F(string message, params object[] parameters)
         {
-            return String.Format(NullFormat, message, parameters);
+            return string.Format(NullFormat, message, parameters);
         }
 
         internal static bool IsFileNotFound(this Exception ex)
@@ -120,9 +120,9 @@ namespace AdjustSdk.Pcl
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
-                return Util.F("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return F("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
             else
-                return Util.F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+                return F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -148,7 +148,7 @@ namespace AdjustSdk.Pcl
             if (input == null || !input.Contains(" "))
                 return input;
 
-            return Util.F("'{0}'", input);
+            return F("'{0}'", input);
         }
 
         internal static string DateFormat(DateTime value)
@@ -156,7 +156,7 @@ namespace AdjustSdk.Pcl
             var timeZone = value.ToString("zzz");
             var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = Util.F("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = F("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
 
             return sDateTime;
         }
@@ -234,7 +234,7 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
+                Logger.Error("Failed to parse json response ({0})", ExtractExceptionMessage(e));
             }
 
             if (jsonDicObj == null) { return null; }
@@ -297,14 +297,14 @@ namespace AdjustSdk.Pcl
 
         public static string SecondDisplayFormat(TimeSpan timeSpan)
         {
-            return String.Format("{0:0.0}", timeSpan.TotalSeconds);
+            return string.Format("{0:0.0}", timeSpan.TotalSeconds);
         }
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage)
         {
-            var url = Util.BaseUrl + activityPackage.Path;
+            var url = BaseUrl + activityPackage.Path;
 
-            var sNow = Util.DateFormat(DateTime.Now);
+            var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters["sent_at"] = sNow;
 
             SetUserAgent();
@@ -317,9 +317,9 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
         {
-            var finalQuery = Util.F("{0}&sent_at={1}", queryParameters, Util.DateFormat(DateTime.Now));
+            var finalQuery = F("{0}&sent_at={1}", queryParameters, DateFormat(DateTime.Now));
 
-            var uriBuilder = new UriBuilder(Util.BaseUrl);
+            var uriBuilder = new UriBuilder(BaseUrl);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
 
@@ -336,14 +336,14 @@ namespace AdjustSdk.Pcl
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
         {
-            var jsonDic = Util.ParseJsonResponse(httpWebResponse);
-            return Util.ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode, activityPackage);
+            var jsonDic = ParseJsonResponse(httpWebResponse);
+            return ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode, activityPackage);
         }
 
         public static ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
         {
-            var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
-            return Util.ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode, activityPackage);
+            var jsonDic = ParseJsonResponse(httpResponseMessage);
+            return ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode, activityPackage);
         }
 
         private static ResponseData ProcessResponse(Dictionary<string, string> jsonResponse, 
@@ -361,9 +361,9 @@ namespace AdjustSdk.Pcl
                 return responseData;
             }
 
-            responseData.Message = Util.GetDictionaryString(jsonResponse, "message");
-            responseData.Timestamp = Util.GetDictionaryString(jsonResponse, "timestamp");
-            responseData.Adid = Util.GetDictionaryString(jsonResponse, "adid");
+            responseData.Message = GetDictionaryString(jsonResponse, "message");
+            responseData.Timestamp = GetDictionaryString(jsonResponse, "timestamp");
+            responseData.Adid = GetDictionaryString(jsonResponse, "adid");
 
             string message = responseData.Message;
             if (message == null)

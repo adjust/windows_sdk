@@ -67,8 +67,6 @@ namespace AdjustSdk
                 GetNetworkType = GetNetworkType
             };
 
-            _deviceInfo.GetConnectivityType = GetConnectivityType;
-
             return _deviceInfo;
         }
 
