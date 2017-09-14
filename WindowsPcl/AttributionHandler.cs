@@ -168,6 +168,8 @@ namespace AdjustSdk.Pcl
             foreach (var entry in _attributionPackage.Parameters)
             {
                 if (entry.Key == null) { continue; }
+                if (entry.Key == "app_secret") { continue; }
+
                 var keyEscaped = Uri.EscapeDataString(entry.Key);
 
                 if (entry.Value == null) { continue; }

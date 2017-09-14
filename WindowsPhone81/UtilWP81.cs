@@ -2,9 +2,11 @@
 using AdjustSdk.Uap;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Networking.Connectivity;
 using Windows.Security.Cryptography;
+using Windows.Security.Cryptography.Core;
 using Windows.Security.ExchangeActiveSyncProvisioning;
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -207,6 +209,46 @@ namespace AdjustSdk
                 return null;
 
             return (int)internetConnProfile.WwanConnectionProfileDetails.GetCurrentDataClass();
+        }
+
+        public string HashStringUsingSha256(string stringValue)
+        {
+            return HashString(HashAlgorithmNames.Sha256, stringValue);
+        }
+
+        public string HashStringUsingSha512(string stringValue)
+        {
+            return HashString(HashAlgorithmNames.Sha512, stringValue);
+        }
+
+        public string HashStringUsingShaMd5(string stringValue)
+        {
+            return HashString(HashAlgorithmNames.Md5, stringValue);
+        }
+
+        private string HashString(string algorithmName, string stringValue)
+        {
+            // Convert the message string to binary data.
+            IBuffer buffUtf8Msg = CryptographicBuffer.ConvertStringToBinary(stringValue, BinaryStringEncoding.Utf8);
+
+            // Create a HashAlgorithmProvider object.
+            HashAlgorithmProvider hashAlgorithmProvider = HashAlgorithmProvider.OpenAlgorithm(algorithmName);
+
+            // Hash the message.
+            IBuffer buffHash = hashAlgorithmProvider.HashData(buffUtf8Msg);
+
+            // Verify that the hash length equals the length specified for the algorithm.
+            if (buffHash.Length != hashAlgorithmProvider.HashLength)
+            {
+                //throw new Exception("There was an error creating the hash");
+                return null;
+            }
+
+            // Convert to Hex
+            var hashedStringHexValue = BitConverter.ToString(buffHash.ToArray());
+
+            // Get rid of the dashes
+            return hashedStringHexValue.Replace("-", "");
         }
 
         private string GetClientSdk()

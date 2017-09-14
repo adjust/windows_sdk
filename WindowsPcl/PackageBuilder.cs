@@ -161,10 +161,10 @@ namespace AdjustSdk.Pcl
 
         private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "win_udid", _deviceInfo.DeviceUniqueId);
+            AddString(parameters, "win_adid", _deviceInfo.ReadWindowsAdvertisingId());
             AddString(parameters, "win_hwid", _deviceInfo.HardwareId);
             AddString(parameters, "win_naid", _deviceInfo.NetworkAdapterId);
-            AddString(parameters, "win_adid", _deviceInfo.ReadWindowsAdvertisingId());
+            AddString(parameters, "win_udid", _deviceInfo.DeviceUniqueId);
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
@@ -207,6 +207,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "environment", _config.Environment);
             AddBool(parameters, "device_known", _config.DeviceKnown);
             AddBool(parameters, "needs_response_details", true);
+            AddString(parameters, "app_secret", _config.AppSecret);
         }
 
         private void InjectActivityState(Dictionary<string, string> parameters)

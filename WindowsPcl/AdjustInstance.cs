@@ -24,6 +24,11 @@ namespace AdjustSdk.Pcl
             adjustConfig.PreLaunchActions = _preLaunchActions;
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
+
+            AdjustConfig.String2Sha256Func = deviceUtil.HashStringUsingSha256;
+            AdjustConfig.String2Sha512Func = deviceUtil.HashStringUsingSha512;
+            AdjustConfig.String2Md5Func = deviceUtil.HashStringUsingShaMd5;
+            
             _activityHandler = ActivityHandler.GetInstance(adjustConfig, deviceUtil);
         }
 

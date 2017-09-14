@@ -11,6 +11,7 @@ namespace AdjustSdk
 
         private readonly ILogger _logger = AdjustFactory.Logger;
 
+        internal string AppSecret { get; private set; }
         internal string AppToken { get; }
         internal string Environment { get; }
 
@@ -32,6 +33,10 @@ namespace AdjustSdk
 
         internal List<Action<ActivityHandler>> PreLaunchActions { get; set; }
         internal string PushToken;
+
+        internal static Func<string, string> String2Sha256Func { get; set; }
+        internal static Func<string, string> String2Sha512Func { get; set; }
+        internal static Func<string, string> String2Md5Func { get; set; }
 
         public AdjustConfig(string appToken, string environment, Action<string> logDelegate = null, LogLevel? logLevel = null)
         {
@@ -123,6 +128,11 @@ namespace AdjustSdk
 
             _logger.Error("Unknown environment '{0}'", environment);
             return false;
+        }
+
+        public void SetAppSecret(long info1, long info2, long info3, long info4)
+        {
+            AppSecret = $"{info1}{info2}{info3}{info4}";
         }
     }
 }

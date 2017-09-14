@@ -20,6 +20,12 @@ namespace AdjustSdk.Pcl
         private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
         internal static string UserAgent { get; set; }
 
+        public const string ActivityKind = "activity_kind";
+        public const string CreatedAt = "created_at";
+        public const string AppSecret = "app_secret";
+        public const string ClearSignature = "clear_signature";
+        public const string Fields = "fields";
+
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
             if (parameters.Count == 0) return "";
@@ -307,11 +313,28 @@ namespace AdjustSdk.Pcl
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters["sent_at"] = sNow;
 
-            SetUserAgent();
-
-            using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
+            string appSecret;
+            Dictionary<string, string> parameters;
+            if (activityPackage.Parameters.TryGetValue(AppSecret, out appSecret))
             {
-                return HttpClient.PostAsync(url, parameters).Result;
+                parameters = activityPackage.Parameters.Where(p => p.Key != AppSecret)
+                    .ToDictionary(i => i.Key, i => i.Value);
+            }
+            else
+            {
+                parameters = activityPackage.Parameters;
+            }
+
+            string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
+            string authorizationHeader =
+                BuildAuthorizationHeader(parameters, appSecret, activityKind);
+
+            SetUserAgent();
+            SetAuthorizationParameter(authorizationHeader);
+
+            using (var postParams = new FormUrlEncodedContent(parameters))
+            {
+                return HttpClient.PostAsync(url, postParams).Result;
             }
         }
 
@@ -319,19 +342,121 @@ namespace AdjustSdk.Pcl
         {
             var finalQuery = F("{0}&sent_at={1}", queryParameters, DateFormat(DateTime.Now));
 
+            string appSecret;
+            Dictionary<string, string> parameters = null;
+            if (activityPackage.Parameters.TryGetValue(AppSecret, out appSecret))
+            {
+                parameters = activityPackage.Parameters.Where(p => p.Key != AppSecret)
+                    .ToDictionary(i => i.Key, i => i.Value);
+            }
+
+            string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
+            string authorizationHeader =
+                BuildAuthorizationHeader(parameters, appSecret, activityKind);
+
             var uriBuilder = new UriBuilder(BaseUrl);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
 
             SetUserAgent();
+            SetAuthorizationParameter(authorizationHeader);
 
             return HttpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
+        private static string BuildAuthorizationHeader(IReadOnlyDictionary<string, string> parameters,
+            string appSecret, string activityKind)
+        {
+            // check if the secret exists and it's not empty
+            if (string.IsNullOrEmpty(appSecret) || parameters == null)
+                return null;
+
+            var signatureDetails = GetSignature(parameters, activityKind, appSecret);
+            
+            string algorithm = "sha256";
+            string signature = AdjustConfig.String2Sha256Func(signatureDetails[ClearSignature]);
+            string fields = signatureDetails[Fields];
+
+            string signatureHeader = $"signature=\"{signature}\"";
+            string algorithmHeader = $"algorithm=\"{algorithm}\"";
+            string fieldsHeader = $"headers=\"{fields}\"";
+
+            string authorizationHeader = $"Signature {signatureHeader},{algorithmHeader},{fieldsHeader}";
+
+            Logger.Verbose($"authorizationHeader clear: {authorizationHeader}");
+
+            return authorizationHeader;
+        }
+
+        private static Dictionary<string, string> GetSignature(
+            IReadOnlyDictionary<string, string> parameters,
+            string activityKind, string appSecret)
+        {
+            string createdAt = parameters[CreatedAt];
+            string deviceIdentifier;
+            string deviceIdentifierName = GetValidIdentifier(parameters, out deviceIdentifier);
+
+            var signatureParams = new Dictionary<string, string>
+            {
+                {AppSecret, appSecret},
+                {CreatedAt, createdAt},
+                {ActivityKind, activityKind},
+                {deviceIdentifierName, deviceIdentifier}
+            };
+
+            string fields = string.Empty;
+            string clearSignature = string.Empty;
+
+            foreach (var paramKvp in signatureParams)
+            {
+                if (paramKvp.Value == null)
+                    continue;
+
+                fields += paramKvp.Key + " ";
+                clearSignature += paramKvp.Value;
+            }
+
+            fields = fields.Substring(0, fields.Length - 1);
+
+            var signature = new Dictionary<string, string>
+            {
+                {ClearSignature, clearSignature},
+                {Fields, fields}
+            };
+
+            return signature;
+        }
+
+        private static string GetValidIdentifier(IReadOnlyDictionary<string, string> parameters, 
+            out string foundValue)
+        {
+            if (parameters.TryGetValue("win_adid", out foundValue))
+                return "win_adid";
+
+            if (parameters.TryGetValue("win_hwid", out foundValue))
+                return "win_hwid";
+
+            if (parameters.TryGetValue("win_naid", out foundValue))
+                return "win_naid";
+
+            if (parameters.TryGetValue("win_udid", out foundValue))
+                return "win_udid";
+
+            foundValue = null;
+            return null;
+        }
+        
         private static void SetUserAgent()
         {
             HttpClient.DefaultRequestHeaders.Remove("user-agent");
             HttpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent", UserAgent);
+        }
+
+        private static void SetAuthorizationParameter(string authHeader)
+        {
+            HttpClient.DefaultRequestHeaders.Remove("Authorization");
+            if(!string.IsNullOrEmpty(authHeader))
+                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", authHeader);
         }
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)

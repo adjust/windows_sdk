@@ -26,5 +26,11 @@ namespace AdjustSdk.Pcl
         bool TryTakeValue(string key, out string value);
 
         Task<IFile> GetLegacyStorageFile(string fileName);
+
+        string HashStringUsingSha256(string stringValue);
+
+        string HashStringUsingSha512(string stringValue);
+
+        string HashStringUsingShaMd5(string stringValue);
     }
 }
