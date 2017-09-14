@@ -14,17 +14,15 @@ namespace AdjustSdk
     {
         private static readonly IDeviceUtil DeviceUtil = new UtilUAP10();
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
-        private static bool IsApplicationActive = false;
+        private static bool _isApplicationActive = false;
 
         [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
-        public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
+        public static void SetupLogging(Action<string> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);
         }
 
-        public static bool ApplicationLaunched {
-            get { return AdjustInstance.ApplicationLaunched; }
-        }
+        public static bool ApplicationLaunched => AdjustInstance.ApplicationLaunched;
 
         /// <summary>
         ///  Tell Adjust that the application was launched.
@@ -104,9 +102,9 @@ namespace AdjustSdk
             VisibilityChanged(e.Visible);
         }
 
-        private static void VisibilityChanged(bool Visible)
+        private static void VisibilityChanged(bool visible)
         {
-            if (Visible)
+            if (visible)
             {
                 ApplicationActivated();
             }
@@ -144,9 +142,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationActivated()
         {
-            if (IsApplicationActive) { return; }
+            if (_isApplicationActive) { return; }
 
-            IsApplicationActive = true;
+            _isApplicationActive = true;
             AdjustInstance.ApplicationActivated();
         }
 
@@ -158,9 +156,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationDeactivated()
         {
-            if (!IsApplicationActive) { return; }
+            if (!_isApplicationActive) { return; }
 
-            IsApplicationActive = false;
+            _isApplicationActive = false;
             AdjustInstance.ApplicationDeactivated();
         }
 
@@ -196,7 +194,7 @@ namespace AdjustSdk
         /// <summary>
         /// Puts the SDK in offline or online mode
         /// </summary>
-        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        /// <param name="offlineMode">The flag to enable or disable offline mode</param>
         public static void SetOfflineMode(bool offlineMode)
         {
             AdjustInstance.SetOfflineMode(offlineMode);
@@ -207,9 +205,9 @@ namespace AdjustSdk
         /// an adjust deep link
         /// </summary>
         /// <param name="url">The url that open the application</param>
-        public static void AppWillOpenUrl(Uri uri)
+        public static void AppWillOpenUrl(Uri url)
         {
-            AdjustInstance.AppWillOpenUrl(uri);
+            AdjustInstance.AppWillOpenUrl(url);
         }
 
         /// <summary>
