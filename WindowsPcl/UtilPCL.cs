@@ -375,6 +375,7 @@ namespace AdjustSdk.Pcl
             
             string algorithm = "sha256";
             string signature = AdjustConfig.String2Sha256Func(signatureDetails[ClearSignature]);
+            signature = signature.ToLower();
             string fields = signatureDetails[Fields];
 
             string signatureHeader = $"signature=\"{signature}\"";
@@ -400,7 +401,7 @@ namespace AdjustSdk.Pcl
             {
                 {AppSecret, appSecret},
                 {CreatedAt, createdAt},
-                {ActivityKind, activityKind},
+                {ActivityKind, activityKind.ToLower()},
                 {deviceIdentifierName, deviceIdentifier}
             };
 
