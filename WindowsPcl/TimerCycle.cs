@@ -10,8 +10,8 @@ namespace AdjustSdk.Pcl
         private TimeSpan _timeStart;
         private bool _isPaused;
         private DateTime? _fireDate;
-        private readonly ActionQueue _actionQueue;
-        private readonly Action _action;
+        private ActionQueue _actionQueue;
+        private Action _action;
 
         private CancellationTokenSource _cancelDelayTokenSource;
 
@@ -97,11 +97,11 @@ namespace AdjustSdk.Pcl
 
         public void Teardown()
         {
-            _CancelDelayTokenSource.Cancel();
+            _cancelDelayTokenSource.Cancel();
 
-            _Action = null;
-            _ActionQueue.Teardown();
-            _ActionQueue = null;
+            _action = null;
+            _actionQueue.Teardown();
+            _actionQueue = null;
         }
     }
 }

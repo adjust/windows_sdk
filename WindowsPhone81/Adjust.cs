@@ -203,7 +203,7 @@ namespace AdjustSdk
         /// <param name="url">The url that open the application</param>
         public static void AppWillOpenUrl(Uri url)
         {
-            GetAdjustInstance().AppWillOpenUrl(uri);
+            GetAdjustInstance().AppWillOpenUrl(url);
         }
 
         /// <summary>

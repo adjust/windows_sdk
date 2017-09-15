@@ -10,12 +10,12 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
+        private ILogger _logger = AdjustFactory.Logger;
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;
 
-        private CancellationTokenSource _sendPackageTaskCancelToken;
+        private readonly CancellationTokenSource _sendPackageTaskCancelToken;
 
         public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
