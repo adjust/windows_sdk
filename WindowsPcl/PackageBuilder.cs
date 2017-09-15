@@ -165,6 +165,8 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "win_hwid", _deviceInfo.HardwareId);
             AddString(parameters, "win_naid", _deviceInfo.NetworkAdapterId);
             AddString(parameters, "win_udid", _deviceInfo.DeviceUniqueId);
+
+            AddString(parameters, "eas_id", _deviceInfo.EasId);
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
