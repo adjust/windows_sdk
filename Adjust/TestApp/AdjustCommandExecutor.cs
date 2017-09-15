@@ -171,6 +171,25 @@ namespace TestApp
                 adjustConfig.DelayStart = TimeSpan.FromSeconds(delayStart);
             }
 
+            if (Command.ContainsParameter("appSecret"))
+            {
+                var appSecretList = Command.Parameters["appSecret"];
+                Log.Debug("Received AppSecret array: " + appSecretList);
+
+                if (appSecretList.Count == 4)
+                {
+                    long info1, info2, info3, info4;
+                    long.TryParse(appSecretList[0], out info1);
+                    long.TryParse(appSecretList[1], out info2);
+                    long.TryParse(appSecretList[2], out info3);
+                    long.TryParse(appSecretList[3], out info4);
+
+                    adjustConfig.SetAppSecret(info1, info2, info3, info4);
+                }
+                else
+                    Log.Error("App secret list does not contain 4 elements! Skip setting app secret.");
+            }
+
             if (Command.ContainsParameter("deviceKnown"))
             {
                 var deviceKnownS = Command.GetFirstParameterValue("deviceKnown");

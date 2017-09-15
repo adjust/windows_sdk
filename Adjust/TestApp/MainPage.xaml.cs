@@ -46,34 +46,34 @@ namespace TestApp
             {
                 // PASSING ////////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                testsDir + "Event_Count",
-                testsDir + "Event_Revenue",
-                testsDir + "DefaultTracker",
-                testsDir + "Event_EventToken_Malformed",
-                testsDir + "Event_Params",
-                testsDir + "SessionParams",
-                testsDir + "SessionCount",
-                testsDir + "SubsessionCount",
-                testsDir + "SessionEventCallbacks",
-                testsDir + "Event_OrderId",
-                testsDir + "AttributionCallback",
-                testsDir + "Init_Malformed",
-                testDirWin + "SdkPrefix",
-                testDirWin + "UserAgent",
-                testDirWin + "Deeplink",
-                testDirWin + "DelayStart",
-                testDirWin + "SendInBackground",
+                //testsDir + "Event_Count",
+                //testsDir + "Event_Revenue",
+                //testsDir + "DefaultTracker",
+                //testsDir + "Event_EventToken_Malformed",
+                //testsDir + "Event_Params",
+                //testsDir + "SessionParams",
+                //testsDir + "SessionCount",
+                //testsDir + "SubsessionCount",
+                //testsDir + "SessionEventCallbacks",
+                //testsDir + "Event_OrderId",
+                //testsDir + "AttributionCallback",
+                //testsDir + "Init_Malformed",
+                //testDirWin + "SdkPrefix",
+                //testDirWin + "UserAgent",
+                //testDirWin + "Deeplink",
+                //testDirWin + "DelayStart",
+                //testDirWin + "SendInBackground",
+                testDirWin + "AppSecret",
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-
+                
 
                 // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
                 //testsDir + "OfflineMode",
                 //testsDir + "Disable_Enable"
                 //testsDir + "EventBuffering"
-                //testsDir + "AppSecret",
                 //testDirWin + "SdkInfo",
 
                 // EXPELED     ////////////////////////////////////////////////////////
@@ -86,7 +86,7 @@ namespace TestApp
 
         private void StartTestSession()
         {
-            _testLibrary.InitTestSession("wuap4.11.4");
+            _testLibrary.InitTestSession("wuap4.12.0");
         }
 
         private string GetLocalIp()
