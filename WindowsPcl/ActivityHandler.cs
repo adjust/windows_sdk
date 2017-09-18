@@ -987,7 +987,15 @@ namespace AdjustSdk.Pcl
 
             // send info package
             _packageHandler.AddPackage(infoPackage);
-            _packageHandler.SendFirstPackage();
+
+            if (_config.EventBufferingEnabled)
+            {
+                _logger.Info("Buffered event {0}", infoPackage.Suffix);
+            }
+            else
+            {
+                _packageHandler.SendFirstPackage();
+            }
         }
 
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,
