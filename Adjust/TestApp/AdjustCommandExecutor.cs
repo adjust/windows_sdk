@@ -517,8 +517,11 @@ namespace TestApp
         {
             Log.Debug(" --- trying to teardown all ---");
 
-            ClearAllPersistedObjects();
-            ClearAllPeristedValues();
+            if (deleteState)
+            {
+                ClearAllPersistedObjects();
+                ClearAllPeristedValues();
+            }
 
             var adjustInstance = Adjust.GetAdjustInstance();
             adjustInstance?.Teardown(deleteState);
