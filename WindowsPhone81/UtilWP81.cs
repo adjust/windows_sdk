@@ -23,6 +23,8 @@ namespace AdjustSdk
         private readonly ApplicationDataContainer _localSettings;
         private readonly StorageFolder _localFolder;
 
+        private const string PREFS_KEY_INSTALL_TRACKED = "install_tracked";
+
         private const double PersistValueMaxWaitSeconds = 60;
 
         public UtilWP81()
@@ -249,6 +251,19 @@ namespace AdjustSdk
 
             // Get rid of the dashes
             return hashedStringHexValue.Replace("-", "");
+        }
+
+        public void SetInstallTracked()
+        {
+            PersistValue(PREFS_KEY_INSTALL_TRACKED, bool.TrueString);
+        }
+
+        public bool IsInstallTracked()
+        {
+            string isInstallTracked;
+            TryTakeValue(PREFS_KEY_INSTALL_TRACKED, out isInstallTracked);
+
+            return string.Equals(isInstallTracked, bool.TrueString, StringComparison.CurrentCultureIgnoreCase);
         }
 
         private string GetClientSdk()

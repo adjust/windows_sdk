@@ -32,5 +32,9 @@ namespace AdjustSdk.Pcl
         string HashStringUsingSha512(string stringValue);
 
         string HashStringUsingShaMd5(string stringValue);
+
+        void SetInstallTracked();
+
+        bool IsInstallTracked();
     }
 }

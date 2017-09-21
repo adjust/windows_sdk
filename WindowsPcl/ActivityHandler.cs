@@ -198,6 +198,13 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
+            if (enabled && !_deviceUtil.IsInstallTracked())
+            {
+                _logger.Debug("SDK enbalded -> Tracking new session.");
+                var now = DateTime.Now;
+                TrackNewSessionI(now);
+            }
+
             _activityState.Enabled = enabled;
             WriteActivityStateI();
 
@@ -562,14 +569,7 @@ namespace AdjustSdk.Pcl
             // new session
             if (lastInterval > _sessionInterval)
             {
-                _activityState.SessionCount++;
-                _activityState.LastInterval = lastInterval;
-
-                TransferSessionPackageI();
-
-                _activityState.ResetSessionAttributes(now);
-                WriteActivityStateI();
-
+                TrackNewSessionI(now);
                 return;
             }
 
@@ -585,6 +585,19 @@ namespace AdjustSdk.Pcl
                     _activityState.SubSessionCount, _activityState.SessionCount);
                 return;
             }
+        }
+
+        private void TrackNewSessionI(DateTime now)
+        {
+            var lastInterval = now - _activityState.LastActivity.Value;
+
+            _activityState.SessionCount++;
+            _activityState.LastInterval = lastInterval;
+
+            TransferSessionPackageI();
+
+            _activityState.ResetSessionAttributes(now);
+            WriteActivityStateI();
         }
 
         private void TransferSessionPackageI()
@@ -700,6 +713,12 @@ namespace AdjustSdk.Pcl
             {
                 task = LaunchAttributionActionI();
             }
+
+            if (sessionResponseData.Success)
+            {
+                _deviceUtil.SetInstallTracked();
+            }
+
             // launch Session tracking listener if available
             LaunchSessionAction(sessionResponseData, task);
 
@@ -1140,6 +1159,9 @@ namespace AdjustSdk.Pcl
                 if (_activityState != null)
                 {
                     WriteActivityStateS(null);
+
+                    //TODO: check whether the activity state is persisted, and THEN delete
+
                     activityStateLegacyFile.DeleteAsync();
                     _logger.Info("Legacy ActivityState File found and successfully read, then deleted afterwards.");
                 }
@@ -1170,6 +1192,9 @@ namespace AdjustSdk.Pcl
                 if (_attribution != null)
                 {
                     WriteAttributionI();
+
+                    //TODO: check whether the attribution is persisted, and THEN delete
+
                     attributionLegacyFile.DeleteAsync();
                     _logger.Info("Legacy Attribution File found and successfully read, then deleted afterwards.");
                 }
