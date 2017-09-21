@@ -614,7 +614,7 @@ namespace AdjustSdk.Pcl
         private void CheckAttributionStateI()
         {
             // if it's a new session
-            if (_activityState.SubSessionCount <= 1) { return; }
+            if (!CheckActivityStateI(_activityState)) { return; }
 
             // if it's the first launch
             if (_state.IsFirstLaunch)
