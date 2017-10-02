@@ -541,11 +541,11 @@ namespace AdjustSdk.Pcl
             {
                 // create fresh activity state
                 _activityState = new ActivityState();
-                _activityState.SessionCount = 1; // first session
                 _activityState.PushToken = _config.PushToken;
 
                 if (_state.IsEnabled)
                 {
+                    _activityState.SessionCount = 1; // first session
                     TransferSessionPackageI();
                 }
 
