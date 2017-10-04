@@ -32,7 +32,6 @@ namespace AdjustSdk
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
 
         internal List<Action<ActivityHandler>> PreLaunchActions { get; set; }
-        internal string PushToken;
 
         internal static Func<string, string> String2Sha256Func { get; set; }
         internal static Func<string, string> String2Sha512Func { get; set; }

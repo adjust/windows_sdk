@@ -8,7 +8,6 @@ namespace AdjustSdk.Pcl
         private IActivityHandler _activityHandler;
         private readonly ILogger _logger = AdjustFactory.Logger;
         private List<Action<ActivityHandler>> _preLaunchActions;
-        private string _pushToken;
         private bool? _startEnabled = null;
         private bool _startOffline = false;
 
@@ -20,7 +19,6 @@ namespace AdjustSdk.Pcl
 
         public void ApplicationLaunching(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
-            adjustConfig.PushToken = _pushToken;
             adjustConfig.PreLaunchActions = _preLaunchActions;
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
@@ -218,15 +216,17 @@ namespace AdjustSdk.Pcl
             });
         }
 
-        public void SetPushToken(string pushToken)
+        public void SetPushToken(string pushToken, IDeviceUtil deviceUtil)
         {
-            if (_activityHandler != null)
-            {
-                _activityHandler.SetPushToken(pushToken);
-                return;
-            }
+            deviceUtil.PersistValue("adj_push_token", pushToken);
 
-            _pushToken = pushToken;
+            if (CheckActivityHandler())
+            {
+                if (_activityHandler.IsEnabled())
+                {
+                    _activityHandler.SetPushToken(pushToken);
+                }
+            }
         }
 
         public void SendFirstPackages()

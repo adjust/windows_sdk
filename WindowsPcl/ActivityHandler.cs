@@ -345,9 +345,14 @@ namespace AdjustSdk.Pcl
             _actionQueue.Enqueue(() => {
                 if (_activityState == null)
                 {
-                    StartI();
+                    // No install has been tracked so far.
+                    // Push token is saved, ready for the session package to pick it up.
+                    return;
                 }
-                SetPushTokenI(pushToken);
+                else
+                {
+                    SetPushTokenI(pushToken);
+                }
             });
         }
 
@@ -459,13 +464,11 @@ namespace AdjustSdk.Pcl
                 _logger.Info("Default tracker: '{0}'", _config.DefaultTracker);
             }
 
-            if (_config.PushToken != null)
+            if (_activityState != null)
             {
-                _logger.Info("Push token: '{0}'", _config.PushToken);
-                if (_activityState != null)
-                {
-                    SetPushToken(_config.PushToken);
-                }
+                string pushToken;
+                _deviceUtil.TryTakeValue("adj_push_token", out pushToken);
+                SetPushToken(pushToken);
             }
 
             _foregroundTimer = new TimerCycle(_actionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
@@ -540,8 +543,12 @@ namespace AdjustSdk.Pcl
             if (_activityState == null)
             {
                 // create fresh activity state
-                _activityState = new ActivityState();
-                _activityState.PushToken = _config.PushToken;
+                _activityState = new ActivityState();                
+                
+                //_activityState.PushToken = _config.PushToken;
+                string pushToken;
+                _deviceUtil.TryTakeValue("adj_push_token", out pushToken);
+                _activityState.PushToken = pushToken;
 
                 if (_state.IsEnabled)
                 {
@@ -552,6 +559,8 @@ namespace AdjustSdk.Pcl
                 _activityState.ResetSessionAttributes(now);
                 _activityState.Enabled = _state.IsEnabled;
                 WriteActivityStateI();
+
+                //TODO: remove old push token from device
 
                 return;
             }
@@ -1007,6 +1016,10 @@ namespace AdjustSdk.Pcl
             // send info package
             _packageHandler.AddPackage(infoPackage);
 
+            // If push token was cached, remove it.
+            //TODO: remove old push token from device
+            //add methods to remove persisted value from device
+            
             if (_config.EventBufferingEnabled)
             {
                 _logger.Info("Buffered event {0}", infoPackage.Suffix);
