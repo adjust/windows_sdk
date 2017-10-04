@@ -41,7 +41,6 @@ namespace TestApp
         private string GetTestNames()
         {
             string testsDir = "current/Test_";
-            string testDirWin = "current/windows/Test_";
             var testNamesList = new List<string>
             {
                 // PASSING ////////////////////////////////////////////////////////////
@@ -58,27 +57,22 @@ namespace TestApp
                 //testsDir + "Event_OrderId",
                 //testsDir + "AttributionCallback",
                 //testsDir + "Init_Malformed",
-                //testDirWin + "SdkPrefix",
-                //testDirWin + "UserAgent",
-                //testDirWin + "Deeplink",
-                //testDirWin + "DelayStart",
-                //testDirWin + "SendInBackground",
-                testDirWin + "AppSecret",
+                //testsDir + "SdkPrefix",
+                //testsDir + "UserAgent",
+                //testsDir + "Deeplink",
+                //testsDir + "DelayStart",
+                //testsDir + "SendInBackground",
+                //testsDir + "Disable_Enable"
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                
+                //testsDir + "AppSecret",
+                testsDir + "SdkInfo",
 
                 // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
                 //testsDir + "OfflineMode",
-                //testsDir + "Disable_Enable"
                 //testsDir + "EventBuffering"
-                //testDirWin + "SdkInfo",
-
-                // EXPELED     ////////////////////////////////////////////////////////
-                ///////////////////////////////////////////////////////////////////////
-                //testsDir + "ExternalDeviceId"
             };
 
             return string.Join(";", testNamesList);
@@ -95,13 +89,17 @@ namespace TestApp
 
             if (icp?.NetworkAdapter == null) return null;
 
-            var hostname = NetworkInformation.GetHostNames()
-                .SingleOrDefault(hn =>
-                    hn.IPInformation?.NetworkAdapter != null && hn.IPInformation.NetworkAdapter.NetworkAdapterId
-                    == icp.NetworkAdapter.NetworkAdapterId);
+            var hostNames = NetworkInformation.GetHostNames();
+            foreach (var hn in hostNames)
+            {
+                if(hn.IPInformation?.NetworkAdapter == null)
+                    continue;
 
-            // the ip address
-            return hostname?.CanonicalName;
+                if (hn.IPInformation.NetworkAdapter.NetworkAdapterId == icp.NetworkAdapter.NetworkAdapterId)
+                    return hn.CanonicalName;
+            }
+
+            return string.Empty;
         }
 
         public void Exit()
