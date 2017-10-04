@@ -251,7 +251,7 @@ namespace AdjustSdk
 
         public static void SetPushToken(string pushToken)
         {
-            GetAdjustInstance().SetPushToken(pushToken, DeviceUtil);
+            GetAdjustInstance().SetPushToken(pushToken, _deviceUtil);
         }
 
         public static string GetAdid()
