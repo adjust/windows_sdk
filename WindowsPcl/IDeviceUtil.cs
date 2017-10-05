@@ -17,13 +17,19 @@ namespace AdjustSdk.Pcl
 
         string ReadWindowsAdvertisingId();
 
+        bool ClearSimpleValue(string key);
+
         void PersistObject(string key, Dictionary<string, object> objectValuesMap);
 
         bool PersistValue(string key, string value);
 
+        void PersistSimpleValue(string key, string value);
+
         bool TryTakeObject(string key, out Dictionary<string, object> objectValuesMap);
 
         bool TryTakeValue(string key, out string value);
+
+        bool TryTakeSimpleValue(string key, out string value);
 
         Task<IFile> GetLegacyStorageFile(string fileName);
 

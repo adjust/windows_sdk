@@ -198,11 +198,21 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
-            if (enabled && !_deviceUtil.IsInstallTracked())
+            if (enabled)
             {
-                _logger.Debug("SDK enbalded -> Tracking new session.");
-                var now = DateTime.Now;
-                TrackNewSessionI(now);
+                if (!_deviceUtil.IsInstallTracked())
+                {
+                    _logger.Debug("SDK enbalded -> Tracking new session.");
+                    var now = DateTime.Now;
+                    TrackNewSessionI(now);
+                }
+
+                string pushToken;
+                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
+                if (pushToken != null && pushToken != _activityState.PushToken)
+                {
+                    SetPushToken(pushToken);
+                }
             }
 
             _activityState.Enabled = enabled;
@@ -467,7 +477,7 @@ namespace AdjustSdk.Pcl
             if (_activityState != null)
             {
                 string pushToken;
-                _deviceUtil.TryTakeValue("adj_push_token", out pushToken);
+                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
                 SetPushToken(pushToken);
             }
 
@@ -547,7 +557,7 @@ namespace AdjustSdk.Pcl
                 
                 //_activityState.PushToken = _config.PushToken;
                 string pushToken;
-                _deviceUtil.TryTakeValue("adj_push_token", out pushToken);
+                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
                 _activityState.PushToken = pushToken;
 
                 if (_state.IsEnabled)
@@ -560,7 +570,8 @@ namespace AdjustSdk.Pcl
                 _activityState.Enabled = _state.IsEnabled;
                 WriteActivityStateI();
 
-                //TODO: remove old push token from device
+                // remove old push token from device
+                _deviceUtil.ClearSimpleValue("adj_push_token");
 
                 return;
             }
@@ -1017,9 +1028,8 @@ namespace AdjustSdk.Pcl
             _packageHandler.AddPackage(infoPackage);
 
             // If push token was cached, remove it.
-            //TODO: remove old push token from device
-            //add methods to remove persisted value from device
-            
+            _deviceUtil.ClearSimpleValue("adj_push_token");
+
             if (_config.EventBufferingEnabled)
             {
                 _logger.Info("Buffered event {0}", infoPackage.Suffix);

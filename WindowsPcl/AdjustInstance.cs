@@ -218,7 +218,7 @@ namespace AdjustSdk.Pcl
 
         public void SetPushToken(string pushToken, IDeviceUtil deviceUtil)
         {
-            deviceUtil.PersistValue("adj_push_token", pushToken);
+            deviceUtil.PersistSimpleValue("adj_push_token", pushToken);
 
             if (CheckActivityHandler())
             {

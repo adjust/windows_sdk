@@ -94,6 +94,11 @@ namespace AdjustSdk
             return UtilUap.GetAdvertisingId();
         }
 
+        public bool ClearSimpleValue(string key)
+        {
+            return _localSettings.Values.Remove(key);
+        }
+
         public void PersistObject(string key, Dictionary<string, object> objectValuesMap)
         {
             var objectValue = new ApplicationDataCompositeValue();
@@ -109,6 +114,11 @@ namespace AdjustSdk
 
             return FileIO.WriteBufferAsync(valueFile, valueBuffer)
                 .AsTask().Wait(TimeSpan.FromSeconds(PersistValueMaxWaitSeconds));
+        }
+
+        public void PersistSimpleValue(string key, string value)
+        {
+            _localSettings.Values[key] = value;
         }
 
         public bool TryTakeObject(string key, out Dictionary<string, object> objectValuesMap)
@@ -148,6 +158,18 @@ namespace AdjustSdk
                 value = null;
                 return false;
             }
+        }
+
+        public bool TryTakeSimpleValue(string key, out string value)
+        {
+            value = null;
+
+            object objectValue;
+            if (!_localSettings.Values.TryGetValue(key, out objectValue)) return false;
+
+            value = objectValue.ToString();
+
+            return true;
         }
 
         public async Task<IFile> GetLegacyStorageFile(string fileName)
