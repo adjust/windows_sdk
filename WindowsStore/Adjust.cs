@@ -28,6 +28,8 @@ namespace AdjustSdk
         {
             if (_adjustInstance == null)
                 _adjustInstance = new AdjustInstance();
+            if (_deviceUtil == null)
+                _deviceUtil = new UtilWS();
             return _adjustInstance;
         }
 
@@ -39,8 +41,7 @@ namespace AdjustSdk
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
             if (ApplicationLaunched) { return; }
-            if (_deviceUtil == null)
-                _deviceUtil = new UtilWS();
+
             GetAdjustInstance().ApplicationLaunching(adjustConfig, _deviceUtil);
             RegisterLifecycleEvents();
         }
@@ -200,6 +201,9 @@ namespace AdjustSdk
         /// </summary>
         public static string GetWindowsAdId()
         {
+            if (_deviceUtil == null)
+                _deviceUtil = new UtilWS();
+            
             return _deviceUtil.ReadWindowsAdvertisingId();
         }
 

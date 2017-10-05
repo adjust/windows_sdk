@@ -63,16 +63,13 @@ namespace TestApp
                 //testsDir + "DelayStart",
                 //testsDir + "SendInBackground",
                 //testsDir + "Disable_Enable"
+                //testsDir + "SdkInfo",
+                //testsDir + "OfflineMode",
+                //testsDir + "EventBuffering"
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                //testsDir + "AppSecret",
-                testsDir + "SdkInfo",
-
-                // NOT PASSING - 4.12.0 ///////////////////////////////////////////////
-                ///////////////////////////////////////////////////////////////////////
-                //testsDir + "OfflineMode",
-                //testsDir + "EventBuffering"
+                testsDir + "AppSecret",
             };
 
             return string.Join(";", testNamesList);
