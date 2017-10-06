@@ -211,6 +211,7 @@ namespace AdjustSdk.Pcl
             AddBool(parameters, "needs_response_details", true);
             AddString(parameters, "secret_id", _config.SecretId);
             AddString(parameters, "app_secret", _config.AppSecret);
+            AddBool(parameters, "event_buffering_enabled", _config.EventBufferingEnabled);
         }
 
         private void InjectActivityState(Dictionary<string, string> parameters)
