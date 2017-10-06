@@ -174,20 +174,21 @@ namespace TestApp
             if (Command.ContainsParameter("appSecret"))
             {
                 var appSecretList = Command.Parameters["appSecret"];
-                Log.Debug("Received AppSecret array: " + appSecretList);
+                Log.Debug("Received AppSecret array: " + string.Join(",", appSecretList));
 
-                if (appSecretList.Count == 4)
+                if (appSecretList.Count == 5)
                 {
-                    long info1, info2, info3, info4;
-                    long.TryParse(appSecretList[0], out info1);
-                    long.TryParse(appSecretList[1], out info2);
-                    long.TryParse(appSecretList[2], out info3);
-                    long.TryParse(appSecretList[3], out info4);
+                    long secretId, info1, info2, info3, info4;
+                    long.TryParse(appSecretList[0], out secretId);
+                    long.TryParse(appSecretList[1], out info1);
+                    long.TryParse(appSecretList[2], out info2);
+                    long.TryParse(appSecretList[3], out info3);
+                    long.TryParse(appSecretList[4], out info4);
 
-                    adjustConfig.SetAppSecret(info1, info2, info3, info4);
+                    adjustConfig.SetAppSecret(secretId, info1, info2, info3, info4);
                 }
                 else
-                    Log.Error("App secret list does not contain 4 elements! Skip setting app secret.");
+                    Log.Error("App secret list does not contain 5 elements! Skip setting app secret.");
             }
 
             if (Command.ContainsParameter("deviceKnown"))
