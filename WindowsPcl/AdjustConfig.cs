@@ -11,6 +11,7 @@ namespace AdjustSdk
 
         private readonly ILogger _logger = AdjustFactory.Logger;
 
+        internal string SecretId { get; private set; }
         internal string AppSecret { get; private set; }
         internal string AppToken { get; }
         internal string Environment { get; }
@@ -129,8 +130,9 @@ namespace AdjustSdk
             return false;
         }
 
-        public void SetAppSecret(long info1, long info2, long info3, long info4)
+        public void SetAppSecret(long secretId, long info1, long info2, long info3, long info4)
         {
+            SecretId = secretId.ToString();
             AppSecret = $"{info1}{info2}{info3}{info4}";
         }
     }

@@ -22,6 +22,7 @@ namespace AdjustSdk.Pcl
 
         public const string ActivityKind = "activity_kind";
         public const string CreatedAt = "created_at";
+        public const string SecretId = "secret_id";
         public const string AppSecret = "app_secret";
         public const string ClearSignature = "clear_signature";
         public const string Fields = "fields";
@@ -303,7 +304,7 @@ namespace AdjustSdk.Pcl
 
         public static string SecondDisplayFormat(TimeSpan timeSpan)
         {
-            return string.Format("{0:0.0}", timeSpan.TotalSeconds);
+            return $"{timeSpan.TotalSeconds:0.0}";
         }
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage)
@@ -313,26 +314,17 @@ namespace AdjustSdk.Pcl
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters["sent_at"] = sNow;
 
-            string appSecret;
-            Dictionary<string, string> parameters;
-            if (activityPackage.Parameters.TryGetValue(AppSecret, out appSecret))
-            {
-                parameters = activityPackage.Parameters.Where(p => p.Key != AppSecret)
-                    .ToDictionary(i => i.Key, i => i.Value);
-            }
-            else
-            {
-                parameters = activityPackage.Parameters;
-            }
+            string secretId = ExtractSecretId(activityPackage.Parameters);
+            string appSecret = ExtrectAppSecret(activityPackage.Parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
-                BuildAuthorizationHeader(parameters, appSecret, activityKind);
+                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            using (var postParams = new FormUrlEncodedContent(parameters))
+            using (var postParams = new FormUrlEncodedContent(activityPackage.Parameters))
             {
                 return HttpClient.PostAsync(url, postParams).Result;
             }
@@ -342,17 +334,12 @@ namespace AdjustSdk.Pcl
         {
             var finalQuery = F("{0}&sent_at={1}", queryParameters, DateFormat(DateTime.Now));
 
-            string appSecret;
-            Dictionary<string, string> parameters = null;
-            if (activityPackage.Parameters.TryGetValue(AppSecret, out appSecret))
-            {
-                parameters = activityPackage.Parameters.Where(p => p.Key != AppSecret)
-                    .ToDictionary(i => i.Key, i => i.Value);
-            }
+            string secretId = ExtractSecretId(activityPackage.Parameters);
+            string appSecret = ExtrectAppSecret(activityPackage.Parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
-                BuildAuthorizationHeader(parameters, appSecret, activityKind);
+                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
             var uriBuilder = new UriBuilder(BaseUrl);
             uriBuilder.Path = activityPackage.Path;
@@ -364,8 +351,28 @@ namespace AdjustSdk.Pcl
             return HttpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
+        private static string ExtrectAppSecret(Dictionary<string, string> parameters)
+        {
+            string appSecret;
+            if (parameters.TryGetValue(AppSecret, out appSecret))
+            {
+                parameters.Remove(AppSecret);
+            }
+            return appSecret;
+        }
+
+        private static string ExtractSecretId(Dictionary<string, string> parameters)
+        {
+            string secretId;
+            if (parameters.TryGetValue(SecretId, out secretId))
+            {
+                parameters.Remove(SecretId);
+            }
+            return secretId;
+        }
+
         private static string BuildAuthorizationHeader(IReadOnlyDictionary<string, string> parameters,
-            string appSecret, string activityKind)
+            string appSecret, string secretId, string activityKind)
         {
             // check if the secret exists and it's not empty
             if (string.IsNullOrEmpty(appSecret) || parameters == null)
@@ -378,13 +385,14 @@ namespace AdjustSdk.Pcl
             signature = signature.ToLower();
             string fields = signatureDetails[Fields];
 
+            string secretIdHeader = $"secret_id=\"{secretId}\"";
             string signatureHeader = $"signature=\"{signature}\"";
             string algorithmHeader = $"algorithm=\"{algorithm}\"";
             string fieldsHeader = $"headers=\"{fields}\"";
 
-            string authorizationHeader = $"Signature {signatureHeader},{algorithmHeader},{fieldsHeader}";
+            string authorizationHeader = $"Signature {secretIdHeader},{signatureHeader},{algorithmHeader},{fieldsHeader}";
 
-            Logger.Verbose($"authorizationHeader clear: {authorizationHeader}");
+            Logger.Verbose($"authorizationHeader: {authorizationHeader}");
 
             return authorizationHeader;
         }
