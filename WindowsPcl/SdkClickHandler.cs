@@ -11,14 +11,11 @@ namespace AdjustSdk.Pcl
         private Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
         private IRequestHandler _requestHandler;
         private WeakReference<IActivityHandler> _activityHandlerWeakReference;
-        private readonly string _userAgent;
 
         private bool _isPaused;
 
-        public SdkClickHandler(IActivityHandler activityHandler, bool startPaused, string userAgent)
+        public SdkClickHandler(IActivityHandler activityHandler, bool startPaused)
         {
-            _userAgent = userAgent;
-
             Init(activityHandler, startPaused);
             _requestHandler = new RequestHandler(
                 successCallbac: (responseData) => ProcessSdkClickResponseData(responseData),
@@ -87,7 +84,6 @@ namespace AdjustSdk.Pcl
             Action action = () =>
             {
                 _requestHandler.SendPackageSync(sdkClickPackage, _packageQueue.Count - 1);
-
                 SendNextSdkClick();
             };
 

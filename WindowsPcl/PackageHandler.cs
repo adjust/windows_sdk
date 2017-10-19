@@ -26,13 +26,9 @@ namespace AdjustSdk.Pcl
 
         private bool _isPaused;
 
-        private readonly string _userAgent;
-
-        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused, string userAgent)
+        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
             Init(activityHandler, deviceUtil, startPaused);
-
-            _userAgent = userAgent;
 
             _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
         }

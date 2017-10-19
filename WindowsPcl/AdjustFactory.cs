@@ -51,10 +51,10 @@ namespace AdjustSdk.Pcl
             _sdkClickHandlerBackoffStrategy = null;
         }
         
-        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused, string userAgent)
+        public static IPackageHandler GetPackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
             if (_iPackageHandler == null)
-                return new PackageHandler(activityHandler, deviceUtil, startPaused, userAgent);
+                return new PackageHandler(activityHandler, deviceUtil, startPaused);
 
             _iPackageHandler.Init(activityHandler, deviceUtil, startPaused);
             return _iPackageHandler;
@@ -82,11 +82,11 @@ namespace AdjustSdk.Pcl
             return _iRequestHandler;
         }
 
-        public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused, string userAgent)
+        public static ISdkClickHandler GetSdkClickHandler(IActivityHandler activityHandler, bool startPaused)
         {
             if (_iSdkClickHandler == null)
             {
-                return new SdkClickHandler(activityHandler, startPaused, userAgent);
+                return new SdkClickHandler(activityHandler, startPaused);
             }
             _iSdkClickHandler.Init(activityHandler, startPaused);
             return _iSdkClickHandler;

@@ -558,7 +558,7 @@ namespace AdjustSdk.Pcl
 
             Util.Recreate(_deviceInfo.ClientSdk);
 
-            _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false), _config.UserAgent);
+            _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));
 
             var attributionPackage = GetAttributionPackageI();
 
@@ -566,7 +566,7 @@ namespace AdjustSdk.Pcl
                 attributionPackage,
                 IsPausedI(sdkClickHandlerOnly: false));
 
-            _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true), _config.UserAgent);
+            _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
 
             // fail-safe check if app crashed during delay state, to update packages in queue
             if (IsToUpdatePackagesI())
@@ -784,37 +784,29 @@ namespace AdjustSdk.Pcl
 
         private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
         {
-            try
+            // try to update adid from response
+            UpdateAdidI(sessionResponseData.Adid);
+
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
+
+            Task task = null;
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
             {
-                // try to update adid from response
-                UpdateAdidI(sessionResponseData.Adid);
-
-                // try to update the attribution
-                var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
-
-                Task task = null;
-                // if attribution changed, launch attribution changed delegate
-                if (attributionUpdated)
-                {
-                    task = LaunchAttributionActionI();
-                }
-
-                if (sessionResponseData.Success)
-                {
-                    _deviceUtil.SetInstallTracked();
-                }
-
-                // launch Session tracking listener if available
-                LaunchSessionAction(sessionResponseData, task);
-
-                // mark session response has been proccessed
-                _state.HasSessionResponseNotBeenProcessed = true;
+                task = LaunchAttributionActionI();
             }
-            catch (Exception e)
+
+            if (sessionResponseData.Success)
             {
-                System.Diagnostics.Debug.WriteLine(e);
-                throw;
+                _deviceUtil.SetInstallTracked();
             }
+
+            // launch Session tracking listener if available
+            LaunchSessionAction(sessionResponseData, task);
+
+            // mark session response has been proccessed
+            _state.HasSessionResponseNotBeenProcessed = true;
         }
 
         private void LaunchSdkClickResponseTasksI(SdkClickResponseData sdkClickResponseData)
@@ -880,18 +872,10 @@ namespace AdjustSdk.Pcl
 
         private Task LaunchAttributionActionI()
         {
-            try
-            {
-                if (_config.AttributionChanged == null) { return null; }
-                if (_attribution == null) { return null; }
+            if (_config.AttributionChanged == null) { return null; }
+            if (_attribution == null) { return null; }
 
-                return _deviceUtil.RunActionInForeground(() => _config.AttributionChanged(_attribution));
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine(e);
-                throw;
-            }
+            return _deviceUtil.RunActionInForeground(() => _config.AttributionChanged(_attribution));
         }
 
         private void LaunchAttributionResponseTasksI(AttributionResponseData attributionResponseData)
@@ -1453,28 +1437,20 @@ namespace AdjustSdk.Pcl
 
         private bool IsToSendI(bool sdkClickHandlerOnly)
         {
-            try
+            // don't send when it's paused
+            if (IsPausedI(sdkClickHandlerOnly))
             {
-                // don't send when it's paused
-                if (IsPausedI(sdkClickHandlerOnly))
-                {
-                    return false;
-                }
-
-                // has the option to send in the background -> is to send
-                if (_config.SendInBackground)
-                {
-                    return true;
-                }
-
-                // doesn't have the option -> depends on being on the background/foreground
-                return _state.IsInForeground;
+                return false;
             }
-            catch (Exception e)
+
+            // has the option to send in the background -> is to send
+            if (_config.SendInBackground)
             {
-                System.Diagnostics.Debug.WriteLine(e);
-                throw;
+                return true;
             }
+
+            // doesn't have the option -> depends on being on the background/foreground
+            return _state.IsInForeground;
         }
 
         #region delay start
