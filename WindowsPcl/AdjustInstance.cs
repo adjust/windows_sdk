@@ -7,10 +7,8 @@ namespace AdjustSdk.Pcl
     public class AdjustInstance
     {
         private IActivityHandler _activityHandler;
+        private readonly ILogger _logger = AdjustFactory.Logger;
         private List<Action<ActivityHandler>> _preLaunchActions;
-        private ILogger _logger = AdjustFactory.Logger;
-        private List<Action<ActivityHandler>> _sessionParametersActionsArray;
-        private string _pushToken;
         private bool? _startEnabled = null;
         private bool _startOffline = false;
 
@@ -36,11 +34,7 @@ namespace AdjustSdk.Pcl
         public void Teardown(bool deleteState)
         {
             _activityHandler?.Teardown(deleteState);
-
             _activityHandler = null;
-            _sessionParametersActionsArray?.Clear();
-            _sessionParametersActionsArray = null;
-            _pushToken = null;
         }
 
         public void TrackEvent(AdjustEvent adjustEvent)
