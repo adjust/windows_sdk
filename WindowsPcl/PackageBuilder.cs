@@ -81,6 +81,7 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetAttributableParameters(_sessionParameters);
 
+            AddString(parameters, "deeplink", Deeplink);
             AddString(parameters, "source", source);
             AddDateTime(parameters, "click_time", ClickTime);
             AddDictionaryJson(parameters, "params", ExtraParameters);
