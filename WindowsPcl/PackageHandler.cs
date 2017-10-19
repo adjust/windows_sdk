@@ -230,9 +230,15 @@ namespace AdjustSdk.Pcl
                 // and then delete the old file
                 if (_packageQueue != null)
                 {
+                    _logger.Info("Legacy PackageQueue File found and successfully read.");
+
                     WritePackageQueueI();
-                    packageQueueLegacyFile.DeleteAsync();
-                    _logger.Info("Legacy PackageQueue File found and successfully read, then deleted afterwards.");
+
+                    if (_deviceUtil.TryTakeValue(PackageQueueStorageName, out packageQueueString))
+                    {
+                        packageQueueLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy PackageQueue File deleted.");
+                    }
                 }
             }
             

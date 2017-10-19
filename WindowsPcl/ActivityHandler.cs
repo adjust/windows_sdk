@@ -1181,12 +1181,16 @@ namespace AdjustSdk.Pcl
                 // and then delete the old file
                 if (_activityState != null)
                 {
+                    _logger.Info("Legacy ActivityState File found and successfully read.");
+
                     WriteActivityStateS(null);
 
-                    //TODO: check whether the activity state is persisted, and THEN delete
-
-                    activityStateLegacyFile.DeleteAsync();
-                    _logger.Info("Legacy ActivityState File found and successfully read, then deleted afterwards.");
+                    // check whether the activity state is persisted, and THEN delete
+                    if (_deviceUtil.TryTakeObject(ActivityStateStorageName, out activityStateObjectMap))
+                    {
+                        activityStateLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy ActivityState File deleted.");
+                    }
                 }
             }
         }
@@ -1214,12 +1218,16 @@ namespace AdjustSdk.Pcl
                 // and then delete the old file
                 if (_attribution != null)
                 {
+                    _logger.Info("Legacy Attribution File found and successfully read.");
+
                     WriteAttributionI();
 
-                    //TODO: check whether the attribution is persisted, and THEN delete
-
-                    attributionLegacyFile.DeleteAsync();
-                    _logger.Info("Legacy Attribution File found and successfully read, then deleted afterwards.");
+                    // check whether the attribution is persisted, and THEN delete
+                    if (_deviceUtil.TryTakeObject(AttributionStorageName, out attributionObjectMap))
+                    {
+                        attributionLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy Attribution File deleted.");
+                    }
                 }
             }
         }
