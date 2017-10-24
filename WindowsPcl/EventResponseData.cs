@@ -7,7 +7,7 @@
         public EventResponseData(ActivityPackage activityPackage)
         {
             string eventToken;
-            if (activityPackage.Parameters.TryGetValue("event_token", out eventToken))
+            if (activityPackage.Parameters.TryGetValue(Constants.EVENT_TOKEN, out eventToken))
             {
                 EventToken = eventToken;
             }

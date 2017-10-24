@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
@@ -55,10 +56,12 @@ namespace AdjustSdk.Pcl
 
         private ActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
-            // default values
+            Init(adjustConfig, deviceUtil);
+
+            _logger.IsLocked = true;
 
             // enabled by default
-            _state.IsEnabled = true;
+            _state.IsEnabled = adjustConfig.StartEnabled ?? true;
 
             _state.IsOffline = adjustConfig.StartOffline;
 
@@ -70,10 +73,7 @@ namespace AdjustSdk.Pcl
             _state.ItHasToUpdatePackages = false;
             // does not have the session response by default
             _state.HasSessionResponseNotBeenProcessed = false;
-
-            _logger.IsLocked = true;
-
-            Init(adjustConfig, deviceUtil);
+            
             _actionQueue.Enqueue(InitI);
         }
 
@@ -202,13 +202,13 @@ namespace AdjustSdk.Pcl
             {
                 if (!_deviceUtil.IsInstallTracked())
                 {
-                    _logger.Debug("SDK enbalded -> Tracking new session.");
+                    _logger.Debug("SDK enabled -> Tracking new session.");
                     var now = DateTime.Now;
                     TrackNewSessionI(now);
                 }
 
                 string pushToken;
-                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 if (pushToken != null && pushToken != _activityState.PushToken)
                 {
                     SetPushToken(pushToken);
@@ -252,6 +252,13 @@ namespace AdjustSdk.Pcl
             }
 
             UpdateHandlersStatusAndSend();
+        }
+
+        private void SetAskingAttributionI(bool askingAttribution)
+        {
+            _activityState.AskingAttribution = askingAttribution;
+
+            WriteActivityStateI();
         }
 
         private bool HasChangedStateI(bool previousState, bool newState,
@@ -388,7 +395,7 @@ namespace AdjustSdk.Pcl
 
         public void SetAskingAttribution(bool askingAttribution)
         {
-            WriteActivityStateS(() => _activityState.AskingAttribution = askingAttribution);
+            _actionQueue.Enqueue(() => SetAskingAttributionI(askingAttribution));
         }
 
         public ActivityPackage GetAttributionPackage()
@@ -477,7 +484,7 @@ namespace AdjustSdk.Pcl
             if (_activityState != null)
             {
                 string pushToken;
-                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 SetPushToken(pushToken);
             }
 
@@ -514,6 +521,12 @@ namespace AdjustSdk.Pcl
 
             _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
 
+            // fail-safe check if app crashed during delay state, to update packages in queue
+            if (IsToUpdatePackagesI())
+            {
+                UpdatePackagesI();
+            }
+
             PreLaunchActionsI(_config.PreLaunchActions);
 
             //StartI();
@@ -532,8 +545,7 @@ namespace AdjustSdk.Pcl
         private void StartI()
         {
             // it shouldn't start if it was disabled after a first session
-            if (_activityState != null
-                && !_activityState.Enabled)
+            if (_activityState != null && !_activityState.Enabled)
             {
                 return;
             }
@@ -557,7 +569,7 @@ namespace AdjustSdk.Pcl
                 
                 //_activityState.PushToken = _config.PushToken;
                 string pushToken;
-                _deviceUtil.TryTakeSimpleValue("adj_push_token", out pushToken);
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 _activityState.PushToken = pushToken;
 
                 if (_state.IsEnabled)
@@ -568,10 +580,12 @@ namespace AdjustSdk.Pcl
 
                 _activityState.ResetSessionAttributes(now);
                 _activityState.Enabled = _state.IsEnabled;
+                _activityState.UpdatePackages = _state.ItHasToUpdatePackages;
+
                 WriteActivityStateI();
 
                 // remove old push token from device
-                _deviceUtil.ClearSimpleValue("adj_push_token");
+                _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
 
                 return;
             }
@@ -605,6 +619,8 @@ namespace AdjustSdk.Pcl
                     _activityState.SubSessionCount, _activityState.SessionCount);
                 return;
             }
+
+            _logger.Verbose("Time span since last activity too short for a new subsession");
         }
 
         private void TrackNewSessionI(DateTime now)
@@ -709,7 +725,7 @@ namespace AdjustSdk.Pcl
             if (eventResponseData.Success && _config.EventTrackingSucceeded != null)
             {
                 _logger.Debug("Launching success event tracking action");
-                _deviceUtil.RunActionInForeground(() => _config.EventTrackingSucceeded(eventResponseData.GetSuccessResponseData()));
+                _deviceUtil.RunActionInForeground(() => _config?.EventTrackingSucceeded(eventResponseData.GetSuccessResponseData()));
             }
             // failure callback
             if (!eventResponseData.Success && _config.EventTrackingFailed != null)
@@ -1028,7 +1044,7 @@ namespace AdjustSdk.Pcl
             _packageHandler.AddPackage(infoPackage);
 
             // If push token was cached, remove it.
-            _deviceUtil.ClearSimpleValue("adj_push_token");
+            _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
 
             if (_config.EventBufferingEnabled)
             {
@@ -1054,7 +1070,7 @@ namespace AdjustSdk.Pcl
             clickBuilder.Attribution = attribution;
             clickBuilder.ClickTime = clickTime;
             
-            return clickBuilder.BuildClickPackage("deeplink");
+            return clickBuilder.BuildClickPackage(DEEPLINK);
         }
 
         private void ReadQueryStringI(string queryString,
@@ -1083,25 +1099,25 @@ namespace AdjustSdk.Pcl
             string key,
             string value)
         {
-            if (key.Equals("tracker"))
+            if (key.Equals(TRACKER))
             {
                 attribution.TrackerName = value;
                 return true;
             }
 
-            if (key.Equals("campaign"))
+            if (key.Equals(CAMPAIGN))
             {
                 attribution.Campaign = value;
                 return true;
             }
 
-            if (key.Equals("adgroup"))
+            if (key.Equals(ADGROUP))
             {
                 attribution.Adgroup = value;
                 return true;
             }
 
-            if (key.Equals("creative"))
+            if (key.Equals(CREATIVE))
             {
                 attribution.Creative = value;
                 return true;
@@ -1129,19 +1145,9 @@ namespace AdjustSdk.Pcl
         
         private void WriteActivityStateI()
         {
-            WriteActivityStateS(null);
+            _deviceUtil.PersistObject(ActivityStateStorageName, ActivityState.ToDictionary(_activityState));
         }
-
-        private void WriteActivityStateS(Action action)
-        {
-            lock (_activityStateLock) // lock prevents sync issues from non internal accesses
-            {
-                action?.Invoke();
-
-                _deviceUtil.PersistObject(ActivityStateStorageName, ActivityState.ToDictionary(_activityState));                
-            }
-        }
-
+        
         private void WriteAttributionI()
         {
             _deviceUtil.PersistObject(AttributionStorageName, AdjustAttribution.ToDictionary(_attribution));
@@ -1183,7 +1189,7 @@ namespace AdjustSdk.Pcl
                 {
                     _logger.Info("Legacy ActivityState File found and successfully read.");
 
-                    WriteActivityStateS(null);
+                    WriteActivityStateI();
 
                     // check whether the activity state is persisted, and THEN delete
                     if (_deviceUtil.TryTakeObject(ActivityStateStorageName, out activityStateObjectMap))
@@ -1243,6 +1249,8 @@ namespace AdjustSdk.Pcl
         // return whether or not activity state should be written
         private bool UpdateActivityStateI(DateTime now)
         {
+            if (!CheckActivityStateI(_activityState)) { return false; }
+
             var lastInterval = now - _activityState.LastActivity.Value;
 
             // ignore past updates
@@ -1292,7 +1300,17 @@ namespace AdjustSdk.Pcl
         {
             _attributionHandler.PauseSending();
             _packageHandler.PauseSending();
-            _sdkClickHandler.PauseSending();
+
+            // the conditions to pause the sdk click handler are less restrictive
+            // it's possible for the sdk click handler to be active while others are paused
+            if (!IsToSendI(true))
+            {
+                _sdkClickHandler.PauseSending();
+            }
+            else
+            {
+                _sdkClickHandler.ResumeSending();
+            }
         }
 
         private void ResumeSendingI()
@@ -1454,7 +1472,7 @@ namespace AdjustSdk.Pcl
         #region timers
         private void StartForegroundTimerI()
         {
-            if (IsPausedI())
+            if (!IsEnabledI())
             {
                 return;
             }

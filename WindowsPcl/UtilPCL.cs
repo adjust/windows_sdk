@@ -9,23 +9,16 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using AdjustSdk.Pcl.FileSystem;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
     public static class Util
     {
-        public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
         private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
         internal static string UserAgent { get; set; }
-
-        public const string ActivityKind = "activity_kind";
-        public const string CreatedAt = "created_at";
-        public const string SecretId = "secret_id";
-        public const string AppSecret = "app_secret";
-        public const string ClearSignature = "clear_signature";
-        public const string Fields = "fields";
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -256,7 +249,7 @@ namespace AdjustSdk.Pcl
         internal static void ConfigureHttpClient(string clientSdk)
         {
             HttpClient.Timeout = new TimeSpan(0, 1, 0);
-            HttpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
+            HttpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
 
         internal static string ExtractExceptionMessage(Exception e)
@@ -309,7 +302,7 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage)
         {
-            var url = BaseUrl + activityPackage.Path;
+            var url = BASE_URL + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters["sent_at"] = sNow;
@@ -341,7 +334,7 @@ namespace AdjustSdk.Pcl
             string authorizationHeader =
                 BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
-            var uriBuilder = new UriBuilder(BaseUrl);
+            var uriBuilder = new UriBuilder(BASE_URL);
             uriBuilder.Path = activityPackage.Path;
             uriBuilder.Query = finalQuery;
 
@@ -354,9 +347,9 @@ namespace AdjustSdk.Pcl
         private static string ExtrectAppSecret(Dictionary<string, string> parameters)
         {
             string appSecret;
-            if (parameters.TryGetValue(AppSecret, out appSecret))
+            if (parameters.TryGetValue(APP_SECRET, out appSecret))
             {
-                parameters.Remove(AppSecret);
+                parameters.Remove(APP_SECRET);
             }
             return appSecret;
         }
@@ -364,9 +357,9 @@ namespace AdjustSdk.Pcl
         private static string ExtractSecretId(Dictionary<string, string> parameters)
         {
             string secretId;
-            if (parameters.TryGetValue(SecretId, out secretId))
+            if (parameters.TryGetValue(SECRET_ID, out secretId))
             {
-                parameters.Remove(SecretId);
+                parameters.Remove(SECRET_ID);
             }
             return secretId;
         }
@@ -381,9 +374,9 @@ namespace AdjustSdk.Pcl
             var signatureDetails = GetSignature(parameters, activityKind, appSecret);
             
             string algorithm = "sha256";
-            string signature = AdjustConfig.String2Sha256Func(signatureDetails[ClearSignature]);
+            string signature = AdjustConfig.String2Sha256Func(signatureDetails[CLEAR_SIGNATURE]);
             signature = signature.ToLower();
-            string fields = signatureDetails[Fields];
+            string fields = signatureDetails[FIELDS];
 
             string secretIdHeader = $"secret_id=\"{secretId}\"";
             string signatureHeader = $"signature=\"{signature}\"";
@@ -401,15 +394,15 @@ namespace AdjustSdk.Pcl
             IReadOnlyDictionary<string, string> parameters,
             string activityKind, string appSecret)
         {
-            string createdAt = parameters[CreatedAt];
+            string createdAt = parameters[CREATED_AT];
             string deviceIdentifier;
             string deviceIdentifierName = GetValidIdentifier(parameters, out deviceIdentifier);
 
             var signatureParams = new Dictionary<string, string>
             {
-                {AppSecret, appSecret},
-                {CreatedAt, createdAt},
-                {ActivityKind, activityKind.ToLower()},
+                {APP_SECRET, appSecret},
+                {CREATED_AT, createdAt},
+                {ACTIVITY_KIND, activityKind.ToLower()},
                 {deviceIdentifierName, deviceIdentifier}
             };
 
@@ -429,8 +422,8 @@ namespace AdjustSdk.Pcl
 
             var signature = new Dictionary<string, string>
             {
-                {ClearSignature, clearSignature},
-                {Fields, fields}
+                {CLEAR_SIGNATURE, clearSignature},
+                {FIELDS, fields}
             };
 
             return signature;
@@ -439,17 +432,17 @@ namespace AdjustSdk.Pcl
         private static string GetValidIdentifier(IReadOnlyDictionary<string, string> parameters, 
             out string foundValue)
         {
-            if (parameters.TryGetValue("win_adid", out foundValue))
-                return "win_adid";
+            if (parameters.TryGetValue(WIN_ADID, out foundValue))
+                return WIN_ADID;
 
-            if (parameters.TryGetValue("win_hwid", out foundValue))
-                return "win_hwid";
+            if (parameters.TryGetValue(WIN_HWID, out foundValue))
+                return WIN_HWID;
 
-            if (parameters.TryGetValue("win_naid", out foundValue))
-                return "win_naid";
+            if (parameters.TryGetValue(WIN_NAID, out foundValue))
+                return WIN_NAID;
 
-            if (parameters.TryGetValue("win_udid", out foundValue))
-                return "win_udid";
+            if (parameters.TryGetValue(WIN_UDID, out foundValue))
+                return WIN_UDID;
 
             foundValue = null;
             return null;
@@ -457,8 +450,8 @@ namespace AdjustSdk.Pcl
         
         private static void SetUserAgent()
         {
-            HttpClient.DefaultRequestHeaders.Remove("user-agent");
-            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation("user-agent", UserAgent);
+            HttpClient.DefaultRequestHeaders.Remove(USER_AGENT);
+            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
         }
 
         private static void SetAuthorizationParameter(string authHeader)

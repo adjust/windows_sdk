@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
@@ -168,14 +169,14 @@ namespace AdjustSdk.Pcl
             foreach (var entry in _attributionPackage.Parameters)
             {
                 if (entry.Key == null) { continue; }
-                if (entry.Key == "app_secret") { continue; }
+                if (entry.Key == APP_SECRET) { continue; }
 
                 var keyEscaped = Uri.EscapeDataString(entry.Key);
 
                 if (entry.Value == null) { continue; }
                 var valueEscaped = Uri.EscapeDataString(entry.Value);
 
-                var queryParameter = string.Format("{0}={1}", keyEscaped, valueEscaped);
+                var queryParameter = $"{keyEscaped}={valueEscaped}";
 
                 queryList.Add(queryParameter);
             }

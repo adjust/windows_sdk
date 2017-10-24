@@ -19,6 +19,15 @@ namespace AdjustSdk
 
         internal Dictionary<string, string> Json { get; set; }
 
+        private const string TRACKER_NAME = "TrackerName";
+        private const string TRACKER_TOKEN = "TrackerToken";
+        private const string ADD_NETWORK = "Network";
+        private const string CAMPAIGN = "Campaign";
+        private const string ADGROUP = "Adgroup";
+        private const string CREATIVE = "Creative";
+        private const string CLICK_LABEL = "ClickLabel";
+        private const string ADID = "Adid";
+
         public static AdjustAttribution FromJsonString(string attributionString, string adid)
         {
             if (attributionString == null) { return null; }
@@ -97,14 +106,14 @@ namespace AdjustSdk
         {
             return new Dictionary<string, object>
             {
-                {"TrackerName", attribution.TrackerName},
-                {"TrackerToken", attribution.TrackerToken},
-                {"Network", attribution.Network},
-                {"Campaign", attribution.Campaign},
-                {"Adgroup", attribution.Adgroup},
-                {"Creative", attribution.Creative},
-                {"ClickLabel", attribution.ClickLabel},
-                {"Adid", attribution.Adid}
+                {TRACKER_NAME, attribution.TrackerName},
+                {TRACKER_TOKEN, attribution.TrackerToken},
+                {ADD_NETWORK, attribution.Network},
+                {CAMPAIGN, attribution.Campaign},
+                {ADGROUP, attribution.Adgroup},
+                {CREATIVE, attribution.Creative},
+                {CLICK_LABEL, attribution.ClickLabel},
+                {ADID, attribution.Adid}
             };
         }
 
@@ -112,14 +121,14 @@ namespace AdjustSdk
         {
             return new AdjustAttribution
             {
-                TrackerName = attributionObjectMap.ContainsKey("TrackerName") ? attributionObjectMap["TrackerName"] as string : null,
-                TrackerToken = attributionObjectMap.ContainsKey("TrackerToken") ? attributionObjectMap["TrackerToken"] as string : null,
-                Network = attributionObjectMap.ContainsKey("Network") ? attributionObjectMap["Network"] as string : null,
-                Campaign = attributionObjectMap.ContainsKey("Campaign") ? attributionObjectMap["Campaign"] as string : null,
-                Adgroup = attributionObjectMap.ContainsKey("Adgroup") ? attributionObjectMap["Adgroup"] as string : null,
-                Creative = attributionObjectMap.ContainsKey("Creative") ? attributionObjectMap["Creative"] as string : null,
-                ClickLabel = attributionObjectMap.ContainsKey("ClickLabel") ? attributionObjectMap["ClickLabel"] as string : null,
-                Adid = attributionObjectMap.ContainsKey("Adid") ? attributionObjectMap["Adid"] as string : null
+                TrackerName = attributionObjectMap.ContainsKey(TRACKER_NAME) ? attributionObjectMap[TRACKER_NAME] as string : null,
+                TrackerToken = attributionObjectMap.ContainsKey(TRACKER_TOKEN) ? attributionObjectMap[TRACKER_TOKEN] as string : null,
+                Network = attributionObjectMap.ContainsKey(ADD_NETWORK) ? attributionObjectMap[ADD_NETWORK] as string : null,
+                Campaign = attributionObjectMap.ContainsKey(CAMPAIGN) ? attributionObjectMap[CAMPAIGN] as string : null,
+                Adgroup = attributionObjectMap.ContainsKey(ADGROUP) ? attributionObjectMap[ADGROUP] as string : null,
+                Creative = attributionObjectMap.ContainsKey(CREATIVE) ? attributionObjectMap[CREATIVE] as string : null,
+                ClickLabel = attributionObjectMap.ContainsKey(CLICK_LABEL) ? attributionObjectMap[CLICK_LABEL] as string : null,
+                Adid = attributionObjectMap.ContainsKey(ADID) ? attributionObjectMap[ADID] as string : null
             };
         }
 

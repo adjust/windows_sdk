@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk
 {
@@ -17,15 +18,15 @@ namespace AdjustSdk
     {
         public static ActivityKind FromString(string activityKindString)
         {
-            if ("session".Equals(activityKindString))
+            if (activityKindString == SESSION)
                 return ActivityKind.Session;
-            if ("event".Equals(activityKindString))
+            if (activityKindString == EVENT)
                 return ActivityKind.Event;
-            if ("click".Equals(activityKindString))
+            if (activityKindString == CLICK)
                 return ActivityKind.Click;
-            if ("attribution".Equals(activityKindString))
+            if (activityKindString == ATTRIBUTION)
                 return ActivityKind.Attribution;
-            if ("info".Equals(activityKindString))
+            if (activityKindString == INFO)
                 return ActivityKind.Info;
             return ActivityKind.Unknown;
         }
@@ -39,11 +40,11 @@ namespace AdjustSdk
         {
             switch (activityKind)
             {
-                case ActivityKind.Session: return "/session";
-                case ActivityKind.Event: return "/event";
-                case ActivityKind.Click: return "/sdk_click";
-                case ActivityKind.Attribution: return "/attribution";
-                case ActivityKind.Info: return "/sdk_info";
+                case ActivityKind.Session: return SESSION_PATH;
+                case ActivityKind.Event: return EVENT_PATH;
+                case ActivityKind.Click: return SDK_CLICK_PATH;
+                case ActivityKind.Attribution: return ATTRIBUTION_PATH;
+                case ActivityKind.Info: return SDK_INFO_PATH;
                 default: return null;
             }
         }
@@ -52,18 +53,18 @@ namespace AdjustSdk
         {
             string eventToken = null;
 
-            parameters?.TryGetValue("event_token", out eventToken);
+            parameters?.TryGetValue(EVENT_TOKEN, out eventToken);
 
             if (eventToken == null) { return ""; }
 
             string sRevenue;
 
-            if (!parameters.TryGetValue("revenue", out sRevenue))
+            if (!parameters.TryGetValue(REVENUE, out sRevenue))
             {
                 return Util.F("'{0}'", eventToken);
             }
 
-            return Util.F("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
+            return Util.F("({0} {1}, '{2}')", sRevenue, parameters[CURRENCY], eventToken);
         }
     }
 }

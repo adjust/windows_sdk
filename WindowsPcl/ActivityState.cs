@@ -30,6 +30,21 @@ namespace AdjustSdk.Pcl
         internal LinkedList<string> PurchaseIds { get; private set; }
         private static int PURCHASE_ID_MAXCOUNT = 10;
 
+        private static readonly string EVENT_COUNT = "EventCount";
+        private static readonly string SESSION_COUNT = "SessionCount";
+        private static readonly string SUBSESSION_COUNT = "SubSessionCount";
+        private static readonly string SESSION_LENGTH = "SessionLenght";
+        private static readonly string TIME_SPENT = "TimeSpent";
+        private static readonly string LAST_ACTIVITY = "LastActivity";
+        private static readonly string LAST_INTERVAL = "LastInterval";
+        private static readonly string UUID = "Uuid";
+        private static readonly string ENABLED = "Enabled";
+        private static readonly string ASKING_ATTRIBUTION = "AskingAttribution";
+        private static readonly string UPDATE_PACKAGES = "UpdatePackages";
+        private static readonly string PUSH_TOKEN = "PushToken";
+        private static readonly string ADID = "Adid";
+        private static readonly string PURCHASE_IDS = "PurchaseIds";
+
         public ActivityState()
         {
             SubSessionCount = -1; // -1 means unknown
@@ -90,20 +105,20 @@ namespace AdjustSdk.Pcl
 
             return new Dictionary<string, object>
             {
-                {"EventCount", activityState.EventCount},
-                {"SessionCount", activityState.SessionCount},
-                {"SubSessionCount", activityState.SubSessionCount},
-                {"SessionLenght", activityState.SessionLenght},
-                {"TimeSpent", activityState.TimeSpent},
-                {"LastActivity", activityState.LastActivity?.Ticks ?? DateTime.MinValue.Ticks},
-                {"LastInterval", activityState.LastInterval},
-                {"Uuid", activityState.Uuid},
-                {"Enabled", activityState.Enabled},
-                {"AskingAttribution", activityState.AskingAttribution},
-                {"UpdatePackages", activityState.UpdatePackages},
-                {"PushToken", activityState.PushToken},
-                {"Adid", activityState.Adid},
-                {"PurchaseIds", purchaseIdsString }
+                {EVENT_COUNT, activityState.EventCount},
+                {SESSION_COUNT, activityState.SessionCount},
+                {SUBSESSION_COUNT, activityState.SubSessionCount},
+                {SESSION_LENGTH, activityState.SessionLenght},
+                {TIME_SPENT, activityState.TimeSpent},
+                {LAST_ACTIVITY, activityState.LastActivity?.Ticks ?? DateTime.MinValue.Ticks},
+                {LAST_INTERVAL, activityState.LastInterval},
+                {UUID, activityState.Uuid},
+                {ENABLED, activityState.Enabled},
+                {ASKING_ATTRIBUTION, activityState.AskingAttribution},
+                {UPDATE_PACKAGES, activityState.UpdatePackages},
+                {PUSH_TOKEN, activityState.PushToken},
+                {ADID, activityState.Adid},
+                {PURCHASE_IDS, purchaseIdsString }
             };
         }
         
@@ -111,27 +126,27 @@ namespace AdjustSdk.Pcl
         {
             var activityState = new ActivityState
             {
-                EventCount = activityStateObjectMap.ContainsKey("EventCount") ? (int) activityStateObjectMap["EventCount"] : 0,
-                SessionCount = activityStateObjectMap.ContainsKey("SessionCount") ? (int) activityStateObjectMap["SessionCount"] : 0,
-                SubSessionCount = activityStateObjectMap.ContainsKey("SubSessionCount") ? (int) activityStateObjectMap["SubSessionCount"] : 0,
-                SessionLenght = activityStateObjectMap.ContainsKey("SessionLenght") ? activityStateObjectMap["SessionLenght"] as TimeSpan? : TimeSpan.Zero,
-                TimeSpent = activityStateObjectMap.ContainsKey("TimeSpent") ? activityStateObjectMap["TimeSpent"] as TimeSpan? : TimeSpan.Zero,
-                LastInterval = activityStateObjectMap.ContainsKey("LastInterval") ? activityStateObjectMap["LastInterval"] as TimeSpan? : null,
-                Uuid = activityStateObjectMap.ContainsKey("Uuid") ? (Guid) activityStateObjectMap["Uuid"] : default(Guid),
-                Enabled = activityStateObjectMap.ContainsKey("Enabled") ? (bool) activityStateObjectMap["Enabled"] : false,
-                AskingAttribution = activityStateObjectMap.ContainsKey("AskingAttribution") ? (bool) activityStateObjectMap["AskingAttribution"] : false,
-                UpdatePackages = activityStateObjectMap.ContainsKey("UpdatePackages") ? (bool) activityStateObjectMap["UpdatePackages"] : false,
-                PushToken = activityStateObjectMap.ContainsKey("PushToken") ? activityStateObjectMap["PushToken"] as string : null,
-                Adid = activityStateObjectMap.ContainsKey("Adid") ? activityStateObjectMap["Adid"] as string : null
+                EventCount = activityStateObjectMap.ContainsKey(EVENT_COUNT) ? (int) activityStateObjectMap[EVENT_COUNT] : 0,
+                SessionCount = activityStateObjectMap.ContainsKey(SESSION_COUNT) ? (int) activityStateObjectMap[SESSION_COUNT] : 0,
+                SubSessionCount = activityStateObjectMap.ContainsKey(SUBSESSION_COUNT) ? (int) activityStateObjectMap[SUBSESSION_COUNT] : 0,
+                SessionLenght = activityStateObjectMap.ContainsKey(SESSION_LENGTH) ? activityStateObjectMap[SESSION_LENGTH] as TimeSpan? : TimeSpan.Zero,
+                TimeSpent = activityStateObjectMap.ContainsKey(TIME_SPENT) ? activityStateObjectMap[TIME_SPENT] as TimeSpan? : TimeSpan.Zero,
+                LastInterval = activityStateObjectMap.ContainsKey(LAST_INTERVAL) ? activityStateObjectMap[LAST_INTERVAL] as TimeSpan? : null,
+                Uuid = activityStateObjectMap.ContainsKey(UUID) ? (Guid) activityStateObjectMap[UUID] : default(Guid),
+                Enabled = activityStateObjectMap.ContainsKey(ENABLED) ? (bool) activityStateObjectMap[ENABLED] : false,
+                AskingAttribution = activityStateObjectMap.ContainsKey(ASKING_ATTRIBUTION) ? (bool) activityStateObjectMap[ASKING_ATTRIBUTION] : false,
+                UpdatePackages = activityStateObjectMap.ContainsKey(UPDATE_PACKAGES) ? (bool) activityStateObjectMap[UPDATE_PACKAGES] : false,
+                PushToken = activityStateObjectMap.ContainsKey(PUSH_TOKEN) ? activityStateObjectMap[PUSH_TOKEN] as string : null,
+                Adid = activityStateObjectMap.ContainsKey(ADID) ? activityStateObjectMap[ADID] as string : null
             };
 
-            var lastActivityTicks = (long)activityStateObjectMap["LastActivity"];
+            var lastActivityTicks = (long)activityStateObjectMap[LAST_ACTIVITY];
             var lastActivity = new DateTime(lastActivityTicks);
             if (lastActivity != DateTime.MinValue)
                 activityState.LastActivity = lastActivity;
 
             object purchaseIdsJson;
-            if (activityStateObjectMap.TryGetValue("PurchaseIds", out purchaseIdsJson))
+            if (activityStateObjectMap.TryGetValue(PURCHASE_IDS, out purchaseIdsJson))
                 activityState.PurchaseIds =
                     JsonConvert.DeserializeObject<LinkedList<string>>(purchaseIdsJson.ToString());
 

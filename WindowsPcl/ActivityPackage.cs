@@ -16,6 +16,14 @@ namespace AdjustSdk.Pcl
         public Dictionary<string, string> CallbackParameters { get; set; }
         public Dictionary<string, string> PartnerParameters { get; set; }
 
+        private const string PATH = "Path";
+        private const string CLIENT_SDK = "ClientSdk";
+        private const string ACTIVITY_KIND = "ActivityKind";
+        private const string SUFFIX = "Suffix";
+        private const string PARAMETERS = "Parameters";
+        private const string CALLBACK_PARAMETERS = "CallbackParameters";
+        private const string PARAMETER_PARAMETERS = "PartnerParameters";
+
         public ActivityPackage()
         { }
 
@@ -73,13 +81,13 @@ namespace AdjustSdk.Pcl
 
             return new Dictionary<string, string>
             {
-                {"Path", activityPackage.Path},
-                {"ClientSdk", activityPackage.ClientSdk},
-                {"ActivityKind", ActivityKindUtil.ToString(activityPackage.ActivityKind)},
-                {"Suffix", activityPackage.Suffix},
-                {"Parameters", parametersJson},
-                {"CallbackParameters", callbackParamsJson},
-                {"PartnerParameters", partnerParamsJson}
+                {PATH, activityPackage.Path},
+                {CLIENT_SDK, activityPackage.ClientSdk},
+                {ACTIVITY_KIND, ActivityKindUtil.ToString(activityPackage.ActivityKind)},
+                {SUFFIX, activityPackage.Suffix},
+                {PARAMETERS, parametersJson},
+                {CALLBACK_PARAMETERS, callbackParamsJson},
+                {PARAMETER_PARAMETERS, partnerParamsJson}
             };
         }
 
@@ -88,31 +96,31 @@ namespace AdjustSdk.Pcl
             var activityPackage = new ActivityPackage();
 
             string parametersJson;
-            if (activityPackageObjectMap.TryGetValue("Parameters", out parametersJson))
+            if (activityPackageObjectMap.TryGetValue(PARAMETERS, out parametersJson))
             {
                 activityPackage.Parameters =
                     JsonConvert.DeserializeObject<Dictionary<string, string>>(parametersJson);
             }
 
             string callbackParamsJson;
-            if (activityPackageObjectMap.TryGetValue("CallbackParameters", out callbackParamsJson))
+            if (activityPackageObjectMap.TryGetValue(CALLBACK_PARAMETERS, out callbackParamsJson))
             {
                 activityPackage.CallbackParameters =
                     JsonConvert.DeserializeObject<Dictionary<string, string>>(callbackParamsJson);
             }
 
             string partnerParamsJson;
-            if (activityPackageObjectMap.TryGetValue("PartnerParameters", out partnerParamsJson))
+            if (activityPackageObjectMap.TryGetValue(PARAMETER_PARAMETERS, out partnerParamsJson))
             {
                 activityPackage.PartnerParameters =
                     JsonConvert.DeserializeObject<Dictionary<string, string>>(partnerParamsJson);
             }
 
-            activityPackage.Path = activityPackageObjectMap.ContainsKey("Path") ? activityPackageObjectMap["Path"] : null;
-            activityPackage.ClientSdk = activityPackageObjectMap.ContainsKey("ClientSdk") ? activityPackageObjectMap["ClientSdk"] : null;
-            activityPackage.Suffix = activityPackageObjectMap.ContainsKey("Suffix") ? activityPackageObjectMap["Suffix"] : null;
+            activityPackage.Path = activityPackageObjectMap.ContainsKey(PATH) ? activityPackageObjectMap[PATH] : null;
+            activityPackage.ClientSdk = activityPackageObjectMap.ContainsKey(CLIENT_SDK) ? activityPackageObjectMap["ClientSdk"] : null;
+            activityPackage.Suffix = activityPackageObjectMap.ContainsKey(SUFFIX) ? activityPackageObjectMap["Suffix"] : null;
 
-            string activityKindString = activityPackageObjectMap.ContainsKey("ActivityKind") ? activityPackageObjectMap["ActivityKind"] : null;
+            string activityKindString = activityPackageObjectMap.ContainsKey(ACTIVITY_KIND) ? activityPackageObjectMap["ActivityKind"] : null;
             if (activityKindString != null)
                 activityPackage.ActivityKind = ActivityKindUtil.FromString(activityKindString);
 

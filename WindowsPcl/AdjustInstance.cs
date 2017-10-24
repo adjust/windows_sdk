@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
@@ -240,7 +241,7 @@ namespace AdjustSdk.Pcl
 
         public void SetPushToken(string pushToken, IDeviceUtil deviceUtil)
         {
-            deviceUtil.PersistSimpleValue("adj_push_token", pushToken);
+            deviceUtil.PersistSimpleValue(ADJUST_PUSH_TOKEN, pushToken);
 
             if (CheckActivityHandler())
             {

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
@@ -52,10 +53,10 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetDefaultParameters();
 
-            AddInt(parameters, "event_count", _activityState.EventCount);
-            AddString(parameters, "event_token", adjustEvent.EventToken);
-            AddDouble(parameters, "revenue", adjustEvent.Revenue);
-            AddString(parameters, "currency", adjustEvent.Currency);
+            AddInt(parameters, EVENT_COUNT, _activityState.EventCount);
+            AddString(parameters, EVENT_TOKEN, adjustEvent.EventToken);
+            AddDouble(parameters, REVENUE, adjustEvent.Revenue);
+            AddString(parameters, CURRENCY, adjustEvent.Currency);
             if (!isInDelay)
             {
                 AddDictionaryJson(parameters, "callback_params",
@@ -81,17 +82,17 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetAttributableParameters(_sessionParameters);
 
-            AddString(parameters, "deeplink", Deeplink);
-            AddString(parameters, "source", source);
+            AddString(parameters, DEEPLINK, Deeplink);
+            AddString(parameters, SOURCE, source);
             AddDateTime(parameters, "click_time", ClickTime);
             AddDictionaryJson(parameters, "params", ExtraParameters);
 
             if (Attribution != null)
             {
-                AddString(parameters, "tracker", Attribution.TrackerName);
-                AddString(parameters, "campaign", Attribution.Campaign);
-                AddString(parameters, "adgroup", Attribution.Adgroup);
-                AddString(parameters, "creative", Attribution.Creative);
+                AddString(parameters, TRACKER, Attribution.TrackerName);
+                AddString(parameters, CAMPAIGN, Attribution.Campaign);
+                AddString(parameters, ADGROUP, Attribution.Adgroup);
+                AddString(parameters, CREATIVE, Attribution.Creative);
             }
 
             return new ActivityPackage(ActivityKind.Click, _deviceInfo.ClientSdk, parameters);
@@ -101,7 +102,7 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetIdsParameters();
 
-            AddString(parameters, "source", source);
+            AddString(parameters, SOURCE, source);
             InjectPushToken(parameters);
 
             return new ActivityPackage(ActivityKind.Info, _deviceInfo.ClientSdk, parameters);
@@ -156,18 +157,18 @@ namespace AdjustSdk.Pcl
 
         private void InjectCommonParameters(Dictionary<string, string> parameters)
         {
-            AddDateTime(parameters, "created_at", _createdAt);
-            AddBool(parameters, "attribution_deeplink", true);
+            AddDateTime(parameters, CREATED_AT, _createdAt);
+            AddBool(parameters, ATTRIBUTION_DEEPLINK, true);
         }
 
         private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "win_adid", _deviceInfo.ReadWindowsAdvertisingId());
-            AddString(parameters, "win_hwid", _deviceInfo.HardwareId);
-            AddString(parameters, "win_naid", _deviceInfo.NetworkAdapterId);
-            AddString(parameters, "win_udid", _deviceInfo.DeviceUniqueId);
+            AddString(parameters, WIN_ADID, _deviceInfo.ReadWindowsAdvertisingId());
+            AddString(parameters, WIN_HWID, _deviceInfo.HardwareId);
+            AddString(parameters, WIN_NAID, _deviceInfo.NetworkAdapterId);
+            AddString(parameters, WIN_UDID, _deviceInfo.DeviceUniqueId);
 
-            AddString(parameters, "eas_id", _deviceInfo.EasId);
+            AddString(parameters, EAS_ID, _deviceInfo.EasId);
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
@@ -189,7 +190,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "country", _deviceInfo.Country);
 
             AddString(parameters, "eas_name", _deviceInfo.EasFriendlyName);
-            AddString(parameters, "eas_id", _deviceInfo.EasId);
+            AddString(parameters, EAS_ID, _deviceInfo.EasId);
             AddString(parameters, "eas_os", _deviceInfo.EasOperatingSystem);
             AddString(parameters, "eas_firmware_version", _deviceInfo.EasSystemFirmwareVersion);
             AddString(parameters, "eas_hardware_version", _deviceInfo.EasSystemHardwareVersion);
@@ -200,8 +201,8 @@ namespace AdjustSdk.Pcl
             string connectivityType = _deviceInfo.GetConnectivityType()?.ToString();
             string networkType = _deviceInfo.GetNetworkType()?.ToString();
 
-            AddString(parameters, "connectivity_type", connectivityType);
-            AddString(parameters, "network_type", networkType);
+            AddString(parameters, CONNECTIVITY_TYPE, connectivityType);
+            AddString(parameters, NETWORK_TYPE, networkType);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)
@@ -210,8 +211,8 @@ namespace AdjustSdk.Pcl
             AddString(parameters, "environment", _config.Environment);
             AddBool(parameters, "device_known", _config.DeviceKnown);
             AddBool(parameters, "needs_response_details", true);
-            AddString(parameters, "secret_id", _config.SecretId);
-            AddString(parameters, "app_secret", _config.AppSecret);
+            AddString(parameters, SECRET_ID, _config.SecretId);
+            AddString(parameters, APP_SECRET, _config.AppSecret);
             AddBool(parameters, "event_buffering_enabled", _config.EventBufferingEnabled);
         }
 
@@ -228,12 +229,12 @@ namespace AdjustSdk.Pcl
 
         private void InjectWindowsUuid(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "win_uuid", _activityState?.Uuid.ToString());
+            AddString(parameters, WIN_UUID, _activityState?.Uuid.ToString());
         }
 
         private void InjectPushToken(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "push_token", _activityState?.PushToken);
+            AddString(parameters, PUSH_TOKEN, _activityState?.PushToken);
         }
 
         #region AddParameter
