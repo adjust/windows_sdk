@@ -50,11 +50,9 @@ namespace AdjustSdk.Pcl
 
         public void SetEnabled(bool enabled)
         {
-            if (!CheckActivityHandler())
-            {
-                _startEnabled = enabled;
-            }
-            else
+            _startEnabled = enabled;
+
+            if(CheckActivityHandler(enabled, "enabled mode", "disabled mode"))
             {
                 _activityHandler.SetEnabled(enabled);
             }
@@ -68,7 +66,7 @@ namespace AdjustSdk.Pcl
 
         public void SetOfflineMode(bool offlineMode)
         {
-            if (!CheckActivityHandler())
+            if (!CheckActivityHandler(offlineMode, "offline mode", "online mode"))
             {
                 _startOffline = offlineMode;
             }
@@ -91,11 +89,35 @@ namespace AdjustSdk.Pcl
             return _activityHandler.GetAttribution();
         }
 
-        private bool CheckActivityHandler()
+        /// <summary>
+        /// Check if ActivityHandler instance is set or not.
+        /// </summary>
+        /// <param name="status">Is SDK enabled or not</param>
+        /// <param name="trueMessage">Log message to display in case SDK is enabled</param>
+        /// <param name="falseMessage">Log message to display in case SDK is disabled</param>
+        /// <returns>boolean indicating whether ActivityHandler instance is set or not</returns>
+        private bool CheckActivityHandler(bool status, string trueMessage, string falseMessage)
+        {
+            if (status)
+                return CheckActivityHandler(trueMessage);
+
+            return CheckActivityHandler(falseMessage);
+        }
+
+        /// <summary>
+        /// Check if ActivityHandler instance is set or not.
+        /// </summary>
+        /// <param name="savedForLaunchWarningSuffixMessage">Log message to indicate action that was asked when SDK was disabled</param>
+        /// <returns>boolean indicating whether ActivityHandler instance is set or not</returns>
+        private bool CheckActivityHandler(string savedForLaunchWarningSuffixMessage = null)
         {
             if (_activityHandler == null)
             {
-                _logger.Error("Please initialize Adjust by calling 'ApplicationLaunching' before");
+                if (!string.IsNullOrEmpty(savedForLaunchWarningSuffixMessage))
+                    _logger.Warn($"Adjust not initialized, but {savedForLaunchWarningSuffixMessage} saved for launch");
+                else
+                    _logger.Error("Adjust not initialized correctly");
+
                 return false;
             }
 
