@@ -79,13 +79,8 @@ namespace AdjustSdk.Pcl
         {
             try
             {
-                //IFolder localStorage = FileSystem.Current.LocalStorage;
-
-                //IFile file = await localStorage.GetFileAsync(fileName);
-
                 if (file == null)
                 {
-                    //throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
                     Logger.Verbose("{0} file not found", objectName);
                     return defaultReturn();
                 }
@@ -120,9 +115,11 @@ namespace AdjustSdk.Pcl
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
+            {
                 return F("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
-            else
-                return F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+            }
+
+            return F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -137,16 +134,14 @@ namespace AdjustSdk.Pcl
 
         internal static double SecondsFormat(this TimeSpan? timeSpan)
         {
-            if (timeSpan == null)
-                return -1;
-            else
-                return timeSpan.Value.TotalSeconds;
+            if (timeSpan == null) { return -1; }
+
+            return timeSpan.Value.TotalSeconds;
         }
 
         internal static string Quote(this string input)
         {
-            if (input == null || !input.Contains(" "))
-                return input;
+            if (input == null || !input.Contains(" ")) { return input; }
 
             return F("'{0}'", input);
         }
@@ -300,12 +295,12 @@ namespace AdjustSdk.Pcl
             return $"{timeSpan.TotalSeconds:0.0}";
         }
 
-        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage)
+        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, int queueSize)
         {
             var url = BASE_URL + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
-            activityPackage.Parameters["sent_at"] = sNow;
+            activityPackage.Parameters[SENT_AT] = sNow;
 
             string secretId = ExtractSecretId(activityPackage.Parameters);
             string appSecret = ExtrectAppSecret(activityPackage.Parameters);
@@ -317,7 +312,11 @@ namespace AdjustSdk.Pcl
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            using (var postParams = new FormUrlEncodedContent(activityPackage.Parameters))
+            Dictionary<string, string> postParamsMap =
+                new Dictionary<string, string>(activityPackage.Parameters)
+                { {QUEUE_SIZE, queueSize.ToString()} };
+
+            using (var postParams = new FormUrlEncodedContent(postParamsMap))
             {
                 return HttpClient.PostAsync(url, postParams).Result;
             }
@@ -325,7 +324,7 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
         {
-            var finalQuery = F("{0}&sent_at={1}", queryParameters, DateFormat(DateTime.Now));
+            var finalQuery = F("{0}&{1}={2}", queryParameters, SENT_AT, DateFormat(DateTime.Now));
 
             string secretId = ExtractSecretId(activityPackage.Parameters);
             string appSecret = ExtrectAppSecret(activityPackage.Parameters);
@@ -373,15 +372,15 @@ namespace AdjustSdk.Pcl
 
             var signatureDetails = GetSignature(parameters, activityKind, appSecret);
             
-            string algorithm = "sha256";
+            string algorithm = ALG_SHA256;
             string signature = AdjustConfig.String2Sha256Func(signatureDetails[CLEAR_SIGNATURE]);
             signature = signature.ToLower();
             string fields = signatureDetails[FIELDS];
 
-            string secretIdHeader = $"secret_id=\"{secretId}\"";
-            string signatureHeader = $"signature=\"{signature}\"";
-            string algorithmHeader = $"algorithm=\"{algorithm}\"";
-            string fieldsHeader = $"headers=\"{fields}\"";
+            string secretIdHeader = $"{SECRET_ID}=\"{secretId}\"";
+            string signatureHeader = $"{SIGNATURE}=\"{signature}\"";
+            string algorithmHeader = $"{ALGORITHM}=\"{algorithm}\"";
+            string fieldsHeader = $"{HEADERS}=\"{fields}\"";
 
             string authorizationHeader = $"Signature {secretIdHeader},{signatureHeader},{algorithmHeader},{fieldsHeader}";
 
@@ -456,9 +455,9 @@ namespace AdjustSdk.Pcl
 
         private static void SetAuthorizationParameter(string authHeader)
         {
-            HttpClient.DefaultRequestHeaders.Remove("Authorization");
+            HttpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
             if(!string.IsNullOrEmpty(authHeader))
-                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", authHeader);
+                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
         }
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
@@ -547,28 +546,20 @@ namespace AdjustSdk.Pcl
             Dictionary<string, string> source,
             string parametersName)
         {
-            if (target == null)
-            {
-                return source;
-            }
-            if (source == null)
-            {
-                return target;
-            }
+            if (target == null) { return source; }
+            if (source == null) { return target; }
 
             var mergedParameters = new Dictionary<string, string>(target);
             foreach (var kvp in source)
             {
-                var key = kvp.Key;
-                var value = kvp.Value;
-                string oldValue = null;
-                if (mergedParameters.TryGetValue(key, out oldValue))
+                string oldValue;
+                if (mergedParameters.TryGetValue(kvp.Key, out oldValue))
                 {
                     Logger.Warn("Key {0} with value {1} from {2} parameter was replaced by value {3}",
-                        key,
+                        kvp.Key,
                         oldValue,
                         parametersName,
-                        value);
+                        kvp.Value);
                 }
                 mergedParameters.AddSafe(kvp.Key, kvp.Value);
             }
@@ -577,9 +568,7 @@ namespace AdjustSdk.Pcl
 
         internal static void AddSafe<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value)
         {
-            if (key == null || value == null) {
-                return;
-            }
+            if (key == null || value == null) { return; }
             dict.Remove(key);
             dict.Add(key, value);
         }
@@ -594,10 +583,8 @@ namespace AdjustSdk.Pcl
             {
                 return this;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public string Format(string format, object arg, IFormatProvider provider)

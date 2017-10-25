@@ -25,17 +25,17 @@ namespace AdjustSdk.Pcl
             _failureCallback = failureCallback;
         }
 
-        public void SendPackage(ActivityPackage activityPackage)
+        public void SendPackage(ActivityPackage activityPackage, int queueSize)
         {
-            Task.Run(() => SendI(activityPackage))
+            Task.Run(() => SendI(activityPackage, queueSize))
                 // continuation used to prevent unhandled exceptions in SendI
                 .ContinueWith((responseData) => PackageSent(responseData, activityPackage),
                     TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI
         }
 
-        public void SendPackageSync(ActivityPackage activityPackage)
+        public void SendPackageSync(ActivityPackage activityPackage, int queueSize)
         {
-            var sendTask = new Task<ResponseData>(() => SendI(activityPackage));
+            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, queueSize));
             // continuation used to prevent unhandled exceptions in SendI
             sendTask.ContinueWith((responseData) => {
                 PackageSent(responseData, activityPackage);
@@ -44,13 +44,12 @@ namespace AdjustSdk.Pcl
             sendTask.RunSynchronously();
         }
 
-        private ResponseData SendI(ActivityPackage activityPackage)
+        private ResponseData SendI(ActivityPackage activityPackage, int queueSize)
         {
-            ResponseData responseData = null;
-
+            ResponseData responseData;
             try
             {
-                using (var httpResponseMessage = Util.SendPostRequest(activityPackage))
+                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, queueSize))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
                 }
@@ -58,13 +57,9 @@ namespace AdjustSdk.Pcl
             catch (HttpRequestException hre)
             {
                 var we = hre.InnerException as WebException;
-                if (we == null)
-                {
-                    responseData = ProcessException(hre, activityPackage);
-                } else
-                {
-                    responseData = ProcessWebException(we, activityPackage);
-                }
+                responseData = we == null ? 
+                    ProcessException(hre, activityPackage) : 
+                    ProcessWebException(we, activityPackage);
             }
             catch (WebException we) { responseData = ProcessWebException(we, activityPackage); }
             catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }

@@ -99,10 +99,7 @@ namespace AdjustSdk.Pcl
         /// <returns>boolean indicating whether ActivityHandler instance is set or not</returns>
         private bool CheckActivityHandler(bool status, string trueMessage, string falseMessage)
         {
-            if (status)
-                return CheckActivityHandler(trueMessage);
-
-            return CheckActivityHandler(falseMessage);
+            return CheckActivityHandler(status ? trueMessage : falseMessage);
         }
 
         /// <summary>
@@ -115,9 +112,13 @@ namespace AdjustSdk.Pcl
             if (_activityHandler == null)
             {
                 if (!string.IsNullOrEmpty(savedForLaunchWarningSuffixMessage))
+                {
                     _logger.Warn($"Adjust not initialized, but {savedForLaunchWarningSuffixMessage} saved for launch");
+                }
                 else
+                {
                     _logger.Error("Adjust not initialized correctly");
+                }
 
                 return false;
             }

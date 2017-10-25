@@ -142,7 +142,9 @@ namespace AdjustSdk.Pcl
             {
                 if (_activityState == null)
                 {
-                    // TODO add warning log
+                    _logger.Warn("Event tracked before first activity resumed.\n" +
+                                 "If it was triggered in the Application class, it might timestamp or even send an install long before the user opens the app.\n" +
+                                 "Please check https://github.com/adjust/android_sdk#can-i-trigger-an-event-at-application-launch for more information.");
                     StartI();
                 }
                 TrackEventI(adjustEvent);

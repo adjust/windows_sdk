@@ -2,14 +2,22 @@
 {
     internal static class Constants
     {
+        internal const string ALG_SHA256 = "sha256";
+        internal const string ALG_SHA512 = "sha512";
+        internal const string ALG_MD5 = "md5";
+
         internal const string BASE_URL = "https://app.adjust.com";
 
         internal const string ACTIVITY_KIND = "activity_kind";
         internal const string CREATED_AT = "created_at";
         internal const string SECRET_ID = "secret_id";
+        internal const string SIGNATURE = "signature";
+        internal const string ALGORITHM = "algorithm";
+        internal const string HEADERS = "headers";
         internal const string APP_SECRET = "app_secret";
         internal const string CLEAR_SIGNATURE = "clear_signature";
         internal const string FIELDS = "fields";
+        internal const string AUTHORIZATION_PARAM = "Authorization";
 
         internal const string SESSION = "session";
         internal const string EVENT = "event";
@@ -47,5 +55,7 @@
         internal const string CONNECTIVITY_TYPE = "connectivity_type";
         internal const string NETWORK_TYPE = "network_type";
         internal const string USER_AGENT = "user-agent";
+        internal const string QUEUE_SIZE = "queue_size";
+        internal const string SENT_AT = "sent_at";
     }
 }

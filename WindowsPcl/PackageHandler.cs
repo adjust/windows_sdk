@@ -28,6 +28,8 @@ namespace AdjustSdk.Pcl
 
         public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
+            Init(activityHandler, deviceUtil, startPaused);
+
             _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
         }
 
@@ -95,8 +97,6 @@ namespace AdjustSdk.Pcl
 
         private void InitI(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            Init(activityHandler, deviceUtil, startPaused);
-
             ReadPackageQueueI();
 
             _internalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
@@ -116,7 +116,7 @@ namespace AdjustSdk.Pcl
 
         private void SendFirstI()
         {
-            if (_packageQueue.Count == 0) return;
+            if (_packageQueue.Count == 0) {  return; }
 
             if (_isPaused)
             {
@@ -130,7 +130,7 @@ namespace AdjustSdk.Pcl
             if (_internalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
                 _internalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                _requestHandler.SendPackage(_packageQueue.First());
+                _requestHandler.SendPackage(_packageQueue.First(), _packageQueue.Count - 1);
             }
             else
             {
@@ -144,6 +144,7 @@ namespace AdjustSdk.Pcl
             {
                 _packageQueue.RemoveAt(0);
                 WritePackageQueueI();
+                _logger.Verbose("Package handler can send");
             }
             finally
             // preventing an exception not signaling the WaitHandle

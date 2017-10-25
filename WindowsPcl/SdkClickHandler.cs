@@ -68,7 +68,7 @@ namespace AdjustSdk.Pcl
 
             Action action = () =>
             {
-                _requestHandler.SendPackageSync(sdkClickPackage);
+                _requestHandler.SendPackageSync(sdkClickPackage, _packageQueue.Count - 1);
                 SendNextSdkClick();
             };
 
