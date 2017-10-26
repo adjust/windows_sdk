@@ -303,7 +303,7 @@ namespace AdjustSdk.Pcl
             activityPackage.Parameters[SENT_AT] = sNow;
 
             string secretId = ExtractSecretId(activityPackage.Parameters);
-            string appSecret = ExtrectAppSecret(activityPackage.Parameters);
+            string appSecret = ExtractAppSecret(activityPackage.Parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
@@ -312,9 +312,10 @@ namespace AdjustSdk.Pcl
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            Dictionary<string, string> postParamsMap =
-                new Dictionary<string, string>(activityPackage.Parameters)
-                { {QUEUE_SIZE, queueSize.ToString()} };
+            Dictionary<string, string> postParamsMap = 
+                new Dictionary<string, string>(activityPackage.Parameters);
+            if(queueSize > 0)
+                postParamsMap.Add(QUEUE_SIZE, queueSize.ToString());
 
             using (var postParams = new FormUrlEncodedContent(postParamsMap))
             {
@@ -327,7 +328,7 @@ namespace AdjustSdk.Pcl
             var finalQuery = F("{0}&{1}={2}", queryParameters, SENT_AT, DateFormat(DateTime.Now));
 
             string secretId = ExtractSecretId(activityPackage.Parameters);
-            string appSecret = ExtrectAppSecret(activityPackage.Parameters);
+            string appSecret = ExtractAppSecret(activityPackage.Parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
@@ -343,7 +344,7 @@ namespace AdjustSdk.Pcl
             return HttpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
-        private static string ExtrectAppSecret(Dictionary<string, string> parameters)
+        private static string ExtractAppSecret(Dictionary<string, string> parameters)
         {
             string appSecret;
             if (parameters.TryGetValue(APP_SECRET, out appSecret))
