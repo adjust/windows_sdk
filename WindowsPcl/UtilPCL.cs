@@ -15,7 +15,6 @@ namespace AdjustSdk.Pcl
 {
     public static class Util
     {
-        //public const string BaseUrl = "https://app.adjust.com";
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
         private static HttpClient _httpClient;
@@ -27,14 +26,14 @@ namespace AdjustSdk.Pcl
             _httpClient = null;
         }
 
-        public static void Recreate(string clientSdk)
+        public static void RecreateHttpClient(string clientSdk)
         {
             if (_httpClient != null)
                 return;
 
             _httpClient = new HttpClient {Timeout = new TimeSpan(0, 1, 0)};
             if (clientSdk != null)
-                _httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
+                _httpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
@@ -266,8 +265,8 @@ namespace AdjustSdk.Pcl
 
         internal static void ConfigureHttpClient(string clientSdk)
         {
-            HttpClient.Timeout = new TimeSpan(0, 1, 0);
-            HttpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
+            _httpClient.Timeout = new TimeSpan(0, 1, 0);
+            _httpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
 
         internal static string ExtractExceptionMessage(Exception e)
