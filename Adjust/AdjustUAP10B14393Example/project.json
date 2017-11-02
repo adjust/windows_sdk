@@ -4,8 +4,7 @@
     "Microsoft.Bcl.Async": "1.0.168",
     "Microsoft.Bcl.Build": "1.0.21",
     "Microsoft.Net.Http": "2.2.29",
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.1.0",
-    "PCLStorage": "1.0.2"
+    "Microsoft.NETCore.UniversalWindowsPlatform": "5.1.0"
   },
   "frameworks": {
     "uap10.0": {}
