@@ -5,16 +5,7 @@ namespace Win10Interface
 {
     public class AdjustWS10
     {
-        public static void ApplicationLaunching(
-            string appToken, string environment, string sdkPrefix,
-            bool sendInBackground, double delayStart, string userAgent,
-            string defaultTracker, bool? eventBufferingEnabled, bool launchDeferredDeeplink,
-            string logLevelString, Action<string> logDelegate,
-            Action<Dictionary<string, string>> actionAttributionChangedData,
-            Action<Dictionary<string, string>> actionSessionSuccessData,
-            Action<Dictionary<string, string>> actionSessionFailureData,
-            Action<Dictionary<string, string>> actionEventSuccessData,
-            Action<Dictionary<string, string>> actionEventFailureData)
+        public static void ApplicationLaunching(AdjustConfigDto adjustConfigDto)
         {
         }
 

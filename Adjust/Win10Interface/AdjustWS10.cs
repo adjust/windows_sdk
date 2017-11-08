@@ -7,40 +7,32 @@ namespace Win10Interface
 {
     public class AdjustWS10
     {
-        public static void ApplicationLaunching(
-            string appToken, string environment, string sdkPrefix,
-            bool sendInBackground, double delayStart, string userAgent,
-            string defaultTracker, bool? eventBufferingEnabled, bool launchDeferredDeeplink,
-            string logLevelString, Action<string> logDelegate,
-            Action<Dictionary<string, string>> actionAttributionChangedData,
-            Action<Dictionary<string, string>> actionSessionSuccessData,
-            Action<Dictionary<string, string>> actionSessionFailureData,
-            Action<Dictionary<string, string>> actionEventSuccessData,
-            Action<Dictionary<string, string>> actionEventFailureData)
+        public static void ApplicationLaunching(AdjustConfigDto adjustConfigDto)
         {
             LogLevel logLevel;
-            Enum.TryParse(logLevelString, out logLevel);
+            Enum.TryParse(adjustConfigDto.LogLevelString, out logLevel);
 
-            var config = new AdjustConfig(appToken, environment, logDelegate, logLevel)
+            var config = new AdjustConfig(adjustConfigDto.AppToken, adjustConfigDto.Environment, 
+                adjustConfigDto.LogDelegate, logLevel)
             {
-                DefaultTracker = defaultTracker,
-                SdkPrefix = sdkPrefix,
-                SendInBackground = sendInBackground,
-                DelayStart = TimeSpan.FromSeconds(delayStart)
+                DefaultTracker = adjustConfigDto.DefaultTracker,
+                SdkPrefix = adjustConfigDto.SdkPrefix,
+                SendInBackground = adjustConfigDto.SendInBackground,
+                DelayStart = TimeSpan.FromSeconds(adjustConfigDto.DelayStart)
             };
  
             // TODO: launchDeferredDeeplink
 
             // config.SetAppSecret(0, 0, 0, 0, 0);
 
-            config.SetUserAgent(userAgent);
+            config.SetUserAgent(adjustConfigDto.UserAgent);
 
-            if (eventBufferingEnabled.HasValue)
+            if (adjustConfigDto.EventBufferingEnabled.HasValue)
             {
-                config.EventBufferingEnabled = eventBufferingEnabled.Value;
+                config.EventBufferingEnabled = adjustConfigDto.EventBufferingEnabled.Value;
             }
 
-            if (actionAttributionChangedData != null)
+            if (adjustConfigDto.ActionAttributionChangedData != null)
             {
                 config.AttributionChanged = attribution =>
                 {
@@ -48,32 +40,32 @@ namespace Win10Interface
                         .ToDictionary(attribution)
                         // convert from <string, object> to <string, string>
                         .ToDictionary(x => x.Key, x => x.Value.ToString());
-                    actionAttributionChangedData(attributionMap);
+                    adjustConfigDto.ActionAttributionChangedData(attributionMap);
                 };
             }
 
-            if (actionSessionSuccessData != null)
+            if (adjustConfigDto.ActionSessionSuccessData != null)
             {
-                config.SesssionTrackingSucceeded = session => 
-                    actionSessionSuccessData(AdjustSessionSuccess.ToDictionary(session));
+                config.SesssionTrackingSucceeded = session =>
+                    adjustConfigDto.ActionSessionSuccessData(AdjustSessionSuccess.ToDictionary(session));
             }
 
-            if (actionSessionFailureData != null)
+            if (adjustConfigDto.ActionSessionFailureData != null)
             {
                 config.SesssionTrackingFailed = session =>
-                    actionSessionFailureData(AdjustSessionFailure.ToDictionary(session));
+                    adjustConfigDto.ActionSessionFailureData(AdjustSessionFailure.ToDictionary(session));
             }
 
-            if (actionEventSuccessData != null)
+            if (adjustConfigDto.ActionEventSuccessData != null)
             {
                 config.EventTrackingSucceeded = adjustEvent =>
-                    actionEventSuccessData(AdjustEventSuccess.ToDictionary(adjustEvent));
+                    adjustConfigDto.ActionEventSuccessData(AdjustEventSuccess.ToDictionary(adjustEvent));
             }
 
-            if (actionEventFailureData != null)
+            if (adjustConfigDto.ActionEventFailureData != null)
             {
                 config.EventTrackingFailed = adjustEvent =>
-                    actionEventFailureData(AdjustEventFailure.ToDictionary(adjustEvent));
+                    adjustConfigDto.ActionEventFailureData(AdjustEventFailure.ToDictionary(adjustEvent));
             }
 
             Adjust.ApplicationLaunching(config);

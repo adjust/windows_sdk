@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdjustConfigDto.cs" />
     <Compile Include="AdjustWS10.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
