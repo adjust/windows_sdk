@@ -1,16 +1,10 @@
 ﻿using AdjustSdk.Pcl;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Windows.ApplicationModel;
-using Windows.Security.Cryptography;
-using Windows.Security.Cryptography.Core;
 using Windows.Security.ExchangeActiveSyncProvisioning;
-using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
 using Windows.UI.Core;

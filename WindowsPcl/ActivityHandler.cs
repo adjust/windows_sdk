@@ -35,7 +35,6 @@ namespace AdjustSdk.Pcl
         private TimerCycle _foregroundTimer;
         private TimerOnce _backgroundTimer;
         private TimerOnce _delayStartTimer;
-        private readonly object _activityStateLock = new object();
         private ISdkClickHandler _sdkClickHandler;
         private SessionParameters _sessionParameters;
 
@@ -849,13 +848,30 @@ namespace AdjustSdk.Pcl
             }
 
             // if there is any, try to launch the deeplink
-            LaunchDeepLink(attributionResponseData.Deeplink, task);
+            PrepareDeeplinkI(attributionResponseData.Deeplink, task);
         }
 
-        private void LaunchDeepLink(Uri deeplink, Task previousTask)
+        private void PrepareDeeplinkI(Uri deeplink, Task previousTask)
         {
             if (deeplink == null) { return; }
-            _deviceUtil.LauchDeeplink(deeplink, previousTask);
+
+            _logger.Info($"Deferred deeplink received {deeplink}");
+
+            _deviceUtil.RunActionInForeground(() =>
+            {
+                if (_config == null) { return; }
+
+                bool toLaunchDeeplink = true;
+                if (_config.DeeplinkResponse != null)
+                {
+                    toLaunchDeeplink = _config.DeeplinkResponse(deeplink);
+                }
+
+                if (toLaunchDeeplink)
+                {
+                    _deviceUtil.LauchDeeplink(deeplink, previousTask);
+                }
+            }, previousTask);
         }
         #endregion post response
 

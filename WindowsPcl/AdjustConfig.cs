@@ -31,6 +31,7 @@ namespace AdjustSdk
         public Action<AdjustEventFailure> EventTrackingFailed { get; set; }
         public Action<AdjustSessionSuccess> SesssionTrackingSucceeded { get; set; }
         public Action<AdjustSessionFailure> SesssionTrackingFailed { get; set; }
+        public Func<Uri, bool> DeeplinkResponse { get; set; }
 
         internal List<Action<ActivityHandler>> PreLaunchActions { get; set; }
 
