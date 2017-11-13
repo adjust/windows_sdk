@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{898DCCDE-AFC2-4FF5-8234-8C99695FEB2A}</ProjectGuid>
+    <ProjectGuid>{51775A57-3BC7-45E6-80E4-D8E1DDE5A9E9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Win10Interface</RootNamespace>
-    <AssemblyName>Win10Interface</AssemblyName>
+    <RootNamespace>WinInterface</RootNamespace>
+    <AssemblyName>WinInterface</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;WIN_STUB_10</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;WIN_STUB</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -25,7 +25,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;WIN_STUB_10</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -38,12 +38,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\WinStub\AdjustConfigDto.cs">
-      <Link>AdjustConfigDto.cs</Link>
-    </Compile>
-    <Compile Include="..\WinStub\AdjustWinInterface.cs">
-      <Link>AdjustWinInterface.cs</Link>
-    </Compile>
+    <Compile Include="AdjustConfigDto.cs" />
+    <Compile Include="AdjustWinInterface.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

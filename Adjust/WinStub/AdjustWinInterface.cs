@@ -1,9 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
+#if WIN_STUB_10
 namespace Win10Interface
+#elif WIN_STUB_81
+namespace Win81Interface
+#elif WIN_STUB_WS
+namespace WinWsInterface
+#else
+namespace WinInterface
+#endif
 {
-    public class AdjustWS10
+    public class AdjustWinInterface
     {
         public static void ApplicationLaunching(AdjustConfigDto adjustConfigDto)
         {

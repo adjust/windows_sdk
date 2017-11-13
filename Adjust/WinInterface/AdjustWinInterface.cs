@@ -1,18 +1,29 @@
-﻿using System;
+﻿#if NETFX_CORE
+using AdjustSdk;
+#endif
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using AdjustSdk;
 
+#if WIN_INTERFACE_10
 namespace Win10Interface
+#elif WIN_INTERFACE_81
+namespace Win81Interface
+#elif WIN_INTERFACE_WS
+namespace WinWsInterface
+#else
+namespace WinInterface
+#endif
 {
-    public class AdjustWS10
+    public class AdjustWinInterface
     {
         public static void ApplicationLaunching(AdjustConfigDto adjustConfigDto)
         {
+#if NETFX_CORE
             LogLevel logLevel;
             Enum.TryParse(adjustConfigDto.LogLevelString, out logLevel);
 
-            var config = new AdjustConfig(adjustConfigDto.AppToken, adjustConfigDto.Environment, 
+            var config = new AdjustConfig(adjustConfigDto.AppToken, adjustConfigDto.Environment,
                 adjustConfigDto.LogDelegate, logLevel)
             {
                 DefaultTracker = adjustConfigDto.DefaultTracker,
@@ -20,8 +31,6 @@ namespace Win10Interface
                 SendInBackground = adjustConfigDto.SendInBackground,
                 DelayStart = TimeSpan.FromSeconds(adjustConfigDto.DelayStart)
             };
- 
-            // TODO: launchDeferredDeeplink
 
             // config.SetAppSecret(0, 0, 0, 0, 0);
 
@@ -68,14 +77,22 @@ namespace Win10Interface
                     adjustConfigDto.ActionEventFailureData(AdjustEventFailure.ToDictionary(adjustEvent));
             }
 
+            if (adjustConfigDto.FuncDeeplinkResponseData != null)
+            {
+                config.DeeplinkResponse = uri =>
+                    adjustConfigDto.FuncDeeplinkResponseData(uri.AbsoluteUri);
+            }
+
             Adjust.ApplicationLaunching(config);
+#endif
         }
 
         public static void TrackEvent(string eventToken, double? revenue, string currency,
             string purchaseId, List<string> callbackList, List<string> partnerList)
         {
+#if NETFX_CORE
             var adjustEvent = new AdjustEvent(eventToken)
-                {PurchaseId = purchaseId};
+            { PurchaseId = purchaseId };
 
             if (revenue.HasValue)
             {
@@ -105,90 +122,131 @@ namespace Win10Interface
             }
 
             Adjust.TrackEvent(adjustEvent);
+#endif
         }
 
         public static void ApplicationActivated()
         {
+#if NETFX_CORE
             Adjust.ApplicationActivated();
+#endif
         }
 
         public static void ApplicationDeactivated()
         {
+#if NETFX_CORE
             Adjust.ApplicationDeactivated();
+#endif
         }
 
         public static bool IsEnabled()
         {
+#if NETFX_CORE
             return Adjust.IsEnabled();
+#else
+            return false;
+#endif
         }
 
         public static void SetEnabled(bool enabled)
         {
+#if NETFX_CORE
             Adjust.SetEnabled(enabled);
+#endif
         }
 
         public static void SetOfflineMode(bool offlineMode)
         {
+#if NETFX_CORE
             Adjust.SetOfflineMode(offlineMode);
+#endif
         }
 
         public static void SendFirstPackages()
         {
+#if NETFX_CORE
             Adjust.SendFirstPackages();
+#endif
         }
 
         public static void SetDeviceToken(string deviceToken)
         {
+#if NETFX_CORE
             Adjust.SetPushToken(deviceToken);
+#endif
         }
 
         public static Dictionary<string, string> GetAttribution()
         {
+#if NETFX_CORE
             var attribution = Adjust.GetAttributon();
             return AdjustAttribution
                 .ToDictionary(attribution)
                 // convert from <string, object> to <string, string>
                 .ToDictionary(x => x.Key, x => x.Value.ToString());
+#else
+            return null;
+#endif
         }
 
         public static string GetWindowsAdId()
         {
+#if NETFX_CORE
             return Adjust.GetWindowsAdId();
+#else
+            return string.Empty;
+#endif
         }
 
         public static string GetAdid()
         {
+#if NETFX_CORE
             return Adjust.GetAdid();
+#else
+            return string.Empty;
+#endif
         }
 
         public static void AddSessionCallbackParameter(string key, string value)
         {
+#if NETFX_CORE
             Adjust.AddSessionCallbackParameter(key, value);
+#endif
         }
 
         public static void AddSessionPartnerParameter(string key, string value)
         {
+#if NETFX_CORE
             Adjust.AddSessionPartnerParameter(key, value);
+#endif
         }
 
         public static void RemoveSessionCallbackParameter(string key)
         {
+#if NETFX_CORE
             Adjust.RemoveSessionCallbackParameter(key);
+#endif
         }
 
         public static void RemoveSessionPartnerParameter(string key)
         {
+#if NETFX_CORE
             Adjust.RemoveSessionPartnerParameter(key);
+#endif
         }
 
         public static void ResetSessionCallbackParameters()
         {
+#if NETFX_CORE
             Adjust.ResetSessionCallbackParameters();
+#endif
         }
 
         public static void ResetSessionPartnerParameters()
         {
+#if NETFX_CORE
             Adjust.ResetSessionPartnerParameters();
+#endif
         }
     }
 }

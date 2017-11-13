@@ -1,7 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
+#if WIN_STUB_10
 namespace Win10Interface
+#elif WIN_STUB_81
+namespace Win81Interface
+#elif WIN_STUB_WS
+namespace WinWsInterface
+#else
+namespace WinInterface
+#endif
 {
     public class AdjustConfigDto
     {
@@ -21,5 +29,6 @@ namespace Win10Interface
         public Action<Dictionary<string, string>> ActionSessionFailureData;
         public Action<Dictionary<string, string>> ActionEventSuccessData;
         public Action<Dictionary<string, string>> ActionEventFailureData;
+        public Func<string, bool> FuncDeeplinkResponseData;
     }
 }
