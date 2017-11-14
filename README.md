@@ -2,7 +2,29 @@
 
 This is the Windows SDK of adjust™. You can read more about adjust™ at [adjust.com](http://adjust.com).
 
-## Example app
+## Table of contents
+
+* [Example app](#example-app)
+* [Basic integration](#basic-integration)
+   * [1 - Install the package Adjust using NuGet Package Manager](#install-adjust-package)
+   * [2 - Integrate adjust into your app](#integrate-adjust-package)
+   * [3 - Update adjust settings](#update-adjust-settings)
+      * [App Token & Environment](#app-token-and-environment)
+      * [Adjust Logging](#adjust-logging)
+   * [4 - Build your app](#build-your-app)
+* [Additional features](#additional-features)
+   * [1 - Add tracking of custom events](#custom-events-tracking)
+   * [2 - Add callback parameters](#add-callback-params)
+   * [3 - Partner parameters](#partner-params)
+   * [4 - Add tracking of revenue](#revenue-tracking)
+   * [5 - Set up deep link reattributions](#deeplink-reattributions)
+   * [6 - Enable event bufferings](#enable-event-buffering)
+   * [7 - Set listener for attribution changes](#attribution-changes-listener)
+* [Troubleshooting](#troubleshooting)
+   * TODO
+* [License](#license)
+
+## <a id="example-app"></a>Example app
 
 There are different example apps inside the [`Adjust` directory][example]: 
 1. `AdjustUAP10Example` for Universal Windows Apps,
@@ -11,7 +33,7 @@ There are different example apps inside the [`Adjust` directory][example]:
 
 You can use these example projects to see how the adjust SDK can be integrated into your app.
 
-## Basic Installation
+## <a id="basic-integration"></a>Basic Integration
 
 These are the basic steps required to integrate the adjust SDK into your
 Windows Phone or Windows Store project. We are going to assume that you use
@@ -20,7 +42,7 @@ screenshots show the integration process for a Windows Universal app, but the
 procedure is very similar for both Windows Store or Phone apps. Any differences with Windows Phone 8.1
 or Windows Store apps will be noted throughout the walkthrough.
 
-### 1. Install the package Adjust using NuGet Package Manager
+### <a id="install-adjust-package"></a>1. Install the package Adjust using NuGet Package Manager
 
 Right click on the project in the Solution Explorer, then click on `Manage NuGet Packages...`.
 In the NuGet Package Manager window, click on "Browse" tab, enter "adjust" in the search box, and press Enter.
@@ -43,7 +65,7 @@ Install-Package Adjust
 It's also possible to install the Adjust package through the NuGet Package
 Manager for your Windows Phone or Windows Store project.
 
-### 2. Integrate adjust into your app
+### <a id="integrate-adjust-package"></a>2. Integrate adjust into your app
 
 In the Solution Explorer, open the file `App.xaml.cs`. Add the `using
 AdjustSdk;` statement at the top of the file.
@@ -66,7 +88,9 @@ sealed partial class App : Application
 }
 ```
 
-### 3. Update adjust settings
+### <a id="update-adjust-settings"></a>3. Update adjust settings
+
+#### <a id="app-token-and-environment"></a>App Token & Environment
 
 Replace the `{YourAppToken}` placeholder with your App Token, which you can find in
 your [dashboard].
@@ -89,7 +113,7 @@ We use this environment to distinguish between real traffic and test traffic
 from test devices. It is very important that you keep this value meaningful at
 all times, especially if you are tracking revenue.
 
-#### Adjust Logging
+#### <a id="adjust-logging"></a>Adjust Logging
 
 To see the compiled logs from our library in `released` mode, it is
 necessary to redirect the log output to your app while it's being tested in `debug` mode.
@@ -123,7 +147,7 @@ logLevel: LogLevel.Assert   // disable errors as well
 logLevel: LogLevel.Suppress // disable all logs
 ```
 
-### 4. Build your app
+### <a id="build-your-app"></a>4. Build your app
 
 From the menu, select `DEBUG → Start Debugging`. After the app launches, you
 should see the Adjust debug logs in the Output view. Every Adjust specific log
@@ -131,12 +155,12 @@ starts with ```[Adjust]``` tag, like in the picture below:
 
 ![][debug_output_window]
 
-## Additional features
+## <a id="additional-features"></a>Additional features
 
 Once you have integrated the adjust SDK into your project, you can take
 advantage of the following features.
 
-### 5. Add tracking of custom events
+### <a id="custom-events-tracking"></a>1. Add tracking of custom events
 
 You can use adjust to track any event in your app. Suppose you want to track
 every tap of a button. You would have to create a new event token in your
@@ -150,7 +174,7 @@ Adjust.TrackEvent(adjustEvent);
 
 The event instance can be used to further configure before you begin tracking.
 
-### 6. Add callback parameters
+### <a id="add-callback-params"></a>2. Add callback parameters
 
 You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling `AddCallbackParameter` on the
 event instance before tracking it. We will then append these parameters to your specified callback URL.
@@ -183,7 +207,7 @@ these parameters won't even be read.
 You can read more about using URL callbacks, including a full list of available
 values, in our [callbacks guide][callbacks-guide].
 
-### 7. Partner parameters
+### <a id="partner-params"></a>3. Partner parameters
 
 You can also add parameters to be transmitted to network partners for
 integrations that have been activated in your adjust dashboard.
@@ -203,7 +227,7 @@ Adjust.TrackEvent(adjustEvent);
 You can read more about special partners and these integrations in our [guide
 to special partners.][special-partners]
 
-### 8. Add tracking of revenue
+### <a id="revenue-tracking"></a>4. Add tracking of revenue
 
 If your users generate revenue by tapping on advertisements or making
 in-app purchases, then you can track those revenues with events. Let's say a tap is
@@ -222,7 +246,7 @@ When you set a currency token, adjust will automatically convert the incoming re
 You can read more about revenue and event tracking in the [event tracking
 guide.][event-tracking]
 
-### 9. Set up deep link reattributions
+### <a id="deeplink-reattributions"></a>5. Set up deep link reattributions
 
 You can set up the adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. We will only read adjust-specific parameters. This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
 
@@ -249,7 +273,7 @@ public partial class App : Application
 }
 ```
 
-### 10. Enable event buffering
+### <a id="enable-event-buffering"></a>6. Enable event buffering
 
 If your app makes heavy use of event tracking, you may want to delay some
 HTTP requests in order to send them in a single batch per minute. You can enable
@@ -263,7 +287,7 @@ config.EventBufferingEnabled = true;
 Adjust.ApplicationLaunching(config);
 ```
 
-### 11. Set listener for attribution changes
+### <a id="attribution-changes-listener"></a>7. Set listener for attribution changes
 
 You can register a listener to be notified of tracker attribution changes. Due
 to the different sources considered for attribution, this information cannot
@@ -312,6 +336,10 @@ parameter. Here is a quick summary of its properties:
 - `string ClickLabel` the click label of the current install.
 - `string Adid` the ADID of the current install.
 
+## <a id="troubleshooting">Troubleshooting
+
+TODO
+
 [adjust.com]: http://www.adjust.com
 [dashboard]: http://www.adjust.com
 [nuget]: http://nuget.org/packages/Adjust
@@ -347,7 +375,7 @@ parameter. Here is a quick summary of its properties:
 [currency-conversion]:  https://docs.adjust.com/en/event-tracking/#tracking-purchases-in-different-currencies
 
 
-## License
+## <a id="license"></a>License
 
 The adjust SDK is licensed under the MIT License.
 
