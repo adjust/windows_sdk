@@ -4,25 +4,34 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
 
 ## Example app
 
-There are different example apps inside the [`Adjust` directory][example]: `AdjustWP80Example` for Windows
-Phone 8.0, `AdjustWP81Example` for Windows Phone 8.1 and `AdjustWSExample` for Windows Store. You can use
-these example projects to see how the adjust SDK can be integrated into your app.
+There are different example apps inside the [`Adjust` directory][example]: 
+1. `AdjustUAP10Example` for Universal Windows Apps,
+2. `AdjustWP81Example` for Windows Phone 8.1,
+3. `AdjustWSExample` for Windows Store. 
+
+You can use these example projects to see how the adjust SDK can be integrated into your app.
 
 ## Basic Installation
 
 These are the basic steps required to integrate the adjust SDK into your
 Windows Phone or Windows Store project. We are going to assume that you use
-Visual Studio 2013 or later, with the latest NuGet package manager installed. A previous version that supports Windows Phone 8.0 or Windows 8 should also work. The
+Visual Studio 2015 or later, with the latest NuGet package manager installed. A previous version that supports Windows Phone 8.1 or Windows 8 should also work. The
 screenshots show the integration process for a Windows Universal app, but the
-procedure is very similar for both Windows Store or Phone apps. The differences with Windows Phone 8.0
-will be noted throughout the walkthrough.
+procedure is very similar for both Windows Store or Phone apps. Any differences with Windows Phone 8.1
+or Windows Store apps will be noted throughout the walkthrough.
 
-### 1. Install the package Adjust using NuGet
+### 1. Install the package Adjust using NuGet Package Manager
 
-In the Visual Studio menu, select `TOOLS → Library Package Manager → Package
-Manager Console` to open the Package Manager Console view.
+Right click on the project in the Solution Explorer, then click on `Manage NuGet Packages...`.
+In the NuGet Package Manager window, click on "Browse" tab, enter "adjust" in the search box, and press Enter.
+Adjust package sould be the first search result, click on it, and in the right pane, click on Install.
 
-![][nuget_click]
+![][adjust_nuget_pm]
+
+Another method to install Adjust package is using Package Manager Console.
+In the Visual Studio menu, select `TOOLS → NuGet Package Manager → Package
+Manager Console` (or, in older version of Visual Studio `TOOLS → Library Package Manager → Package
+Manager Console`) to open the Package Manager Console view.
 
 After the `PM>` prompt, enter the following line and press `<Enter>` to install
 the [Adjust package][NuGet]:
@@ -31,62 +40,15 @@ the [Adjust package][NuGet]:
 Install-Package Adjust
 ```
 
-![][nuget_install]
+It's also possible to install the Adjust package through the NuGet Package
+Manager for your Windows Phone or Windows Store project.
 
-It's also possible to install the Adjust package through the NuGet package
-manager for your Windows Phone or Windows Store project.
-
-### 2. Add capabilities (Windows Phone 8.0 only)
-
-In the Solution Explorer, open the `Properties\WMAppManifest.xml` file, switch
-to the Capabilities tab and check the `ID_CAP_IDENTITY_DEVICE` checkbox.
-
-![][wp_capabilities]
-
-### 3. Integrate adjust into your app
+### 2. Integrate adjust into your app
 
 In the Solution Explorer, open the file `App.xaml.cs`. Add the `using
 AdjustSdk;` statement at the top of the file.
 
-#### Windows Phone 8.0
-
-In the `Application_Launching` method of your app, call the method
-`AppDidLaunch`. This tells Adjust about the launch of your Application.
-
-```cs
-using AdjustSdk;
-
-public partial class App : Application
-{
-    private void Application_Launching(object sender, LaunchingEventArgs e)
-    {
-        string appToken = "{YourAppToken}";
-        string environment = AdjustConfig.EnvironmentSandbox;
-        var config = new AdjustConfig(appToken, environment);
-        Adjust.ApplicationLaunching(config);
-        // ...
-    }
-
-    private void Application_Activated(object sender, ActivatedEventArgs e)
-    {
-        Adjust.ApplicationActivated();
-        // ...
-    }
-
-    private void Application_Deactivated(object sender, DeactivatedEventArgs e)
-    {
-        Adjust.ApplicationDeactivated();
-        // ...
-    }
-}
-```
-
-![][wp_app_integration]
-
-#### Universal Apps
-
-In the `OnLaunched` method of your app, call the method `AppDidLaunch`. This
-tells adjust about the launch of your Application.
+Here is a snippet of the code that has to be added in `OnLaunched` method of your app.
 
 ```cs
 using AdjustSdk;
@@ -104,9 +66,7 @@ sealed partial class App : Application
 }
 ```
 
-![][ws_app_integration]
-
-### 4. Update adjust settings
+### 3. Update adjust settings
 
 Replace the `{YourAppToken}` placeholder with your App Token, which you can find in
 your [dashboard].
@@ -134,18 +94,24 @@ all times, especially if you are tracking revenue.
 To see the compiled logs from our library in `released` mode, it is
 necessary to redirect the log output to your app while it's being tested in `debug` mode.
 
-Call the `Adjust.SetupLogging` method before making any other calls to our SDK.
+To do this, use the `AdjustConfig` constructor with 4 parameters, where 3rd parameter is the
+delegate method which handles the logging, and 4th parameter being Log Level:
 
 ```cs
-Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg));
-// ...
-var config = new AdjustConfig(appToken, environment);
-Adjust.ApplicationLaunching(config);
-// ...
+// ....
+protected override void OnLaunched(LaunchActivatedEventArgs e)
+{
+    string appToken = "hmqwpvspxnuo";
+    string environment = AdjustConfig.EnvironmentSandbox;
+    var config = new AdjustConfig(appToken, environment,
+        msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+    // ...
+}
+// ....
 ```
 
 You can increase or decrease the amount of logs you see in tests by setting the
-second argument of the `SetupLogging` method, `logLevel`, with one of the following values:
+4th argument of the `AdjustConfig` constructor, `logLevel`, with one of the following values:
 
 ```cs
 logLevel: LogLevel.Verbose  // enable all logging
@@ -154,66 +120,23 @@ logLevel: LogLevel.Info     // the default
 logLevel: LogLevel.Warn     // disable info logging
 logLevel: LogLevel.Error    // disable warnings as well
 logLevel: LogLevel.Assert   // disable errors as well
+logLevel: LogLevel.Suppress // disable all logs
 ```
 
-#### Windows Phone 8.0
-
-In the `Application_Launching` method of your app, call the method
-`SetupLogging` before making any other calls to our SDK.
-
-```cs
-using AdjustSdk;
-
-public partial class App : Application
-{
-    private void Application_Launching(object sender, LaunchingEventArgs e)
-    {
-        Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
-            logLevel: LogLevel.Verbose);
-        // ...
-        var config = new AdjustConfig(appToken, environment);
-        Adjust.ApplicationLaunching(config);
-        // ...
-    }
-    // ...
-}
-```
-
-#### Universal Apps
-
-In the `OnLaunched` method of your app, call the method `SetupLogging` 
-before making any other calls to our SDK.
-
-```cs
-using AdjustSdk;
-
-sealed partial class App : Application
-{
-    protected override void OnLaunched(LaunchActivatedEventArgs e)
-    {
-        Adjust.SetupLogging(logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
-            logLevel: LogLevel.Verbose);
-        // ...
-        var config = new AdjustConfig(appToken, environment);
-        Adjust.ApplicationLaunching(config);
-        // ...
-    }
-}
-```
-
-### 5. Build your app
+### 4. Build your app
 
 From the menu, select `DEBUG → Start Debugging`. After the app launches, you
-should see the debug log `Tracked session start` in the Output view.
+should see the Adjust debug logs in the Output view. Every Adjust specific log
+starts with ```[Adjust]``` tag, like in the picture below:
 
-![][run_app]
+![][debug_output_window]
 
 ## Additional features
 
 Once you have integrated the adjust SDK into your project, you can take
 advantage of the following features.
 
-### 6. Add tracking of custom events
+### 5. Add tracking of custom events
 
 You can use adjust to track any event in your app. Suppose you want to track
 every tap of a button. You would have to create a new event token in your
@@ -222,12 +145,12 @@ method, you can add the following lines to track the click:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
-Adjust.trackEvent(adjustEvent);
+Adjust.TrackEvent(adjustEvent);
 ```
 
 The event instance can be used to further configure before you begin tracking.
 
-### 7. Add callback parameters
+### 6. Add callback parameters
 
 You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling `AddCallbackParameter` on the
 event instance before tracking it. We will then append these parameters to your specified callback URL.
@@ -238,10 +161,10 @@ For example, suppose you have registered the URL
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
 
-adjustEvent.addCallbackParameter("key", "value");
-adjustEvent.addCallbackParameter("foo", "bar");
+adjustEvent.AddCallbackParameter("key", "value");
+adjustEvent.AddCallbackParameter("foo", "bar");
 
-Adjust.trackEvent(adjustEvent);
+Adjust.TrackEvent(adjustEvent);
 ```
 
 In that case we would track the event and send a request to:
@@ -260,7 +183,7 @@ these parameters won't even be read.
 You can read more about using URL callbacks, including a full list of available
 values, in our [callbacks guide][callbacks-guide].
 
-### 8. Partner parameters
+### 7. Partner parameters
 
 You can also add parameters to be transmitted to network partners for
 integrations that have been activated in your adjust dashboard.
@@ -271,16 +194,16 @@ added by calling the `AddPartnerParameter` method on your `AdjustEvent` instance
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
 
-adjustEvent.addPartnerParameter("key", "value");
-adjustEvent.addPartnerParameter("foo", "bar");
+adjustEvent.AddPartnerParameter("key", "value");
+adjustEvent.AddPartnerParameter("foo", "bar");
 
-Adjust.trackEvent(adjustEvent);
+Adjust.TrackEvent(adjustEvent);
 ```
 
 You can read more about special partners and these integrations in our [guide
 to special partners.][special-partners]
 
-### 9. Add tracking of revenue
+### 8. Add tracking of revenue
 
 If your users generate revenue by tapping on advertisements or making
 in-app purchases, then you can track those revenues with events. Let's say a tap is
@@ -288,8 +211,8 @@ worth €0.01. You can then track the revenue event like this:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
-adjustEvent.setRevenue(0.01, "EUR");
-Adjust.trackEvent(adjustEvent);
+adjustEvent.SetRevenue(0.01, "EUR");
+Adjust.TrackEvent(adjustEvent);
 ```
 
 This can be combined with callback parameters, of course.
@@ -299,29 +222,9 @@ When you set a currency token, adjust will automatically convert the incoming re
 You can read more about revenue and event tracking in the [event tracking
 guide.][event-tracking]
 
-### 10. Set up deep link reattributions
+### 9. Set up deep link reattributions
 
-You can set up the adjust SDK to handle any deep links (also known as URI associations in Windows Phone 8.0 and URI activation in Universal apps) used to open your app. We will only read adjust-specific parameters. This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
-
-#### Windows Phone 8.0
-
-In the `MapUri` method of the `UriMapperBase` class created to handle the deep links,
-call the `AppWillOpenUrl` method.
-
-```cs
-using AdjustSdk;
-
-public class AssociationUriMapper : UriMapperBase
-{
-    public override Uri MapUri(Uri uri)
-    {
-        Adjust.AppWillOpenUrl(uri);
-        //...
-    }
-}
-```
-
-#### Universal Apps
+You can set up the adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. We will only read adjust-specific parameters. This is essential if you are planning to run retargeting or re-engagement campaigns with deep links.
 
 In the `OnActivated` method of your app, call the method `AppWillOpenUrl`.
 
@@ -346,7 +249,7 @@ public partial class App : Application
 }
 ```
 
-### 11. Enable event buffering
+### 10. Enable event buffering
 
 If your app makes heavy use of event tracking, you may want to delay some
 HTTP requests in order to send them in a single batch per minute. You can enable
@@ -355,12 +258,12 @@ event buffering with your `AdjustConfig` instance:
 ```cs
 var config = new AdjustConfig(appToken, environment);
 
-config.setEventBufferingEnabled(true);
+config.EventBufferingEnabled = true;
 
 Adjust.ApplicationLaunching(config);
 ```
 
-### 12. Set listener for attribution changes
+### 11. Set listener for attribution changes
 
 You can register a listener to be notified of tracker attribution changes. Due
 to the different sources considered for attribution, this information cannot
@@ -407,16 +310,17 @@ parameter. Here is a quick summary of its properties:
 - `string Adgroup` the ad group grouping level of the current install.
 - `string Creative` the creative grouping level of the current install.
 - `string ClickLabel` the click label of the current install.
+- `string Adid` the ADID of the current install.
 
 [adjust.com]: http://www.adjust.com
 [dashboard]: http://www.adjust.com
 [nuget]: http://nuget.org/packages/Adjust
 [nuget_click]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/01_nuget_console_click.png
-[nuget_install]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/02_nuget_install.png
+[adjust_nuget_pm]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/v4_12/adjust_nuget_pm.png
 [wp_capabilities]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/03_windows_phone_capabilities.png
 [wp_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/04_wp_app_integration.png
 [ws_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/05_ws_app_integration.png
-[run_app]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/06_run_app.png
+[debug_output_window]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/v4_12/debug_output_window.png
 [attribution-data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
 
 [dashboard]:     http://adjust.com
