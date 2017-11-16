@@ -1,19 +1,10 @@
 ﻿using AdjustSdk;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 namespace AdjustUAP10Example
@@ -40,7 +31,7 @@ namespace AdjustUAP10Example
         /// <param name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            // deprecated way of logging setup
+            // deprecated way of logging setup, use AdjustConfig constructor instead
             Adjust.SetupLogging(
                 logDelegate: msg => System.Diagnostics.Debug.WriteLine(msg),
                 logLevel: LogLevel.Verbose);
@@ -49,8 +40,13 @@ namespace AdjustUAP10Example
             //var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox);
 
             // configure Adjust - with logging (Sandox env & Verbose log level)
-            var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox, 
-                msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+            string appToken = "{yourAppToken}";
+            string environment = AdjustConfig.EnvironmentSandbox;
+            var config = new AdjustConfig(appToken, environment, 
+                msg => Debug.WriteLine(msg), LogLevel.Verbose);
+
+            // configure app secret (available since v4.12)
+            // config.SetAppSecret(0, 1000, 3000, 4000, 5000);
 
             // enable event buffering
             //config.EventBufferingEnabled = true;
@@ -58,24 +54,22 @@ namespace AdjustUAP10Example
             // set default tracker
             //config.DefaultTracker = "{YourDefaultTracker}";
 
-            // set attribution delegate
-            config.AttributionChanged = (attribution) =>
-                System.Diagnostics.Debug.WriteLine("attribution: " + attribution);
+            ExampleOfVariousCallbacksSetup(config);
 
+            // signal Adjust that the application was launched
             Adjust.ApplicationLaunching(config);
 
             // put the SDK in offline mode
-            //Adjust.SetOfflineMode(offlineMode: true);
+            //Adjust.SetOfflineMode(offlineMode: true); 
 
             // disable the SDK
             //Adjust.SetEnabled(enabled: false);
 #if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (Debugger.IsAttached)
             {
                 this.DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
-
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
@@ -105,6 +99,89 @@ namespace AdjustUAP10Example
             }
             // Ensure the current window is active
             Window.Current.Activate();
+        }
+
+        private void ExampleOfVariousCallbacksSetup(AdjustConfig config)
+        {
+            // set event success tracking delegate
+            config.EventTrackingSucceeded = adjustEventSuccess =>
+            {
+                // ...
+                //Debug.WriteLine("adjustEventSuccess: " + adjustEventSuccess);
+            };
+
+            // set event failure tracking delegate
+            config.EventTrackingFailed = adjustEventFailure =>
+            {
+                // ...
+                //Debug.WriteLine("adjustEventFailure: " + adjustEventFailure);
+            };
+
+            // set session success tracking delegate
+            config.SesssionTrackingSucceeded = adjustSessionSuccess =>
+            {
+                // ...
+                //Debug.WriteLine("adjustSessionSuccess: " + adjustSessionSuccess);
+            };
+
+            // set session failure tracking delegate
+            config.SesssionTrackingFailed = adjustSessionFailure =>
+            {
+                // ...
+                //Debug.WriteLine("adjustSessionFailure: " + adjustSessionFailure);
+            };
+
+            // set attribution delegate
+            config.AttributionChanged = attribution =>
+            {
+                // ...
+                Debug.WriteLine("attribution: " + attribution);
+            };
+
+            // deferred deep linking scenario
+            config.DeeplinkResponse = deepLinkUri =>
+            {
+                //Debug.WriteLine("deeplink response: " + deepLinkUri);
+
+                if (ShouldAdjustSdkLaunchTheDeeplink(deepLinkUri))
+                {
+                    return true;
+                }
+
+                return false;
+            };
+        }
+
+        /// <summary>
+        /// Example Dummy method used in Deferred deep linking - within AdjustConfig.DeeplinkResponse delegate
+        /// </summary>
+        /// <param name="deepLinkUri"></param>
+        /// <returns></returns>
+        private bool ShouldAdjustSdkLaunchTheDeeplink(Uri deepLinkUri)
+        {
+            // dummy-example method
+            // ...
+            return true;
+        }
+
+        /// <summary>
+        /// The OnActivated event handler receives all activation events. 
+        /// The Kind property indicates the type of activation event. 
+        /// This example is set up to handle Protocol activation events.
+        /// NEEDED FOR DeepLinks
+        /// </summary>
+        /// <param name="args"></param>
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            if (args.Kind == ActivationKind.Protocol)
+            {
+                var eventArgs = args as ProtocolActivatedEventArgs;
+                if (eventArgs != null)
+                {
+                    Adjust.AppWillOpenUrl(eventArgs.Uri);
+                }
+            }
+            base.OnActivated(args);
         }
 
         /// <summary>
