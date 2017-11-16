@@ -6,12 +6,12 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
 
 * [Example app](#example-app)
 * [Basic integration](#basic-integration)
-    * [1 - Install the package Adjust using NuGet Package Manager](#install-adjust-package)
-    * [2 - Integrate adjust into your app](#integrate-adjust-package)
-    * [3 - Update adjust settings](#update-adjust-settings)
+    * [1 Install the package Adjust using NuGet Package Manager](#install-adjust-package)
+    * [2 Integrate adjust into your app](#integrate-adjust-package)
+    * [3 Update adjust settings](#update-adjust-settings)
         * [App Token & Environment](#app-token-and-environment)
         * [Adjust Logging](#adjust-logging)
-    * [4 - Build your app](#build-your-app)
+    * [4 Build your app](#build-your-app)
 * [Additional features](#additional-features)
     * [Event tracking](#custom-events-tracking)
         * [Revenue tracking](#revenue-tracking)
@@ -606,48 +606,132 @@ follow these steps.
 
 ### <a id="deeplinking"></a>Deep linking
 
-If you are using the adjust tracker URL with an option to deep link into your app from the URL, there is the possibility to get info about the deep link URL and its content. Hitting the URL can happen when the user has your app already installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario). In the standard deep linking scenario, Windows platform natively offers the possibility for you to get the info about the deep link content. Deferred deep linking scenario is something which Windows platform doesn't support out of box and for this case, the adjust SDK will offer you the mechanism to get the info about the deep link content.
+You can set up the adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. 
+We will only read adjust-specific parameters. 
+
+If you are using the adjust tracker URL with an option to deep link into your app from the URL, there is the possibility
+to get info about the deep link URL and its content. Hitting the URL can happen when the user has your app already
+installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario).
+In the standard deep linking scenario, Windows platform natively offers the possibility for you to get the info about the
+deep link content.
+Deferred deep linking scenario is something which Windows platform doesn't support out of box and for this case,
+the adjust SDK will offer you the mechanism to get the info about the deep link content.
 
 ### <a id="deeplinking-standard">Standard deep linking scenario
 
+If a user has your app installed and you want it to launch after hitting an adjust tracker URL with the deep_link parameter
+in it, you need to enable deep linking in your app. This is being done by choosing a desired **unique scheme name** and 
+assigning it to the specific handler method in your app which runs once the app opens after the user clicked on the link. 
+This is set in the `Package.appxmanifest`, and here's how you indicate that your app handles your unique URI scheme name:
 
+```
+1. in the Solution Explorer, double-click *package.appxmanifest* to open the manifest designer,
+2. select the Declarations tab and in the Available Declarations drop-down, select Protocol and then click Add,
+3. choose a name for the Uri scheme (the Name must be in all lower case letters),
+4. press Ctrl+S to save the change to package.appxmanifest.
+```
 
+![][unique_scheme_name_setup]
 
+Here, we added a protocol with assigned unique scheme name of *myapp*;
 
+Next thing you have to set up is *OnActivated* event handler which handles the activated deeplink event. 
 
+In your App.xaml.cs file, add the following:
 
+```cs
+// ...
+protected override void OnActivated(IActivatedEventArgs args)
+{
+    if (args.Kind == ActivationKind.Protocol)
+    {
+        var eventArgs = args as ProtocolActivatedEventArgs;
+        if (eventArgs != null)
+        {
+            // to get deep link URI:
+            Uri depplink = eventArgs.Uri;
+            
+            // ...            
+        }
+    }
+    base.OnActivated(args);
+}
+// ...
+```
 
+`You can find more info on the official Microsoft documentation:` [URI activation handling][handle-uri-activation]
+
+With this being set, you need to use the assigned scheme name in the adjust tracker URL's `deep_link` parameter if you want
+your app to launch once the tracker URL is clicked. A tracker URL without any information added to the deep link can be built
+to look something like this:
+
+```
+https://app.adjust.com/abc123?deep_link=adjustExample%3A%2F%2F
+```
+
+Please, have in mind that the `deep_link` parameter value in the URL **must be URL encoded**.
+
+After clicking this tracker URL, and with the app set as described above, your app will launch along with *OnActivated* 
+event handler, inside which you will automatically be provided with the information about the `deep_link` parameter content. 
+Once this content is delivered to you, it **will not be encoded**, although it was encoded in the URL.
 
 ### <a id="deeplinking-deferred">Deferred deep linking scenario
 
+Deferred deep linking scenario happens when a user clicks on the adjust tracker URL with the `deep_link` parameter in it,
+but does not have the app installed on the device at the moment of click. After that, the user will get redirected to the 
+Microsoft Store to download and install your app. After opening it for the first time, the content of the `deep_link` 
+parameter will be delivered to the app.
+
+In order to get info about the `deep_link` parameter content in a deferred deep linking scenario, you should set a 
+delegate method (`DeeplinkResponse`) on the `AdjustConfig` object. This will get triggered once the adjust SDK gets the 
+info about the deep link content from the backend.
+
+```cs
+// ...
+var config = new AdjustConfig(appToken, environment,
+    msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.DeeplinkResponse = deepLinkUri =>
+{
+    if (ShouldAdjustSdkLaunchTheDeeplink(deepLinkUri))
+    {
+        return true;
+    }
+    else
+    {
+        return false;    
+    }
+};
+
+Adjust.ApplicationLaunching(config);
+// ...
+```
 
 
+Once the adjust SDK receives the info about the deep link content from the backend, it will deliver you the info about its 
+content in this delegate and expect the `bool` return value from you. This return value represents your decision on whether 
+the adjust SDK should launch *OnActivated* event handler to which you have assigned the scheme name from the deep link 
+(like in the [Standard deep linking scenario](#deeplinking-standard)) or not.
 
-
-
-
-
-
-
-
-
+If you return `true`, we will launch it and the exact same scenario which is described in the 
+[Standard deep linking scenario chapter](#deeplinking-standard) will happen. If you do not want the SDK to launch the 
+*OnActivated* event handler, you can return `false` from this delegate (`DeeplinkResponse`) and based on the deep link 
+content decide on your own what to do next in your app.
 
 ### <a id="deeplinking-reattribution">Reattribution via deep links
 
-You can set up the adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. 
-We will only read adjust-specific parameters. This is essential if you are planning to run *retargeting* or *re-engagement* 
-campaigns with deep links.
-
-For more information on how to do that, please check our [official docs][reattribution-with-deeplinks].
+Handling of deep links (URI activation un UAP) used to open your app is essential if you are planning to 
+run *retargeting* or *re-engagement* campaigns with deep links. For more information on how to do that, 
+please check our [official docs][reattribution-with-deeplinks].
 
 If you are using this feature, in order for your user to be properly reattributed, you need to make one additional 
 call to the adjust SDK in your app.
 
 Once you have received deep link content information in your app, add a call to `Adjust.AppWillOpenUrl` method. 
-By making this call, the adjust SDK will try to find if there is any new attribution info inside of the deep link and if any,
-it will be sent to the adjust backend. If your user should be reattributed due to a click on the adjust tracker URL with deep link
-content in it, you will see the [attribution callback](#attribution-callback) in your app being triggered with new attribution
-info for this user.
+By making this call, the adjust SDK will try to find if there is any new attribution info inside of the deep link 
+and if any, it will be sent to the adjust backend. If your user should be reattributed due to a click on the adjust 
+tracker URL with deep link content in it, you will see the [attribution callback](#attribution-callback) in your app
+being triggered with new attribution info for this user.
 
 The call to `Adjust.AppWillOpenUrl` should be done in `OnActivated` method of your app, like this:
 
@@ -681,29 +765,11 @@ public partial class App : Application
 [nuget]: http://nuget.org/packages/Adjust
 [nuget_click]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/01_nuget_console_click.png
 [adjust_nuget_pm]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/v4_12/adjust_nuget_pm.png
-[wp_capabilities]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/03_windows_phone_capabilities.png
-[wp_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/04_wp_app_integration.png
-[ws_app_integration]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/05_ws_app_integration.png
 [debug_output_window]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/v4_12/debug_output_window.png
+[unique_scheme_name_setup]: https://raw.github.com/adjust/adjust_sdk/master/Resources/windows/v4_12/unique_scheme_name_setup.png
 [attribution-data]: https://github.com/adjust/sdks/blob/master/doc/attribution-data.md
 
-[dashboard]:     http://adjust.com
 [releases]:      https://github.com/adjust/adjust_android_sdk/releases
-[import_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/01_import_module.png
-[select_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/02_select_module.png
-[imported_module]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/03_imported_module.png
-[gradle_adjust]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/04_gradle_adjust.png
-[gradle_gps]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/05_gradle_gps.png
-[manifest_gps]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/06_manifest_gps.png
-[manifest_permissions]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/07_manifest_permissions.png
-[proguard]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/08_proguard.png
-[receiver]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/09_receiver.png
-[application_class]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/11_application_class.png
-[manifest_application]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/12_manifest_application.png
-[application_config]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/13_application_config.png
-[activity]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/14_activity.png
-[log_message]: https://raw.github.com/adjust/sdks/master/Resources/android/v4/15_log_message.png
-
 [callbacks-guide]:      https://docs.adjust.com/en/callbacks
 [event-tracking]:       https://docs.adjust.com/en/event-tracking
 [special-partners]:     https://docs.adjust.com/en/special-partners
@@ -711,6 +777,7 @@ public partial class App : Application
 [currency-conversion]:  https://docs.adjust.com/en/event-tracking/#tracking-purchases-in-different-currencies
 [reattribution-with-deeplinks]:   https://docs.adjust.com/en/deeplinking/#manually-appending-attribution-data-to-a-deep-link
 
+[handle-uri-activation]: https://docs.microsoft.com/en-us/windows/uwp/launch-resume/handle-uri-activation
 
 ## <a id="license"></a>License
 
@@ -737,4 +804,3 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
