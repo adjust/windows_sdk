@@ -66,12 +66,15 @@ namespace TestApp
                 //testsDir + "SdkInfo",
                 //testsDir + "OfflineMode",
                 //testsDir + "EventBuffering"
+                //testsDir + "AppSecret",
+
+                testsDir + "DeferredDeeplink",
 
                 // NOT PASSING ////////////////////////////////////////////////////////
                 ///////////////////////////////////////////////////////////////////////
-                testsDir + "AppSecret",
+                
             };
-
+            
             return string.Join(";", testNamesList);
         }
 

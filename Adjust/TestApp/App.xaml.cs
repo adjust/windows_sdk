@@ -14,6 +14,8 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
+using AdjustSdk;
+using static TestApp.MainPage;
 
 namespace TestApp
 {
@@ -77,6 +79,28 @@ namespace TestApp
                 // Ensure the current window is active
                 Window.Current.Activate();
             }
+        }
+
+        /// <summary>
+        /// The OnActivated event handler receives all activation events. 
+        /// The Kind property indicates the type of activation event. 
+        /// This example is set up to handle Protocol activation events.
+        /// NEEDED FOR DeepLinks
+        /// </summary>
+        /// <param name="args"></param>
+        protected override void OnActivated(IActivatedEventArgs args)
+        {
+            Log.Debug(TAG, "OnActivated (deeplink received)");
+
+            if (args.Kind == ActivationKind.Protocol)
+            {
+                var eventArgs = args as ProtocolActivatedEventArgs;
+                if (eventArgs != null)
+                {
+                    Adjust.AppWillOpenUrl(eventArgs.Uri);
+                }
+            }
+            base.OnActivated(args);
         }
 
         /// <summary>
