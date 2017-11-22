@@ -176,7 +176,7 @@ namespace TestApp
                 var appSecretList = Command.Parameters["appSecret"];
                 Log.Debug("Received AppSecret array: " + string.Join(",", appSecretList));
 
-                if (appSecretList.Count == 5)
+                if (!string.IsNullOrEmpty(appSecretList[0]) && appSecretList.Count == 5)
                 {
                     long secretId, info1, info2, info3, info4;
                     long.TryParse(appSecretList[0], out secretId);
