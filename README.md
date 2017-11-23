@@ -649,7 +649,7 @@ protected override void OnActivated(IActivatedEventArgs args)
         if (eventArgs != null)
         {
             // to get deep link URI:
-            Uri depplink = eventArgs.Uri;
+            Uri deeplink = eventArgs.Uri;
             
             // ...            
         }
