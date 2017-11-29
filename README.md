@@ -401,13 +401,13 @@ The delegate function will be called when the SDK receives the final attribution
 information. Within the listener function you have access to the `attribution`
 parameter. Here is a quick summary of its properties:
 
-- `string TrackerToken` the tracker token of the current install.
-- `string TrackerName` the tracker name of the current install.
-- `string Network` the network grouping level of the current install.
-- `string Campaign` the campaign grouping level of the current install.
-- `string Adgroup` the ad group grouping level of the current install.
-- `string Creative` the creative grouping level of the current install.
-- `string ClickLabel` the click label of the current install.
+- `string TrackerToken` the tracker token of the current attribution.
+- `string TrackerName` the tracker name of the current attribution.
+- `string Network` the network grouping level of the current attribution.
+- `string Campaign` the campaign grouping level of the current attribution.
+- `string Adgroup` the ad group grouping level of the current attribution.
+- `string Creative` the creative grouping level of the current attribution.
+- `string ClickLabel` the click label of the current attribution.
 - `string Adid` the adjust device identifier.
 
 If any value is unavailable, it will default to `null`.
