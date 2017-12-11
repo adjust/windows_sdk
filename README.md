@@ -38,8 +38,6 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
         * [Standard deep linking scenario](#deeplinking-standard)
         * [Deferred deep linking scenario](#deeplinking-deferred)
         * [Reattribution via deep links](#deeplinking-reattribution)
-* [Troubleshooting](#troubleshooting)
-    * Work in progress...
 * [License](#license)
 
 ## <a id="example-app"></a>Example app
