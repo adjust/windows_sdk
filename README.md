@@ -7,7 +7,7 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
 * [Example app](#example-app)
 * [Basic integration](#basic-integration)
     * [Install the Adjust package using NuGet Package Manager](#install-adjust-package)
-    * [Integrate Adjust SDK into your app](#integrate-adjust-package)
+    * [Integrate the Adjust SDK into your app](#integrate-adjust-package)
     * [Update Adjust settings](#update-adjust-settings)
         * [App Token & Environment](#app-token-and-environment)
         * [Adjust Logging](#adjust-logging)
@@ -49,17 +49,17 @@ There are different example apps inside the [`Adjust` directory][example]:
 
 You can use these example projects to see how the Adjust SDK can be integrated into your app.
 
-## <a id="basic-integration"></a>Basic Integration
+## <a id="basic-integration"></a>Basic integration
 
 These are the basic steps required to integrate the Adjust SDK into your Windows Phone or Windows Store project. We are going to assume that you use Visual Studio 2015 or later, with the latest NuGet package manager installed. A previous version that supports Windows Phone 8.1 or Windows 8 should also work. The screenshots show the integration process for a Windows Universal app, but the procedure is very similar for both Windows Store or Phone apps. Any differences with Windows Phone 8.1 or Windows Store apps will be noted throughout the walkthrough.
 
 ### <a id="install-adjust-package"></a>Install the Adjust package using NuGet Package Manager
 
-Right click on the project in the Solution Explorer, then click on `Manage NuGet Packages...`. In the newly opened NuGet Package Manager window, click on "Browse" tab, then enter "adjust" in the search box, and press Enter. Adjust package sould be the first search result. Click on it, and in the right pane, click on `Install`.
+Right click on the project in the Solution Explorer, then click on `Manage NuGet Packages...`. In the newly opened NuGet Package Manager window, click on the `Browse` tab, then enter `adjust` in the search box, and press `<Enter>`. The Adjust package should be the first search result. Click on it, and in the right pane, click on `Install`.
 
 ![][adjust_nuget_pm]
 
-Another method to install Adjust package is using `Package Manager Console`. In the Visual Studio menu, select `TOOLS → NuGet Package Manager → Package Manager Console` (or, in older version of Visual Studio `TOOLS → Library Package Manager → Package Manager Console`) to open the Package Manager Console view.
+Another method to install Adjust package is using `Package Manager Console`. In the Visual Studio menu, select `TOOLS → NuGet Package Manager → Package Manager Console` (or, in older versions of Visual Studio `TOOLS → Library Package Manager → Package Manager Console`) to open the Package Manager Console view.
 
 After the `PM>` prompt, enter the following line and press `<Enter>` to install the [Adjust package][NuGet]:
 
@@ -69,11 +69,11 @@ Install-Package Adjust
 
 It's also possible to install the Adjust package through the NuGet Package Manager for your Windows Phone or Windows Store project.
 
-### <a id="integrate-adjust-package"></a>Integrate Adjust SDK into your app
+### <a id="integrate-adjust-package"></a>Integrate the Adjust SDK into your app
 
-In the Solution Explorer, open the file `App.xaml.cs`. Add the `using AdjustSdk;` statement at the top of the file.
+In Solution Explorer, open the `App.xaml.cs` file. Add the `using AdjustSdk;` statement at the top of the file.
 
-Here is a snippet of the code that has to be added in `OnLaunched` method of your app.
+Here is a snippet of the code that has to be added in the `OnLaunched` method of your app.
 
 ```cs
 using AdjustSdk;
@@ -95,24 +95,24 @@ sealed partial class App : Application
 
 #### <a id="app-token-and-environment"></a>App Token & Environment
 
-Replace the `{YourAppToken}` placeholder with your App Token, which you can find in your [dashboard].
+Replace the `{YourAppToken}` placeholder with your app token, which you can find in your [dashboard].
 
-Depending on whether or not you build your app for testing or for production, you will need to set the `environment` parameter with one of these values:
+Depending on whether or not you are building your app for testing or for production, you will need to set the `environment` parameter with one of these values:
 
 ```cs
 string environment = AdjustConfig.EnvironmentSandbox;
 string environment = AdjustConfig.EnvironmentProduction;
 ```
 
-**Important:** This value should be set to `AdjustConfig.EnvironmentSandbox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustConfig.EnvironmentProduction` just before you publish your app. Set it back to `AdjustConfig.EnvironmentSandbox` if you start developing and testing it again.
+**Important:** This value should be set to `AdjustConfig.EnvironmentSandbox` if and only if you or someone else is testing your app. Make sure to set the environment to `AdjustConfig.EnvironmentProduction` before you publish your app. Set it back to `AdjustConfig.EnvironmentSandbox` if you start developing and testing it again.
 
-We use this environment to distinguish between real traffic and test traffic from test devices. It is very important that you keep this value meaningful at all times, especially if you are tracking revenue.
+We use this environment to distinguish between real traffic and test traffic from test devices. It is imperative that you keep this value meaningful at all times, especially if you are tracking revenue.
 
 #### <a id="adjust-logging"></a>Adjust Logging
 
 To see the compiled logs from our library in `released` mode, it is necessary to redirect the log output to your app while it's being tested in `debug` mode.
 
-To do this, use the `AdjustConfig` constructor with 4 parameters, where 3rd parameter is the delegate method which handles the logging, and 4th parameter being Log Level:
+To do this, use the `AdjustConfig` constructor with 4 parameters, where the 3rd parameter is the delegate method which handles the logging, and the 4th parameter is the `LogLevel`:
 
 ```cs
 // ....
@@ -139,9 +139,9 @@ logLevel: LogLevel.Assert   // disable errors as well
 logLevel: LogLevel.Suppress // disable all logs
 ```
 
-### <a id="build-your-app"></a>Build and Debug your app
+### <a id="build-your-app"></a>Build and debug your app
 
-From the menu, select `DEBUG → Start Debugging`. After the app launches, you should see the Adjust debug logs in the Output view. Every Adjust specific log starts with ```[Adjust]``` tag, like in the picture below:
+From the menu, select `DEBUG → Start Debugging`. After the app launches, you should see the Adjust debug logs in the Output view. Every Adjust-specific log starts with the ```[Adjust]``` tag, like in the picture below:
 
 ![][debug_output_window]
 
@@ -160,7 +160,7 @@ Adjust.TrackEvent(adjustEvent);
 
 ### <a id="revenue-tracking"></a>Revenue tracking
 
-If your users generate revenue by tapping on advertisements or making in-app purchases, then you can track those revenues with events. Let's say a tap is worth €0.01. You can then track the revenue event like this:
+If your users generate revenue by tapping on advertisements or making in-app purchases, then you can track that revenue through events. Let's say a tap is worth €0.01. You can then track the revenue event like this:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
@@ -168,7 +168,7 @@ adjustEvent.SetRevenue(0.01, "EUR");
 Adjust.TrackEvent(adjustEvent);
 ```
 
-This can be combined with callback parameters, of course.
+This can always be combined with callback parameters.
 
 When you set a currency token, Adjust will automatically convert the incoming revenue into the reporting revenue of your choice. Read more about [currency conversion here][currency-conversion].
 
@@ -178,9 +178,9 @@ The event instance can be used to further configure before you begin tracking.
 
 ### <a id="revenue-deduplication"></a>Revenue deduplication
 
-You can also add an optional purchase ID to avoid tracking duplicate revenues. The last ten purchase IDs are remembered, and revenue events with duplicate purchase IDs are skipped. This is especially useful for In-App Purchase tracking. You can see an example below.
+You can also add an optional purchase ID to avoid tracking duplicate revenues. The last ten purchase IDs are remembered, and revenue events with duplicate purchase IDs are skipped. This is especially useful for in-app purchase tracking. You can see an example below.
 
-If you want to track in-app purchases, please make sure to call the TrackEvent only if the purchase is finished and item is purchased. That way you can avoid tracking revenue that is not actually being generated.
+If you want to track in-app purchases, please make sure to call `TrackEvent` only if the purchase is finished and item is purchased. That way you can avoid tracking revenue that is not actually being generated.
 
 ```
 AdjustEvent event = new AdjustEvent("abc123");
@@ -193,10 +193,9 @@ Adjust.trackEvent(event);
 
 ### <a id="callback-parameters"></a>Callback parameters
 
-You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling `AddCallbackParameter` on the event instance before tracking it. We will then append these parameters to your specified callback URL.
+You can register a callback URL for the events in your [dashboard]. We will send a GET request to this URL whenever an event is tracked. You can also add callback parameters to the event by calling the `AddCallbackParameter` on the event instance before tracking it. We will then append these parameters to your specified callback URL.
 
-For example, suppose you have registered the URL
-`http://www.adjust.com/callback` then track an event like this:
+For example, suppose you have registered the URL `http://www.adjust.com/callback`. Then, you would track an event like this:
 
 ```cs
 var adjustEvent = new AdjustEvent("abc123");
@@ -213,13 +212,13 @@ In that case we would track the event and send a request to:
 http://www.adjust.com/callback?key=value&foo=bar
 ```
 
-It should be mentioned that we support a variety of placeholders like `{win_adid}` that can be used as parameter values. In the resulting callback, this placeholder would be replaced with the Windows Advertising ID of the current device. Also note that we don't store any of your custom parameters, but only append them to your callbacks. If you haven't registered a callback for an event, these parameters won't even be read.
+It should be mentioned that we support a variety of placeholders, such as `{win_adid}`, that can be used as parameter values. In the resulting callback, this placeholder would be replaced with the Windows advertising ID of the current device. Also note that we don't store any of your custom parameters but only append them to your callbacks. If you haven't registered a callback for an event, these parameters won't even be read.
 
 You can read more about using URL callbacks, including a full list of available values, in our [callbacks guide][callbacks-guide].
 
 ### <a id="partner-params"></a>Partner parameters
 
-You can also add parameters to be transmitted to network partners, which have been activated in your Adjust dashboard.
+You can also add parameters to be transmitted to network partners that have been activated in your Adjust dashboard.
 
 This works similarly to the callback parameters mentioned above, but can be added by calling the `addPartnerParameter` method on your `AdjustEvent` instance.
 
@@ -238,13 +237,13 @@ You can read more about special partners and these integrations in our [guide to
 
 Some parameters are saved to be sent in every event and session of the Adjust SDK. Once you have added any of these parameters, you don't need to add them every time, since they will be saved locally. If you add the same parameter twice, there will be no effect.
 
-These session parameters can be called before the Adjust SDK is launched to make sure they are sent even on install. If you need to send them with an install, but can only obtain the needed values after launch, it's possible to delay the first launch of the Adjust SDK to allow this behaviour.
+These session parameters can be called before the Adjust SDK is launched to make sure they are sent even on install. If you need to send them with an install but can only obtain the needed values after launch, it's possible to delay the first launch of the Adjust SDK to allow for this behavior.
 
 ### <a id="session-callback-parameters"></a>Session callback parameters
 
 The same callback parameters that are registered for [events](#callback-parameters) can be also saved to be sent in every event or session of the Adjust SDK.
 
-The session callback parameters have a similar interface to the event callback parameters. Instead of adding the key and it's value to an event, it's added through a call to `Adjust.AddSessionCallbackParameter(string key, string value)`:
+The session callback parameters have a similar interface to the event callback parameters. Except, instead of adding the key and its value to an event, they are added through a call to `Adjust.AddSessionCallbackParameter(string key, string value)`:
 
 ```cs
 Adjust.AddSessionCallbackParameter("foo", "bar");
@@ -252,13 +251,13 @@ Adjust.AddSessionCallbackParameter("foo", "bar");
 
 The session callback parameters will be merged with the callback parameters added to an event. The callback parameters added to an event have precedence over the session callback parameters. Meaning that, when adding a callback parameter to an event with the same key to one added from the session, the value that prevails is the callback parameter added to the event.
 
-It's possible to remove a specific session callback parameter by passing the desiring key to the method `Adjust.RemoveSessionCallbackParameter(string key)`.
+It's possible to remove a specific session callback parameter by passing the desired key to the `Adjust.RemoveSessionCallbackParameter(string key)` method.
 
 ```cs
 Adjust.RemoveSessionCallbackParameter("foo");
 ```
 
-If you wish to remove all keys and their corresponding values from the session callback parameters, you can reset it with the method `Adjust.ResetSessionCallbackParameters()`.
+If you wish to remove all keys and their corresponding values from the session callback parameters, you can reset them with the `Adjust.ResetSessionCallbackParameters()` method.
 
 ```cs
 Adjust.ResetSessionCallbackParameters();
@@ -266,11 +265,11 @@ Adjust.ResetSessionCallbackParameters();
 
 ### <a id="session-partner-parameters"></a>Session partner parameters
 
-In the same way that there are [session callback parameters](#session-callback-parameters) sent in every event or session of the Adjust SDK, there is also session partner parameters.
+In the same way that there are [session callback parameters](#session-callback-parameters) sent in every event or session of the Adjust SDK, there are also session partner parameters.
 
-These will be transmitted to network partners, for the integrations that have been activated in your Adjust [dashboard].
+These will be transmitted to network partners for the integrations that have been activated in your Adjust [dashboard].
 
-The session partner parameters have a similar interface to the event partner parameters. Instead of adding the key and it's value to an event, it's added through a call to `Adjust.AddSessionPartnerParameter(string key, string value)`:
+Session partner parameters have a similar interface to event partner parameters. Except, instead of adding the key and its value to an event, they are added through a call to `Adjust.AddSessionPartnerParameter(string key, string value)`:
 
 ```cs
 Adjust.AddSessionPartnerParameter("foo", "bar");
@@ -278,13 +277,13 @@ Adjust.AddSessionPartnerParameter("foo", "bar");
 
 The session partner parameters will be merged with the partner parameters added to an event. The partner parameters added to an event have precedence over the session partner parameters. Meaning that, when adding a partner parameter to an event with the same key to one added from the session, the value that prevails is the partner parameter added to the event.
 
-It's possible to remove a specific session partner parameter by passing the desiring key to the method `Adjust.RemoveSessionPartnerParameter(string key)`.
+It's possible to remove a specific session partner parameter by passing the desired key to the `Adjust.RemoveSessionPartnerParameter(string key)` method.
 
 ```cs
 Adjust.RemoveSessionPartnerParameter("foo");
 ```
 
-If you wish to remove all keys and their corresponding values from the session partner parameters, you can reset it with the method `Adjust.ResetSessionPartnerParameters()`.
+If you wish to remove all keys and their corresponding values from the session partner parameters, you can reset them with the `Adjust.ResetSessionPartnerParameters()` method.
 
 ```cs
 Adjust.RresetSessionPartnerParameters();
@@ -294,13 +293,13 @@ Adjust.RresetSessionPartnerParameters();
 
 Delaying the start of the Adjust SDK allows your app some time to obtain session parameters, such as unique identifiers, to be sent on install.
 
-Set the initial delay time in seconds with the property `DelayStart` in the `AdjustConfig` instance:
+Set the initial delay time in seconds with the `DelayStart` property in the `AdjustConfig` instance:
 
 ```cs
 adjustConfig.DelayStart = TimeSpan.FromSeconds(5.5);
 ```
 
-In this case, this will make the Adjust SDK not send the initial install session and any event created for 5.5 seconds. After this time is expired or if you call `Adjust.SendFirstPackages()` in the meanwhile, every session parameter will be added to the delayed install session and events and the Adjust SDK will resume as usual.
+In this case, the Adjust SDK will not send the initial install session or any events created for 5.5 seconds. After this time has expired--or if you call `Adjust.SendFirstPackages()` in the meanwhile--every session parameter will be added to the delayed install session and events, and the Adjust SDK will resume as usual.
 
 **The maximum delay start time of the Adjust SDK is 10 seconds**.
 
@@ -321,7 +320,7 @@ config.AttributionChanged = (attribution) =>
 Adjust.ApplicationLaunching(config);
 ```
 
-Alternatively, you could implement the `AttributionChanged` delegate interface in your `Application` class and set it as a delegate:
+Alternatively, you can implement the `AttributionChanged` delegate interface in your `Application` class and set it as a delegate:
 
 ```cs
 var config = new AdjustConfig(appToken, environment);
@@ -334,7 +333,7 @@ private void AdjustAttributionChanged(AdjustAttribution attribution)
 }
 ```
 
-The delegate function will be called when the SDK receives the final install attribution information and also each time when attribution changes. Within the listener function you have access to the `attribution` parameter. Here is a quick summary of its properties:
+The delegate function will be called when the SDK receives the final install attribution information and also each time an attribution changes. Within the listener function you have access to the `attribution` parameter. Here is a quick summary of its properties:
 
 - `string TrackerToken` the tracker token of the current attribution.
 - `string TrackerName` the tracker name of the current attribution.
@@ -382,7 +381,7 @@ config.SesssionTrackingFailed = adjustSessionFailure =>
 Adjust.ApplicationLaunching(config);
 ```
 
-The delegate function will be called after the SDK tries to send a package to the server. Within the delegate function you have access to a response data object specifically for the event. Here is a quick summary of the success session response data object fields:
+The delegate function will be called after the SDK tries to send a package to the server. Within the delegate function you have access to a response data object specifically for the event. Here is a quick summary of the successful session response data object fields:
 
 - `string Message` the message from the server or the error logged by the SDK.
 - `string Timestamp` timestamp from the server.
@@ -401,13 +400,13 @@ And both event and session failed objects also contain:
 
 ### <a id="disable-tracking"></a>Disable tracking
 
-You can disable the Adjust SDK from tracking any activities of the current device by calling `setEnabled` with parameter `false`. **This setting is remembered between sessions**.
+You can disable the Adjust SDK from tracking any activities of the current device by calling `setEnabled` with the parameter set to `false`. **This setting is remembered between sessions**.
 
 ```cs
 Adjust.SetEnabled(false);
 ```
 
-You can check if the Adjust SDK is currently enabled by calling the function `isEnabled`. It is always possible to activatе the Adjust SDK by invoking `SetEnabled` with the `enabled` parameter as `true`.
+You can check if the Adjust SDK is currently enabled by calling the `isEnabled` function. It is always possible to activate the Adjust SDK by invoking `SetEnabled` with the `enabled` parameter set to `true`.
 
 ### <a id="offline-mode"></a>Offline mode
 
@@ -438,7 +437,7 @@ Adjust.ApplicationLaunching(config);
 
 ### <a id="background-tracking"></a>Background tracking
 
-The default behaviour of the Adjust SDK is to pause sending HTTP requests while the app is in the background. You can change this in your `AdjustConfig` instance:
+The default behavior of the Adjust SDK is to pause sending HTTP requests while the app is in the background. You can change this in your `AdjustConfig` instance:
 
 ```cs
 var config = new AdjustConfig(appToken, environment,
@@ -451,13 +450,13 @@ Adjust.ApplicationLaunching(config);
 
 ### <a id="device-ids"></a>Device IDs
 
-The Adjust SDK offers you possibility to obtain some of the device identifiers.
+The Adjust SDK offers you possibility to obtain some device identifiers.
 
 ### <a id="di-win-adid"></a>Windows advertising identifier
 
-Retrieves a unique ID used to provide more relevant advertising on Windows platform. When the advertising ID feature is turned off on the device by the user, this is an empty string.
+This retrieves a unique ID used to provide more relevant advertising on the Windows platform. When a user turns the advertising ID feature off on their device, this will be an empty string.
 
-Get Windows Advertising Id by calling `GetWindowsAdId` method:
+Get the Windows advertising ID by calling the `GetWindowsAdId` method:
 
 ```cs
 var windowsAdid = Adjust.GetWindowsAdId();
@@ -465,7 +464,7 @@ var windowsAdid = Adjust.GetWindowsAdId();
 
 ### <a id="di-adid"></a>Adjust device identifier
 
-For each device with your app installed on it, Adjust backend generates unique **Adjust device identifier** (**adid**). In order to obtain this identifier, you can make a call to following method on `Adjust` instance:
+For each device with your app installed on it, the Adjust backend generates a unique **Adjust device identifier** (**adid**). In order to obtain this identifier, you can make a call to following method on the `Adjust` instance:
 
 ```cs
 string adid = Adjust.GetAdid();
@@ -473,11 +472,11 @@ string adid = Adjust.GetAdid();
 
 **Note**: You can only make this call in the Adjust SDK v4.12.0 and above.
 
-**Note**: Information about **adid** is available after app installation has been tracked by the Adjust backend. From that moment on, Adjust SDK has information about your device **adid** and you can access it with this method. So, **it is not possible** to access **adid** value before the SDK has been initialised and installation of your app was tracked successfully.
+**Note**: Information about the **adid** is available after an app installation has been tracked by the Adjust backend. From that moment on, the Adjust SDK has information about the device **adid** and you can access it with this method. So, **it is not possible** to access the **adid** value before the SDK has been initialized and installation of your app has been tracked successfully.
 
 ### <a id="user-attribution"></a>User attribution
 
-Like described in [attribution callback section](#attribution-callback), this callback get triggered providing you info about new attribution when ever it changes. In case you want to access info about your user's current attribution when ever you need it, you can make a call to following method of the `Adjust` instance:
+This callback is triggered as described in the [attribution callback section](#attribution-callback). It provides information about new attributions whenever there is a change. In case you want to access information about your user's current attribution whenever you need it, you can make a call to the following method of the `Adjust` instance:
 
 ```cs
 AdjustAttribution attribution = Adjust.GetAttribution();
@@ -485,12 +484,11 @@ AdjustAttribution attribution = Adjust.GetAttribution();
 
 **Note**: You can only make this call in the Adjust SDK v4.12.0 and above.
 
-**Note**: Information about current attribution is available after app installation has been tracked by the Adjust backend and attribution callback has been initially triggered. From that moment on, Adjust SDK has information about your user's attribution and you can access it with this method. So, **it is not possible** to access user's attribution value before the SDK has been initialised and attribution callback has been initially triggered.
+**Note**: Information about a current attribution is available after app installation has been tracked by the Adjust backend and an attribution callback has been triggered. From that moment on, the Adjust SDK has information about your user's attribution status and you can access it with this method. So, **it is not possible** to access a user's attribution value before the SDK has been initialized and an attribution callback has been triggered.
 
 ### <a id="push-token"></a>Push token
 
-To send us the push notification token, add the following call to Adjust once you have obtained your token
-or when ever it's value is changed:
+To send us the push notification token, add the following call to Adjust once you have obtained your token or whenever its value is changed:
 
 ```cs
 Adjust.SetPushToken(pushNotificationsToken);
@@ -498,8 +496,7 @@ Adjust.SetPushToken(pushNotificationsToken);
 
 ### <a id="pre-installed-trackers"></a>Pre-installed trackers
 
-If you want to use the Adjust SDK to recognize users that found your app pre-installed on their device,
-follow these steps.
+If you want to use the Adjust SDK to recognize users whose devices came with your app preinstalled, follow these steps.
 
 1. Create a new tracker in your [dashboard].
 2. Set the ```DefaultTracker``` property of your `AdjustConfig`:
@@ -523,26 +520,27 @@ follow these steps.
 
 ### <a id="deeplinking"></a>Deep linking
 
-You can set up the Adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. 
-We will only read Adjust-specific parameters. 
+You can set up the Adjust SDK to handle any deep links (also known as URI activation in Universal apps) used to open your app. We will only read Adjust-specific parameters. 
 
-If you are using the Adjust tracker URL with an option to deep link into your app from the URL, there is the possibility to get info about the deep link URL and its content. Hitting the URL can happen when the user has your app already installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario). In the standard deep linking scenario, Windows platform natively offers the possibility for you to get the info about the deep link content. Deferred deep linking scenario is something which Windows platform doesn't support out of box and for this case, the Adjust SDK will offer you the mechanism to get the info about the deep link content.
+If you are using an Adjust tracker URL with an option to deep link into your app from the URL, there is the possibility to get information about the deep link URL and its content.
+
+Hitting the URL can happen when the user has your app already installed (standard deep linking scenario) or if they don't have the app on their device (deferred deep linking scenario). In the standard deep linking scenario, the Windows platform natively offers the possibility for you to get the information about the deep link's content. The deferred deep linking scenario is something that the Windows platform doesn't support out of the box and, in this case, the Adjust SDK will offer you the means to get the information about the deep link content.
 
 ### <a id="deeplinking-standard"></a>Standard deep linking scenario
 
-If a user has your app installed and you want it to launch after hitting an Adjust tracker URL with the deep_link parameter in it, you need to enable deep linking in your app. This is being done by choosing a desired **unique scheme name** and assigning it to the specific handler method in your app which runs once the app opens after the user clicked on the link. This is set in the `Package.appxmanifest`, and here's how you indicate that your app handles your unique URI scheme name:
+If a user has your app installed and you want it to launch after hitting an Adjust tracker URL with the `deep_link` parameter in it, you need to enable deep linking in your app. This is done by choosing a desired **unique scheme name** and assigning it to the specific handler method in your app, which runs once the app opens after the user has clicked on the link. This is set in the `Package.appxmanifest`, and here's how you indicate that your app handles your unique URI scheme name:
 
 
-1. In the `Solution Explorer`, double-click `package.appxmanifest` to open the manifest designer.
-2. Select the `Declarations` tab and in the `Available Declarations` drop-down, select `Protocol` and then click `Add`.
-3. Choose a name for the URI scheme (the name must be in all lower case letters),
+1. In the `Solution Explorer`, double click `package.appxmanifest` to open the manifest designer
+2. Select the `Declarations` tab, and in the `Available Declarations` drop down, select `Protocol` and then click `Add`.
+3. Choose a name for the URI scheme (the name must be in all lowercase letters),
 4. Press `Ctrl+S` to save the changes to `package.appxmanifest`.
 
 ![][unique_scheme_name_setup]
 
-Here, we added a protocol with assigned unique scheme name of **myapp**;
+Here, we added a protocol with the assigned unique scheme name of **myapp**;
 
-Next thing you have to set up is `OnActivated` event handler which handles the activated deep link event. 
+Next thing you have to set up is the `OnActivated` event handler, which handles the activated deep link event. 
 
 In your `App.xaml.cs` file, add the following:
 
@@ -566,23 +564,23 @@ protected override void OnActivated(IActivatedEventArgs args)
 // ...
 ```
 
-You can find more info on the official Microsoft documentation: [URI activation handling][handle-uri-activation]
+You can find more information in the official Microsoft documentation: [URI activation handling][handle-uri-activation]
 
-With this being set, you need to use the assigned scheme name in the Adjust tracker URL's `deep_link` parameter if you want your app to launch once the tracker URL is clicked. A tracker URL without any information added to the deep link can be built to look something like this:
+With this now set, you need to use the assigned scheme name in the Adjust tracker URL's `deep_link` parameter if you want your app to launch once the tracker URL is clicked. A tracker URL without any information added to the deep link can be built to look something like this:
 
 ```
 https://app.adjust.com/abc123?deep_link=adjustExample%3A%2F%2F
 ```
 
-Please, have in mind that the `deep_link` parameter value in the URL **must be URL encoded**.
+Please bear in mind that the `deep_link` parameter value in the URL **must be URL encoded**.
 
-After clicking this tracker URL, and with the app set as described above, your app will launch along with `OnActivated` event handler, inside which you will automatically be provided with the information about the `deep_link` parameter content. Once this content is delivered to you, it **will not be encoded**, although it was encoded in the URL.
+With the app set as described above, after clicking this tracker URL. your app will launch along with `OnActivated` event handler, inside which you will automatically be provided with the information about the `deep_link` parameter content. Once this content is delivered to you, it **will not be encoded**, although it was encoded in the URL.
 
 ### <a id="deeplinking-deferred"></a>Deferred deep linking scenario
 
-Deferred deep linking scenario happens when a user clicks on the Adjust tracker URL with the `deep_link` parameter in it, but does not have the app installed on the device at the moment of click. After that, the user will get redirected to the  Microsoft Store to download and install your app. After opening it for the first time, the content of the `deep_link` parameter will be delivered to the app.
+The deferred deep linking scenario occurs when a user clicks on the Adjust tracker URL with the `deep_link` parameter in it but does not have the app installed on the device at the time of click. After that, the user will get redirected to the  Microsoft Store to download and install your app. After opening it for the first time, the content of the `deep_link` parameter will be delivered to the app.
 
-In order to get info about the `deep_link` parameter content in a deferred deep linking scenario, you should set a delegate method (`DeeplinkResponse`) on the `AdjustConfig` object. This will get triggered once the Adjust SDK gets the info about the deep link content from the backend.
+In order to get information about the `deep_link` parameter content in a deferred deep linking scenario, you should set a delegate method (`DeeplinkResponse`) on the `AdjustConfig` object. This will get triggered once the Adjust SDK gets the information about the deep link content from the backend.
 
 ```cs
 // ...
@@ -605,19 +603,19 @@ Adjust.ApplicationLaunching(config);
 // ...
 ```
 
-Once the Adjust SDK receives the info about the deep link content from the backend, it will deliver you the info about its content in this delegate and expect the `bool` return value from you. This return value represents your decision on whether the Adjust SDK should launch `OnActivated` event handler to which you have assigned the scheme name from the deep link (like in the [Standard deep linking scenario](#deeplinking-standard)) or not.
+Once the Adjust SDK receives the information about the deep link content from the backend, it will deliver it to you through this delegate and expect the `bool` return value from you. This return value represents your decision on whether the Adjust SDK should launch the `OnActivated` event handler to which you have assigned the scheme name from the deep link (like in the [Standard deep linking scenario](#deeplinking-standard)) or not.
 
-If you return `true`, we will launch it and the exact same scenario which is described in the [Standard deep linking scenario chapter](#deeplinking-standard) will happen. If you do not want the SDK to launch the `OnActivated` event handler, you can return `false` from this delegate (`DeeplinkResponse`) and based on the deep link content decide on your own what to do next in your app.
+If you return `true`, we will launch the event handler and the exact same scenario which is described in the [Standard deep linking scenario chapter](#deeplinking-standard) will happen. If you do not want the SDK to launch the `OnActivated` event handler, you can return `false` from this delegate (`DeeplinkResponse`), and, based on the deep link content, decide on your own what to do next in your app.
 
 ### <a id="deeplinking-reattribution"></a>Reattribution via deep links
 
-Handling of deep links (URI activation un UAP) used to open your app is essential if you are planning to run **retargeting** or **re-engagement** campaigns with deep links. For more information on how to do that, please check our [official docs][reattribution-with-deeplinks].
+Handling of deep links (URI activation on UAP) used to open your app is essential if you are planning to run **retargeting** or **re-engagement** campaigns with deep links. For more information on how to do that, please check our [official docs][reattribution-with-deeplinks].
 
-If you are using this feature, in order for your user to be properly reattributed, you need to make one additional call to the Adjust SDK in your app.
+If you are using this feature, in order for your users to be properly reattributed, you need to make one additional call to the Adjust SDK in your app.
 
-Once you have received deep link content information in your app, add a call to `Adjust.AppWillOpenUrl` method. By making this call, the Adjust SDK will try to find if there is any new attribution info inside of the deep link and if any, it will be sent to the Adjust backend. If your user should be reattributed due to a click on the Adjust tracker URL with deep link content in it, you will see the [attribution callback](#attribution-callback) in your app being triggered with new attribution info for this user.
+Once you have received the deep link content information in your app, add a call to the `Adjust.AppWillOpenUrl` method. By making this call, the Adjust SDK will try to find if there is any new attribution information inside of the deep link, and, if there is any, it will be sent to the Adjust backend. If your user should be reattributed due to a click on an Adjust tracker URL with deep link content in it, you will see the [attribution callback](#attribution-callback) in your app being triggered with new attribution information for this user.
 
-The call to `Adjust.AppWillOpenUrl` should be done in `OnActivated` method of your app, like this:
+The call to `Adjust.AppWillOpenUrl` should be done in the `OnActivated` method of your app, like this:
 
 ```cs
 using AdjustSdk;
