@@ -25,7 +25,7 @@ namespace AdjustSdk.FileSystem
         public string Name => _wrappedFile.Name;
 
         /// <summary>
-        /// The "full path" of the file, which should uniquely identify it within a given <see cref="PCLStorage.IFileSystem"/>
+        /// The "full path" of the file, which should uniquely identify it within a given File System/>
         /// </summary>
         public string Path => _wrappedFile.Path;
 
