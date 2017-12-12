@@ -25,6 +25,7 @@
 - Added usage of app secret in authorization header.
 
 #### Changed
+- Removed `Windows Phone 8.0` support.
 - Sending `sdk_click` immediately with a dedicated handler.
 - Firing attribution request as soon as install has been tracked, regardless of presence of attribution callback implementation in user's app.
 - Replaced `assert` level logs with `warn` level.
