@@ -1,67 +1,89 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
     public class ActivityHandler : IActivityHandler
     {
-        private const string ActivityStateFileName = "AdjustIOActivityState";
-        private const string ActivityStateName = "Activity state";
-        private const string AttributionFileName = "AdjustAttribution";
-        private const string AttributionName = "Attribution";
-
+        private const string ActivityStateLegacyFileName = "AdjustIOActivityState";
+        private const string ActivityStateLegacyName = "Activity state";
+        private const string ActivityStateStorageName = "adjust_activity_state";
+        private const string AttributionLegacyFileName = "AdjustAttribution";
+        private const string AttributionLegacyName = "Attribution";
+        private const string AttributionStorageName = "adjust_attribution";
         private const string AdjustPrefix = "adjust_";
+        private const string SessionParametersStorageName = "adjust_session_params";
 
-        private DeviceUtil DeviceUtil { get; set; }
+        private TimeSpan _backgroundTimerInterval;
 
-        private AdjustConfig AdjustConfig { get; set; }
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
+        private readonly InternalState _state = new InternalState();
 
-        private DeviceInfo DeviceInfo { get; set; }
+        private IDeviceUtil _deviceUtil;
+        private AdjustConfig _config;
+        private DeviceInfo _deviceInfo;
+        private ActivityState _activityState;
+        private AdjustAttribution _attribution;
+        private TimeSpan _sessionInterval;
+        private TimeSpan _subsessionInterval;
+        private IPackageHandler _packageHandler;
+        private IAttributionHandler _attributionHandler;
+        private TimerCycle _foregroundTimer;
+        private TimerOnce _backgroundTimer;
+        private TimerOnce _delayStartTimer;
+        private ISdkClickHandler _sdkClickHandler;
+        private SessionParameters _sessionParameters;
 
-        private ActivityState ActivityState { get; set; }
-
-        private AdjustAttribution Attribution { get; set; }
-
-        private bool Enabled { get; set; }
-
-        private bool Offline { get; set; }
-
-        private TimeSpan SessionInterval { get; set; }
-
-        private TimeSpan SubsessionInterval { get; set; }
-
-        private TimeSpan TimerInterval { get; set; }
-
-        private TimeSpan TimerStart { get; set; }
-
-        private IPackageHandler PackageHandler { get; set; }
-
-        private IAttributionHandler AttributionHandler { get; set; }
-
-        private TimerCycle Timer { get; set; }
-
-        private ActionQueue InternalQueue { get; set; }
-
-        private ILogger Logger { get; set; }
-
-        private ActivityHandler(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        public class InternalState
         {
-            // default values
-            Enabled = true;
-
-            Logger = AdjustFactory.Logger;
-
-            InternalQueue = new ActionQueue("adjust.ActivityQueue");
-            InternalQueue.Enqueue(() => InitInternal(adjustConfig, deviceUtil));
+            public bool IsEnabled { get; internal set; }
+            public bool IsDisabled => !IsEnabled;
+            public bool IsOffline { get; internal set; }
+            public bool IsOnline => !IsOffline;
+            public bool IsInBackground { get; internal set; }
+            public bool IsInForeground => !IsInBackground;
+            public bool IsInDelayStart { get; internal set; }
+            public bool IsNotInDelayedStart => !IsInDelayStart;
+            public bool ItHasToUpdatePackages { get; internal set; }
+            public bool IsFirstLaunch { get; internal set; }
+            public bool HasSessionResponseNotBeenProcessed { get; internal set; }
         }
 
-        public void Init(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        private ActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
-            AdjustConfig = adjustConfig;
-            DeviceUtil = deviceUtil;
+            Init(adjustConfig, deviceUtil);
+
+            _logger.IsLocked = true;
+
+            // enabled by default
+            _state.IsEnabled = adjustConfig.StartEnabled ?? true;
+
+            _state.IsOffline = adjustConfig.StartOffline;
+
+            // in the background by default
+            _state.IsInBackground = true;
+            // delay start not configured by default
+            _state.IsInDelayStart = false;
+            // does not need to update packages by default
+            _state.ItHasToUpdatePackages = false;
+            // does not have the session response by default
+            _state.HasSessionResponseNotBeenProcessed = false;
+            
+            _actionQueue.Enqueue(InitI);
         }
 
-        public static ActivityHandler GetInstance(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        public void Init(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
+        {
+            _config = adjustConfig;
+            _deviceUtil = deviceUtil;
+        }
+
+        public static ActivityHandler GetInstance(AdjustConfig adjustConfig,
+            IDeviceUtil deviceUtil)
         {
             if (adjustConfig == null)
             {
@@ -74,91 +96,173 @@ namespace AdjustSdk.Pcl
                 AdjustFactory.Logger.Error("AdjustConfig not initialized correctly");
                 return null;
             }
-
+            
             ActivityHandler activityHandler = new ActivityHandler(adjustConfig, deviceUtil);
             return activityHandler;
         }
 
+        public void ApplicationActivated()
+        {
+            _state.IsInBackground = false;
+
+            _actionQueue.Enqueue(() =>
+            {
+                DelayStartI();
+
+                StopBackgroundTimerI();
+
+                StartForegroundTimerI();
+
+                _logger.Verbose("Subsession start");
+
+                StartI();
+            });
+        }
+
+        public void ApplicationDeactivated()
+        {
+            _state.IsInBackground = true;
+
+            _actionQueue.Enqueue(() =>
+            {
+                StopForegroundTimerI();
+
+                StartBackgroundTimerI();
+
+                _logger.Verbose("Subsession end");
+
+                EndI();
+            });
+        }
+
         public void TrackEvent(AdjustEvent adjustEvent)
         {
-            InternalQueue.Enqueue(() => TrackEventInternal(adjustEvent));
+            _actionQueue.Enqueue(() =>
+            {
+                if (_activityState == null)
+                {
+                    _logger.Warn("Event tracked before first activity resumed.\n" +
+                                 "If it was triggered in the Application class, it might timestamp or even send an install long before the user opens the app.\n" +
+                                 "Please check https://github.com/adjust/android_sdk#can-i-trigger-an-event-at-application-launch for more information.");
+                    StartI();
+                }
+                TrackEventI(adjustEvent);
+            });
         }
 
-        public void TrackSubsessionStart()
+        public void FinishedTrackingActivity(ResponseData responseData)
         {
-            InternalQueue.Enqueue(StartInternal);
-        }
-
-        public void TrackSubsessionEnd()
-        {
-            InternalQueue.Enqueue(EndInternal);
-        }
-
-        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
-        {
-            LaunchDeepLink(jsonDict);
-            AttributionHandler.CheckAttribution(jsonDict);
+            // redirect session responses to attribution handler to check for attribution information
+            if (responseData is SessionResponseData)
+            {
+                _attributionHandler.CheckSessionResponse(responseData as SessionResponseData);
+            }
+            else if (responseData is SdkClickResponseData)
+            {
+                _attributionHandler.CheckSdkClickResponse(responseData as SdkClickResponseData);
+            }
+            else if (responseData is EventResponseData)
+            {
+                LaunchEventResponseTasks(responseData as EventResponseData);
+            }
         }
 
         public void SetEnabled(bool enabled)
         {
-            if (!HasChangedState(
+            _actionQueue.Enqueue(() =>
+            {
+                SetEnabledI(enabled);
+            });
+        }
+
+        private void SetEnabledI(bool enabled)
+        {
+            // compare with the saved or internal state
+            if (!HasChangedStateI(
                 previousState: IsEnabled(),
                 newState: enabled,
-                trueMessage: "Adjust already enabled",
+                trueMessage: "Adjust already enabled", 
                 falseMessage: "Adjust already disabled"))
             {
                 return;
             }
 
-            Enabled = enabled;
+            // save new enabled state in internal state
+            _state.IsEnabled = enabled;
 
-            if (ActivityState != null)
+            if (_activityState == null)
             {
-                ActivityState.Enabled = enabled;
-                WriteActivityState();
-            }
-
-            UpdateStatusCondition(
-                pausingState: !enabled,
-                pausingMessage: "Pausing package and attribution handler to disable the SDK",
-                remainsPausedMessage: "Package and attribution handler remain paused due to the SDK is offline",
-                unPausingMessage: "Resuming package and attribution handler to enabled the SDK");
-        }
-
-        public bool IsEnabled()
-        {
-            if (ActivityState != null)
-            {
-                return ActivityState.Enabled;
-            }
-            else
-            {
-                return Enabled;
-            }
-        }
-
-        public void SetOfflineMode(bool offline)
-        {
-            if (!HasChangedState(
-                previousState: Offline,
-                newState: offline, 
-                trueMessage: "Adjust already in offline mode",
-                falseMessage: "Adjust already in online mode"))
-            {
+                UpdateStatusI(pausingState: !enabled,
+                    pausingMessage: "Handlers will start as paused due to the SDK being disabled",
+                    remainsPausedMessage: "Handlers will still start as paused",
+                    unPausingMessage: "Handlers will start as active due to the SDK being enabled");
                 return;
             }
 
-            Offline = offline;
+            if (enabled)
+            {
+                if (!_deviceUtil.IsInstallTracked())
+                {
+                    _logger.Debug("SDK enabled -> Tracking new session.");
+                    var now = DateTime.Now;
+                    TrackNewSessionI(now);
+                }
 
-            UpdateStatusCondition(
-                pausingState: offline,
-                pausingMessage: "Pausing package and attribution handler to put in offline mode",
-                remainsPausedMessage: "Package and attribution handler remain paused because the SDK is disabled",
-                unPausingMessage: "Resuming package and attribution handler to put in online mode");
+                string pushToken;
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
+                if (pushToken != null && pushToken != _activityState.PushToken)
+                {
+                    SetPushToken(pushToken);
+                }
+            }
+
+            _activityState.Enabled = enabled;
+            WriteActivityStateI();
+
+            UpdateStatusI(pausingState: !enabled,
+                pausingMessage: "Pausing handlers due to SDK being disabled",
+                remainsPausedMessage: "Handlers remain paused",
+                unPausingMessage: "Resuming handlers due to SDK being enabled");
         }
-        
-        private bool HasChangedState(bool previousState, bool newState,
+
+        private void UpdateStatusI(bool pausingState, string pausingMessage,
+            string remainsPausedMessage, string unPausingMessage)
+        {
+            // it is changing from an active state to a pause state
+            if (pausingState)
+            {
+                _logger.Info(pausingMessage);
+            }
+            // check if it's remaining in a pause state
+            else if (IsPausedI(sdkClickHandlerOnly: false)) // safe to use internal version of paused (read only), can suffer from phantom read but not an issue
+            {
+                // including the sdk click handler
+                if (IsPausedI(sdkClickHandlerOnly: true))
+                {
+                    _logger.Info(remainsPausedMessage);
+                }
+                else
+                {
+                    _logger.Info(remainsPausedMessage + ", except the Sdk Click Handler");
+                }
+            }
+            else
+            {
+                // it is changing from a pause state to an active state
+                _logger.Info(unPausingMessage);
+            }
+
+            UpdateHandlersStatusAndSend();
+        }
+
+        private void SetAskingAttributionI(bool askingAttribution)
+        {
+            _activityState.AskingAttribution = askingAttribution;
+
+            WriteActivityStateI();
+        }
+
+        private bool HasChangedStateI(bool previousState, bool newState,
             string trueMessage, string falseMessage)
         {
             if (previousState != newState)
@@ -166,268 +270,633 @@ namespace AdjustSdk.Pcl
                 return true;
             }
 
-            if (previousState)
-            {
-                Logger.Debug(trueMessage);
-            }
-            else
-            {
-                Logger.Debug(falseMessage);
-            }
+            _logger.Debug(previousState ? trueMessage : falseMessage);
 
             return false;
         }
 
-        private void UpdateStatusCondition(bool pausingState, string pausingMessage,
-            string remainsPausedMessage, string unPausingMessage)
+        public bool IsEnabled()
         {
-            if (pausingState)
+            return IsEnabledI();
+        }
+
+        private bool IsEnabledI()
+        {
+            return _activityState?.Enabled ?? _state.IsEnabled;
+        }
+
+        public void SetOfflineMode(bool offline)
+        {
+            _actionQueue.Enqueue(() =>
             {
-                Logger.Info(pausingMessage);
-                TrackSubsessionEnd();
+                SetOfflineModeI(offline);
+            });
+        }
+
+        private void SetOfflineModeI(bool offline)
+        {
+            // compare with the internal state
+            if (!HasChangedStateI(
+                previousState: _state.IsOffline,
+                newState: offline,
+                trueMessage: "Adjust already in offline mode",
+                falseMessage: "Adjust already in online mode"))
+            {
                 return;
             }
 
-            if (Paused())
+            _state.IsOffline = offline;
+
+            if (_activityState == null)
             {
-                Logger.Info(remainsPausedMessage);
+                UpdateStatusI(pausingState: offline,
+                    pausingMessage: "Handlers will start paused due to SDK being offline",
+                    remainsPausedMessage: "Handlers will still start as paused",
+                    unPausingMessage: "Handlers will start as active due to SDK being online");
+                return;
             }
-            else
-            {
-                Logger.Info(unPausingMessage);
-                TrackSubsessionStart();
-            }
+
+            UpdateStatusI(
+                pausingState: offline,
+                pausingMessage: "Pausing handlers to put SDK offline mode",
+                remainsPausedMessage: "Handlers remain paused",
+                unPausingMessage: "Resuming handlers to put SDK in online mode");
         }
 
-        public void OpenUrl(Uri uri)
+        public void OpenUrl(Uri uri, DateTime clickTime)
         {
-            InternalQueue.Enqueue(() => OpenUrlInternal(uri));
+            _actionQueue.Enqueue(() => OpenUrlI(uri, clickTime));
         }
 
-        public bool UpdateAttribution(AdjustAttribution attribution)
+        public void AddSessionCallbackParameter(string key, string value)
         {
-            if (attribution == null) { return false; }
+            _actionQueue.Enqueue(() => AddSessionCallbackParameterI(key, value));
+        }
 
-            if (attribution.Equals(Attribution)) { return false; }
+        public void AddSessionPartnerParameter(string key, string value)
+        {
+            _actionQueue.Enqueue(() => AddSessionPartnerParameterI(key, value));
+        }
 
-            Attribution = attribution;
-            WriteAttribution();
+        public void RemoveSessionCallbackParameter(string key)
+        {
+            _actionQueue.Enqueue(() => RemoveSessionCallbackParameterI(key));
+        }
 
-            RunDelegate(attribution);
-            return true;
+        public void RemoveSessionPartnerParameter(string key)
+        {
+            _actionQueue.Enqueue(() => RemoveSessionPartnerParameterI(key));
+        }
+
+        public void ResetSessionCallbackParameters()
+        {
+            _actionQueue.Enqueue(ResetSessionCallbackParametersI);
+        }
+
+        public void ResetSessionPartnerParameters()
+        {
+            _actionQueue.Enqueue(ResetSessionPartnerParametersI);
         }
         
+        public void SetPushToken(string pushToken)
+        {
+            _actionQueue.Enqueue(() => {
+                if (_activityState == null)
+                {
+                    // No install has been tracked so far.
+                    // Push token is saved, ready for the session package to pick it up.
+                    return;
+                }
+                else
+                {
+                    SetPushTokenI(pushToken);
+                }
+            });
+        }
+
+        public void LaunchEventResponseTasks(EventResponseData eventResponseData)
+        {
+            _actionQueue.Enqueue(() => LaunchEventResponseTasksI(eventResponseData));
+        }
+
+        public void LaunchSessionResponseTasks(SessionResponseData sessionResponseData)
+        {
+            _actionQueue.Enqueue(() => LaunchSessionResponseTasksI(sessionResponseData));
+        }
+
+        public void LaunchSdkClickResponseTasks(SdkClickResponseData sdkClickResponseData)
+        {
+            _actionQueue.Enqueue(() => LaunchSdkClickResponseTasksI(sdkClickResponseData));
+        }
+
+        public void LaunchAttributionResponseTasks(AttributionResponseData attributionResponseData)
+        {
+            _actionQueue.Enqueue(() => LaunchAttributionResponseTasksI(attributionResponseData));
+        }
+
         public void SetAskingAttribution(bool askingAttribution)
         {
-            ActivityState.AskingAttribution = askingAttribution;
-            WriteActivityState();
+            _actionQueue.Enqueue(() => SetAskingAttributionI(askingAttribution));
         }
 
         public ActivityPackage GetAttributionPackage()
         {
-            var now = DateTime.Now;
-            var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, now);
-            return packageBuilder.BuildAttributionPackage();
+            return GetAttributionPackageI();
         }
 
-        private void UpdateStatus()
+        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters,
+            AdjustAttribution attribution, string deeplink, DateTime clickTime)
         {
-            InternalQueue.Enqueue(UpdateStatusInternal);
+            return GetDeeplinkClickPackageI(extraParameters, attribution, deeplink, clickTime);
         }
 
+        public void SendFirstPackages()
+        {
+            _actionQueue.Enqueue(SendFirstPackagesI);
+        }
+
+        #region private
         private void WriteActivityState()
         {
-            InternalQueue.Enqueue(WriteActivityStateInternal);
+            _actionQueue.Enqueue(WriteActivityStateI);
         }
 
         private void WriteAttribution()
         {
-            InternalQueue.Enqueue(WriteAttributionInternal);
+            _actionQueue.Enqueue(WriteAttributionI);
         }
 
-        private void InitInternal(AdjustConfig adjustConfig, DeviceUtil deviceUtil)
+        private void UpdateHandlersStatusAndSend()
         {
-            Init(adjustConfig, deviceUtil);
-            DeviceInfo = DeviceUtil.GetDeviceInfo();
-            DeviceInfo.SdkPrefix = adjustConfig.SdkPrefix;
+            _actionQueue.Enqueue(UpdateHandlersStatusAndSendI);
+        }
 
-            TimerInterval = AdjustFactory.GetTimerInterval();
-            TimerStart = AdjustFactory.GetTimerStart();
-            SessionInterval = AdjustFactory.GetSessionInterval();
-            SubsessionInterval = AdjustFactory.GetSubsessionInterval();
-
-            if (AdjustConfig.Environment.Equals(AdjustConfig.EnvironmentProduction))
-            {
-                Logger.LogLevel = LogLevel.Assert;
-            }
+        private void InitI()
+        {
+            _deviceInfo = _deviceUtil.GetDeviceInfo();
+            _deviceInfo.SdkPrefix = _config.SdkPrefix;
             
-            if (AdjustConfig.EventBufferingEnabled)
+            ReadAttributionI();
+            ReadActivityStateI();
+            ReadSessionParametersI();
+
+            if (_config.StartEnabled.HasValue)
             {
-                Logger.Info("Event buffering is enabled");
+                if (_config.PreLaunchActions == null)
+                {
+                    _config.PreLaunchActions = new List<Action<ActivityHandler>>();
+                }
+
+                _config.PreLaunchActions.Add(activityHandler =>
+                {
+                    activityHandler.SetEnabledI(_config.StartEnabled.Value);
+                });
             }
 
-            if (AdjustConfig.DefaultTracker != null)
+            // first launch if activity state is null
+            if (_activityState != null)
             {
-                Logger.Info("Default tracker: '{0}'", AdjustConfig.DefaultTracker);
+                _state.IsEnabled = _activityState.Enabled;
+                _state.ItHasToUpdatePackages = _activityState.UpdatePackages;
+                _state.IsFirstLaunch = false;
+            }
+            else
+            {
+                _state.IsFirstLaunch = true;
             }
 
-            ReadAttribution();
-            ReadActivityState();
+            TimeSpan foregroundTimerInterval = AdjustFactory.GetTimerInterval();
+            TimeSpan foregroundTimerStart = AdjustFactory.GetTimerStart();
+            _backgroundTimerInterval = AdjustFactory.GetTimerInterval();
 
-            PackageHandler = AdjustFactory.GetPackageHandler(this, Paused());
+            _sessionInterval = AdjustFactory.GetSessionInterval();
+            _subsessionInterval = AdjustFactory.GetSubsessionInterval();
 
-            var attributionPackage = GetAttributionPackage();
+            if (_config.EventBufferingEnabled)
+            {
+                _logger.Info("Event buffering is enabled");
+            }
 
-            AttributionHandler = AdjustFactory.GetAttributionHandler(this,
+            if (_config.DefaultTracker != null)
+            {
+                _logger.Info("Default tracker: '{0}'", _config.DefaultTracker);
+            }
+
+            if (_activityState != null)
+            {
+                string pushToken;
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
+                SetPushToken(pushToken);
+            }
+
+            _foregroundTimer = new TimerCycle(_actionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
+
+            // create background timer
+            if (_config.SendInBackground)
+            {
+                _logger.Info("Send in background configured");
+                _backgroundTimer = new TimerOnce(_actionQueue, BackgroundTimerFiredI);
+            }
+
+            // configure delay start timer
+            if (_activityState == null &&
+                    _config.DelayStart.HasValue &&
+                    _config.DelayStart > TimeSpan.Zero)
+            {
+                _logger.Info("Delay start configured");
+                _state.IsInDelayStart = true;
+                _delayStartTimer = new TimerOnce(_actionQueue, SendFirstPackagesI);
+            }
+
+            Util.UserAgent = _config.UserAgent;
+
+            Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
+
+            _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));
+
+            var attributionPackage = GetAttributionPackageI();
+
+            _attributionHandler = AdjustFactory.GetAttributionHandler(this,
                 attributionPackage,
-                Paused(),
-                AdjustConfig.HasDelegate);
+                IsPausedI(sdkClickHandlerOnly: false));
 
-            Timer = new TimerCycle(InternalQueue, TimerFiredInternal, timeInterval: TimerInterval, timeStart: TimerStart);
+            _sdkClickHandler = AdjustFactory.GetSdkClickHandler(this, IsPausedI(sdkClickHandlerOnly: true));
 
-            StartInternal();
+            // fail-safe check if app crashed during delay state, to update packages in queue
+            if (IsToUpdatePackagesI())
+            {
+                UpdatePackagesI();
+            }
+
+            PreLaunchActionsI(_config.PreLaunchActions);
+
+            //StartI();
         }
 
-        private void StartInternal()
+        private void PreLaunchActionsI(List<Action<ActivityHandler>> preLaunchActions)
         {
-            if (ActivityState != null
-                && !ActivityState.Enabled)
+            if (preLaunchActions == null) { return; }
+
+            foreach (var action in preLaunchActions)
+            {
+                action(this);
+            }
+        }
+
+        private void StartI()
+        {
+            // it shouldn't start if it was disabled after a first session
+            if (_activityState != null && !_activityState.Enabled)
             {
                 return;
             }
 
-            UpdateStatusInternal();
+            UpdateHandlersStatusAndSendI();
 
-            ProcessSession();
+            ProcessSessionI();
 
-            CheckAttributionState();
-
-            StartTimer();
+            CheckAttributionStateI();
         }
 
-        private void ProcessSession()
+        private void ProcessSessionI()
         {
             var now = DateTime.Now;
 
             // very firsts Session
-            if (ActivityState == null)
+            if (_activityState == null)
             {
                 // create fresh activity state
-                ActivityState = new ActivityState();
-                ActivityState.SessionCount = 1; // first session
+                _activityState = new ActivityState();                
+                
+                //_activityState.PushToken = _config.PushToken;
+                string pushToken;
+                _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
+                _activityState.PushToken = pushToken;
 
-                TransferSessionPackage();
+                if (_state.IsEnabled)
+                {
+                    _activityState.SessionCount = 1; // first session
+                    TransferSessionPackageI();
+                }
 
-                ActivityState.ResetSessionAttributes(now);
-                ActivityState.Enabled = Enabled;
-                WriteActivityStateInternal();
+                _activityState.ResetSessionAttributes(now);
+                _activityState.Enabled = _state.IsEnabled;
+                _activityState.UpdatePackages = _state.ItHasToUpdatePackages;
+
+                WriteActivityStateI();
+
+                // remove old push token from device
+                _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
 
                 return;
             }
 
-            var lastInterval = now - ActivityState.LastActivity.Value;
+            var lastInterval = now - _activityState.LastActivity.Value;
 
             if (lastInterval.Ticks < 0)
             {
-                Logger.Error("Time Travel!");
-                ActivityState.LastActivity = now;
-                WriteActivityStateInternal();
+                _logger.Error("Time Travel!");
+                _activityState.LastActivity = now;
+                WriteActivityStateI();
                 return;
             }
 
             // new session
-            if (lastInterval > SessionInterval)
+            if (lastInterval > _sessionInterval)
             {
-                ActivityState.SessionCount++;
-                ActivityState.LastInterval = lastInterval;
-
-                TransferSessionPackage();
-
-                ActivityState.ResetSessionAttributes(now);
-                WriteActivityStateInternal();
-
+                TrackNewSessionI(now);
                 return;
             }
 
             // new subsession
-            if (lastInterval > SubsessionInterval)
+            if (lastInterval > _subsessionInterval)
             {
-                ActivityState.SubSessionCount++;
-                ActivityState.SessionLenght += lastInterval;
-                ActivityState.LastActivity = now;
+                _activityState.SubSessionCount++;
+                _activityState.SessionLenght += lastInterval;
+                _activityState.LastActivity = now;
 
-                WriteActivityStateInternal();
-                Logger.Info("Started subsession {0} of session {1}",
-                    ActivityState.SubSessionCount, ActivityState.SessionCount);
+                WriteActivityStateI();
+                _logger.Info("Started subsession {0} of session {1}",
+                    _activityState.SubSessionCount, _activityState.SessionCount);
                 return;
             }
+
+            _logger.Verbose("Time span since last activity too short for a new subsession");
         }
 
-        private void CheckAttributionState()
+        private void TrackNewSessionI(DateTime now)
+        {
+            var lastInterval = now - _activityState.LastActivity.Value;
+
+            _activityState.SessionCount++;
+            _activityState.LastInterval = lastInterval;
+
+            TransferSessionPackageI();
+
+            _activityState.ResetSessionAttributes(now);
+            WriteActivityStateI();
+        }
+
+        private void TransferSessionPackageI()
+        {
+            // build Session Package
+            var sessionBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, DateTime.Now);
+            var sessionPackage = sessionBuilder.BuildSessionPackage(_state.IsInDelayStart);
+
+            // send Session Package
+            _packageHandler.AddPackage(sessionPackage);
+            _packageHandler.SendFirstPackage();
+        }
+
+        private void CheckAttributionStateI()
         {
             // if it's a new session
-            if (ActivityState.SubSessionCount <= 1) { return; }
+            if (!CheckActivityStateI(_activityState)) { return; }
+
+            // if it's the first launch
+            if (_state.IsFirstLaunch)
+            {
+                // and it hasn't received the session response
+                if (!_state.HasSessionResponseNotBeenProcessed)
+                {
+                    return;
+                }
+            }
 
             // if there is already an attribution saved and there was no attribution being asked
-            if (Attribution != null && !ActivityState.AskingAttribution) { return; }
+            if (_attribution != null && !_activityState.AskingAttribution) { return; }
 
-            AttributionHandler.AskAttribution();
+            _attributionHandler.GetAttribution();
         }
 
-        private void EndInternal()
+        private void EndI()
         {
-            PackageHandler.PauseSending();
-            AttributionHandler.PauseSending();
-            StopTimer();
-            if (UpdateActivityState(DateTime.Now))
+            // pause sending if it's not allowed to send
+            if (!IsToSendI())
             {
-                WriteActivityStateInternal();
+                PauseSendingI();
+            }
+
+            if (UpdateActivityStateI(DateTime.Now))
+            {
+                WriteActivityStateI();
             }
         }
 
-        private void TrackEventInternal(AdjustEvent adjustEvent)
+        private void TrackEventI(AdjustEvent adjustEvent)
         {
-            if (!IsEnabled()) { return; }
-            if (!CheckEvent(adjustEvent)) { return; }
+            if (!IsEnabledI()) { return; }
+            if (!CheckEventI(adjustEvent)) { return; }
+            if (!CheckPurchaseIdI(adjustEvent.PurchaseId)) { return; }
 
             var now = DateTime.Now;
 
-            ActivityState.EventCount++;
-            UpdateActivityState(now);
+            _activityState.EventCount++;
+            UpdateActivityStateI(now);
 
-            var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, now);
-            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent);
-            PackageHandler.AddPackage(eventPackage);
+            var packageBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, now);
+            ActivityPackage eventPackage = packageBuilder.BuildEventPackage(adjustEvent, _state.IsInDelayStart);
+            _packageHandler.AddPackage(eventPackage);
 
-            if (AdjustConfig.EventBufferingEnabled)
+            if (_config.EventBufferingEnabled)
             {
-                Logger.Info("Buffered event {0}", eventPackage.Suffix);
+                _logger.Info("Buffered event {0}", eventPackage.Suffix);
             }
             else
             {
-                PackageHandler.SendFirstPackage();
+                _packageHandler.SendFirstPackage();
             }
 
-            WriteActivityStateInternal();
+            // if it is in the background and it can send, start the background timer
+            if (_config.SendInBackground && _state.IsInBackground)
+            {
+                StartBackgroundTimerI();
+            }
+
+            WriteActivityStateI();
         }
 
-        private void OpenUrlInternal(Uri uri)
+        #region post response
+        private void LaunchEventResponseTasksI(EventResponseData eventResponseData)
         {
-            if (uri == null) return;
+            // try to update adid from response
+            UpdateAdidI(eventResponseData.Adid);
 
-            var sUri = Uri.UnescapeDataString(uri.ToString());
+            // success callback
+            if (eventResponseData.Success && _config.EventTrackingSucceeded != null)
+            {
+                _logger.Debug("Launching success event tracking action");
+                _deviceUtil.RunActionInForeground(() => _config?.EventTrackingSucceeded(eventResponseData.GetSuccessResponseData()));
+            }
+            // failure callback
+            if (!eventResponseData.Success && _config.EventTrackingFailed != null)
+            {
+                _logger.Debug("Launching failed event tracking action");
+                _deviceUtil.RunActionInForeground(() => _config.EventTrackingFailed(eventResponseData.GetFailureResponseData()));
+            }
+        }
+
+        private void LaunchSessionResponseTasksI(SessionResponseData sessionResponseData)
+        {
+            // try to update adid from response
+            UpdateAdidI(sessionResponseData.Adid);
+
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(sessionResponseData.Attribution);
+
+            Task task = null;
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                task = LaunchAttributionActionI();
+            }
+
+            if (sessionResponseData.Success)
+            {
+                _deviceUtil.SetInstallTracked();
+            }
+
+            // launch Session tracking listener if available
+            LaunchSessionAction(sessionResponseData, task);
+
+            // mark session response has been proccessed
+            _state.HasSessionResponseNotBeenProcessed = true;
+        }
+
+        private void LaunchSdkClickResponseTasksI(SdkClickResponseData sdkClickResponseData)
+        {
+            // try to update adid from response
+            UpdateAdidI(sdkClickResponseData.Adid);
+
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(sdkClickResponseData.Attribution);
+
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                LaunchAttributionActionI();
+            }
+        }
+
+        private void LaunchSessionAction(SessionResponseData sessionResponseData, Task previousTask)
+        {
+            // success callback
+            if (sessionResponseData.Success && _config.SesssionTrackingSucceeded != null)
+            {
+                _logger.Debug("Launching success session tracking action");
+                _deviceUtil.RunActionInForeground(() => _config.SesssionTrackingSucceeded(sessionResponseData.GetSessionSuccess()),
+                    previousTask);
+            }
+            // failure callback
+            if (!sessionResponseData.Success && _config.SesssionTrackingFailed != null)
+            {
+                _logger.Debug("Launching failed session tracking action");
+                _deviceUtil.RunActionInForeground(() => _config.SesssionTrackingFailed(sessionResponseData.GetFailureResponseData()),
+                    previousTask);
+            }
+        }
+
+        private void UpdateAdidI(string adid)
+        {
+            if (adid == null)
+            {
+                return;
+            }
+
+            if (adid == _activityState.Adid)
+            {
+                return;
+            }
+
+            _activityState.Adid = adid;
+            WriteActivityStateI();
+        }
+
+        private bool UpdateAttributionI(AdjustAttribution attribution)
+        {
+            if (attribution == null) { return false; }
+
+            if (attribution.Equals(_attribution)) { return false; }
+
+            _attribution = attribution;
+            WriteAttributionI();
+
+            return true;
+        }
+
+        private Task LaunchAttributionActionI()
+        {
+            if (_config.AttributionChanged == null) { return null; }
+            if (_attribution == null) { return null; }
+
+            return _deviceUtil.RunActionInForeground(() => _config.AttributionChanged(_attribution));
+        }
+
+        private void LaunchAttributionResponseTasksI(AttributionResponseData attributionResponseData)
+        {
+            // try to update adid from response
+            UpdateAdidI(attributionResponseData.Adid);
+
+            // try to update the attribution
+            var attributionUpdated = UpdateAttributionI(attributionResponseData.Attribution);
+
+            Task task = null;
+            // if attribution changed, launch attribution changed delegate
+            if (attributionUpdated)
+            {
+                task = LaunchAttributionActionI();
+            }
+
+            // if there is any, try to launch the deeplink
+            PrepareDeeplinkI(attributionResponseData.Deeplink, task);
+        }
+
+        private void PrepareDeeplinkI(Uri deeplink, Task previousTask)
+        {
+            if (deeplink == null) { return; }
+
+            _logger.Info($"Deferred deeplink received {deeplink}");
+
+            _deviceUtil.RunActionInForeground(() =>
+            {
+                if (_config == null) { return; }
+
+                bool toLaunchDeeplink = true;
+                if (_config.DeeplinkResponse != null)
+                {
+                    toLaunchDeeplink = _config.DeeplinkResponse(deeplink);
+                }
+
+                if (toLaunchDeeplink)
+                {
+                    _deviceUtil.LauchDeeplink(deeplink, previousTask);
+                }
+            }, previousTask);
+        }
+        #endregion post response
+
+        private void OpenUrlI(Uri uri, DateTime clickTime)
+        {
+            if (!IsEnabledI()) { return; }
+            if (uri == null) { return; }
+
+            var deeplink = Uri.UnescapeDataString(uri.ToString());
+
+            if (deeplink?.Length == 0) { return; }
 
             var windowsPhone80Protocol = "/Protocol?";
-            if (sUri.StartsWith(windowsPhone80Protocol))
+            if (deeplink?.StartsWith(windowsPhone80Protocol) == true)
             {
-                sUri = sUri.Substring(windowsPhone80Protocol.Length);
+                deeplink = deeplink.Substring(windowsPhone80Protocol.Length);
             }
-            
-            var queryStringIdx = sUri. IndexOf("?");
-            // check if '?' exists and it's not the last char
-            if (queryStringIdx == -1 || queryStringIdx + 1 == sUri.Length) return;
 
-            var queryString = sUri.Substring(queryStringIdx + 1);
+            var queryString = "";
+            var queryStringIdx = deeplink.IndexOf("?");
+            // check if '?' exists and it's not the last char
+            if (queryStringIdx != -1 && queryStringIdx + 1 != deeplink.Length)
+            {
+                queryString = deeplink.Substring(queryStringIdx + 1);
+            }
 
             // remove any possible fragments
             var fragmentIdx = queryString.LastIndexOf("#");
@@ -439,80 +908,234 @@ namespace AdjustSdk.Pcl
             var queryPairs = queryString.Split('&');
             var extraParameters = new Dictionary<string, string>(queryPairs.Length);
             var attribution = new AdjustAttribution();
-            bool hasAdjustTags = false;
 
             foreach (var pair in queryPairs)
             {
-                if (ReadQueryString(pair, extraParameters, attribution))
-                {
-                    hasAdjustTags = true;
-                }
+                ReadQueryStringI(pair, extraParameters, attribution);
             }
 
-            if (!hasAdjustTags) { return; }
+            var clickPackage = GetDeeplinkClickPackageI(extraParameters, attribution, deeplink, clickTime);
 
-            var clickPackage = GetDeeplinkClickPackage(extraParameters, attribution);
-            PackageHandler.AddPackage(clickPackage);
-            PackageHandler.SendFirstPackage();
+            _sdkClickHandler.SendSdkClick(clickPackage);
         }
 
-        public ActivityPackage GetDeeplinkClickPackage(Dictionary<string, string> extraParameters, AdjustAttribution attribution)
+        #region session parameters
+        internal void AddSessionCallbackParameterI(string key, string value)
         {
-            var now = DateTime.Now;
+            if (!Util.CheckParameter(key, "key", "Session Callback")) { return; }
+            if (!Util.CheckParameter(value, "value", "Session Callback")) { return; }
 
-            var packageBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, now);
-            packageBuilder.ExtraParameters = extraParameters;
+            if (_sessionParameters.CallbackParameters == null)
+            {
+                _sessionParameters.CallbackParameters = new Dictionary<string, string>();
+            }
 
-            return packageBuilder.BuildClickPackage("deeplink", now, attribution);
+            string oldValue = null;
+            if (_sessionParameters.CallbackParameters.TryGetValue(key, out oldValue))
+            {
+                if (value.Equals(oldValue))
+                {
+                    _logger.Verbose("Key {0} already present with the same value", key);
+                    return;
+                }
+
+                _logger.Warn("Key {0} will be overwritten", key);
+            }
+
+            _sessionParameters.CallbackParameters.AddSafe(key, value);
+
+            WriteSessionParametersI();
         }
 
-        private bool ReadQueryString(string queryString,
+        internal void AddSessionPartnerParameterI(string key, string value)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Partner")) { return; }
+            if (!Util.CheckParameter(value, "value", "Session Partner")) { return; }
+
+            if (_sessionParameters.PartnerParameters == null)
+            {
+                _sessionParameters.PartnerParameters = new Dictionary<string, string>();
+            }
+
+            string oldValue = null;
+            if (_sessionParameters.PartnerParameters.TryGetValue(key, out oldValue))
+            {
+                if (value.Equals(oldValue))
+                {
+                    _logger.Verbose("Key {0} already present with the same value", key);
+                    return;
+                }
+
+                _logger.Warn("Key {0} will be overwritten", key);
+            }
+
+            _sessionParameters.PartnerParameters.AddSafe(key, value);
+
+            WriteSessionParametersI();
+        }
+
+        internal void RemoveSessionCallbackParameterI(string key)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Callback")) { return; }
+
+            if (_sessionParameters.CallbackParameters == null)
+            {
+                _logger.Warn("Session Callback parameters are not set");
+                return;
+            }
+
+            if (!_sessionParameters.CallbackParameters.Remove(key))
+            {
+                _logger.Warn("Key {0} does not exist", key);
+                return;
+            }
+
+            _logger.Debug("Key {0} will be removed", key);
+
+            WriteSessionParametersI();
+        }
+
+        internal void RemoveSessionPartnerParameterI(string key)
+        {
+            if (!Util.CheckParameter(key, "key", "Session Partner")) { return; }
+
+            if (_sessionParameters.PartnerParameters == null)
+            {
+                _logger.Warn("Session Partner parameters are not set");
+                return;
+            }
+
+            if (!_sessionParameters.PartnerParameters.Remove(key))
+            {
+                _logger.Warn("Key {0} does not exist", key);
+                return;
+            }
+
+            _logger.Debug("Key {0} will be removed", key);
+
+            WriteSessionParametersI();
+        }
+
+        internal void ResetSessionCallbackParametersI()
+        {
+            if (_sessionParameters.CallbackParameters == null)
+            {
+                _logger.Warn("Session Callback parameters are not set");
+            }
+
+            _sessionParameters.CallbackParameters = null;
+
+            WriteSessionParametersI();
+        }
+
+        internal void ResetSessionPartnerParametersI()
+        {
+            if (_sessionParameters.PartnerParameters == null)
+            {
+                _logger.Warn("Session Partner parameters are not set");
+            }
+
+            _sessionParameters.PartnerParameters = null;
+
+            WriteSessionParametersI();
+        }
+        #endregion session parameters
+
+        private void SetPushTokenI(string pushToken)
+        {
+            if (!CheckActivityStateI(_activityState)) { return; }
+            if (!IsEnabledI()) { return; }
+
+            if (pushToken == null) { return; }
+            if (pushToken == _activityState.PushToken) { return; }
+
+            // save new push token
+            _activityState.PushToken = pushToken;
+            WriteActivityStateI();
+
+            // build info package
+            var now = DateTime.Now;
+            var infoBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, now);
+            var infoPackage = infoBuilder.BuildInfoPackage("push");
+
+            // send info package
+            _packageHandler.AddPackage(infoPackage);
+
+            // If push token was cached, remove it.
+            _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
+
+            if (_config.EventBufferingEnabled)
+            {
+                _logger.Info("Buffered event {0}", infoPackage.Suffix);
+            }
+            else
+            {
+                _packageHandler.SendFirstPackage();
+            }
+        }
+
+        private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,
+            AdjustAttribution attribution, string deeplink, DateTime clickTime)
+        {
+            //if (_activityState.LastActivity.HasValue)
+            //{
+            //    _activityState.LastInterval = clickTime - _activityState.LastActivity.Value;
+            //}
+
+            var clickBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, _sessionParameters, clickTime);
+            clickBuilder.ExtraParameters = extraParameters;
+            clickBuilder.Deeplink = deeplink;
+            clickBuilder.Attribution = attribution;
+            clickBuilder.ClickTime = clickTime;
+            
+            return clickBuilder.BuildClickPackage(DEEPLINK);
+        }
+
+        private void ReadQueryStringI(string queryString,
             Dictionary<string, string> extraParameters,
             AdjustAttribution attribution)
         {
             var pairComponents = queryString.Split('=');
-            if (pairComponents.Length != 2) return false;
+            if (pairComponents.Length != 2) return;
 
             var key = pairComponents[0];
-            if (!key.StartsWith(AdjustPrefix)) return false;
+            if (!key.StartsWith(AdjustPrefix)) return;
 
             var value = pairComponents[1];
-            if (value.Length == 0) return false;
+            if (value.Length == 0) return;
 
             var keyWOutPrefix = key.Substring(AdjustPrefix.Length);
-            if (keyWOutPrefix.Length == 0) return false;
+            if (keyWOutPrefix.Length == 0) return;
 
-            if (!ReadAttributionQueryString(attribution, keyWOutPrefix, value))
+            if (!ReadAttributionQueryStringI(attribution, keyWOutPrefix, value))
             {
-                extraParameters.Add(keyWOutPrefix, value);
+                extraParameters.AddSafe(keyWOutPrefix, value);
             }
-
-            return true;
         }
 
-        private bool ReadAttributionQueryString(AdjustAttribution attribution,
+        private bool ReadAttributionQueryStringI(AdjustAttribution attribution,
             string key,
             string value)
         {
-            if (key.Equals("tracker"))
+            if (key.Equals(TRACKER))
             {
                 attribution.TrackerName = value;
                 return true;
             }
 
-            if (key.Equals("campaign"))
+            if (key.Equals(CAMPAIGN))
             {
                 attribution.Campaign = value;
                 return true;
             }
 
-            if (key.Equals("adgroup"))
+            if (key.Equals(ADGROUP))
             {
                 attribution.Adgroup = value;
                 return true;
             }
 
-            if (key.Equals("creative"))
+            if (key.Equals(CREATIVE))
             {
                 attribution.Creative = value;
                 return true;
@@ -521,191 +1144,434 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        private void WriteActivityStateInternal()
+        public string GetAdid()
         {
-            Util.SerializeToFileAsync(
-                fileName: ActivityStateFileName,
-                objectWriter: ActivityState.SerializeToStream, 
-                input: ActivityState,
-                objectName: ActivityStateName)
-                .Wait();
+            return _activityState?.Adid;
         }
 
-        private void WriteAttributionInternal()
+        public AdjustAttribution GetAttribution()
         {
-            Util.SerializeToFileAsync(
-                fileName: AttributionFileName, 
-                objectWriter: AdjustAttribution.SerializeToStream,
-                input: Attribution,
-                objectName: AttributionName)
-                .Wait();
+            return _attribution;
         }
 
-        private void ReadActivityState()
+        private ActivityPackage GetAttributionPackageI()
         {
-            ActivityState = Util.DeserializeFromFileAsync(ActivityStateFileName,
-                ActivityState.DeserializeFromStream, //deserialize function from Stream to ActivityState
-                () => null, //default value in case of error
-                ActivityStateName) // activity state name
-                .Result;
+            var now = DateTime.Now;
+            var packageBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, now);
+            return packageBuilder.BuildAttributionPackage();
+        }
+        
+        private void WriteActivityStateI()
+        {
+            _deviceUtil.PersistObject(ActivityStateStorageName, ActivityState.ToDictionary(_activityState));
+        }
+        
+        private void WriteAttributionI()
+        {
+            _deviceUtil.PersistObject(AttributionStorageName, AdjustAttribution.ToDictionary(_attribution));
         }
 
-        private void ReadAttribution()
+        private void WriteSessionParametersI()
         {
-            Attribution = Util.DeserializeFromFileAsync(AttributionFileName,
-                AdjustAttribution.DeserializeFromStream, //deserialize function from Stream to Attribution
-                () => null, //default value in case of error
-                AttributionName) // attribution name
-                .Result;
+            //_deviceUtil.PersistObject(SessionParametersStorageName, SessionParameters.ToDictionary(_sessionParameters));
+            var sessionParamsMap = SessionParameters.ToDictionary(_sessionParameters);
+            string sessionParamsJson = JsonConvert.SerializeObject(sessionParamsMap);
+
+            bool sessionParamsPersisted = _deviceUtil.PersistValue(SessionParametersStorageName, sessionParamsJson);
+            if (!sessionParamsPersisted)
+                _logger.Error("Error. Session Parameters not persisted on device within specific time frame (60 seconds default).");
         }
 
-        // return whether or not activity state should be written
-        private bool UpdateActivityState(DateTime now)
+        private void ReadActivityStateI()
         {
-            var lastInterval = now - ActivityState.LastActivity.Value;
-
-            // ignore past updates
-            if (lastInterval > SessionInterval) { return false; }
-
-            ActivityState.LastActivity = now;
-
-            if (lastInterval.Ticks < 0)
+            Dictionary<string, object> activityStateObjectMap;
+            if (_deviceUtil.TryTakeObject(ActivityStateStorageName, out activityStateObjectMap))
             {
-                Logger.Error("Time Travel!");
+                _activityState = ActivityState.FromDictionary(activityStateObjectMap);
             }
             else
             {
-                ActivityState.SessionLenght += lastInterval;
-                ActivityState.TimeSpent += lastInterval;
+                var activityStateLegacyFile = _deviceUtil.GetLegacyStorageFile(ActivityStateLegacyFileName).Result;
+
+                // if activity state is not found, try to read it from the legacy file
+                _activityState = Util.DeserializeFromFileAsync(
+                        file: activityStateLegacyFile,
+                        objectReader: ActivityState.DeserializeFromStreamLegacy, //deserialize function from Stream to ActivityState
+                        defaultReturn: () => null, //default value in case of error
+                        objectName: ActivityStateLegacyName) // activity state name
+                    .Result;
+
+                // if it's successfully read from legacy source, store it using new persistance
+                // and then delete the old file
+                if (_activityState != null)
+                {
+                    _logger.Info("Legacy ActivityState File found and successfully read.");
+
+                    WriteActivityStateI();
+
+                    // check whether the activity state is persisted, and THEN delete
+                    if (_deviceUtil.TryTakeObject(ActivityStateStorageName, out activityStateObjectMap))
+                    {
+                        activityStateLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy ActivityState File deleted.");
+                    }
+                }
+            }
+        }
+
+        private void ReadAttributionI()
+        {
+            Dictionary<string, object> attributionObjectMap;
+            if (_deviceUtil.TryTakeObject(AttributionStorageName, out attributionObjectMap))
+            {
+                _attribution = AdjustAttribution.FromDictionary(attributionObjectMap);
+            }
+            else
+            {
+                var attributionLegacyFile = _deviceUtil.GetLegacyStorageFile(AttributionLegacyFileName).Result;
+
+                // if attribution is not found, try to read it from the legacy file
+                _attribution = Util.DeserializeFromFileAsync(
+                        file: attributionLegacyFile,
+                        objectReader: AdjustAttribution.DeserializeFromStreamLegacy, //deserialize function from Stream to Attribution
+                        defaultReturn: () => null, //default value in case of error
+                        objectName: AttributionLegacyName) // attribution name
+                    .Result;
+
+                // if it's successfully read from legacy source, store it using new persistance
+                // and then delete the old file
+                if (_attribution != null)
+                {
+                    _logger.Info("Legacy Attribution File found and successfully read.");
+
+                    WriteAttributionI();
+
+                    // check whether the attribution is persisted, and THEN delete
+                    if (_deviceUtil.TryTakeObject(AttributionStorageName, out attributionObjectMap))
+                    {
+                        attributionLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy Attribution File deleted.");
+                    }
+                }
+            }
+        }
+
+        private void ReadSessionParametersI()
+        {
+            string sessionParamsJson;
+            _sessionParameters = _deviceUtil.TryTakeValue(SessionParametersStorageName, out sessionParamsJson) ? 
+                SessionParameters.FromDictionary(JsonConvert.DeserializeObject<Dictionary<string, object>>(sessionParamsJson)) : 
+                new SessionParameters();
+        }
+        
+        // return whether or not activity state should be written
+        private bool UpdateActivityStateI(DateTime now)
+        {
+            if (!CheckActivityStateI(_activityState)) { return false; }
+
+            var lastInterval = now - _activityState.LastActivity.Value;
+
+            // ignore past updates
+            if (lastInterval > _sessionInterval) { return false; }
+
+            _activityState.LastActivity = now;
+
+            if (lastInterval.Ticks < 0)
+            {
+                _logger.Error("Time Travel!");
+            }
+            else
+            {
+                _activityState.SessionLenght += lastInterval;
+                _activityState.TimeSpent += lastInterval;
             }
 
             return true;
         }
 
-        private void TransferSessionPackage()
+        private void UpdateHandlersStatusAndSendI()
         {
-            // build Session Package
-            var sessionBuilder = new PackageBuilder(AdjustConfig, DeviceInfo, ActivityState, DateTime.Now);
-            var sessionPackage = sessionBuilder.BuildSessionPackage();
-
-            // send Session Package
-            PackageHandler.AddPackage(sessionPackage);
-            PackageHandler.SendFirstPackage();
-        }
-
-        private void RunDelegate(AdjustAttribution adjustAttribution)
-        {
-            if (AdjustConfig.AttributionChanged == null) return;
-            if (adjustAttribution == null) return;
-
-            DeviceUtil.RunAttributionChanged(AdjustConfig.AttributionChanged, adjustAttribution);
-        }
-
-        private void LaunchDeepLink(Dictionary<string, string> jsonDict)
-        {
-            if (jsonDict == null) { return; }
-
-            string deeplink;
-            if (!jsonDict.TryGetValue("deeplink", out deeplink)) { return; }
-
-            if (!Uri.IsWellFormedUriString(deeplink, UriKind.Absolute))
+            // check if it should stop sending
+            if (!IsToSendI())
             {
-                Logger.Error("Malformed deeplink '{0}'", deeplink);
+                PauseSendingI();
                 return;
             }
 
-            Logger.Error("Wellformed deeplink '{0}'", deeplink);
+            ResumeSendingI();
 
-            var deeplinkUri = new Uri(deeplink);
-            DeviceUtil.LauchDeeplink(deeplinkUri);
-        }
-
-        private void UpdateStatusInternal()
-        {
-            UpdateAttributionHandlerStatus();
-            UpdatePackageHandlerStatus();
-        }
-
-        private void UpdateAttributionHandlerStatus()
-        {
-            if (Paused())
+            // try to send if it's the first launch and it hasn't received the session response
+            //  even if event buffering is enabled
+            if (_state.IsFirstLaunch && _state.HasSessionResponseNotBeenProcessed)
             {
-                AttributionHandler.PauseSending();
+                _packageHandler.SendFirstPackage();
+            }
+
+            // try to send
+            if (!_config.EventBufferingEnabled)
+            {
+                _packageHandler.SendFirstPackage();
+            }
+        }
+
+        private void PauseSendingI()
+        {
+            _attributionHandler.PauseSending();
+            _packageHandler.PauseSending();
+
+            // the conditions to pause the sdk click handler are less restrictive
+            // it's possible for the sdk click handler to be active while others are paused
+            if (!IsToSendI(true))
+            {
+                _sdkClickHandler.PauseSending();
             }
             else
             {
-                AttributionHandler.ResumeSending();
+                _sdkClickHandler.ResumeSending();
             }
         }
 
-        private void UpdatePackageHandlerStatus()
+        private void ResumeSendingI()
         {
-            if (Paused())
+            _attributionHandler.ResumeSending();
+            _packageHandler.ResumeSending();
+            _sdkClickHandler.ResumeSending();
+        }
+
+        private bool CheckPurchaseIdI(string purchaseId)
+        {
+            if (string.IsNullOrEmpty(purchaseId))
+                return true;  // no purchase ID given
+
+            if (_activityState.FindPurchaseId(purchaseId))
             {
-                PackageHandler.PauseSending();
+                _logger.Info("Skipping duplicated purchase ID '{0}'", purchaseId);
+                return false; // purchase ID found -> used already
             }
-            else
+
+            _activityState.AddPurchaseId(purchaseId);
+            _logger.Verbose("Added purchase ID '{0}'", purchaseId);
+            // activity state will get written by caller
+            return true;
+        }
+
+        private bool CheckActivityStateI(ActivityState activityState)
+        {
+            if (activityState == null)
             {
-                PackageHandler.ResumeSending();
+                _logger.Error("Missing activity state");
+                return false;
             }
+            return true;
         }
 
-        private bool Paused()
+        private bool IsPausedI()
         {
-            return Offline || !IsEnabled();
+            return IsPausedI(sdkClickHandlerOnly: false);
         }
 
-        #region Timer
-
-        private void StartTimer()
+        private bool IsPausedI(bool sdkClickHandlerOnly)
         {
-            if (Paused())
+            if (sdkClickHandlerOnly)
+            {
+                // sdk click handler is paused if either:
+                return _state.IsOffline ||  // it's offline
+                        !IsEnabledI();      // is disabled
+            }
+            // other handlers are paused if either:
+            return _state.IsOffline ||  // it's offline
+                    !IsEnabledI() ||    // is disabled
+                    _state.IsInDelayStart;    // is in delayed start
+        }
+
+        private bool IsToSendI()
+        {
+            return IsToSendI(sdkClickHandlerOnly: false);
+        }
+
+        private bool IsToSendI(bool sdkClickHandlerOnly)
+        {
+            // don't send when it's paused
+            if (IsPausedI(sdkClickHandlerOnly))
+            {
+                return false;
+            }
+
+            // has the option to send in the background -> is to send
+            if (_config.SendInBackground)
+            {
+                return true;
+            }
+
+            // doesn't have the option -> depends on being on the background/foreground
+            return _state.IsInForeground;
+        }
+
+        #region delay start
+        private void DelayStartI()
+        {
+            // it's not configured to start delayed or already finished
+            if (_state.IsNotInDelayedStart)
             {
                 return;
             }
 
-            Timer.Resume();
-        }
-
-        private void StopTimer()
-        {
-            Timer.Suspend();
-        }
-
-        private void TimerFiredInternal()
-        {
-            if (Paused())
+            // the delay has already started
+            if (IsToUpdatePackagesI())
             {
-                StopTimer();
                 return;
             }
 
-            Logger.Debug("Session timer fired");
-            PackageHandler.SendFirstPackage();
+            // check against max start delay
+            TimeSpan delayStart = _config.DelayStart.HasValue ? _config.DelayStart.Value : TimeSpan.Zero;
+            TimeSpan maxDelayStart = AdjustFactory.GetMaxDelayStart();
 
-            if (UpdateActivityState(DateTime.Now))
+            if (delayStart > maxDelayStart)
             {
-                WriteActivityStateInternal();
+                _logger.Warn("Delay start of {0} seconds bigger than max allowed value of {1} seconds",
+                    Util.SecondDisplayFormat(delayStart),
+                    Util.SecondDisplayFormat(maxDelayStart));
+                delayStart = maxDelayStart;
+            }
+            
+            _logger.Info("Waiting {0} seconds before starting first session", Util.SecondDisplayFormat(delayStart));
+
+            _delayStartTimer.StartIn(delayStart);
+
+            _state.ItHasToUpdatePackages = true;
+
+            if (_activityState != null)
+            {
+                _activityState.UpdatePackages = true;
+                WriteActivityStateI();
             }
         }
 
-        #endregion Timer
+        private void SendFirstPackagesI()
+        {
+            if (_state.IsNotInDelayedStart)
+            {
+                _logger.Info("Start delay expired or never configured");
+                return;
+            }
 
-        private bool CheckEvent(AdjustEvent adjustEvent)
+            // update packages in queue
+            UpdatePackagesI();
+            // no longer is in delay start
+            _state.IsInDelayStart = false;
+            // cancel possible still running timer if it was called by user
+            _delayStartTimer.Cancel();
+            // and release timer
+            _delayStartTimer = null;
+            // update the status and try to send first package
+            UpdateHandlersStatusAndSendI();
+        }
+
+        private void UpdatePackagesI()
+        {
+            // update activity packages
+            _packageHandler.UpdatePackages(_sessionParameters);
+            // no longer needs to update packages
+            _state.ItHasToUpdatePackages = false;
+            if (_activityState != null)
+            {
+                _activityState.UpdatePackages = false;
+                WriteActivityStateI();
+            }
+        }
+
+        private bool IsToUpdatePackagesI()
+        {
+            return _activityState?.UpdatePackages ?? _state.ItHasToUpdatePackages;
+        }
+
+        #endregion delay start
+
+        #region timers
+        private void StartForegroundTimerI()
+        {
+            if (!IsEnabledI())
+            {
+                return;
+            }
+
+            _foregroundTimer.Resume();
+        }
+
+        private void StopForegroundTimerI()
+        {
+            _foregroundTimer.Suspend();
+        }
+
+        private void ForegroundTimerFiredI()
+        {
+            if (IsPausedI())
+            {
+                StopForegroundTimerI();
+                return;
+            }
+
+            _logger.Debug("Session timer fired");
+            _packageHandler.SendFirstPackage();
+
+            if (UpdateActivityStateI(DateTime.Now))
+            {
+                WriteActivityStateI();
+            }
+        }
+
+        private void StartBackgroundTimerI()
+        {
+            if (_backgroundTimer == null)
+            {
+                return;
+            }
+
+            // check if it can send in the background
+            if (!IsToSendI())
+            {
+                return;
+            }
+
+            // background timer already started
+            if (_backgroundTimer.FireIn > TimeSpan.Zero)
+            {
+                return;
+            }
+
+            _backgroundTimer.StartIn(_backgroundTimerInterval);
+        }
+
+        private void StopBackgroundTimerI()
+        {
+            _backgroundTimer?.Cancel();
+        }
+
+        private void BackgroundTimerFiredI()
+        {
+            if (IsToSendI())
+            {
+                _packageHandler.SendFirstPackage();
+            }
+        }
+        #endregion timers
+
+        private bool CheckEventI(AdjustEvent adjustEvent)
         {
             if (adjustEvent == null)
             {
-                Logger.Error("Event missing");
+                _logger.Error("Event missing");
                 return false;
             }
 
             if (!adjustEvent.IsValid())
             {
-                Logger.Error("Event not initialized correctly");
+                _logger.Error("Event not initialized correctly");
                 return false;
             }
 
             return true;
         }
+        #endregion private
     }
 }

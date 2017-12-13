@@ -1,14 +1,14 @@
-﻿using System.Collections.Generic;
-
-namespace AdjustSdk.Pcl
+﻿namespace AdjustSdk.Pcl
 {
     public interface IAttributionHandler
     {
-        void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate);
+        void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused);
 
-        void CheckAttribution(Dictionary<string, string> jsonDict);
+        void CheckSessionResponse(SessionResponseData sessionResponseData);
 
-        void AskAttribution();
+        void CheckSdkClickResponse(SdkClickResponseData sdkClickResponseData);
+
+        void GetAttribution();
 
         void PauseSending();
 

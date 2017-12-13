@@ -1,83 +1,118 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
     internal class PackageBuilder
     {
-        private AdjustConfig AdjustConfig { get; set; }
-
-        private DeviceInfo DeviceInfo { get; set; }
-
-        private ActivityState ActivityState { get; set; }
-
-        private DateTime CreatedAt { get; set; }
+        private readonly AdjustConfig _config;
+        private readonly DeviceInfo _deviceInfo;
+        private readonly ActivityState _activityState;
+        private readonly DateTime _createdAt;
+        private readonly SessionParameters _sessionParameters;
 
         public Dictionary<string, string> ExtraParameters { get; set; }
+        public string Deeplink { get; set; }
+        public AdjustAttribution Attribution { get; set; }
+        public DateTime ClickTime { get; set;}
 
-        internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo, ActivityState activityState, DateTime createdAt)
-            : this(adjustConfig, deviceInfo, createdAt)
+        internal PackageBuilder(AdjustConfig adjustConfig, 
+            DeviceInfo deviceInfo,
+            ActivityState activityState,
+            SessionParameters sessionParameters,
+            DateTime createdAt)
+            : this(adjustConfig, deviceInfo, activityState, createdAt)
         {
-            ActivityState = activityState.Clone();
+            // no need to copy because all access is made synchronously 
+            //  in Activity Handler inside internal functions.
+            //  only exceptions are ´Enable´ and ´AskingAttribution´
+            //  and they are not read here
+            //_ActivityState = activityState;
+            _sessionParameters = sessionParameters;
         }
 
         internal PackageBuilder(AdjustConfig adjustConfig, DeviceInfo deviceInfo,
-            DateTime createdAt)
+            ActivityState activityState, DateTime createdAt)
         {
-            AdjustConfig = adjustConfig;
-            DeviceInfo = deviceInfo;
-            CreatedAt = createdAt;
+            _config = adjustConfig;
+            _deviceInfo = deviceInfo;
+            _activityState = activityState;
+            _createdAt = createdAt;
         }
 
-        internal ActivityPackage BuildSessionPackage()
+        internal ActivityPackage BuildSessionPackage(bool isInDelay)
         {
-            var parameters = GetDefaultParameters();
+            Dictionary<string, string> parameters = GetAttributableParameters(!isInDelay ? _sessionParameters : null);
 
-            AddTimeSpan(parameters, "last_interval", ActivityState.LastInterval);
-            AddString(parameters, "default_tracker", AdjustConfig.DefaultTracker);
-
-            return new ActivityPackage(ActivityKind.Session, DeviceInfo.ClientSdk, parameters);
+            return new ActivityPackage(ActivityKind.Session, _deviceInfo.ClientSdk, parameters);
         }
 
-        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent)
+        internal ActivityPackage BuildEventPackage(AdjustEvent adjustEvent, bool isInDelay)
         {
             var parameters = GetDefaultParameters();
 
-            AddInt(parameters, "event_count", ActivityState.EventCount);
-            AddString(parameters, "event_token", adjustEvent.EventToken);
-            AddDouble(parameters, "revenue", adjustEvent.Revenue);
-            AddString(parameters, "currency", adjustEvent.Currency);
-            AddDictionaryJson(parameters, "callback_params", adjustEvent.CallbackParameters);
-            AddDictionaryJson(parameters, "partner_params", adjustEvent.PartnerParameters);
+            AddInt(parameters, EVENT_COUNT, _activityState.EventCount);
+            AddString(parameters, EVENT_TOKEN, adjustEvent.EventToken);
+            AddDouble(parameters, REVENUE, adjustEvent.Revenue);
+            AddString(parameters, CURRENCY, adjustEvent.Currency);
+            if (!isInDelay)
+            {
+                AddDictionaryJson(parameters, "callback_params",
+                Util.MergeParameters(target: _sessionParameters.CallbackParameters,
+                                    source: adjustEvent.CallbackParameters,
+                                    parametersName: "Callback"));
+                AddDictionaryJson(parameters, "partner_params",
+                    Util.MergeParameters(target: _sessionParameters.PartnerParameters,
+                                        source: adjustEvent.PartnerParameters,
+                                        parametersName: "Partner"));
 
-            return new ActivityPackage(ActivityKind.Event, DeviceInfo.ClientSdk, parameters);
+                return new ActivityPackage(ActivityKind.Event, _deviceInfo.ClientSdk, parameters);
+            }
+
+            var eventPackage = new ActivityPackage(ActivityKind.Event, _deviceInfo.ClientSdk, parameters);
+            eventPackage.CallbackParameters = adjustEvent.CallbackParameters;
+            eventPackage.PartnerParameters = adjustEvent.PartnerParameters;
+
+            return eventPackage;
         }
 
-        internal ActivityPackage BuildClickPackage(string source, DateTime clickTime, AdjustAttribution attribution)
+        internal ActivityPackage BuildClickPackage(string source)
+        {
+            var parameters = GetAttributableParameters(_sessionParameters);
+
+            AddString(parameters, DEEPLINK, Deeplink);
+            AddString(parameters, SOURCE, source);
+            AddDateTime(parameters, "click_time", ClickTime);
+            AddDictionaryJson(parameters, "params", ExtraParameters);
+
+            if (Attribution != null)
+            {
+                AddString(parameters, TRACKER, Attribution.TrackerName);
+                AddString(parameters, CAMPAIGN, Attribution.Campaign);
+                AddString(parameters, ADGROUP, Attribution.Adgroup);
+                AddString(parameters, CREATIVE, Attribution.Creative);
+            }
+
+            return new ActivityPackage(ActivityKind.Click, _deviceInfo.ClientSdk, parameters);
+        }
+
+        internal ActivityPackage BuildInfoPackage(string source)
         {
             var parameters = GetIdsParameters();
 
-            AddString(parameters, "source", source);
-            AddDateTime(parameters, "click_time", clickTime);
-            AddDictionaryJson(parameters, "params", ExtraParameters);
+            AddString(parameters, SOURCE, source);
+            InjectPushToken(parameters);
 
-            if (attribution != null)
-            {
-                AddString(parameters, "tracker", attribution.TrackerName);
-                AddString(parameters, "campaign", attribution.Campaign);
-                AddString(parameters, "adgroup", attribution.Adgroup);
-                AddString(parameters, "creative", attribution.Creative);
-            }
-
-            return new ActivityPackage(ActivityKind.Click, DeviceInfo.ClientSdk, parameters);
+            return new ActivityPackage(ActivityKind.Info, _deviceInfo.ClientSdk, parameters);
         }
 
         internal ActivityPackage BuildAttributionPackage()
         {
             var parameters = GetIdsParameters();
 
-            return new ActivityPackage(ActivityKind.Attribution, DeviceInfo.ClientSdk, parameters);
+            return new ActivityPackage(ActivityKind.Attribution, _deviceInfo.ClientSdk, parameters);
         }
 
         private Dictionary<string, string> GetIdsParameters()
@@ -86,7 +121,23 @@ namespace AdjustSdk.Pcl
 
             InjectDeviceInfoIds(parameters);
             InjectConfig(parameters);
-            InjectCreatedAt(parameters);
+            InjectCommonParameters(parameters);
+
+            return parameters;
+        }
+
+        private Dictionary<string, string> GetAttributableParameters(SessionParameters sessionParameters)
+        {
+            Dictionary<string, string> parameters = GetDefaultParameters();
+
+            AddTimeSpan(parameters, "last_interval", _activityState.LastInterval);
+            AddString(parameters, "default_tracker", _config.DefaultTracker);
+
+            if (sessionParameters != null)
+            {
+                AddDictionaryJson(parameters, "callback_params", sessionParameters.CallbackParameters);
+                AddDictionaryJson(parameters, "partner_params", sessionParameters.PartnerParameters);
+            }
 
             return parameters;
         }
@@ -98,78 +149,98 @@ namespace AdjustSdk.Pcl
             InjectDeviceInfo(parameters);
             InjectConfig(parameters);
             InjectActivityState(parameters);
-            InjectCreatedAt(parameters);
+            InjectCommonParameters(parameters);
 
             return parameters;
         }
 
-        private void InjectCreatedAt(Dictionary<string, string> parameters)
+        private void InjectCommonParameters(Dictionary<string, string> parameters)
         {
-            AddDateTime(parameters, "created_at", CreatedAt);
+            AddDateTime(parameters, CREATED_AT, _createdAt);
+            AddBool(parameters, ATTRIBUTION_DEEPLINK, true);
         }
 
         private void InjectDeviceInfoIds(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "win_udid", DeviceInfo.DeviceUniqueId);
-            AddString(parameters, "win_hwid", DeviceInfo.HardwareId);
-            AddString(parameters, "win_naid", DeviceInfo.NetworkAdapterId);
-            AddString(parameters, "win_adid", DeviceInfo.ReadWindowsAdvertisingId());
+            AddString(parameters, WIN_ADID, _deviceInfo.ReadWindowsAdvertisingId());
+            AddString(parameters, WIN_HWID, _deviceInfo.HardwareId);
+            AddString(parameters, WIN_NAID, _deviceInfo.NetworkAdapterId);
+            AddString(parameters, WIN_UDID, _deviceInfo.DeviceUniqueId);
+
+            AddString(parameters, EAS_ID, _deviceInfo.EasId);
         }
 
         private void InjectDeviceInfo(Dictionary<string, string> parameters)
         {
             InjectDeviceInfoIds(parameters);
 
-            AddString(parameters, "app_display_name", DeviceInfo.AppDisplayName);
-            AddString(parameters, "app_name", DeviceInfo.AppName);
-            AddString(parameters, "app_version", DeviceInfo.AppVersion);
-            AddString(parameters, "app_publisher", DeviceInfo.AppPublisher);
-            AddString(parameters, "app_author", DeviceInfo.AppAuthor);
-            AddString(parameters, "device_type", DeviceInfo.DeviceType);
-            AddString(parameters, "device_name", DeviceInfo.DeviceName);
-            AddString(parameters, "device_manufacturer", DeviceInfo.DeviceManufacturer);
-            AddString(parameters, "architecture", DeviceInfo.Architecture);
-            AddString(parameters, "os_name", DeviceInfo.OsName);
-            AddString(parameters, "os_version", DeviceInfo.OsVersion);
-            AddString(parameters, "language", DeviceInfo.Language);
-            AddString(parameters, "country", DeviceInfo.Country);
+            AddString(parameters, "app_display_name", _deviceInfo.AppDisplayName);
+            AddString(parameters, "app_name", _deviceInfo.AppName);
+            AddString(parameters, "app_version", _deviceInfo.AppVersion);
+            AddString(parameters, "app_publisher", _deviceInfo.AppPublisher);
+            AddString(parameters, "app_author", _deviceInfo.AppAuthor);
+            AddString(parameters, "device_type", _deviceInfo.DeviceType);
+            AddString(parameters, "device_name", _deviceInfo.DeviceName);
+            AddString(parameters, "device_manufacturer", _deviceInfo.DeviceManufacturer);
+            AddString(parameters, "architecture", _deviceInfo.Architecture);
+            AddString(parameters, "os_name", _deviceInfo.OsName);
+            AddString(parameters, "os_version", _deviceInfo.OsVersion);
+            AddString(parameters, "language", _deviceInfo.Language);
+            AddString(parameters, "country", _deviceInfo.Country);
 
-            AddString(parameters, "eas_name", DeviceInfo.EasFriendlyName);
-            AddString(parameters, "eas_id", DeviceInfo.EasId);
-            AddString(parameters, "eas_os", DeviceInfo.EasOperatingSystem);
-            AddString(parameters, "eas_firmware_version", DeviceInfo.EasSystemFirmwareVersion);
-            AddString(parameters, "eas_hardware_version", DeviceInfo.EasSystemHardwareVersion);
-            AddString(parameters, "eas_system_manufacturer", DeviceInfo.EasSystemManufacturer);
-            AddString(parameters, "eas_product_name", DeviceInfo.EasSystemProductName);
-            AddString(parameters, "eas_system_sku", DeviceInfo.EasSystemSku);
+            AddString(parameters, "eas_name", _deviceInfo.EasFriendlyName);
+            AddString(parameters, EAS_ID, _deviceInfo.EasId);
+            AddString(parameters, "eas_os", _deviceInfo.EasOperatingSystem);
+            AddString(parameters, "eas_firmware_version", _deviceInfo.EasSystemFirmwareVersion);
+            AddString(parameters, "eas_hardware_version", _deviceInfo.EasSystemHardwareVersion);
+            AddString(parameters, "eas_system_manufacturer", _deviceInfo.EasSystemManufacturer);
+            AddString(parameters, "eas_product_name", _deviceInfo.EasSystemProductName);
+            AddString(parameters, "eas_system_sku", _deviceInfo.EasSystemSku);
+
+            string connectivityType = _deviceInfo.GetConnectivityType()?.ToString();
+            string networkType = _deviceInfo.GetNetworkType()?.ToString();
+
+            AddString(parameters, CONNECTIVITY_TYPE, connectivityType);
+            AddString(parameters, NETWORK_TYPE, networkType);
         }
 
         private void InjectConfig(Dictionary<string, string> parameters)
         {
-            AddString(parameters, "app_token", AdjustConfig.AppToken);
-            AddString(parameters, "environment", AdjustConfig.Environment);
-            AddBool(parameters, "needs_attribution_data", AdjustConfig.HasDelegate);
+            AddString(parameters, "app_token", _config.AppToken);
+            AddString(parameters, "environment", _config.Environment);
+            AddBool(parameters, "device_known", _config.DeviceKnown);
+            AddBool(parameters, "needs_response_details", true);
+            AddString(parameters, SECRET_ID, _config.SecretId);
+            AddString(parameters, APP_SECRET, _config.AppSecret);
+            AddBool(parameters, "event_buffering_enabled", _config.EventBufferingEnabled);
         }
 
         private void InjectActivityState(Dictionary<string, string> parameters)
         {
-            AddInt(parameters, "session_count", ActivityState.SessionCount);
-            AddInt(parameters, "subsession_count", ActivityState.SubSessionCount);
-            AddTimeSpan(parameters, "session_length", ActivityState.SessionLenght);
-            AddTimeSpan(parameters, "time_spent", ActivityState.TimeSpent);
-            AddString(parameters, "win_uuid", ActivityState.Uuid.ToString());
+            InjectPushToken(parameters);
+
+            AddString(parameters, WIN_UUID, _activityState?.Uuid.ToString());
+            AddInt(parameters, "session_count", _activityState?.SessionCount);
+            AddInt(parameters, "subsession_count", _activityState?.SubSessionCount);
+            AddTimeSpan(parameters, "session_length", _activityState?.SessionLenght);
+            AddTimeSpan(parameters, "time_spent", _activityState?.TimeSpent);
+        }
+        
+        private void InjectPushToken(Dictionary<string, string> parameters)
+        {
+            AddString(parameters, PUSH_TOKEN, _activityState?.PushToken);
         }
 
         #region AddParameter
 
-        private void AddString(Dictionary<string, string> parameters, string key, string value)
+        internal static void AddString(Dictionary<string, string> parameters, string key, string value)
         {
-            if (String.IsNullOrEmpty(value)) { return; }
+            if (string.IsNullOrEmpty(value)) { return; }
 
-            parameters.Add(key, value);
+            parameters.AddSafe(key, value);
         }
 
-        private void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
+        internal static void AddDateTime(Dictionary<string, string> parameters, string key, DateTime? value)
         {
             if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
@@ -178,7 +249,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, sDateTime);
         }
 
-        private void AddInt(Dictionary<string, string> parameters, string key, int? value)
+        internal static void AddInt(Dictionary<string, string> parameters, string key, int? value)
         {
             if (!value.HasValue || value.Value < 0) { return; }
 
@@ -186,7 +257,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, sInt);
         }
 
-        private void AddBool(Dictionary<string, string> parameters, string key, bool? value)
+        internal static void AddBool(Dictionary<string, string> parameters, string key, bool? value)
         {
             if (!value.HasValue) { return; }
 
@@ -195,7 +266,7 @@ namespace AdjustSdk.Pcl
             AddInt(parameters, key, iBool);
         }
 
-        private void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
+        internal static void AddTimeSpan(Dictionary<string, string> parameters, string key, TimeSpan? value)
         {
             if (!value.HasValue || value.Value.Ticks < 0) { return; }
 
@@ -204,7 +275,7 @@ namespace AdjustSdk.Pcl
             AddInt(parameters, key, (int)roundedSeconds);
         }
 
-        private void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
+        internal static void AddDictionaryJson(Dictionary<string, string> parameters, string key, Dictionary<string, string> value)
         {
             if (value == null) { return; }
             if (value.Count == 0) { return; }
@@ -214,15 +285,15 @@ namespace AdjustSdk.Pcl
             AddString(parameters, key, json);
         }
 
-        private void AddDouble(Dictionary<string, string> parameters, string key, double? value)
+        internal static void AddDouble(Dictionary<string, string> parameters, string key, double? value)
         {
             if (value == null) { return; }
 
-            string sDouble = Util.f("{0:0.00000}", value);
+            string sDouble = Util.F("{0:0.00000}", value);
 
             AddString(parameters, key, sDouble);
         }
-
+        
         #endregion AddParameter
     }
 }

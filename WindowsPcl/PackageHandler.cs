@@ -2,167 +2,254 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
     public class PackageHandler : IPackageHandler
     {
-        private const string PackageQueueFilename = "AdjustIOPackageQueue";
-        private const string PackageQueueName = "Package queue";
+        private const string PackageQueueLegacyFilename = "AdjustIOPackageQueue";
+        private const string PackageQueueLegacyName = "Package queue";
+        private const string PackageQueueStorageName = "adjust_package_queue";
 
-        private ActionQueue InternalQueue { get; set; }
-        private List<ActivityPackage> PackageQueue { get; set; }
-        private IRequestHandler RequestHandler { get; set; }
-        private IActivityHandler ActivityHandler { get; set; }
-        private ILogger Logger { get; set; }
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.PackageHandler");
+        private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetPackageHandlerBackoffStrategy();
 
-        private ManualResetEvent InternalWaitHandle;
+        private List<ActivityPackage> _packageQueue;
+        private IRequestHandler _requestHandler;
+        private IActivityHandler _activityHandler;
 
-        private bool IsPaused;
+        private ManualResetEvent _internalWaitHandle;
 
-        public PackageHandler(IActivityHandler activityHandler, bool startPaused)
+        private IDeviceUtil _deviceUtil;
+
+        private bool _isPaused;
+
+        public PackageHandler(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            Logger = AdjustFactory.Logger;
+            Init(activityHandler, deviceUtil, startPaused);
 
-            InternalQueue = new ActionQueue("adjust.PackageQueue");
-
-            InternalQueue.Enqueue(() => InitInternal(activityHandler, startPaused));
+            _actionQueue.Enqueue(() => InitI(activityHandler, deviceUtil, startPaused));
         }
 
-        public void Init(IActivityHandler activityHandler, bool startPaused)
+        public void Init(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            ActivityHandler = activityHandler;
-            IsPaused = startPaused;
+            _activityHandler = activityHandler;
+            _deviceUtil = deviceUtil;
+            _isPaused = startPaused;
         }
 
         public void AddPackage(ActivityPackage activityPackage)
         {
-            InternalQueue.Enqueue(() => AddInternal(activityPackage));
+            _actionQueue.Enqueue(() => AddI(activityPackage));
         }
 
         public void SendFirstPackage()
         {
-            InternalQueue.Enqueue(SendFirstInternal);
+            _actionQueue.Enqueue(SendFirstI);
         }
 
-        public void SendNextPackage()
+        public void SendNextPackage(ResponseData responseData)
         {
-            InternalQueue.Enqueue(SendNextInternal);
+            _actionQueue.Enqueue(SendNextI);
+
+            _activityHandler.FinishedTrackingActivity(responseData);
         }
 
-        public void CloseFirstPackage()
+        public void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage)
         {
-            InternalWaitHandle.Set(); // open the door (signals the wait handle)
+            _activityHandler.FinishedTrackingActivity(responseData);
+
+            Action action = () =>
+            {
+                _logger.Verbose("Package handler can send");
+                _internalWaitHandle.Set(); // open the door (signals the wait handle)
+
+                SendFirstPackage();
+            };
+
+            int retries = activityPackage.IncreaseRetries();
+
+            var waitTime = Util.WaitingTime(retries, _backoffStrategy);
+
+            _logger.Verbose("Waiting for {0} seconds before retrying for the {1} time", Util.SecondDisplayFormat(waitTime), retries);
+
+            _actionQueue.Delay(waitTime, action);
         }
 
         public void PauseSending()
         {
-            IsPaused = true;
+            _isPaused = true;
         }
 
         public void ResumeSending()
         {
-            IsPaused = false;
+            _isPaused = false;
         }
 
-        public void FinishedTrackingActivity(Dictionary<string, string> jsonDict)
+        public void UpdatePackages(SessionParameters sessionParameters)
         {
-            ActivityHandler.FinishedTrackingActivity(jsonDict);
+            var sessionParametersCopy = sessionParameters.Clone();
+
+            _actionQueue.Enqueue(() => UpdatePackagesI(sessionParametersCopy));
         }
 
-        private void InitInternal(IActivityHandler activityHandler, bool startPaused)
+        private void InitI(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
-            Init(activityHandler, startPaused);
+            ReadPackageQueueI();
 
-            ReadPackageQueue();
+            _internalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            InternalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
-
-            RequestHandler = AdjustFactory.GetRequestHandler(this);
+            _requestHandler = AdjustFactory.GetRequestHandler(SendNextPackage, CloseFirstPackage);
         }
 
-        private void AddInternal(ActivityPackage activityPackage)
+        private void AddI(ActivityPackage activityPackage)
         {
-            if (activityPackage.ActivityKind.Equals(ActivityKind.Click) && PackageQueue.Count > 0)
+            _packageQueue.Add(activityPackage);
+
+            _logger.Debug("Added package {0} ({1})", _packageQueue.Count, activityPackage);
+            _logger.Verbose("{0}", activityPackage.GetExtendedString());
+
+            WritePackageQueueI();
+        }
+
+        private void SendFirstI()
+        {
+            if (_packageQueue.Count == 0) {  return; }
+
+            if (_isPaused)
             {
-                PackageQueue.Insert(1, activityPackage);
-            }
-            else
-            {
-                PackageQueue.Add(activityPackage);
-            }
-
-            Logger.Debug("Added package {0} ({1})", PackageQueue.Count, activityPackage);
-            Logger.Verbose("{0}", activityPackage.GetExtendedString());
-
-            WritePackageQueue();
-        }
-
-        private void SendFirstInternal()
-        {
-            if (PackageQueue.Count == 0) return;
-
-            if (IsPaused)
-            {
-                Logger.Debug("Package handler is paused");
+                _logger.Debug("Package handler is paused");
                 return;
             }
 
             // no need to lock InternalWaitHandle between WaitOne(0) call and Reset()
             // because all Internal methods of PackageHandler can be only executed by 1 thread at a time
 
-            if (InternalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
+            if (_internalWaitHandle.WaitOne(0)) // check if the door is open without waiting (waiting 0 seconds)
             {
-                InternalWaitHandle.Reset(); // close the door (non-signals the wait handle)
-                RequestHandler.SendPackage(PackageQueue.First());
+                _internalWaitHandle.Reset(); // close the door (non-signals the wait handle)
+                _requestHandler.SendPackage(_packageQueue.First(), _packageQueue.Count - 1);
             }
             else
             {
-                Logger.Verbose("Package handler is already sending");
+                _logger.Verbose("Package handler is already sending");
             }
         }
 
-        private void SendNextInternal()
+        private void SendNextI()
         {
             try
             {
-                PackageQueue.RemoveAt(0);
-                WritePackageQueue();
+                _packageQueue.RemoveAt(0);
+                WritePackageQueueI();
+                _logger.Verbose("Package handler can send");
             }
             finally
             // preventing an exception not signaling the WaitHandle
             {
-                InternalWaitHandle.Set(); // open the door (signals the wait handle)
+                _internalWaitHandle.Set(); // open the door (signals the wait handle)
             }
-            SendFirstInternal();
+            SendFirstI();
         }
 
-        private void WritePackageQueue()
+        private void UpdatePackagesI(SessionParameters sessionParameters)
         {
-            Func<string> sucessMessage = () => Util.f("Package handler wrote {0} packages", PackageQueue.Count);
-            Util.SerializeToFileAsync(
-                fileName: PackageQueueFilename,
-                objectWriter: ActivityPackage.SerializeListToStream,
-                input: PackageQueue,
-                sucessMessage: sucessMessage)
-                .Wait();
-        }
+            _logger.Debug("Updating package handler queue");
+            _logger.Verbose("Session Callback parameters: {0}", sessionParameters.CallbackParameters);
+            _logger.Verbose("Session Partner parameters: {0}", sessionParameters.PartnerParameters);
 
-        private void ReadPackageQueue()
-        {
-            PackageQueue = Util.DeserializeFromFileAsync(PackageQueueFilename,
-                ActivityPackage.DeserializeListFromStream, // deserialize function from Stream to List of ActivityPackage
-                () => null, // default value in case of error
-                PackageQueueName) // package queue name
-                .Result; // wait to finish
-
-            if (PackageQueue != null)
+            foreach (var activityPackage in _packageQueue)
             {
-                Logger.Debug("Package handler read {0} packages", PackageQueue.Count);
+                var parameters = activityPackage.Parameters;
+
+                // callback parameters
+                var mergedCallbackParameters = Util.MergeParameters(
+                    target: sessionParameters.CallbackParameters,
+                    source: activityPackage.CallbackParameters,
+                    parametersName: "Callback");
+                PackageBuilder.AddDictionaryJson(parameters, "callback_params", mergedCallbackParameters);
+
+                // partner parameters
+                var mergedPartnerParameters = Util.MergeParameters(
+                    target: sessionParameters.PartnerParameters,
+                    source: activityPackage.PartnerParameters,
+                    parametersName: "Partner");
+                PackageBuilder.AddDictionaryJson(parameters, "partner_params", mergedPartnerParameters);
+            }
+
+            WritePackageQueueI();
+        }
+
+        private void WritePackageQueueI()
+        {
+            List<string> packageQueueStringList = new List<string>(_packageQueue.Count);
+            foreach (var activityPackage in _packageQueue)
+            {
+                var activityPackageMap = ActivityPackage.ToDictionary(activityPackage);
+                packageQueueStringList.Add(JsonConvert.SerializeObject(activityPackageMap));
+            }
+
+            string packageQueueString = JsonConvert.SerializeObject(packageQueueStringList);
+
+            bool packageQueuePersisted = _deviceUtil.PersistValue(PackageQueueStorageName, packageQueueString);
+            if (!packageQueuePersisted)
+                _logger.Verbose("Error. Package queue not persisted on device within specific time frame (60 seconds default).");
+        }
+
+        private void ReadPackageQueueI()
+        {
+            string packageQueueString;
+            if (_deviceUtil.TryTakeValue(PackageQueueStorageName, out packageQueueString))
+            {
+                _packageQueue = new List<ActivityPackage>();
+
+                List<string> packageQueueStringList =
+                    JsonConvert.DeserializeObject<List<string>>(packageQueueString);
+                foreach (var activityPackageMapString in packageQueueStringList)
+                {
+                    var activityPackageMap =
+                        JsonConvert.DeserializeObject<Dictionary<string, string>>(activityPackageMapString);
+                    var activityPackage = ActivityPackage.FromDictionary(activityPackageMap);
+                    _packageQueue.Add(activityPackage);
+                }
+            }
+            else
+            {
+                var packageQueueLegacyFile = _deviceUtil.GetLegacyStorageFile(PackageQueueLegacyFilename).Result;
+
+                // if package queue is not found, try to read it from the legacy file
+                _packageQueue = Util.DeserializeFromFileAsync(
+                        file: packageQueueLegacyFile,
+                        objectReader: ActivityPackage.DeserializeListFromStreamLegacy, // deserialize function from Stream to List of ActivityPackage
+                        defaultReturn: () => null, // default value in case of error
+                        objectName: PackageQueueLegacyName) // package queue name
+                    .Result;
+
+                // if it's successfully read from legacy source, store it using new persistance
+                // and then delete the old file
+                if (_packageQueue != null)
+                {
+                    _logger.Info("Legacy PackageQueue File found and successfully read.");
+
+                    WritePackageQueueI();
+
+                    if (_deviceUtil.TryTakeValue(PackageQueueStorageName, out packageQueueString))
+                    {
+                        packageQueueLegacyFile.DeleteAsync();
+                        _logger.Info("Legacy PackageQueue File deleted.");
+                    }
+                }
+            }
+            
+            if (_packageQueue != null)
+            {
+                _logger.Debug("Package handler read {0} packages", _packageQueue.Count);
             } 
             else
             {
-                PackageQueue = new List<ActivityPackage>();
+                _packageQueue = new List<ActivityPackage>();
             }
         }
     }

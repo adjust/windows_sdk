@@ -6,39 +6,35 @@ namespace AdjustSdk.Pcl
 {
     internal class TimerOnce
     {
-        private ActionQueue ActionQueue { get; set; }
-
-        private Action Action { get; set; }
-
-        private DateTime? FireDate { get; set; }
-
-        private CancellationTokenSource CancelDelayTokenSource { get; set; }
+        private readonly ActionQueue _actionQueue;
+        private readonly Action _action;
+        private DateTime? _fireDate;
+        private CancellationTokenSource _cancelDelayTokenSource = new CancellationTokenSource();
 
         internal TimerOnce(ActionQueue actionQueue, Action action)
         {
-            ActionQueue = actionQueue;
-            Action = action;
-
-            CancelDelayTokenSource = new CancellationTokenSource();
+            _actionQueue = actionQueue;
+            _action = action;
         }
 
-        internal void StartIn(int milliSecondsDelay)
+        internal void StartIn(TimeSpan delay)
         {
             // reset current timer if active 
-            if (FireDate.HasValue)
+            if (_fireDate.HasValue)
             {
-                CancelDelayTokenSource.Cancel();
-                CancelDelayTokenSource = new CancellationTokenSource();
+                Cancel();
             }
             // save the next fire date
-            FireDate = DateTime.Now.AddMilliseconds(milliSecondsDelay);
+            _fireDate = DateTime.Now.Add(delay);
             
             // start/reset timer
-            Task.Delay(milliSecondsDelay, CancelDelayTokenSource.Token).ContinueWith((t) => {
+            Task.Delay(delay, _cancelDelayTokenSource.Token).ContinueWith(t => {
+                _fireDate = null;
+
                 if (t.IsCanceled) { 
                     return; 
                 }
-                TimerCallback(); 
+                _actionQueue.Enqueue(_action);
             });
         }
 
@@ -46,21 +42,19 @@ namespace AdjustSdk.Pcl
         {
             get
             {
-                if (FireDate == null)
+                if (_fireDate == null)
                 {
-                    return new TimeSpan(0);
+                    return TimeSpan.Zero;
                 }
-                else
-                {
-                    return FireDate.Value - DateTime.Now;
-                }
+
+                return _fireDate.Value - DateTime.Now;
             }
         }
 
-        private void TimerCallback()
+        internal void Cancel()
         {
-            FireDate = null;
-            ActionQueue.Enqueue(Action);
+            _cancelDelayTokenSource.Cancel();
+            _cancelDelayTokenSource = new CancellationTokenSource();
         }
     }
 }

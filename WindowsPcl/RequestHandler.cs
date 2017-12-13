@@ -2,157 +2,137 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private IPackageHandler PackageHandler { get; set; }
-        private ILogger Logger { get; set; }
-        private HttpClient HttpClient { get; set; }
+        private readonly ILogger _logger = AdjustFactory.Logger;
 
-        private struct SendResponse
+        private Action<ResponseData> _successCallback;
+        private Action<ResponseData, ActivityPackage> _failureCallback;
+        
+        public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
-            internal bool WillRetry { get; set; }
-
-            internal Dictionary<string, string> JsonDict { get; set; }
+            Init(successCallbac, failureCallback);
         }
 
-        public RequestHandler(IPackageHandler packageHandler)
+        public void Init(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
         {
-            Logger = AdjustFactory.Logger;
-
-            Init(packageHandler);
+            _successCallback = successCallbac;
+            _failureCallback = failureCallback;
         }
 
-        public void Init(IPackageHandler packageHandler)
+        public void SendPackage(ActivityPackage activityPackage, int queueSize)
         {
-            PackageHandler = packageHandler;
+            Task.Run(() => SendI(activityPackage, queueSize))
+                // continuation used to prevent unhandled exceptions in SendI
+                .ContinueWith((responseData) => PackageSent(responseData, activityPackage),
+                    TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI
         }
 
-        public void SendPackage(ActivityPackage package)
+        public void SendPackageSync(ActivityPackage activityPackage, int queueSize)
         {
-            Task.Factory.StartNew(() => SendInternal(package))
-                // continuation used to prevent unhandled exceptions in SendInternal
-                // not signaling the WaitHandle in PackageHandler and preventing deadlocks
-                .ContinueWith((sendResponse) => PackageSent(sendResponse));
+            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, queueSize));
+            // continuation used to prevent unhandled exceptions in SendI
+            sendTask.ContinueWith((responseData) => {
+                PackageSent(responseData, activityPackage);
+            }, TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI ->
+
+            sendTask.RunSynchronously();
         }
 
-        private SendResponse SendInternal(ActivityPackage activityPackage)
+        private ResponseData SendI(ActivityPackage activityPackage, int queueSize)
         {
-            SendResponse sendResponse;
+            ResponseData responseData;
             try
             {
-                using (var httpResponseMessage = ExecuteRequest(activityPackage))
+                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, queueSize))
                 {
-                    sendResponse = ProcessResponse(httpResponseMessage, activityPackage);
+                    responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
                 }
             }
-            catch (WebException we) { sendResponse = ProcessException(we, activityPackage); }
-            catch (Exception ex) { sendResponse = ProcessException(ex, activityPackage); }
+            catch (HttpRequestException hre)
+            {
+                var we = hre.InnerException as WebException;
+                responseData = we == null ? 
+                    ProcessException(hre, activityPackage) : 
+                    ProcessWebException(we, activityPackage);
+            }
+            catch (WebException we) { responseData = ProcessWebException(we, activityPackage); }
+            catch (Exception ex) { responseData = ProcessException(ex, activityPackage); }
 
-            return sendResponse;
+            return responseData;
         }
 
-        private HttpResponseMessage ExecuteRequest(ActivityPackage activityPackage)
-        {
-            var httpClient = GetHttpClient(activityPackage);
-            var url = Util.BaseUrl + activityPackage.Path;
-
-            var sNow = Util.DateFormat(DateTime.Now);
-            activityPackage.Parameters["sent_at"] = sNow;
-
-            using (var parameters = new FormUrlEncodedContent(activityPackage.Parameters))
-            {
-                return httpClient.PostAsync(url, parameters).Result;
-            }
-        }
-
-        private SendResponse ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
-        {
-            var sendResponse = new SendResponse
-            {
-                WillRetry = false,
-                JsonDict = Util.ParseJsonResponse(httpResponseMessage),
-            };
-
-            if (httpResponseMessage.StatusCode == HttpStatusCode.InternalServerError   // 500
-                || httpResponseMessage.StatusCode == HttpStatusCode.NotImplemented)    // 501
-            {
-                Logger.Error("{0}. (Status code: {1}).",
-                    activityPackage.FailureMessage(),
-                    (int)httpResponseMessage.StatusCode);
-            }
-            else if (!httpResponseMessage.IsSuccessStatusCode)
-            {
-                sendResponse.WillRetry = true;
-
-                Logger.Error("{0}. (Status code: {1}). Will retry later.",
-                    activityPackage.FailureMessage(),
-                    (int)httpResponseMessage.StatusCode);
-            }
-
-            return sendResponse;
-        }
-
-        private SendResponse ProcessException(WebException webException, ActivityPackage activityPackage)
+        private ResponseData ProcessWebException(WebException webException, ActivityPackage activityPackage)
         {
             using (var response = webException.Response as HttpWebResponse)
             {
-                int? statusCode = (response == null) ? null : (int?)response.StatusCode;
-
-                var sendResponse = new SendResponse
-                {
-                    WillRetry = true,
-                    JsonDict = Util.ParseJsonExceptionResponse(response)
-                };
-
-                Logger.Error("{0}. ({1}, Status code: {2}). Will retry later.",
-                    activityPackage.FailureMessage(),
-                    Util.ExtractExceptionMessage(webException),
-                    statusCode);
-
-                return sendResponse;
+                return Util.ProcessResponse(response, activityPackage);
             }
         }
 
-        private SendResponse ProcessException(Exception exception, ActivityPackage activityPackage)
+        private ResponseData ProcessException(Exception exception, ActivityPackage activityPackage)
         {
-            Logger.Error("{0}. ({1}). Will retry later", activityPackage.FailureMessage(), Util.ExtractExceptionMessage(exception));
+            var responseData = ResponseData.BuildResponseData(activityPackage);
+            responseData.Success = false;
+            responseData.WillRetry = true;
+            responseData.Exception = exception;
 
-            return new SendResponse
-            {
-                WillRetry = true,
-            };
+            return responseData;
         }
 
-        private void PackageSent(Task<SendResponse> SendTask)
+        private void PackageSent(Task<ResponseData> responseDataTask, ActivityPackage activityPackage)
         {
             // status needs to be tested before reading the result.
             // section "Passing data to a continuation" of
             // http://msdn.microsoft.com/en-us/library/ee372288(v=vs.110).aspx
-             var successRunning =
-                !SendTask.IsFaulted
-                && !SendTask.IsCanceled;
+            if (responseDataTask.Status != TaskStatus.RanToCompletion)
+            {
+                var responseDataFaulted = ProcessException(responseDataTask.Exception, activityPackage);
+                LogSendErrorI(responseDataFaulted, activityPackage);
+                _failureCallback?.Invoke(responseDataFaulted, activityPackage);
+                return;
+            }
 
-            if (successRunning && SendTask.Result.JsonDict != null)
-                PackageHandler.FinishedTrackingActivity(SendTask.Result.JsonDict);
+            var responseData = responseDataTask.Result;
 
-            //Logger.Debug("SendTask.Result.WillRetry {0}", SendTask.Result.WillRetry);
-            if (successRunning && !SendTask.Result.WillRetry)
-                PackageHandler.SendNextPackage();
+            if (!responseData.Success)
+            {
+                LogSendErrorI(responseData, activityPackage);
+            }
+
+            if (responseData.WillRetry)
+            {
+                _failureCallback?.Invoke(responseData, activityPackage);
+            }
             else
-                PackageHandler.CloseFirstPackage();
+            {
+                _successCallback?.Invoke(responseData);
+            }
         }
 
-        private HttpClient GetHttpClient(ActivityPackage activityPackage)
+        private void LogSendErrorI(ResponseData responseData, ActivityPackage activityPackage)
         {
-            if (HttpClient == null)
+            var errorMessagBuilder = new StringBuilder(activityPackage.FailureMessage());
+
+            if (responseData.Exception != null)
             {
-                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
+                errorMessagBuilder.AppendFormat(" ({0})", Util.ExtractExceptionMessage(responseData.Exception));
             }
-            return HttpClient;
+            if (responseData.StatusCode.HasValue)
+            {
+                errorMessagBuilder.AppendFormat(" (Status code: {0})", responseData.StatusCode.Value);
+            }
+            if (responseData.WillRetry)
+            {
+                errorMessagBuilder.Append(" Will retry later");
+            }
+
+            _logger.Error("{0}", errorMessagBuilder.ToString());
         }
     }
 }

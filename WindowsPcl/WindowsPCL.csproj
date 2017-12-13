@@ -42,15 +42,26 @@
     <Compile Include="AdjustAttribution.cs" />
     <Compile Include="AdjustConfig.cs" />
     <Compile Include="AdjustEvent.cs" />
+    <Compile Include="AdjustEventFailure.cs" />
+    <Compile Include="AdjustEventSuccess.cs" />
     <Compile Include="AdjustFactory.cs" />
     <Compile Include="AdjustInstance.cs" />
+    <Compile Include="AdjustSessionFailure.cs" />
+    <Compile Include="AdjustSessionSuccess.cs" />
     <Compile Include="AttributionHandler.cs" />
+    <Compile Include="AttributionResponseData.cs" />
+    <Compile Include="BackoffStrategy.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="FileSystem\IFile.cs" />
+    <Compile Include="SdkClickResponseData.cs" />
     <Compile Include="DeviceInfo.cs" />
+    <Compile Include="EventResponseData.cs" />
     <Compile Include="IActivityHandler.cs" />
     <Compile Include="IAttributionHandler.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IPackageHandler.cs" />
     <Compile Include="IRequestHandler.cs" />
+    <Compile Include="ISdkClickHandler.cs" />
     <Compile Include="LogConfig.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="LogLevel.cs" />
@@ -58,10 +69,15 @@
     <Compile Include="PackageHandler.cs" />
     <Compile Include="RequestHandler.cs" />
     <Compile Include="ActionQueue.cs" />
+    <Compile Include="ResponseData.cs" />
+    <Compile Include="SdkClickHandler.cs" />
+    <Compile Include="SessionParameters.cs" />
+    <Compile Include="SessionResponseData.cs" />
     <Compile Include="TimerCycle.cs" />
-    <Compile Include="DeviceUtil.cs" />
+    <Compile Include="IDeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TimerOnce.cs" />
+    <Compile Include="UnknowResponseData.cs" />
     <Compile Include="UtilPcl.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -79,14 +95,6 @@
       <HintPath>..\Adjust\packages\Newtonsoft.Json.7.0.1\lib\portable-net45+wp80+win8+wpa81+dnxcore50\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="PCLStorage, Version=1.0.2.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
-      <HintPath>..\Adjust\packages\PCLStorage.1.0.2\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PCLStorage.Abstractions, Version=1.0.2.0, Culture=neutral, PublicKeyToken=286fe515a2c35b64, processorArchitecture=MSIL">
-      <HintPath>..\Adjust\packages\PCLStorage.1.0.2\lib\portable-net45+wp8+wpa81+win8+monoandroid+monotouch+Xamarin.iOS+Xamarin.Mac\PCLStorage.Abstractions.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Net.Http, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\Adjust\packages\Microsoft.Net.Http.2.2.29\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.dll</HintPath>
       <Private>True</Private>
@@ -100,6 +108,7 @@
       <Private>True</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Import Project="..\Adjust\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\Adjust\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />

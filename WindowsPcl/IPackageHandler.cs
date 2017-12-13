@@ -1,23 +1,21 @@
-﻿using System.Collections.Generic;
-
-namespace AdjustSdk.Pcl
+﻿namespace AdjustSdk.Pcl
 {
     public interface IPackageHandler
     {
-        void Init(IActivityHandler activityHandler, bool startPaused);
+        void Init(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused);
 
         void AddPackage(ActivityPackage activityPackage);
 
         void SendFirstPackage();
 
-        void SendNextPackage();
+        void SendNextPackage(ResponseData responseData);
 
-        void CloseFirstPackage();
+        void CloseFirstPackage(ResponseData responseData, ActivityPackage activityPackage);
 
         void PauseSending();
 
         void ResumeSending();
 
-        void FinishedTrackingActivity(Dictionary<string, string> jsonDict);
+        void UpdatePackages(SessionParameters sessionParameters);
     }
 }

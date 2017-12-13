@@ -1,3 +1,43 @@
+### Version 4.12.0 (13th December 2017)
+#### Added
+- Added new `click label` parameter in attribution.
+- Added reading of responses to `sdk_click` packages.
+- Added `SetDeviceKnown` method in `AdjustConfig` class.
+- Added `EventTrackingSucceeded` property on `AdjustConfig` object for setting a callback to be triggered if event is successfully tracked.
+- Added `EventTrackingFailed` property on `AdjustConfig` object for setting a callback to be triggered if event tracking failed.
+- Added `SesssionTrackingSucceeded` property on `AdjustConfig` object for setting a callback to be triggered if session is successfully tracked.
+- Added `SesssionTrackingFailed` property on `AdjustConfig` object for setting a callback to be triggered if session tracking failed.
+- Added deferred deep link callback `DeeplinkResponse` with decision whether deep link should be launched or not.
+- Added background tracking feature.
+- Added support for suppress log level.
+- Added possibility to delay first session.
+- Added support for session parameters to be sent in every session/event.
+- Added possibility to inject custom user agent to each request.
+- Added sending of push token with dedicated package called `sdk_info`.
+- Added `adid` field to the attribution callback response.
+- Added method `Adjust.GetAdid()` to be able to get `adid` value at any time after obtaining it, not only when session/event callbacks have been triggered.
+- Added methd `Adjust.GetAttribution()` to be able to get current attribution value at any time after obtaining it, not only when attribution callback has been triggered.
+- Added check if `sdk_click` package response contains attribution information.
+- Added sending of attributable parameters with every `sdk_click` package.
+- Added reading of network type.
+- Added reading of connectivity type.
+- Added log messages for saved actions to be done when the SDK starts.
+- Added usage of app secret in authorization header.
+
+#### Changed
+- Removed `Windows Phone 8.0` support.
+- Sending `sdk_click` immediately with a dedicated handler.
+- Firing attribution request as soon as install has been tracked, regardless of presence of attribution callback implementation in user's app.
+- Replaced `assert` level logs with `warn` level.
+- Removed dependency to `PCL Storage`.
+- Not sending `sdk_click` packages when SDK is disabled.
+- Setting enable/disable or offline/online is now queued.
+- Guaranteeing that first package is sent even with event buffering turned ON.
+- Not creating first session package if SDK is disabled before first launch.
+- `Adjust.SetupLogging` method is osbsolete. Use `AdjustConfig` constructor to set up logging instead.
+
+---
+
 ### Version 4.0.3 (2nd February 2016)
 #### Added
 - Added access to Windows Advertising Identifier with `GetWindowsAdId` method.

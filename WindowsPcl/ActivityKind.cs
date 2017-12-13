@@ -1,5 +1,6 @@
 ﻿using AdjustSdk.Pcl;
 using System.Collections.Generic;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk
 {
@@ -10,22 +11,24 @@ namespace AdjustSdk
         Event,
         Click,
         Attribution,
+        Info,
     }
 
     public static class ActivityKindUtil
     {
         public static ActivityKind FromString(string activityKindString)
         {
-            if ("session".Equals(activityKindString))
+            if (activityKindString == SESSION)
                 return ActivityKind.Session;
-            else if ("event".Equals(activityKindString))
+            if (activityKindString == EVENT)
                 return ActivityKind.Event;
-            else if ("click".Equals(activityKindString))
+            if (activityKindString == CLICK)
                 return ActivityKind.Click;
-            else if ("attribution".Equals(activityKindString))
+            if (activityKindString == ATTRIBUTION)
                 return ActivityKind.Attribution;
-            else
-                return ActivityKind.Unknown;
+            if (activityKindString == INFO)
+                return ActivityKind.Info;
+            return ActivityKind.Unknown;
         }
 
         public static string ToString(ActivityKind activityKind)
@@ -37,31 +40,31 @@ namespace AdjustSdk
         {
             switch (activityKind)
             {
-                case ActivityKind.Session: return "/session";
-                case ActivityKind.Event: return "/event";
-                case ActivityKind.Click: return "/sdk_click";
-                case ActivityKind.Attribution: return "/attribution";
+                case ActivityKind.Session: return SESSION_PATH;
+                case ActivityKind.Event: return EVENT_PATH;
+                case ActivityKind.Click: return SDK_CLICK_PATH;
+                case ActivityKind.Attribution: return ATTRIBUTION_PATH;
+                case ActivityKind.Info: return SDK_INFO_PATH;
                 default: return null;
             }
         }
 
         public static string GetSuffix(Dictionary<string, string> parameters)
         {
-            string eventToken;
+            string eventToken = null;
 
-            if (parameters == null ||
-                !parameters.TryGetValue("event_token", out eventToken)) { return ""; }
+            parameters?.TryGetValue(EVENT_TOKEN, out eventToken);
+
+            if (eventToken == null) { return ""; }
 
             string sRevenue;
 
-            if (!parameters.TryGetValue("revenue", out sRevenue))
+            if (!parameters.TryGetValue(REVENUE, out sRevenue))
             {
-                return Util.f("'{0}'", eventToken);
+                return Util.F("'{0}'", eventToken);
             }
-            else
-            {
-                return Util.f("({0} {1}, '{2}')", sRevenue, parameters["currency"], eventToken);
-            }
+
+            return Util.F("({0} {1}, '{2}')", sRevenue, parameters[CURRENCY], eventToken);
         }
     }
 }

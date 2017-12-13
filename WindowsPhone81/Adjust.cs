@@ -1,6 +1,5 @@
 ﻿using AdjustSdk.Pcl;
 using System;
-using System.Collections.Generic;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 
@@ -13,37 +12,19 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly DeviceUtil DeviceUtil = new UtilWP81();
+        private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
         private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
+        private static bool _isApplicationActive = false;
 
         private Adjust() { }
 
-        private static bool firstVisibilityChanged = true;
-
-        /// <summary>
-        ///  Tell Adjust that the application is activated (brought to foreground) or deactivated (sent to background).
-        /// </summary>
-        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
-        {
-            if (firstVisibilityChanged)
-            {
-                firstVisibilityChanged = false;
-                return;
-            }
-            if (args.Visible)
-            {
-                AdjustInstance.ApplicationActivated();
-            }
-            else
-            {
-                AdjustInstance.ApplicationDeactivated();
-            }
-        }
-
+        [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
         public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
         {
             LogConfig.SetupLogging(logDelegate, logLevel);
         }
+
+        public static bool ApplicationLaunched => AdjustInstance.ApplicationLaunched;
 
         /// <summary>
         ///  Tell Adjust that the application was launched.
@@ -56,18 +37,79 @@ namespace AdjustSdk
         /// </param>
         public static void ApplicationLaunching(AdjustConfig adjustConfig)
         {
+            if (ApplicationLaunched) { return; }
             AdjustInstance.ApplicationLaunching(adjustConfig, DeviceUtil);
+            RegisterLifecycleEvents();
+        }
+
+        public static void RegisterLifecycleEvents()
+        {
+            try
+            {
+                Window.Current.VisibilityChanged += VisibilityChanged;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Window.Current.VisibilityChanged for app lifecycle, {0}", ex.Message);
+            }
             try
             {
                 Window.Current.CoreWindow.VisibilityChanged += VisibilityChanged;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                AdjustFactory.Logger.Debug("Not possible to detect automatically if the app goes to the background");
+                AdjustFactory.Logger.Debug("Not possible to register Window.Current.CoreWindow.VisibilityChanged for app lifecycle, {0}", ex.Message);
             }
-
+            try
+            {
+                Application.Current.Resuming += Resuming;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Application.Current.Resuming for app lifecycle, {0}", ex.Message);
+            }
+            try
+            {
+                Application.Current.Suspending += Suspending;
+            }
+            catch (Exception ex)
+            {
+                AdjustFactory.Logger.Debug("Not possible to register Application.Current.Suspending for app lifecycle, {0}", ex.Message);
+            }
         }
-        
+
+        private static void VisibilityChanged(CoreWindow sender, VisibilityChangedEventArgs args)
+        {
+            VisibilityChanged(args.Visible);
+        }
+
+        private static void VisibilityChanged(object sender, VisibilityChangedEventArgs e)
+        {
+            VisibilityChanged(e.Visible);
+        }
+
+        private static void VisibilityChanged(bool visible)
+        {
+            if (visible)
+            {
+                ApplicationActivated();
+            }
+            else
+            {
+                ApplicationDeactivated();
+            }
+        }
+
+        private static void Resuming(object sender, object e)
+        {
+            ApplicationActivated();
+        }
+
+        private static void Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
+        {
+            ApplicationDeactivated();
+        }
+
         /// <summary>
         ///  Tell Adjust that the application is activated (brought to foreground).
         ///
@@ -76,6 +118,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationActivated()
         {
+            if (_isApplicationActive) { return; }
+
+            _isApplicationActive = true;
             AdjustInstance.ApplicationActivated();
         }
 
@@ -87,6 +132,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationDeactivated()
         {
+            if (!_isApplicationActive) { return; }
+
+            _isApplicationActive = false;
             AdjustInstance.ApplicationDeactivated();
         }
 
@@ -122,7 +170,7 @@ namespace AdjustSdk
         /// <summary>
         /// Puts the SDK in offline or online mode
         /// </summary>
-        /// <param name="enabled">The flag to enable or disable the adjust SDK</param>
+        /// <param name="offlineMode">The flag to enable or disable offline mode</param>
         public static void SetOfflineMode(bool offlineMode)
         {
             AdjustInstance.SetOfflineMode(offlineMode);
@@ -133,9 +181,9 @@ namespace AdjustSdk
         /// an adjust deep link
         /// </summary>
         /// <param name="url">The url that open the application</param>
-        public static void AppWillOpenUrl(Uri uri)
+        public static void AppWillOpenUrl(Uri url)
         {
-            AdjustInstance.AppWillOpenUrl(uri);
+            AdjustInstance.AppWillOpenUrl(url);
         }
 
         /// <summary>
@@ -144,6 +192,56 @@ namespace AdjustSdk
         public static string GetWindowsAdId()
         {
             return DeviceUtil.ReadWindowsAdvertisingId();
+        }
+
+        public static void AddSessionCallbackParameter(string key, string value)
+        {
+            AdjustInstance.AddSessionCallbackParameter(key, value);
+        }
+
+        public static void AddSessionPartnerParameter(string key, string value)
+        {
+            AdjustInstance.AddSessionPartnerParameter(key, value);
+        }
+
+        public static void RemoveSessionCallbackParameter(string key)
+        {
+            AdjustInstance.RemoveSessionCallbackParameter(key);
+        }
+
+        public static void RemoveSessionPartnerParameter(string key)
+        {
+            AdjustInstance.RemoveSessionPartnerParameter(key);
+        }
+
+        public static void ResetSessionCallbackParameters()
+        {
+            AdjustInstance.ResetSessionCallbackParameters();
+        }
+
+        public static void ResetSessionPartnerParameters()
+        {
+            AdjustInstance.ResetSessionPartnerParameters();
+        }
+
+        public static void SendFirstPackages()
+        {
+            AdjustInstance.SendFirstPackages();
+        }
+
+        public static void SetPushToken(string pushToken)
+        {
+            AdjustInstance.SetPushToken(pushToken, DeviceUtil);
+        }
+
+        public static string GetAdid()
+        {
+            return AdjustInstance.GetAdid();
+        }
+
+        public static AdjustAttribution GetAttributon()
+        {
+            return AdjustInstance.GetAttribution();
         }
     }
 }

@@ -4,16 +4,15 @@ namespace AdjustSdk.Pcl
 {
     public static class LogConfig
     {
-        public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
+        public static void SetupLogging(Action<string> logDelegate, LogLevel? logLevel = null)
         {
-            AdjustFactory.Logger.LogDelegate = logDelegate;
+            var logger = AdjustFactory.Logger;
+            if (logger.IsLocked) { return; }
+
+            logger.LogDelegate = logDelegate;
             if (logLevel.HasValue)
             {
-                AdjustFactory.Logger.LogLevel = logLevel.Value;
-            }
-            else
-            {
-                AdjustFactory.Logger.LogLevel = LogLevel.Info;
+                logger.LogLevel = logLevel.Value;
             }
         }
     }

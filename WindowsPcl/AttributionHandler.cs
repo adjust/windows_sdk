@@ -1,191 +1,189 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
     public class AttributionHandler : IAttributionHandler
     {
-        private ILogger Logger { get; set; }
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
 
-        private ActionQueue InternalQueue { get; set; }
+        private IActivityHandler _activityHandler;
+        private readonly TimerOnce _timer;
+        private ActivityPackage _attributionPackage;
+        private bool _paused;
+        private readonly string _urlQuery;
 
-        private IActivityHandler ActivityHandler { get; set; }
-
-        private TimerOnce Timer { get; set; }
-
-        private ActivityPackage AttributionPackage { get; set; }
-
-        public bool Paused { private get; set; }
-
-        private bool HasDelegate { get; set; }
-
-        private HttpClient HttpClient { get; set; }
-
-        public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
+        public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
-            Logger = AdjustFactory.Logger;
-
-            InternalQueue = new ActionQueue("adjust.AttributionHandler");
-
             Init(activityHandler: activityHandler,
                 attributionPackage: attributionPackage,
-                startPaused: startPaused,
-                hasDelegate: hasDelegate);
+                startPaused: startPaused);
 
-            Timer = new TimerOnce(actionQueue: InternalQueue, action: GetAttributionInternal);
+            _urlQuery = BuildUrlQuery();
+
+            _timer = new TimerOnce(actionQueue: _actionQueue, action: SendAttributionRequestI);
         }
 
-        public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused, bool hasDelegate)
+        public void Init(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
-            ActivityHandler = activityHandler;
-            AttributionPackage = attributionPackage;
-            Paused = startPaused;
-            HasDelegate = hasDelegate;
+            _activityHandler = activityHandler;
+            _attributionPackage = attributionPackage;
+            _paused = startPaused;
         }
 
-        public void CheckAttribution(Dictionary<string, string> jsonDict)
+        public void CheckSessionResponse(SessionResponseData responseData)
         {
-            InternalQueue.Enqueue(() => CheckAttributionInternal(jsonDict));
+            _actionQueue.Enqueue(() => CheckSessionResponseI(responseData));
         }
 
-        public void AskAttribution()
+        public void CheckSdkClickResponse(SdkClickResponseData sdkClickResponseData)
         {
-            AskAttribution(0);
+            _actionQueue.Enqueue(() => CheckSdkClickResponseI(sdkClickResponseData));
+        }
+
+        public void GetAttribution()
+        {
+            _actionQueue.Enqueue(() => GetAttributionI(TimeSpan.Zero));
         }
 
         public void PauseSending()
         {
-            Paused = true;
+            _paused = true;
         }
 
         public void ResumeSending()
         {
-            Paused = false;
+            _paused = false;
         }
 
-        private void AskAttribution(int milliSecondsDelay)
+        private void GetAttributionI(TimeSpan askIn)
         {
             // don't reset if new time is shorter than the last one
-            if (Timer.FireIn.Milliseconds > milliSecondsDelay) { return; }
+            if (_timer.FireIn > askIn) { return; }
 
-            if (milliSecondsDelay > 0)
+            if (askIn.Milliseconds > 0)
             {
-                Logger.Debug("Waiting to query attribution in {0} milliseconds", milliSecondsDelay);
+                _logger.Debug("Waiting to query attribution in {0} milliseconds", askIn.Milliseconds);
             }
 
             // set the new time the timer will fire in
-            Timer.StartIn(milliSecondsDelay);
+            _timer.StartIn(askIn);
         }
 
-        private void CheckAttributionInternal(Dictionary<string, string> jsonDict)
+        private void CheckAttributionI(ResponseData responseData)
         {
-            if (jsonDict == null) { return; }
+            if (responseData.JsonResponse == null) { return; }
 
-            var attribution = DeserializeAttribution(jsonDict);
-            var askIn = DeserializeAskIn(jsonDict);
+            var askInMilliseconds = Util.GetDictionaryInt(responseData.JsonResponse, "ask_in");
 
-            // without ask_in attribute
-            if (!askIn.HasValue)
+            // with ask_in
+            if (askInMilliseconds.HasValue)
             {
-                ActivityHandler.UpdateAttribution(attribution);
+                _activityHandler.SetAskingAttribution(true);
 
-                ActivityHandler.SetAskingAttribution(false);
-
-                return;
-            }
-            ActivityHandler.SetAskingAttribution(true);
-
-            AskAttribution(askIn.Value);
-        }
-
-        private void GetAttributionInternal()
-        {
-            if (!HasDelegate) { return; }
-
-            if (Paused)
-            {
-                Logger.Debug("Attribution handler is paused");
+                GetAttributionI(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
                 return;
             }
 
-            Logger.Verbose("{0}", AttributionPackage.GetExtendedString());
+            // without ask_in
+            _activityHandler.SetAskingAttribution(false);
 
-            HttpResponseMessage httpResponseMessage;
+            var attributionString = Util.GetDictionaryString(responseData.JsonResponse, "attribution");
+            responseData.Attribution = AdjustAttribution.FromJsonString(attributionString, responseData.Adid);
+        }
+
+        private void CheckSessionResponseI(SessionResponseData sessionResponseData)
+        {
+            CheckAttributionI(sessionResponseData);
+
+            _activityHandler.LaunchSessionResponseTasks(sessionResponseData);
+        }
+
+        private void CheckSdkClickResponseI(SdkClickResponseData sdkClickResponseData)
+        {
+            CheckAttributionI(sdkClickResponseData);
+
+            _activityHandler.LaunchSdkClickResponseTasks(sdkClickResponseData);
+        }
+
+        private void CheckAttributionResponseI(AttributionResponseData attributionResponseData)
+        {
+            CheckAttributionI(attributionResponseData);
+
+            CheckDeeplink(attributionResponseData);
+
+            _activityHandler.LaunchAttributionResponseTasks(attributionResponseData);
+        }
+
+        private void CheckDeeplink(AttributionResponseData attributionResponseData)
+        {
+            if (attributionResponseData.Attribution?.Json == null) { return; }
+
+            var deeplink = Util.GetDictionaryString(attributionResponseData.Attribution.Json, "deeplink");
+            
+            if (deeplink == null) { return; }
+
+            if (!Uri.IsWellFormedUriString(deeplink, UriKind.Absolute))
+            {
+                _logger.Error("Malformed deffered deeplink '{0}'", deeplink);
+                return;
+            }
+
+            attributionResponseData.Deeplink = new Uri(deeplink);
+        }
+
+        private void SendAttributionRequestI()
+        {
+            if (_paused)
+            {
+                _logger.Debug("Attribution handler is paused");
+                return;
+            }
+
+            _logger.Verbose("{0}", _attributionPackage.GetExtendedString());
+
             try
             {
-                var httpClient = GetHttpClient(AttributionPackage);
-                var attribution = GetAttributionUrl();
-                httpResponseMessage = httpClient.GetAsync(attribution).Result;
+                ResponseData responseData;
+                using (var httpResponseMessage = Util.SendGetRequest(_attributionPackage, _urlQuery))
+                {
+                    responseData = Util.ProcessResponse(httpResponseMessage, _attributionPackage);
+                }
+                if (responseData is AttributionResponseData)
+                {
+                    CheckAttributionResponseI(responseData as AttributionResponseData);
+                }
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
-                return;
+                _logger.Error("Failed to get attribution ({0})", Util.ExtractExceptionMessage(ex));
             }
-
-            var jsonDic = Util.ParseJsonResponse(httpResponseMessage);
-
-            CheckAttributionInternal(jsonDic);
         }
 
-        private HttpClient GetHttpClient(ActivityPackage activityPackage)
+        private string BuildUrlQuery()
         {
-            if (HttpClient == null)
-            {
-                HttpClient = Util.BuildHttpClient(activityPackage.ClientSdk);
-            }
-            return HttpClient;
-        }
+            var queryList = new List<string>(_attributionPackage.Parameters.Count);
 
-        private string GetAttributionUrl()
-        {
-            var queryList = new List<string>(AttributionPackage.Parameters.Count);
-
-            foreach (var entry in AttributionPackage.Parameters)
+            foreach (var entry in _attributionPackage.Parameters)
             {
                 if (entry.Key == null) { continue; }
+                if (entry.Key == APP_SECRET) { continue; }
+
                 var keyEscaped = Uri.EscapeDataString(entry.Key);
 
                 if (entry.Value == null) { continue; }
                 var valueEscaped = Uri.EscapeDataString(entry.Value);
 
-                var queryParameter = string.Format("{0}={1}", keyEscaped, valueEscaped);
+                var queryParameter = $"{keyEscaped}={valueEscaped}";
 
                 queryList.Add(queryParameter);
             }
 
-            var sNow = Uri.EscapeDataString(Util.DateFormat(DateTime.Now));
-            var sentAtParameter = "sent_at=" + sNow;
-            queryList.Add(sentAtParameter);
-
             var query = string.Join("&", queryList);
 
-            var uriBuilder = new UriBuilder(Util.BaseUrl);
-            uriBuilder.Path = AttributionPackage.Path;
-            uriBuilder.Query = query;
-
-            return uriBuilder.Uri.ToString();
-        }
-
-        private AdjustAttribution DeserializeAttribution(Dictionary<string, string> jsonDict)
-        {
-            string attributionString = Util.GetDictionaryValue(jsonDict, "attribution");
-            if (attributionString == null) { return null; }
-
-            return AdjustAttribution.FromJsonString(attributionString);
-        }
-
-        private int? DeserializeAskIn(Dictionary<string, string> jsonDict)
-        {
-            var askInString = Util.GetDictionaryValue(jsonDict, "ask_in");
-            if (askInString == null) { return null; }
-
-            int askIn;
-            if (!int.TryParse(askInString, out askIn)) { return null; }
-
-            return askIn;
+            return query;
         }
     }
 }

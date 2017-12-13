@@ -11,5 +11,8 @@
         <Button x:Name="btnRevenueEvent" Content="Track revenue event" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Click="btnRevenueEvent_Click"/>
         <Button x:Name="btnCallbakEvent" Content="Track event with callback parameters" HorizontalAlignment="Left" Margin="10,80,0,0" VerticalAlignment="Top" Click="btnCallbakEvent_Click" />
         <Button x:Name="btnPartnerEvent" Content="Track event with partner parameters" HorizontalAlignment="Left" Margin="10,120,0,0" VerticalAlignment="Top" Click="btnPartnerEvent_Click" />
+        <Button x:Name="btnGetAdid" Content="Get Adid" HorizontalAlignment="Left" Margin="10,187,0,0" VerticalAlignment="Top" Width="152" Click="btnGetAdid_Click"/>
+        <TextBlock x:Name="tblReceivedAdid" HorizontalAlignment="Left" Margin="167,187,0,0" TextWrapping="Wrap" Text="Receive Adid..." VerticalAlignment="Top" Height="32" Width="183"/>
+        <Button x:Name="btnGetAttribution" Content="Get Attribution" HorizontalAlignment="Left" Margin="10,238,0,0" VerticalAlignment="Top" Width="152" Click="btnGetAttribution_Click" />
     </Grid>
 </Page>

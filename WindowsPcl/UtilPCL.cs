@@ -1,6 +1,4 @@
 ﻿using Newtonsoft.Json;
-using PCLStorage;
-//using PCLStorage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,14 +8,17 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using AdjustSdk.Pcl.FileSystem;
+using static AdjustSdk.Pcl.Constants;
 
 namespace AdjustSdk.Pcl
 {
     public static class Util
     {
-        public const string BaseUrl = "https://app.adjust.com";
-        private static ILogger Logger { get { return AdjustFactory.Logger; } }
-        private static NullFormat NullFormat = new NullFormat();
+        private static ILogger Logger => AdjustFactory.Logger;
+        private static readonly NullFormat NullFormat = new NullFormat();
+        private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
+        internal static string UserAgent { get; set; }
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -33,48 +34,16 @@ namespace AdjustSdk.Pcl
 
             return stringBuilder.ToString();
         }
-
-        public static bool DeleteFile(string filename)
+        
+        public static string F(string message, params object[] parameters)
         {
-            try
-            {
-                var localStorage = FileSystem.Current.LocalStorage;
-                var activityStateFile = localStorage.GetFileAsync(filename).Result;
-                if (activityStateFile != null)
-                {
-                    activityStateFile.DeleteAsync().Wait();
-
-                    //Logger.Debug("File {0} deleted", filename);
-                    return true;
-                }
-                else
-                {
-                    //Logger.Debug("File {0} doesn't exist to delete", filename);
-                    return false;
-                }
-            }
-            catch (PCLStorage.Exceptions.FileNotFoundException)
-            {
-                //Logger.Debug("File {0} doesn't exist to delete", filename);
-                return false;
-            }
-            catch (Exception)
-            {
-                //Logger.Error("Error deleting {0} file", filename);
-                return false;
-            }
-        }
-
-        public static string f(string message, params object[] parameters)
-        {
-            return String.Format(NullFormat, message, parameters);
+            return string.Format(NullFormat, message, parameters);
         }
 
         internal static bool IsFileNotFound(this Exception ex)
         {
             // check if the exception type is File Not Found (FNF)
-            if (ex is PCLStorage.Exceptions.FileNotFoundException
-                || ex is FileNotFoundException)
+            if (ex is FileNotFoundException)
                 return true;
 
             // if the exception is an aggregate of exceptions
@@ -102,28 +71,26 @@ namespace AdjustSdk.Pcl
             return false;
         }
 
-        internal static async Task<T> DeserializeFromFileAsync<T>(string fileName,
-            Func<Stream, T> ObjectReader,
+        internal static async Task<T> DeserializeFromFileAsync<T>(IFile file,
+            Func<Stream, T> objectReader,
             Func<T> defaultReturn,
             string objectName)
             where T : class
         {
             try
             {
-                var localStorage = FileSystem.Current.LocalStorage;
-
-                var file = await localStorage.GetFileAsync(fileName);
-
                 if (file == null)
                 {
-                    throw new PCLStorage.Exceptions.FileNotFoundException(fileName);
+                    Logger.Verbose("{0} file not found", objectName);
+                    return defaultReturn();
                 }
 
                 T output;
-                using (var stream = await file.OpenAsync(FileAccess.Read))
+                using (var stream = await file.OpenAsync())
                 {
-                    output = ObjectReader(stream);
+                    output = objectReader(stream);
                 }
+
                 Logger.Debug("Read {0}: {1}", objectName, output);
 
                 // successful read
@@ -137,51 +104,22 @@ namespace AdjustSdk.Pcl
                 }
                 else
                 {
-                    Logger.Error("Failed to read file {0} ({1})", objectName, Util.ExtractExceptionMessage(ex));
+                    Logger.Error("Failed to read file {0} ({1})", objectName, ExtractExceptionMessage(ex));
                 }
             }
 
             // fresh start
             return defaultReturn();
         }
-
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, Func<string> sucessMessage)
-            where T : class
-        {
-            try
-            {
-                var localStorage = FileSystem.Current.LocalStorage;
-                var newActivityStateFile = await localStorage.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-
-                using (var stream = await newActivityStateFile.OpenAsync(FileAccess.ReadAndWrite))
-                {
-                    stream.Seek(0, SeekOrigin.Begin);
-                    objectWriter(stream, input);
-                }
-                Logger.Debug(sucessMessage());
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("Failed to write to file {0} ({1})", fileName, Util.ExtractExceptionMessage(ex));
-            }
-
-        }
-        internal static async Task SerializeToFileAsync<T>(string fileName, Action<Stream, T> objectWriter, T input, string objectName)
-            where T : class
-        {
-            await SerializeToFileAsync(
-                fileName: fileName,
-                objectWriter: objectWriter,
-                input: input,
-                sucessMessage: () => Util.f("Wrote {0}: {1}", objectName, input));
-        }
-
+        
         private static string EncodedQueryParameter(KeyValuePair<string, string> pair, bool isFirstParameter = false)
         {
             if (isFirstParameter)
-                return Util.f("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
-            else
-                return Util.f("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+            {
+                return F("{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
+            }
+
+            return F("&{0}={1}", Uri.EscapeDataString(pair.Key), Uri.EscapeDataString(pair.Value));
         }
 
         internal static double SecondsFormat(this DateTime? date)
@@ -196,18 +134,16 @@ namespace AdjustSdk.Pcl
 
         internal static double SecondsFormat(this TimeSpan? timeSpan)
         {
-            if (timeSpan == null)
-                return -1;
-            else
-                return timeSpan.Value.TotalSeconds;
+            if (timeSpan == null) { return -1; }
+
+            return timeSpan.Value.TotalSeconds;
         }
 
         internal static string Quote(this string input)
         {
-            if (input == null || !input.Contains(" "))
-                return input;
+            if (input == null || !input.Contains(" ")) { return input; }
 
-            return Util.f("'{0}'", input);
+            return F("'{0}'", input);
         }
 
         internal static string DateFormat(DateTime value)
@@ -215,45 +151,13 @@ namespace AdjustSdk.Pcl
             var timeZone = value.ToString("zzz");
             var rfc822TimeZone = timeZone.Remove(3, 1);
             var sDTwOutTimeZone = value.ToString("yyyy-MM-ddTHH:mm:ss");
-            var sDateTime = Util.f("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
+            var sDateTime = F("{0}Z{1}", sDTwOutTimeZone, rfc822TimeZone);
 
             return sDateTime;
         }
 
         #region Serialization
-
-        internal static Int64 SerializeTimeSpanToLong(TimeSpan? timeSpan)
-        {
-            if (timeSpan.HasValue)
-                return timeSpan.Value.Ticks;
-            else
-                return -1;
-        }
-
-        internal static Int64 SerializeDatetimeToLong(DateTime? dateTime)
-        {
-            if (dateTime.HasValue)
-                return dateTime.Value.Ticks;
-            else
-                return -1;
-        }
-
-        internal static TimeSpan? DeserializeTimeSpanFromLong(Int64 ticks)
-        {
-            if (ticks == -1)
-                return null;
-            else
-                return new TimeSpan(ticks);
-        }
-
-        internal static DateTime? DeserializeDateTimeFromLong(Int64 ticks)
-        {
-            if (ticks == -1)
-                return null;
-            else
-                return new DateTime(ticks);
-        }
-
+        
         internal static T TryRead<T>(Func<T> readStream, Func<T> defaultValue)
         {
             T result;
@@ -282,7 +186,7 @@ namespace AdjustSdk.Pcl
             }
         }
 
-        internal static Dictionary<string, string> ParseJsonExceptionResponse(HttpWebResponse httpWebResponse)
+        internal static Dictionary<string, string> ParseJsonResponse(HttpWebResponse httpWebResponse)
         {
             if (httpWebResponse == null) { return null; }
 
@@ -290,21 +194,29 @@ namespace AdjustSdk.Pcl
             using (var streamReader = new StreamReader(streamResponse))
             {
                 var sResponse = streamReader.ReadToEnd();
-                return BuildJsonDict(sResponse, false);
+                return BuildJsonDict(sResponse: sResponse, isSuccessStatusCode: false);
             }
         }
 
-        internal static string GetDictionaryValue(Dictionary<string, string> dic, string key)
+        internal static string GetDictionaryString(Dictionary<string, string> dict, string key)
         {
-            string value;
-            if (!dic.TryGetValue(key, out value))
-            {
-                return null;
-            }
+            string value = null;
+            dict?.TryGetValue(key, out value);
             return value;
         }
+        
+        internal static int? GetDictionaryInt(Dictionary<string, string> dict, string key)
+        {
+            var stringValue = GetDictionaryString(dict, key);
+            int intValue;
+            if (int.TryParse(stringValue, out intValue))
+            {
+                return intValue;
+            }
+            return null;
+        }
 
-        internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool IsSuccessStatusCode)
+        internal static Dictionary<string, string> BuildJsonDict(string sResponse, bool isSuccessStatusCode)
         {
             Logger.Verbose("Response: {0}", sResponse);
 
@@ -317,40 +229,22 @@ namespace AdjustSdk.Pcl
             }
             catch (Exception e)
             {
-                Logger.Error("Failed to parse json response ({0})", Util.ExtractExceptionMessage(e));
+                Logger.Error("Failed to parse json response ({0})", ExtractExceptionMessage(e));
             }
 
             if (jsonDicObj == null) { return null; }
 
-            var jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
+            // convert to a string,string dictionary
+            Dictionary<string, string> jsonDic = jsonDicObj.Where(kvp => kvp.Value != null).
                 ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToString());
-
-            string message;
-            if (!jsonDic.TryGetValue("message", out message))
-            {
-                message = "No message found";
-            }
-
-            if (IsSuccessStatusCode)
-            {
-                Logger.Info("{0}", message);
-            }
-            else
-            {
-                Logger.Error("{0}", message);
-            }
 
             return jsonDic;
         }
 
-        internal static HttpClient BuildHttpClient(string clientSdk)
+        internal static void ConfigureHttpClient(string clientSdk)
         {
-            var httpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
-
-            httpClient.Timeout = new TimeSpan(0, 1, 0);
-            httpClient.DefaultRequestHeaders.Add("Client-SDK", clientSdk);
-
-            return httpClient;
+            HttpClient.Timeout = new TimeSpan(0, 1, 0);
+            HttpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
 
         internal static string ExtractExceptionMessage(Exception e)
@@ -360,6 +254,324 @@ namespace AdjustSdk.Pcl
                 return "";
             }
             return e.Message + ExtractExceptionMessage(e.InnerException);
+        }
+
+        internal static TimeSpan WaitingTime(int retries, BackoffStrategy backoffStrategy)
+        {
+            if (retries < backoffStrategy.MinRetries)
+            {
+                return TimeSpan.Zero;
+            }
+
+            // Start with base 0
+            int baseValue = retries - backoffStrategy.MinRetries;
+
+            // Get the exponential Time from the base: 1, 2, 4, 8, 16, ... * times the multiplier
+            long exponentialTimeTicks = (long)Math.Pow(2, baseValue) * backoffStrategy.TicksMultiplier;
+
+            // Limit the maximum allowed time to wait
+            long ceilingTimeTicks = Math.Min(exponentialTimeTicks, backoffStrategy.MaxWaitTicks);
+
+            // get the random range
+            double randomRange = GetRandomNumber(backoffStrategy.MinRange, backoffStrategy.MaxRange);
+
+            // Apply jitter factor
+            double waitingTimeTicks = ceilingTimeTicks * randomRange;
+
+            return TimeSpan.FromTicks((long)exponentialTimeTicks);
+        }
+
+        private static double GetRandomNumber(double minRange, double maxRange)
+        {
+            Random random = new Random();
+            double range = maxRange - minRange;
+            double scaled = random.NextDouble() * range;
+            double shifted = scaled + minRange;
+            return shifted;
+        }
+
+        public static string SecondDisplayFormat(TimeSpan timeSpan)
+        {
+            return $"{timeSpan.TotalSeconds:0.0}";
+        }
+
+        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, int queueSize)
+        {
+            var url = BASE_URL + activityPackage.Path;
+
+            var sNow = DateFormat(DateTime.Now);
+            activityPackage.Parameters[SENT_AT] = sNow;
+
+            string secretId = ExtractSecretId(activityPackage.Parameters);
+            string appSecret = ExtractAppSecret(activityPackage.Parameters);
+
+            string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
+            string authorizationHeader =
+                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
+
+            SetUserAgent();
+            SetAuthorizationParameter(authorizationHeader);
+
+            Dictionary<string, string> postParamsMap = 
+                new Dictionary<string, string>(activityPackage.Parameters);
+            if(queueSize > 0)
+                postParamsMap.Add(QUEUE_SIZE, queueSize.ToString());
+
+            using (var postParams = new FormUrlEncodedContent(postParamsMap))
+            {
+                return HttpClient.PostAsync(url, postParams).Result;
+            }
+        }
+
+        public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
+        {
+            var finalQuery = F("{0}&{1}={2}", queryParameters, SENT_AT, DateFormat(DateTime.Now));
+
+            string secretId = ExtractSecretId(activityPackage.Parameters);
+            string appSecret = ExtractAppSecret(activityPackage.Parameters);
+
+            string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
+            string authorizationHeader =
+                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
+
+            var uriBuilder = new UriBuilder(BASE_URL);
+            uriBuilder.Path = activityPackage.Path;
+            uriBuilder.Query = finalQuery;
+
+            SetUserAgent();
+            SetAuthorizationParameter(authorizationHeader);
+
+            return HttpClient.GetAsync(uriBuilder.Uri).Result;
+        }
+
+        private static string ExtractAppSecret(Dictionary<string, string> parameters)
+        {
+            string appSecret;
+            if (parameters.TryGetValue(APP_SECRET, out appSecret))
+            {
+                parameters.Remove(APP_SECRET);
+            }
+            return appSecret;
+        }
+
+        private static string ExtractSecretId(Dictionary<string, string> parameters)
+        {
+            string secretId;
+            if (parameters.TryGetValue(SECRET_ID, out secretId))
+            {
+                parameters.Remove(SECRET_ID);
+            }
+            return secretId;
+        }
+
+        private static string BuildAuthorizationHeader(IReadOnlyDictionary<string, string> parameters,
+            string appSecret, string secretId, string activityKind)
+        {
+            // check if the secret exists and it's not empty
+            if (string.IsNullOrEmpty(appSecret) || parameters == null)
+                return null;
+
+            var signatureDetails = GetSignature(parameters, activityKind, appSecret);
+            
+            string algorithm = ALG_SHA256;
+            string signature = AdjustConfig.String2Sha256Func(signatureDetails[CLEAR_SIGNATURE]);
+            signature = signature.ToLower();
+            string fields = signatureDetails[FIELDS];
+
+            string secretIdHeader = $"{SECRET_ID}=\"{secretId}\"";
+            string signatureHeader = $"{SIGNATURE}=\"{signature}\"";
+            string algorithmHeader = $"{ALGORITHM}=\"{algorithm}\"";
+            string fieldsHeader = $"{HEADERS}=\"{fields}\"";
+
+            string authorizationHeader = $"Signature {secretIdHeader},{signatureHeader},{algorithmHeader},{fieldsHeader}";
+
+            Logger.Verbose($"authorizationHeader: {authorizationHeader}");
+
+            return authorizationHeader;
+        }
+
+        private static Dictionary<string, string> GetSignature(
+            IReadOnlyDictionary<string, string> parameters,
+            string activityKind, string appSecret)
+        {
+            string createdAt = parameters[CREATED_AT];
+            string deviceIdentifier;
+            string deviceIdentifierName = GetValidIdentifier(parameters, out deviceIdentifier);
+
+            var signatureParams = new Dictionary<string, string>
+            {
+                {APP_SECRET, appSecret},
+                {CREATED_AT, createdAt},
+                {ACTIVITY_KIND, activityKind.ToLower()},
+                {deviceIdentifierName, deviceIdentifier}
+            };
+
+            string fields = string.Empty;
+            string clearSignature = string.Empty;
+
+            foreach (var paramKvp in signatureParams)
+            {
+                if (paramKvp.Value == null)
+                    continue;
+
+                fields += paramKvp.Key + " ";
+                clearSignature += paramKvp.Value;
+            }
+
+            fields = fields.Substring(0, fields.Length - 1);
+
+            var signature = new Dictionary<string, string>
+            {
+                {CLEAR_SIGNATURE, clearSignature},
+                {FIELDS, fields}
+            };
+
+            return signature;
+        }
+
+        private static string GetValidIdentifier(IReadOnlyDictionary<string, string> parameters, 
+            out string foundValue)
+        {
+            if (parameters.TryGetValue(WIN_ADID, out foundValue))
+                return WIN_ADID;
+
+            if (parameters.TryGetValue(WIN_HWID, out foundValue))
+                return WIN_HWID;
+
+            if (parameters.TryGetValue(WIN_NAID, out foundValue))
+                return WIN_NAID;
+
+            if (parameters.TryGetValue(WIN_UDID, out foundValue))
+                return WIN_UDID;
+
+            foundValue = null;
+            return null;
+        }
+        
+        private static void SetUserAgent()
+        {
+            HttpClient.DefaultRequestHeaders.Remove(USER_AGENT);
+            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
+        }
+
+        private static void SetAuthorizationParameter(string authHeader)
+        {
+            HttpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
+            if(!string.IsNullOrEmpty(authHeader))
+                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
+        }
+
+        public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
+        {
+            var jsonDic = ParseJsonResponse(httpWebResponse);
+            return ProcessResponse(jsonDic, (int?)httpWebResponse?.StatusCode, activityPackage);
+        }
+
+        public static ResponseData ProcessResponse(HttpResponseMessage httpResponseMessage, ActivityPackage activityPackage)
+        {
+            var jsonDic = ParseJsonResponse(httpResponseMessage);
+            return ProcessResponse(jsonDic, (int?)httpResponseMessage?.StatusCode, activityPackage);
+        }
+
+        private static ResponseData ProcessResponse(Dictionary<string, string> jsonResponse, 
+            int? statusCode, 
+            ActivityPackage activityPackage)
+        {
+            var responseData = ResponseData.BuildResponseData(activityPackage);
+            responseData.JsonResponse = jsonResponse;
+            responseData.StatusCode = statusCode;
+            responseData.Success = false; // false by default, set to true later
+
+            if (jsonResponse == null)
+            {
+                responseData.WillRetry = true;
+                return responseData;
+            }
+
+            responseData.Message = GetDictionaryString(jsonResponse, "message");
+            responseData.Timestamp = GetDictionaryString(jsonResponse, "timestamp");
+            responseData.Adid = GetDictionaryString(jsonResponse, "adid");
+
+            string message = responseData.Message;
+            if (message == null)
+            {
+                message = "No message found";
+            }
+            
+            if (statusCode.HasValue && statusCode.Value == 200)
+            {
+                Logger.Info("{0}", message);
+                responseData.Success = true;
+            }
+            else
+            {
+                Logger.Error("{0}", message);
+                responseData.Success = false;
+            }
+
+            if (!statusCode.HasValue)
+            {
+                responseData.WillRetry = true;
+            }
+            else if (statusCode == 500 || statusCode == 501)
+            {
+                responseData.WillRetry = false;
+            }
+            else if (statusCode != 200)
+            {
+                responseData.WillRetry = true;
+            }
+
+            return responseData;
+        }
+
+        internal static bool CheckParameter(string attribute, string attributeType, string parameterName)
+        {
+            if (attribute == null)
+            {
+                Logger.Error("{0} parameter {1} is missing", parameterName, attributeType);
+                return false;
+            }
+
+            if (attribute.Length == 0)
+            {
+                Logger.Error("{0} parameter {1} is empty", parameterName, attributeType);
+                return false;
+            }
+
+            return true;
+        }
+
+        internal static Dictionary<string, string> MergeParameters(
+            Dictionary<string, string> target,
+            Dictionary<string, string> source,
+            string parametersName)
+        {
+            if (target == null) { return source; }
+            if (source == null) { return target; }
+
+            var mergedParameters = new Dictionary<string, string>(target);
+            foreach (var kvp in source)
+            {
+                string oldValue;
+                if (mergedParameters.TryGetValue(kvp.Key, out oldValue))
+                {
+                    Logger.Warn("Key {0} with value {1} from {2} parameter was replaced by value {3}",
+                        kvp.Key,
+                        oldValue,
+                        parametersName,
+                        kvp.Value);
+                }
+                mergedParameters.AddSafe(kvp.Key, kvp.Value);
+            }
+            return mergedParameters;
+        }
+
+        internal static void AddSafe<TKey, TValue>(this Dictionary<TKey, TValue> dict, TKey key, TValue value)
+        {
+            if (key == null || value == null) { return; }
+            dict.Remove(key);
+            dict.Add(key, value);
         }
     }
 
@@ -372,10 +584,8 @@ namespace AdjustSdk.Pcl
             {
                 return this;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         public string Format(string format, object arg, IFormatProvider provider)

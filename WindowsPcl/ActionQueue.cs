@@ -1,69 +1,84 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace AdjustSdk.Pcl
 {
     internal class ActionQueue
     {
-        private Queue<Action> InternalQueue;
-        private ILogger Logger;
+        private readonly ILogger _logger = AdjustFactory.Logger;
+        private readonly Queue<Action> _actionQueue = new Queue<Action>();
 
-        // more info about Wait handles in http://www.yoda.arachsys.com/csharp/threads/waithandles.shtml
-        private ManualResetEvent ManualHandle;
+        private bool _isTaskWorkerProcessing = false; // protected by lock(InternalQueue)
 
-        internal string Name { get; private set; }
+        internal string Name { get; }
 
         internal ActionQueue(string name)
         {
             Name = name;
-            InternalQueue = new Queue<Action>();
-            ManualHandle = new ManualResetEvent(false); // door starts closed (non-signaled)
-            Logger = AdjustFactory.Logger;
-            Task.Factory.StartNew(() => ProcessTaskQueue(), TaskCreationOptions.LongRunning);
         }
 
-        internal void Enqueue(Action task)
+        internal void Delay(TimeSpan timeSpan, Action action)
         {
-            lock (InternalQueue)
+            Task.Delay(timeSpan).ContinueWith(_ => Enqueue(action));
+        }
+
+        internal void Enqueue(Action action)
+        {
+            lock (_actionQueue)
             {
-                if (InternalQueue.Count == 0)
-                    ManualHandle.Set(); // open the door (signals the wait handle)
-                InternalQueue.Enqueue(task);
-                // Logger.Verbose("ActionQueue {0} enqueued", Name);
+                if (!_isTaskWorkerProcessing)
+                {
+                    //_Logger.Verbose("TaskScheduler {0} start thread", Name);
+                    _isTaskWorkerProcessing = true;
+                    ProcessActionQueue(action);
+                }
+                else
+                {
+                    //_Logger.Verbose("TaskScheduler {0} enqued", Name);
+                    _actionQueue.Enqueue(action);
+                }
             }
         }
 
-        private void ProcessTaskQueue()
+        private void ProcessActionQueue(Action firstAction)
         {
-            while (true)
+            Task.Run(() =>
             {
-                // Logger.Verbose("ActionQueue {0} waiting", Name);
-                ManualHandle.WaitOne(); // waits until the door is open
+                //_Logger.Verbose("ActionQueue {0} run first action", Name);
+
+                // execute the first task
+                TryExecuteAction(firstAction);
+
+                // Process all available items in the queue.
                 while (true)
                 {
                     Action action;
-                    lock (InternalQueue)
+                    lock (_actionQueue)
                     {
-                        // Logger.Verbose("ActionQueue {0} got {1} action to process", Name, InternalQueue.Count);
-                        if (InternalQueue.Count == 0)
+                        //_Logger.Verbose("ActionQueue {0} got {1} action to process", Name, _ActionQueue.Count);
+                        if (_actionQueue.Count == 0)
                         {
-                            ManualHandle.Reset(); // closes the door (non-signals the wait handle)
+                            _isTaskWorkerProcessing = false;
                             break;
                         }
-                        action = InternalQueue.Dequeue();
-                        // Logger.Verbose("ActionQueue  {0} dequeued", Name);
+                        action = _actionQueue.Dequeue();
+                        //_Logger.Verbose("ActionQueue {0} dequeued", Name);
                     }
-                    try
-                    {
-                        action();
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
-                    }
+                    TryExecuteAction(action);
                 }
+            });
+        }
+
+        private void TryExecuteAction(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("ActionQueue {0} with exception ({1})", Name, ex);
             }
         }
     }

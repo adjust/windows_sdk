@@ -9,33 +9,43 @@ namespace AdjustSdk
     public class AdjustAttribution
     {
         public string TrackerToken { get; set; }
-
         public string TrackerName { get; set; }
-
         public string Network { get; set; }
-
         public string Campaign { get; set; }
-
         public string Adgroup { get; set; }
-
         public string Creative { get; set; }
-
         public string ClickLabel { get; set; }
+        public string Adid { get; set; }
 
-        public static AdjustAttribution FromJsonString(string attributionString)
+        internal Dictionary<string, string> Json { get; set; }
+
+        private const string TRACKER_NAME = "TrackerName";
+        private const string TRACKER_TOKEN = "TrackerToken";
+        private const string ADD_NETWORK = "Network";
+        private const string CAMPAIGN = "Campaign";
+        private const string ADGROUP = "Adgroup";
+        private const string CREATIVE = "Creative";
+        private const string CLICK_LABEL = "ClickLabel";
+        private const string ADID = "Adid";
+
+        public static AdjustAttribution FromJsonString(string attributionString, string adid)
         {
+            if (attributionString == null) { return null; }
+
             try
             {
                 var jsonDict = JsonConvert.DeserializeObject<Dictionary<string, string>>(attributionString);
                 var attribution = new AdjustAttribution
                 {
-                    TrackerToken = Util.GetDictionaryValue(jsonDict, "tracker_token"),
-                    TrackerName = Util.GetDictionaryValue(jsonDict, "tracker_name"),
-                    Network = Util.GetDictionaryValue(jsonDict, "network"),
-                    Campaign = Util.GetDictionaryValue(jsonDict, "campaign"),
-                    Adgroup = Util.GetDictionaryValue(jsonDict, "adgroup"),
-                    Creative = Util.GetDictionaryValue(jsonDict, "creative"),
-                    ClickLabel = Util.GetDictionaryValue(jsonDict, "click_label"),
+                    TrackerToken = Util.GetDictionaryString(jsonDict, "tracker_token"),
+                    TrackerName = Util.GetDictionaryString(jsonDict, "tracker_name"),
+                    Network = Util.GetDictionaryString(jsonDict, "network"),
+                    Campaign = Util.GetDictionaryString(jsonDict, "campaign"),
+                    Adgroup = Util.GetDictionaryString(jsonDict, "adgroup"),
+                    Creative = Util.GetDictionaryString(jsonDict, "creative"),
+                    ClickLabel = Util.GetDictionaryString(jsonDict, "click_label"),
+                    Adid = adid,
+                    Json = jsonDict,
                 };
                 return attribution;
             }
@@ -59,6 +69,7 @@ namespace AdjustSdk
             if (!EqualString(Adgroup, other.Adgroup)) { return false; }
             if (!EqualString(Creative, other.Creative)) { return false; }
             if (!EqualString(ClickLabel, other.ClickLabel)) { return false; }
+            if (!EqualString(Adid, other.Adid)) { return false; }
 
             return true;
         }
@@ -73,42 +84,52 @@ namespace AdjustSdk
             hashCode = 37 * hashCode + HashString(Adgroup);
             hashCode = 37 * hashCode + HashString(Creative);
             hashCode = 37 * hashCode + HashString(ClickLabel);
+            hashCode = 37 * hashCode + HashString(Adid);
 
             return hashCode;
         }
 
         public override string ToString()
         {
-            return Util.f("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6}",
+            return Util.F("tt:{0} tn:{1} net:{2} cam:{3} adg:{4} cre:{5} cl:{6} adid:{7}",
                 TrackerToken, 
                 TrackerName, 
                 Network, 
                 Campaign, 
                 Adgroup, 
                 Creative, 
-                ClickLabel);
+                ClickLabel,
+                Adid);
         }
 
-        public Dictionary<string, string> ToDictionary()
+        public static Dictionary<string, object> ToDictionary(AdjustAttribution attribution)
         {
-            return new Dictionary<string, string>
+            return new Dictionary<string, object>
             {
-                {"trackerName", TrackerName},
-                {"trackerToken", TrackerToken},
-                {"network", Network},
-                {"campaign", Campaign},
-                {"adgroup", Adgroup},
-                {"creative", Creative},
-                {"clickLabel", ClickLabel},
+                {TRACKER_NAME, attribution.TrackerName},
+                {TRACKER_TOKEN, attribution.TrackerToken},
+                {ADD_NETWORK, attribution.Network},
+                {CAMPAIGN, attribution.Campaign},
+                {ADGROUP, attribution.Adgroup},
+                {CREATIVE, attribution.Creative},
+                {CLICK_LABEL, attribution.ClickLabel},
+                {ADID, attribution.Adid}
             };
         }
 
-        private void addToDic(Dictionary<string, string> dic, string key, string value)
+        public static AdjustAttribution FromDictionary(Dictionary<string, object> attributionObjectMap)
         {
-            if (!string.IsNullOrEmpty(value))
+            return new AdjustAttribution
             {
-                dic.Add(key, value);
-            }
+                TrackerName = attributionObjectMap.ContainsKey(TRACKER_NAME) ? attributionObjectMap[TRACKER_NAME] as string : null,
+                TrackerToken = attributionObjectMap.ContainsKey(TRACKER_TOKEN) ? attributionObjectMap[TRACKER_TOKEN] as string : null,
+                Network = attributionObjectMap.ContainsKey(ADD_NETWORK) ? attributionObjectMap[ADD_NETWORK] as string : null,
+                Campaign = attributionObjectMap.ContainsKey(CAMPAIGN) ? attributionObjectMap[CAMPAIGN] as string : null,
+                Adgroup = attributionObjectMap.ContainsKey(ADGROUP) ? attributionObjectMap[ADGROUP] as string : null,
+                Creative = attributionObjectMap.ContainsKey(CREATIVE) ? attributionObjectMap[CREATIVE] as string : null,
+                ClickLabel = attributionObjectMap.ContainsKey(CLICK_LABEL) ? attributionObjectMap[CLICK_LABEL] as string : null,
+                Adid = attributionObjectMap.ContainsKey(ADID) ? attributionObjectMap[ADID] as string : null
+            };
         }
 
         private bool EqualString(string first, string second)
@@ -127,35 +148,9 @@ namespace AdjustSdk
 
             return value.GetHashCode();
         }
-
-        #region Serialization
-
+        
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, AdjustAttribution attribution)
-        {
-            var writer = new BinaryWriter(stream);
-
-            WriteOptionalString(writer, attribution.TrackerToken);
-            WriteOptionalString(writer, attribution.TrackerName);
-            WriteOptionalString(writer, attribution.Network);
-            WriteOptionalString(writer, attribution.Campaign);
-            WriteOptionalString(writer, attribution.Adgroup);
-            WriteOptionalString(writer, attribution.Creative);
-            WriteOptionalString(writer, attribution.ClickLabel);
-        }
-
-        private static void WriteOptionalString(BinaryWriter writer, string value)
-        {
-            var hasValue = value != null;
-            writer.Write(hasValue);
-            if (hasValue)
-            {
-                writer.Write(value);
-            }
-        }
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static AdjustAttribution DeserializeFromStream(Stream stream)
+        internal static AdjustAttribution DeserializeFromStreamLegacy(Stream stream)
         {
             AdjustAttribution attribution = null;
             var reader = new BinaryReader(stream);
@@ -179,7 +174,5 @@ namespace AdjustSdk
 
             return reader.ReadString();
         }
-
-        #endregion Serialization
     }
 }

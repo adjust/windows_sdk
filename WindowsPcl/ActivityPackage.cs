@@ -1,25 +1,31 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace AdjustSdk.Pcl
 {
     public class ActivityPackage
     {
         public ActivityKind ActivityKind { get; set; }
-
         public string ClientSdk { get; private set; }
-
         public Dictionary<string, string> Parameters { get; private set; }
-
         public string Path { get; private set; }
-
         public string Suffix { get; set; }
+        public int Retries { get; private set; }
+        public Dictionary<string, string> CallbackParameters { get; set; }
+        public Dictionary<string, string> PartnerParameters { get; set; }
 
-        private ActivityPackage()
-        {
-        }
+        private const string PATH = "Path";
+        private const string CLIENT_SDK = "ClientSdk";
+        private const string ACTIVITY_KIND = "ActivityKind";
+        private const string SUFFIX = "Suffix";
+        private const string PARAMETERS = "Parameters";
+        private const string CALLBACK_PARAMETERS = "CallbackParameters";
+        private const string PARAMETER_PARAMETERS = "PartnerParameters";
+
+        public ActivityPackage()
+        { }
 
         public ActivityPackage(ActivityKind activityKind, string clientSdk, Dictionary<string, string> parameters)
         {
@@ -28,16 +34,17 @@ namespace AdjustSdk.Pcl
             Parameters = parameters;
             Path = ActivityKindUtil.GetPath(ActivityKind);
             Suffix = ActivityKindUtil.GetSuffix(Parameters);
+            Retries = 0;
         }
 
         public string FailureMessage()
         {
-            return Util.f("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.F("Failed to track {0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public override string ToString()
         {
-            return Util.f("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
+            return Util.F("{0}{1}", ActivityKindUtil.ToString(ActivityKind), Suffix);
         }
 
         public string GetExtendedString()
@@ -60,30 +67,68 @@ namespace AdjustSdk.Pcl
             return stringBuilder.ToString();
         }
 
-        #region Serialization
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeToStream(Stream stream, ActivityPackage activityPackage)
+        public int IncreaseRetries()
         {
-            var writer = new BinaryWriter(stream);
-
-            writer.Write(activityPackage.Path);
-            writer.Write("");
-            writer.Write(activityPackage.ClientSdk);
-            writer.Write(ActivityKindUtil.ToString(activityPackage.ActivityKind));
-            writer.Write(activityPackage.Suffix);
-
-            var parametersArray = activityPackage.Parameters.ToArray();
-            writer.Write(parametersArray.Length);
-            for (int i = 0; i < parametersArray.Length; i++)
-            {
-                writer.Write(parametersArray[i].Key);
-                writer.Write(parametersArray[i].Value);
-            }
+            Retries++;
+            return Retries;
         }
 
+        public static Dictionary<string, string> ToDictionary(ActivityPackage activityPackage)
+        {
+            var callbackParamsJson = JsonConvert.SerializeObject(activityPackage.CallbackParameters);
+            var partnerParamsJson = JsonConvert.SerializeObject(activityPackage.PartnerParameters);
+            var parametersJson = JsonConvert.SerializeObject(activityPackage.Parameters);
+
+            return new Dictionary<string, string>
+            {
+                {PATH, activityPackage.Path},
+                {CLIENT_SDK, activityPackage.ClientSdk},
+                {ACTIVITY_KIND, ActivityKindUtil.ToString(activityPackage.ActivityKind)},
+                {SUFFIX, activityPackage.Suffix},
+                {PARAMETERS, parametersJson},
+                {CALLBACK_PARAMETERS, callbackParamsJson},
+                {PARAMETER_PARAMETERS, partnerParamsJson}
+            };
+        }
+
+        public static ActivityPackage FromDictionary(Dictionary<string, string> activityPackageObjectMap)
+        {
+            var activityPackage = new ActivityPackage();
+
+            string parametersJson;
+            if (activityPackageObjectMap.TryGetValue(PARAMETERS, out parametersJson))
+            {
+                activityPackage.Parameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(parametersJson);
+            }
+
+            string callbackParamsJson;
+            if (activityPackageObjectMap.TryGetValue(CALLBACK_PARAMETERS, out callbackParamsJson))
+            {
+                activityPackage.CallbackParameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(callbackParamsJson);
+            }
+
+            string partnerParamsJson;
+            if (activityPackageObjectMap.TryGetValue(PARAMETER_PARAMETERS, out partnerParamsJson))
+            {
+                activityPackage.PartnerParameters =
+                    JsonConvert.DeserializeObject<Dictionary<string, string>>(partnerParamsJson);
+            }
+
+            activityPackage.Path = activityPackageObjectMap.ContainsKey(PATH) ? activityPackageObjectMap[PATH] : null;
+            activityPackage.ClientSdk = activityPackageObjectMap.ContainsKey(CLIENT_SDK) ? activityPackageObjectMap["ClientSdk"] : null;
+            activityPackage.Suffix = activityPackageObjectMap.ContainsKey(SUFFIX) ? activityPackageObjectMap["Suffix"] : null;
+
+            string activityKindString = activityPackageObjectMap.ContainsKey(ACTIVITY_KIND) ? activityPackageObjectMap["ActivityKind"] : null;
+            if (activityKindString != null)
+                activityPackage.ActivityKind = ActivityKindUtil.FromString(activityKindString);
+
+            return activityPackage;
+        }
+        
         // does not close stream received. Caller is responsible to close if it wants it
-        internal static ActivityPackage DeserializeFromStream(Stream stream)
+        internal static ActivityPackage DeserializeFromStreamLegacy(Stream stream)
         {
             ActivityPackage activityPackage = null;
             var reader = new BinaryReader(stream);
@@ -100,7 +145,7 @@ namespace AdjustSdk.Pcl
 
             for (int i = 0; i < parameterLength; i++)
             {
-                activityPackage.Parameters.Add(
+                activityPackage.Parameters.AddSafe(
                     reader.ReadString(),
                     reader.ReadString()
                 );
@@ -108,22 +153,8 @@ namespace AdjustSdk.Pcl
 
             return activityPackage;
         }
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static void SerializeListToStream(Stream stream, List<ActivityPackage> activityPackageList)
-        {
-            var writer = new BinaryWriter(stream);
-
-            var activityPackageArray = activityPackageList.ToArray();
-            writer.Write(activityPackageArray.Length);
-            for (int i = 0; i < activityPackageArray.Length; i++)
-            {
-                ActivityPackage.SerializeToStream(stream, activityPackageArray[i]);
-            }
-        }
-
-        // does not close stream received. Caller is responsible to close if it wants it
-        internal static List<ActivityPackage> DeserializeListFromStream(Stream stream)
+        
+        internal static List<ActivityPackage> DeserializeListFromStreamLegacy(Stream stream)
         {
             List<ActivityPackage> activityPackageList = null;
             var reader = new BinaryReader(stream);
@@ -134,13 +165,12 @@ namespace AdjustSdk.Pcl
             for (int i = 0; i < activityPackageLength; i++)
             {
                 activityPackageList.Add(
-                    ActivityPackage.DeserializeFromStream(stream)
+                    DeserializeFromStreamLegacy(stream)
                 );
             }
 
             return activityPackageList;
         }
-
-        #endregion Serialization
+        
     }
 }
