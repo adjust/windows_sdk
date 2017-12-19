@@ -27,7 +27,7 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
     * [Disable tracking](#disable-tracking)
     * [Offline mode](#offline-mode)
     * [Event buffering](#event-buffering)
-    * [SDK Signature](#sdk-signature)
+    * [SDK signature](#sdk-signature)
     * [Background tracking](#background-tracking)
     * [Device IDs](#device-ids)
         * [Windows advertising identifier](#di-win-adid)
@@ -436,16 +436,21 @@ config.EventBufferingEnabled = true;
 Adjust.ApplicationLaunching(config);
 ```
 
-### <a id="sdk-signature"></a> SDK Signature
+### <a id="sdk-signature"></a> SDK signature
 
-An account manager must activate the Adjust SDK Signature. Contact Adjust support (support@adjust.com) if you are interested in using this feature.
+An account manager must activate the Adjust SDK signature. Contact Adjust support (support@adjust.com) if you are interested in using this feature.
 
-If the SDK Signature has already been enabled on your account and you have access to App Secrets in your Adjust Dashboard, please use the method below to integrate the SDK Signature into your app.
+If the SDK signature has already been enabled on your account and you have access to App Secrets in your Adjust Dashboard, please use the method below to integrate the SDK signature into your app.
 
 An App Secret is set by calling `setAppSecret` on your `AdjustConfig` instance:
 
-```java
-adjustConfig.setAppSecret(secretId, info1, info2, info3, info4);
+```cs
+var config = new AdjustConfig(appToken, environment,
+   msg => System.Diagnostics.Debug.WriteLine(msg), LogLevel.Verbose);
+
+config.SetAppSecret(secretId, info1, info2, info3, info4);
+
+Adjust.ApplicationLaunching(config);
 ```
 
 ### <a id="background-tracking"></a>Background tracking
