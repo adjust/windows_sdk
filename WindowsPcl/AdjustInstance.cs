@@ -11,6 +11,7 @@ namespace AdjustSdk.Pcl
         private List<Action<ActivityHandler>> _preLaunchActions;
         private bool? _startEnabled = null;
         private bool _startOffline = false;
+        private string _basePath;
 
         public bool ApplicationLaunched => _activityHandler != null;
 
@@ -23,6 +24,7 @@ namespace AdjustSdk.Pcl
             adjustConfig.PreLaunchActions = _preLaunchActions;
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
+            adjustConfig.BasePath = _basePath;
 
             AdjustConfig.String2Sha256Func = deviceUtil.HashStringUsingSha256;
             AdjustConfig.String2Sha512Func = deviceUtil.HashStringUsingSha512;
@@ -263,6 +265,51 @@ namespace AdjustSdk.Pcl
         {
             if (!CheckActivityHandler()) { return null; }
             return _activityHandler.GetAdid();
+        }
+
+        public void SetTestOptions(IntegrationTesting.AdjustTestOptions testOptions)
+        {
+            if (testOptions.BasePath != null)
+            {
+                _basePath = testOptions.BasePath;
+            }
+
+            if (testOptions.BaseUrl != null)
+            {
+                AdjustFactory.BaseUrl = testOptions.BaseUrl;
+            }
+            
+            if (testOptions.TimerIntervalInMilliseconds.HasValue)
+            {
+                var intervalMillis = testOptions.TimerIntervalInMilliseconds.Value;
+                AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(intervalMillis));
+            }
+
+            if (testOptions.TimerStartInMilliseconds.HasValue)
+            {
+                var timerStartMillis = testOptions.TimerStartInMilliseconds.Value;
+                AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStartMillis));
+            }
+
+            if (testOptions.SessionIntervalInMilliseconds.HasValue)
+            {
+                var sessionIntervalMillis = testOptions.SessionIntervalInMilliseconds.Value;
+                AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionIntervalMillis));
+            }
+
+            if (testOptions.SubsessionIntervalInMilliseconds.HasValue)
+            {
+                var subSessionIntervalMillis = testOptions.SubsessionIntervalInMilliseconds.Value;
+                AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
+            }
+        }
+
+        public void Teardown()
+        {
+            if (!CheckActivityHandler()) { return; }
+
+            _activityHandler.Teardown();
+            _activityHandler = null;
         }
     }
 }

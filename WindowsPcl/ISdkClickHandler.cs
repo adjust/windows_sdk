@@ -9,5 +9,7 @@
         void ResumeSending();
 
         void SendSdkClick(ActivityPackage sdkClickPackage);
+
+        void Teardown();
     }
 }

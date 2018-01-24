@@ -17,5 +17,7 @@
         void ResumeSending();
 
         void UpdatePackages(SessionParameters sessionParameters);
+
+        void Teardown();
     }
 }

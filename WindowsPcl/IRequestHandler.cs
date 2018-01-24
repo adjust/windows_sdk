@@ -6,8 +6,10 @@ namespace AdjustSdk.Pcl
     {
         void Init(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback);
 
-        void SendPackage(ActivityPackage package, int queueSize);
+        void SendPackage(ActivityPackage package, string basePath, int queueSize);
 
-        void SendPackageSync(ActivityPackage activityPackage, int queueSize);
+        void SendPackageSync(ActivityPackage activityPackage, string basePath, int queueSize);
+
+        void Teardown();
     }
 }

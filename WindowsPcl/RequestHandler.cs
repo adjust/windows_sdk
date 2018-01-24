@@ -9,7 +9,7 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
+        private ILogger _logger = AdjustFactory.Logger;
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;
@@ -25,17 +25,17 @@ namespace AdjustSdk.Pcl
             _failureCallback = failureCallback;
         }
 
-        public void SendPackage(ActivityPackage activityPackage, int queueSize)
+        public void SendPackage(ActivityPackage activityPackage, string basePath, int queueSize)
         {
-            Task.Run(() => SendI(activityPackage, queueSize))
+            Task.Run(() => SendI(activityPackage, basePath, queueSize))
                 // continuation used to prevent unhandled exceptions in SendI
                 .ContinueWith((responseData) => PackageSent(responseData, activityPackage),
                     TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI
         }
 
-        public void SendPackageSync(ActivityPackage activityPackage, int queueSize)
+        public void SendPackageSync(ActivityPackage activityPackage, string basePath, int queueSize)
         {
-            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, queueSize));
+            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, basePath, queueSize));
             // continuation used to prevent unhandled exceptions in SendI
             sendTask.ContinueWith((responseData) => {
                 PackageSent(responseData, activityPackage);
@@ -44,12 +44,12 @@ namespace AdjustSdk.Pcl
             sendTask.RunSynchronously();
         }
 
-        private ResponseData SendI(ActivityPackage activityPackage, int queueSize)
+        private ResponseData SendI(ActivityPackage activityPackage, string basePath, int queueSize)
         {
             ResponseData responseData;
             try
             {
-                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, queueSize))
+                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, basePath, queueSize))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
                 }
@@ -133,6 +133,13 @@ namespace AdjustSdk.Pcl
             }
 
             _logger.Error("{0}", errorMessagBuilder.ToString());
+        }
+
+        public void Teardown()
+        {
+            _successCallback = null;
+            _failureCallback = null;
+            _logger = null;
         }
     }
 }

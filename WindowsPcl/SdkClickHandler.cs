@@ -5,12 +5,13 @@ namespace AdjustSdk.Pcl
 {
     public class SdkClickHandler : ISdkClickHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.SdkClickHandler");
-        private readonly BackoffStrategy _backoffStrategy = AdjustFactory.GetSdkClickHandlerBackoffStrategy();
-        private readonly Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
-        private readonly IRequestHandler _requestHandler;
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.SdkClickHandler");
+        private BackoffStrategy _backoffStrategy = AdjustFactory.GetSdkClickHandlerBackoffStrategy();
+        private Queue<ActivityPackage> _packageQueue = new Queue<ActivityPackage>();
+        private IRequestHandler _requestHandler;
         private WeakReference<IActivityHandler> _activityHandlerWeakReference;
+        private string _basePath;
 
         private bool _isPaused;
 
@@ -26,6 +27,7 @@ namespace AdjustSdk.Pcl
         {
             _isPaused = startPaused;
             _activityHandlerWeakReference = new WeakReference<IActivityHandler>(activityHandler);
+            _basePath = activityHandler.BasePath;
         }
 
         public void PauseSending()
@@ -68,7 +70,7 @@ namespace AdjustSdk.Pcl
 
             Action action = () =>
             {
-                _requestHandler.SendPackageSync(sdkClickPackage, _packageQueue.Count - 1);
+                _requestHandler.SendPackageSync(sdkClickPackage, _basePath, _packageQueue.Count - 1);
                 SendNextSdkClick();
             };
 
@@ -100,6 +102,21 @@ namespace AdjustSdk.Pcl
 
             _logger.Error("Retrying sdk_click package for the {0} time", retries);
             SendSdkClick(sdkClickPackage);
+        }
+
+        public void Teardown()
+        {
+            _actionQueue?.Teardown();
+            _packageQueue?.Clear();
+            _activityHandlerWeakReference.SetTarget(null);
+            _requestHandler.Teardown();
+
+            _actionQueue = null;
+            _logger = null;
+            _packageQueue = null;
+            _backoffStrategy = null;
+            _requestHandler = null;
+            _activityHandlerWeakReference = null;
         }
     }
 }
