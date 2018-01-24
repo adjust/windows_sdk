@@ -13,5 +13,7 @@
         void PauseSending();
 
         void ResumeSending();
+
+        void Teardown();
     }
 }

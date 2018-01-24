@@ -6,14 +6,15 @@ namespace AdjustSdk.Pcl
 {
     public class AttributionHandler : IAttributionHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
 
         private IActivityHandler _activityHandler;
-        private readonly TimerOnce _timer;
+        private TimerOnce _timer;
         private ActivityPackage _attributionPackage;
         private bool _paused;
         private readonly string _urlQuery;
+        private string _basePath;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
@@ -31,6 +32,7 @@ namespace AdjustSdk.Pcl
             _activityHandler = activityHandler;
             _attributionPackage = attributionPackage;
             _paused = startPaused;
+            _basePath = activityHandler.BasePath;
         }
 
         public void CheckSessionResponse(SessionResponseData responseData)
@@ -147,7 +149,7 @@ namespace AdjustSdk.Pcl
             try
             {
                 ResponseData responseData;
-                using (var httpResponseMessage = Util.SendGetRequest(_attributionPackage, _urlQuery))
+                using (var httpResponseMessage = Util.SendGetRequest(_attributionPackage, _basePath, _urlQuery))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, _attributionPackage);
                 }
@@ -184,6 +186,18 @@ namespace AdjustSdk.Pcl
             var query = string.Join("&", queryList);
 
             return query;
+        }
+
+        public void Teardown()
+        {
+            _timer?.Teardown();
+            _actionQueue?.Teardown();
+
+            _actionQueue = null;
+            _activityHandler = null;
+            _logger = null;
+            _attributionPackage = null;
+            _timer = null;
         }
     }
 }

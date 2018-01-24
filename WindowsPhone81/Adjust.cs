@@ -1,5 +1,9 @@
 ﻿using AdjustSdk.Pcl;
 using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.Search;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 
@@ -13,7 +17,7 @@ namespace AdjustSdk
     public class Adjust
     {
         private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
-        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
+        private static AdjustInstance AdjustInstance = new AdjustInstance();
         private static bool _isApplicationActive = false;
 
         private Adjust() { }
@@ -243,5 +247,60 @@ namespace AdjustSdk
         {
             return AdjustInstance.GetAttribution();
         }
+
+#if DEBUG
+        public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
+        {
+            if (testOptions.Teardown.HasValue && testOptions.Teardown.Value)
+            {
+                if (AdjustInstance != null)
+                {
+                    AdjustInstance.Teardown();
+                }
+
+                AdjustInstance = null;
+                AdjustFactory.Teardown();
+
+                // check whether to delete state 
+                if (testOptions.DeleteState.HasValue && testOptions.DeleteState.Value)
+                {
+                    ClearAllPersistedObjects();
+                    ClearAllPeristedValues();
+                }
+            }
+
+            AdjustInstance = new AdjustInstance();
+            AdjustInstance.SetTestOptions(testOptions);
+        }
+
+        private static void ClearAllPersistedObjects()
+        {
+            var localSettings = ApplicationData.Current.LocalSettings;
+            Task.Run(() =>
+            {
+                Debug.WriteLine("About to delete local settings. Count: {0}", localSettings.Values.Count);
+                localSettings.Values.Clear();
+            });
+        }
+
+        private static void ClearAllPeristedValues()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+
+            if (localFolder == null)
+                return;
+
+            Task.Run(async () =>
+            {
+                int filesDeletedCount = 0;
+                foreach (var file in await localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    filesDeletedCount++;
+                }
+                Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
+            });
+        }
+#endif
     }
 }

@@ -21,6 +21,24 @@ namespace AdjustSdk.Pcl
         private static BackoffStrategy _sdkClickHandlerBackoffStrategy;
         private static TimeSpan? _maxDelayStart;
 
+        private static string _baseUrl = null;
+        public static string BaseUrl
+        {
+            get
+            {
+                if (_baseUrl == null)
+                {
+                    return Constants.BASE_URL;
+                }
+                return _baseUrl;
+            }
+
+            set
+            {
+                _baseUrl = value;
+            }
+        }
+
         public static ILogger Logger
         {
             get
@@ -33,7 +51,7 @@ namespace AdjustSdk.Pcl
 
             set { _logger = value; }
         }
-
+        
         public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             if (_iActivityHandler == null)
@@ -83,15 +101,7 @@ namespace AdjustSdk.Pcl
             _iSdkClickHandler.Init(activityHandler, startPaused);
             return _iSdkClickHandler;
         }
-
-        public static HttpMessageHandler GetHttpMessageHandler()
-        {
-            if (_httpMessageHandler == null)
-                return new HttpClientHandler();
-            else
-                return _httpMessageHandler;
-        }
-
+        
         public static TimeSpan GetSessionInterval()
         {
             if (!_sessionInterval.HasValue)
@@ -214,6 +224,18 @@ namespace AdjustSdk.Pcl
         public static void SetMaxDelayStart(TimeSpan maxDelayStart)
         {
             _maxDelayStart = maxDelayStart;
+        }
+
+        public static void Teardown()
+        {
+            _iPackageHandler = null;
+            _iRequestHandler = null;
+            _iAttributionHandler = null;
+            _logger = null;
+            _httpMessageHandler?.Dispose();
+            _httpMessageHandler = null;
+            _packageHandlerBackoffStrategy = null;
+            _sdkClickHandlerBackoffStrategy = null;
         }
     }
 }
