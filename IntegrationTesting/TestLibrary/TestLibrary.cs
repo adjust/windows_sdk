@@ -137,6 +137,12 @@ namespace TestLibrary
                 return;
             }
 
+            if(httpResponse.Response == "{}")
+            {
+                DebugLog("ReadResponseI - httpResponse is empty, skipping");
+                return;
+            }
+
             var testCommandsArray = JsonConvert.DeserializeObject<TestCommand[]>(httpResponse.Response);
             var testCommands = testCommandsArray.ToList();
             try

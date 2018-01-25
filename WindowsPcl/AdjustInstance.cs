@@ -267,6 +267,7 @@ namespace AdjustSdk.Pcl
             return _activityHandler.GetAdid();
         }
 
+#if DEBUG
         public void SetTestOptions(IntegrationTesting.AdjustTestOptions testOptions)
         {
             if (testOptions.BasePath != null)
@@ -282,27 +283,40 @@ namespace AdjustSdk.Pcl
             if (testOptions.TimerIntervalInMilliseconds.HasValue)
             {
                 var intervalMillis = testOptions.TimerIntervalInMilliseconds.Value;
-                AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(intervalMillis));
+                if (intervalMillis == -1)
+                    AdjustFactory.SetTimerInterval(TimeSpan.FromMinutes(1));
+                else
+                    AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(intervalMillis));
             }
 
             if (testOptions.TimerStartInMilliseconds.HasValue)
             {
                 var timerStartMillis = testOptions.TimerStartInMilliseconds.Value;
-                AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStartMillis));
+                if (timerStartMillis == -1)
+                    AdjustFactory.SetTimerStart(TimeSpan.FromMinutes(1));
+                else
+                    AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStartMillis));
             }
 
             if (testOptions.SessionIntervalInMilliseconds.HasValue)
             {
                 var sessionIntervalMillis = testOptions.SessionIntervalInMilliseconds.Value;
-                AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionIntervalMillis));
+                if (sessionIntervalMillis == -1)
+                    AdjustFactory.SetSessionInterval(TimeSpan.FromMinutes(30));
+                else
+                    AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionIntervalMillis));
             }
 
             if (testOptions.SubsessionIntervalInMilliseconds.HasValue)
             {
                 var subSessionIntervalMillis = testOptions.SubsessionIntervalInMilliseconds.Value;
-                AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
+                if (subSessionIntervalMillis == -1)
+                    AdjustFactory.SetSubsessionInterval(TimeSpan.FromSeconds(1));
+                else
+                    AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
             }
         }
+#endif
 
         public void Teardown()
         {
