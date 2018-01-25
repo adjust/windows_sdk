@@ -16,9 +16,38 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
-        private static AdjustInstance AdjustInstance = new AdjustInstance();
         private static bool _isApplicationActive = false;
+
+        private static AdjustInstance _adjustInstance;
+        private static AdjustInstance AdjustInstance
+        {
+            get
+            {
+                if (_adjustInstance == null)
+                    _adjustInstance = new AdjustInstance();
+                return _adjustInstance;
+            }
+            set
+            {
+                _adjustInstance = value;
+            }
+        }
+
+
+        private static IDeviceUtil _deviceUtil;
+        private static IDeviceUtil DeviceUtil
+        {
+            get
+            {
+                if (_deviceUtil == null)
+                    _deviceUtil = new UtilWP81();
+                return _deviceUtil;
+            }
+            set
+            {
+                _deviceUtil = value;
+            }
+        }
 
         private Adjust() { }
 
@@ -258,6 +287,8 @@ namespace AdjustSdk
                     AdjustInstance.Teardown();
                 }
 
+                _isApplicationActive = false;
+                DeviceUtil = null;
                 AdjustInstance = null;
                 AdjustFactory.Teardown();
 
@@ -269,7 +300,9 @@ namespace AdjustSdk
                 }
             }
 
-            AdjustInstance = new AdjustInstance();
+            if (AdjustInstance == null)
+                AdjustInstance = new AdjustInstance();
+
             AdjustInstance.SetTestOptions(testOptions);
         }
 
