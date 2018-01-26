@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.Storage.Search;
 using AdjustSdk;
 using AdjustSdk.Pcl;
 using TestLibrary;
@@ -35,7 +32,6 @@ namespace TestApp
                 
                 switch (command.MethodName)
                 {
-                    //case "factory": Factory(); break;
                     case "testOptions": TestOptions(); break;
                     case "config": Config(); break;
                     case "start": Start(); break;
@@ -54,12 +50,8 @@ namespace TestApp
                     case "resetSessionCallbackParameters": ResetSessionCallbackParameters(); break;
                     case "resetSessionPartnerParameters": ResetSessionPartnerParameters(); break;
                     case "setPushToken": SetPushToken(); break;
-                    //case "teardown": Teardown(); break;
                     case "openDeeplink": OpenDeeplink(); break;
                     case "sendReferrer": { Log.Debug("NO REFFERER (sendReferrer) IN WIN SDK!"); /*sendReferrer();*/ break; }
-                    //case "sendTestInfo": SendTestInfo(); break;
-                    //case "testBegin": TestBegin(); break;
-                    //case "testEnd": TestEnd(); break;
                 }
             }
             catch (Exception ex)
@@ -67,40 +59,7 @@ namespace TestApp
                 Log.Error(TAG + "{0} ---- {1}", "executeCommand: failed to parse command. Check commands' syntax", ex.ToString());
             }
         }
-
-        //private void SendTestInfo()
-        //{
-        //    string testInfo = Command.GetFirstParameterValue("testInfo");
-        //    _testLibrary.AddInfoToSend("testInfo", testInfo);
-        //    _testLibrary.SendInfoToServer();
-        //}
-
-        //private void Factory()
-        //{
-        //    if (Command.ContainsParameter("basePath"))
-        //        BasePath = Command.GetFirstParameterValue("basePath");
-        //    if (Command.ContainsParameter("timerInterval"))
-        //    {
-        //        var timerInterval = long.Parse(Command.GetFirstParameterValue("timerInterval"));
-        //        AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(timerInterval));
-        //    }
-        //    if (Command.ContainsParameter("timerStart"))
-        //    {
-        //        var timerStart = long.Parse(Command.GetFirstParameterValue("timerStart"));
-        //        AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStart));
-        //    }
-        //    if (Command.ContainsParameter("sessionInterval"))
-        //    {
-        //        var sessionInterval = long.Parse(Command.GetFirstParameterValue("sessionInterval"));
-        //        AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionInterval));
-        //    }
-        //    if (Command.ContainsParameter("subsessionInterval"))
-        //    {
-        //        var subsessionInterval = long.Parse(Command.GetFirstParameterValue("subsessionInterval"));
-        //        AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subsessionInterval));
-        //    }
-        //}
-
+        
         private void TestOptions()
         {
             AdjustTestOptions testOptions = new AdjustTestOptions();
@@ -316,6 +275,8 @@ namespace TestApp
             }
 
             if (Command.ContainsParameter("attributionCallbackSendAll"))
+            {
+                string localBasePath = BasePath;
                 adjustConfig.AttributionChanged += attribution =>
                 {
                     Log.Debug(TAG, "AttributionChanged, attribution = " + attribution);
@@ -328,10 +289,13 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("creative", attribution.Creative);
                     _testLibrary.AddInfoToSend("clickLabel", attribution.ClickLabel);
                     _testLibrary.AddInfoToSend("adid", attribution.Adid);
-                    _testLibrary.SendInfoToServer();
+                    _testLibrary.SendInfoToServer(localBasePath);
                 };
+            }
 
             if (Command.ContainsParameter("sessionCallbackSendSuccess"))
+            {
+                string localBasePath = BasePath;
                 adjustConfig.SesssionTrackingSucceeded += sessionSuccessResponseData =>
                 {
                     Log.Debug(TAG,
@@ -342,10 +306,13 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("adid", sessionSuccessResponseData.Adid);
                     if (sessionSuccessResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", sessionSuccessResponseData.JsonResponse.ToJson());
-                    _testLibrary.SendInfoToServer();
+                    _testLibrary.SendInfoToServer(localBasePath);
                 };
+            }
 
             if (Command.ContainsParameter("sessionCallbackSendFailure"))
+            {
+                string localBasePath = BasePath;
                 adjustConfig.SesssionTrackingFailed += sessionFailureResponseData =>
                 {
                     Log.Debug(TAG,
@@ -356,10 +323,13 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("willRetry", sessionFailureResponseData.WillRetry.ToString().ToLower());
                     if (sessionFailureResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", sessionFailureResponseData.JsonResponse.ToJson());
-                    _testLibrary.SendInfoToServer();
+                    _testLibrary.SendInfoToServer(localBasePath);
                 };
+            }
 
             if (Command.ContainsParameter("eventCallbackSendSuccess"))
+            {
+                string localBasePath = BasePath;
                 adjustConfig.EventTrackingSucceeded += eventSuccessResponseData =>
                 {
                     Log.Debug(TAG, "EventTrackingSucceeded, eventSuccessResponseData = " + eventSuccessResponseData);
@@ -370,10 +340,13 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("eventToken", eventSuccessResponseData.EventToken);
                     if (eventSuccessResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventSuccessResponseData.JsonResponse.ToJson());
-                    _testLibrary.SendInfoToServer();
+                    _testLibrary.SendInfoToServer(localBasePath);
                 };
+            }
 
             if (Command.ContainsParameter("eventCallbackSendFailure"))
+            {
+                string localBasePath = BasePath;
                 adjustConfig.EventTrackingFailed += eventFailureResponseData =>
                 {
                     Log.Debug(TAG, "EventTrackingFailed, eventFailureResponseData = " + eventFailureResponseData);
@@ -385,8 +358,9 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("willRetry", eventFailureResponseData.WillRetry.ToString().ToLower());
                     if (eventFailureResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventFailureResponseData.JsonResponse.ToJson());
-                    _testLibrary.SendInfoToServer();
+                    _testLibrary.SendInfoToServer(localBasePath);
                 };
+            }
         }
 
         private void Start()
@@ -402,7 +376,6 @@ namespace TestApp
 
             var adjustConfig = _savedConfigs[configNumber];
             
-            //AdjustConfig.BasePath = BasePath;
             Adjust.ApplicationLaunching(adjustConfig);
 
             _savedConfigs.Remove(0);
@@ -576,87 +549,11 @@ namespace TestApp
 
             Adjust.SetPushToken(token);
         }
-
-        //private void Teardown()
-        //{
-        //    var deleteStateString = Command.GetFirstParameterValue("deleteState");
-        //    var deleteState = bool.Parse(deleteStateString);
-
-        //    Log.Debug("TestApp {0}", "calling teardown with delete state");
-        //    TeardownAll(deleteState);
-        //}
-
+        
         private void OpenDeeplink()
         {
             var deeplink = Command.GetFirstParameterValue("deeplink");
             Adjust.AppWillOpenUrl(new Uri(deeplink));
-        }
-
-        //private void TestBegin()
-        //{
-        //    if (Command.ContainsParameter("basePath"))
-        //        BasePath = Command.GetFirstParameterValue("basePath");
-
-        //    TeardownAll(true);
-        //    AdjustFactory.SetTimerInterval(null);
-        //    AdjustFactory.SetTimerStart(null);
-        //    AdjustFactory.SetSessionInterval(null);
-        //    AdjustFactory.SetSubsessionInterval(null);
-        //    _savedEvents = new Dictionary<int, AdjustEvent>();
-        //    _savedConfigs = new Dictionary<int, AdjustConfig>();
-        //}
-
-        //private void TestEnd()
-        //{
-        //    TeardownAll(true);
-        //}
-
-        //private void TeardownAll(bool deleteState)
-        //{
-        //    Log.Debug(" --- trying to teardown all ---");
-
-        //    if (deleteState)
-        //    {
-        //        ClearAllPersistedObjects();
-        //        ClearAllPeristedValues();
-        //    }
-
-        //    var adjustInstance = Adjust.GetAdjustInstance();
-        //    adjustInstance?.Teardown(deleteState);
-
-        //    Adjust.SetAdjustInstance(null);
-        //    Adjust.Teardown();
-
-        //    AdjustFactory.Teardown();
-        //}
-
-        //public static void ClearAllPersistedObjects()
-        //{
-        //    var localSettings = ApplicationData.Current.LocalSettings;
-        //    Task.Run(() =>
-        //    {
-        //        Debug.WriteLine("About to delete local settings. Count: {0}", localSettings.Values.Count);
-        //        localSettings.Values.Clear();
-        //    });
-        //}
-
-        //public static void ClearAllPeristedValues()
-        //{
-        //    var localFolder = ApplicationData.Current.LocalFolder;
-
-        //    if (localFolder == null)
-        //        return;
-
-        //    Task.Run(async () =>
-        //    {
-        //        int filesDeletedCount = 0;
-        //        foreach (var file in await localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
-        //        {
-        //            await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
-        //            filesDeletedCount++;
-        //        }
-        //        Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
-        //    });
-        //}
+        }        
     }
 }

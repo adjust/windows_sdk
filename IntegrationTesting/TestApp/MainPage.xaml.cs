@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -17,13 +16,10 @@ namespace TestApp
         public MainPage()
         {
             InitializeComponent();
-            
+
             //var baseUrl = "http://192.168.8.223:8080";
             var baseUrl = "http://localhost:8080";
-
-            //TODO: SSL setup
-            //AdjustFactory.SetTestingMode(baseUrl);
-
+            
             var localIp = GetLocalIp();
             var commandListener = new CommandListener();
             AdjustFactory.BaseUrl = baseUrl;
@@ -36,43 +32,30 @@ namespace TestApp
             commandListener.SetTestLibrary(_testLibrary);
 
             StartTestSession();
-        }
+        }        
 
         private string GetTestNames()
         {
-            string testsDir = "current/Test_";
+            string testsDir = "current/";
             var testNamesList = new List<string>
             {
-                // PASSING ////////////////////////////////////////////////////////////
-                ///////////////////////////////////////////////////////////////////////
-                //testsDir + "Event_Count",
-                //testsDir + "Event_Revenue",
-                //testsDir + "DefaultTracker",
-                //testsDir + "Event_EventToken_Malformed",
-                //testsDir + "Event_Params",
-                //testsDir + "SessionParams",
-                //testsDir + "SessionCount",
-                //testsDir + "SubsessionCount",
-                //testsDir + "SessionEventCallbacks",
-                //testsDir + "Event_OrderId",
-                //testsDir + "AttributionCallback",
-                //testsDir + "Init_Malformed",
-                //testsDir + "SdkPrefix",
-                //testsDir + "UserAgent",
-                //testsDir + "Deeplink",
-                //testsDir + "DelayStart",
-                //testsDir + "SendInBackground",
-                //testsDir + "Disable_Enable"
-                //testsDir + "SdkInfo",
-                //testsDir + "OfflineMode",
-                //testsDir + "EventBuffering"
-                //testsDir + "AppSecret",
+                //testsDir + "event/Test_Event_Params",
+                //testsDir + "event/Test_Event_Count_6events",
+                //testsDir + "event/Test_Event_EventToken_Malformed",
 
-                testsDir + "DeferredDeeplink",
+                //testsDir + "sdkPrefix/Test_SdkPrefix_with_value",
 
-                // NOT PASSING ////////////////////////////////////////////////////////
-                ///////////////////////////////////////////////////////////////////////
-                
+                //testsDir + "appSecret/Test_AppSecret_no_secret",
+                //testsDir + "appSecret/Test_AppSecret_with_secret",
+
+                //testsDir + "eventBuffering/Test_EventBuffering_sensitive_packets",
+
+                //testsDir + "subsessionCount/Test_SubsessionCount",
+
+                testsDir + "disableEnable/Disable_restart_track",
+                //testsDir + "event/Test_Event_OrderId",
+                //testsDir + "event/Test_Event_Params",
+                //testsDir + "offlineMode/Test_OfflineMode",
             };
             
             return string.Join(";", testNamesList);
@@ -80,7 +63,7 @@ namespace TestApp
 
         private void StartTestSession()
         {
-            _testLibrary.InitTestSession(clientSdk: "wuap4.12.0");
+            _testLibrary.StartTestSession(clientSdk: "wuap4.12.0");
         }
 
         private string GetLocalIp()

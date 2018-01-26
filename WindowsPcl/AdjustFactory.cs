@@ -6,6 +6,12 @@ namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
+        private static readonly TimeSpan DefaultSessionInterval = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan DefaultSubsessionInterval = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan DefaultTimerInterval = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan DefaultTimerStart = TimeSpan.FromSeconds(0);
+        private static readonly TimeSpan DefaultMaxDelayStart = TimeSpan.FromSeconds(10);
+
         private static ILogger _logger;
         private static IActivityHandler _iActivityHandler;
         private static IPackageHandler _iPackageHandler;
@@ -101,11 +107,11 @@ namespace AdjustSdk.Pcl
             _iSdkClickHandler.Init(activityHandler, startPaused);
             return _iSdkClickHandler;
         }
-        
+
         public static TimeSpan GetSessionInterval()
         {
             if (!_sessionInterval.HasValue)
-                return new TimeSpan(0, 30, 0); // 30 minutes
+                return DefaultSessionInterval; // 30 minutes
             else
                 return _sessionInterval.Value;
         }
@@ -113,7 +119,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetSubsessionInterval()
         {
             if (!_subsessionInterval.HasValue)
-                return new TimeSpan(0, 0, 1); // 1 second
+                return DefaultSubsessionInterval; // 1 second
             else
                 return _subsessionInterval.Value;
         }
@@ -121,7 +127,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetTimerInterval()
         {
             if (!_timerInterval.HasValue)
-                return new TimeSpan(0, 1, 0); // 1 minute
+                return DefaultTimerInterval; // 1 minute
             else
                 return _timerInterval.Value;
         }
@@ -129,7 +135,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetTimerStart()
         {
             if (!_timerStart.HasValue)
-                return new TimeSpan(0, 0, 0); // 0 seconds
+                return DefaultTimerStart; // 0 seconds
             else
                 return _timerStart.Value;
         }
@@ -151,12 +157,12 @@ namespace AdjustSdk.Pcl
             }
             return _sdkClickHandlerBackoffStrategy;
         }
-
+        
         public static TimeSpan GetMaxDelayStart()
         {
             if (_maxDelayStart == null)
             {
-                return TimeSpan.FromSeconds(10);
+                return DefaultMaxDelayStart;
             }
             return _maxDelayStart.Value;
         }
@@ -236,6 +242,13 @@ namespace AdjustSdk.Pcl
             _httpMessageHandler = null;
             _packageHandlerBackoffStrategy = null;
             _sdkClickHandlerBackoffStrategy = null;
+
+            _timerInterval = DefaultTimerInterval;
+            _timerStart = DefaultTimerStart;
+            _sessionInterval = DefaultSessionInterval;
+            _subsessionInterval = DefaultSubsessionInterval;
+            _maxDelayStart = DefaultMaxDelayStart;
+            _baseUrl = Constants.BASE_URL;
         }
     }
 }
