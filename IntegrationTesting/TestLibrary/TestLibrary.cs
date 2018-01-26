@@ -18,7 +18,7 @@ namespace TestLibrary
         internal ICommandListener CommandListener;
         internal ControlChannel ControlChannel;
         internal string CurrentBasePath;
-        internal string CurrentTest;
+        internal string CurrentTestName;
         internal bool ExitAfterEnd = true;
         internal Dictionary<string, string> InfoToServer;
 
@@ -82,7 +82,7 @@ namespace TestLibrary
             ExitAfterEnd = false;
         }
 
-        public void InitTestSession(string clientSdk)
+        public void StartTestSession(string clientSdk)
         {
             ResetTestLibrary();
             
@@ -97,9 +97,9 @@ namespace TestLibrary
             InfoToServer.Add(key, value);
         }
 
-        public void SendInfoToServer()
+        public void SendInfoToServer(string basePath)
         {
-            Task.Run(() => { SendInfoToServerI(); });
+            Task.Run(() => { SendInfoToServerI(basePath); });
         }
 
         internal void ReadResponse(HttpResponse httpResponse)
@@ -117,11 +117,11 @@ namespace TestLibrary
             ReadResponseI(httpResponse);
         }
 
-        private void SendInfoToServerI()
+        private void SendInfoToServerI(string basePath)
         {
             DebugLog("sendInfoToServerI called");
             var httpResponse = UtilsNetworking
-                .SendPostI(CurrentBasePath + "/test_info", null, LocalIp, InfoToServer).Result;
+                .SendPostI(basePath + "/test_info", null, LocalIp, InfoToServer).Result;
             InfoToServer = null;
             if (httpResponse == null)
                 return;
@@ -226,8 +226,8 @@ namespace TestLibrary
             }
 
             if (paramsMap.ContainsKey("testName")) {
-                CurrentTest = paramsMap["testName"][0];
-                DebugLog($"current test name {CurrentTest}");
+                CurrentTestName = paramsMap["testName"][0];
+                DebugLog($"current test name {CurrentTestName}");
             }
 
             ResetForNextTest();
