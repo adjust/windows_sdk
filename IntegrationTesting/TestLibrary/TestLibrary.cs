@@ -27,11 +27,11 @@ namespace TestLibrary
         //https://docs.microsoft.com/en-us/dotnet/standard/collections/thread-safe/blockingcollection-overview
         internal BlockingCollection<string> WaitControlQueue;
 
-        public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp)
+        public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp, Action<string> logDelegate = null)
         {
+            Log.InjectLogDelegate(logDelegate);
             BaseUrl = baseUrl;
             LocalIp = localIp;
-            DebugLog("base url: {0}", baseUrl);
             CommandListener = commandListener;
         }
 
@@ -84,8 +84,8 @@ namespace TestLibrary
 
         public void StartTestSession(string clientSdk)
         {
+            DebugLog("StartTestSession(" + clientSdk + ")");
             ResetTestLibrary();
-            
             Task.Run(() => { SendTestSessionI(clientSdk); });
         }
 
@@ -109,11 +109,15 @@ namespace TestLibrary
 
         private void SendTestSessionI(string clientSdk)
         {
+            DebugLog("SendTestSessionI");
             var httpResponse = UtilsNetworking
                 .SendPostI("/init_session", clientSdk, LocalIp, TestNames).Result;
             if (httpResponse == null)
+            {
+                DebugLog("/init_session - response is NULL!");
                 return;
-
+            }
+            
             ReadResponseI(httpResponse);
         }
 
@@ -143,15 +147,17 @@ namespace TestLibrary
                 return;
             }
 
+            DebugLog("Reading test commands...");
             var testCommandsArray = JsonConvert.DeserializeObject<TestCommand[]>(httpResponse.Response);
             var testCommands = testCommandsArray.ToList();
+            DebugLog("Received " + testCommands.Count + " test commands");
             try
             {
                 ExecTestCommandsI(testCommands);
             }
             catch (Exception e)
             {
-                Log.Error("Error while executing test commands: {0}", e.ToString());
+                DebugLog("Error while executing test commands: {0}", e.ToString());
                 throw;
             }
         }
@@ -279,7 +285,7 @@ namespace TestLibrary
             ExitAppEvent?.Invoke(this, null);
         }
 
-        private void DebugLog(string message, params object[] parameters)
+        public static void DebugLog(string message, params object[] parameters)
         {
             Log.Debug(nameof(TestLibrary), message, parameters);
         }
