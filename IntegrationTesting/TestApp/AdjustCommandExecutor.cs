@@ -133,7 +133,9 @@ namespace TestApp
                 }
             }
 
+#if DEBUG
             Adjust.SetTestOptions(testOptions);
+#endif
         }
 
         private void Config()
