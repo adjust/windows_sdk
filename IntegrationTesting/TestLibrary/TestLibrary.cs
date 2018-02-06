@@ -112,11 +112,8 @@ namespace TestLibrary
             DebugLog("SendTestSessionI");
             var httpResponse = UtilsNetworking
                 .SendPostI("/init_session", clientSdk, LocalIp, TestNames).Result;
-            if (httpResponse == null)
-            {
-                DebugLog("/init_session - response is NULL!");
-                return;
-            }
+
+            if (httpResponse == null) { return; }
             
             ReadResponseI(httpResponse);
         }
@@ -285,7 +282,7 @@ namespace TestLibrary
             ExitAppEvent?.Invoke(this, null);
         }
 
-        public static void DebugLog(string message, params object[] parameters)
+        private void DebugLog(string message, params object[] parameters)
         {
             Log.Debug(nameof(TestLibrary), message, parameters);
         }
