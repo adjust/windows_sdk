@@ -51,7 +51,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Collections.Concurrent">
-      <HintPath>..\..\..\..\Users\serj\.nuget\packages\System.Collections.Concurrent\4.0.10\ref\dotnet\System.Collections.Concurrent.dll</HintPath>
+      <HintPath>..\3rdParty\system.collections.concurrent4.10.0\System.Collections.Concurrent.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\..\Adjust\packages\Microsoft.Net.Http.2.2.29\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.dll</HintPath>
