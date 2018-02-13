@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TestLibrary.Networking;
+using System.Text;
 
 namespace TestLibrary
 {
@@ -22,7 +23,7 @@ namespace TestLibrary
         internal bool ExitAfterEnd = true;
         internal Dictionary<string, string> InfoToServer;
 
-        internal string TestNames;
+        internal StringBuilder TestNames;
 
         //https://docs.microsoft.com/en-us/dotnet/standard/collections/thread-safe/blockingcollection-overview
         internal BlockingCollection<string> WaitControlQueue;
@@ -33,6 +34,7 @@ namespace TestLibrary
             BaseUrl = baseUrl;
             LocalIp = localIp;
             CommandListener = commandListener;
+            TestNames = new StringBuilder();
         }
 
         public event EventHandler ExitAppEvent;
@@ -72,9 +74,29 @@ namespace TestLibrary
             ControlChannel = new ControlChannel(this);
         }
 
-        public void SetTests(string testNames)
+        public void AddTest(string testName)
         {
-            TestNames = testNames;
+            TestNames.Append(testName);
+
+            if (!testName.EndsWith(";"))
+            {
+                TestNames.Append(";");
+            }
+        }
+        
+        public void AddTestDirectory(string testDir)
+        {
+            TestNames.Append(testDir);
+
+            if (!testDir.EndsWith("/") || !testDir.EndsWith("/;"))
+            {
+                TestNames.Append("/");
+            }
+
+            if (!testDir.EndsWith(";"))
+            {
+                TestNames.Append(";");
+            }
         }
 
         public void DoNotExitAfterEnd()
@@ -111,7 +133,7 @@ namespace TestLibrary
         {
             DebugLog("SendTestSessionI");
             var httpResponse = UtilsNetworking
-                .SendPostI("/init_session", clientSdk, LocalIp, TestNames).Result;
+                .SendPostI("/init_session", clientSdk, LocalIp, TestNames.ToString()).Result;
 
             if (httpResponse == null) { return; }
             
