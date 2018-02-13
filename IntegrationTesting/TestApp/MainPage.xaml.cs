@@ -25,42 +25,15 @@ namespace TestApp
             AdjustFactory.BaseUrl = baseUrl;
             _testLibrary = new TestLibrary.TestLibrary(baseUrl, commandListener, localIp);
 
-            //string testNames = GetTestNames();
-            //_testLibrary.SetTests(testNames);
+            //_testLibrary.AddTest("current/event/Test_Event_Params");
+            //_testLibrary.AddTestDirectory("current/sdkInfo");
 
             _testLibrary.ExitAppEvent += (sender, args) => { Exit(); };
             commandListener.SetTestLibrary(_testLibrary);
 
             StartTestSession();
         }        
-
-        private string GetTestNames()
-        {
-            string testsDir = "current/";
-            var testNamesList = new List<string>
-            {
-                //testsDir + "event/Test_Event_Params",
-                //testsDir + "event/Test_Event_Count_6events",
-                //testsDir + "event/Test_Event_EventToken_Malformed",
-
-                //testsDir + "sdkPrefix/Test_SdkPrefix_with_value",
-
-                //testsDir + "appSecret/Test_AppSecret_no_secret",
-                //testsDir + "appSecret/Test_AppSecret_with_secret",
-
-                //testsDir + "eventBuffering/Test_EventBuffering_sensitive_packets",
-
-                //testsDir + "subsessionCount/Test_SubsessionCount",
-
-                testsDir + "disableEnable/Disable_restart_track",
-                //testsDir + "event/Test_Event_OrderId",
-                //testsDir + "event/Test_Event_Params",
-                //testsDir + "offlineMode/Test_OfflineMode",
-            };
-            
-            return string.Join(";", testNamesList);
-        }
-
+        
         private void StartTestSession()
         {
             _testLibrary.StartTestSession(clientSdk: "wuap4.12.0");
