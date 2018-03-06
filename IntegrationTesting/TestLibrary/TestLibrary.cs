@@ -17,6 +17,8 @@ namespace TestLibrary
 
         public string LocalIp { get; set; }
         internal ICommandListener CommandListener;
+        internal ICommandJsonListener CommandJsonListener;
+        internal ICommandRawJsonListener CommandRawJsonListener;
         internal ControlChannel ControlChannel;
         internal string CurrentBasePath;
         internal string CurrentTestName;
@@ -29,11 +31,28 @@ namespace TestLibrary
         internal BlockingCollection<string> WaitControlQueue;
 
         public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
+        {
+            CommandListener = commandListener;
+        }
+
+        public TestLibrary(string baseUrl, ICommandJsonListener commandJsonListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
+        {
+            CommandJsonListener = commandJsonListener;
+        }
+
+        public TestLibrary(string baseUrl, ICommandRawJsonListener commandRawJsonListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
+        {
+            CommandRawJsonListener = commandRawJsonListener;
+        }
+
+        private TestLibrary(string baseUrl, string localIp, Action<string> logDelegate = null)
         {
             Log.InjectLogDelegate(logDelegate);
             BaseUrl = baseUrl;
             LocalIp = localIp;
-            CommandListener = commandListener;
             TestNames = new StringBuilder();
         }
 
@@ -213,17 +232,17 @@ namespace TestLibrary
                 }
 
                 if (CommandListener != null)
+                {
                     CommandListener.ExecuteCommand(testCommand.ClassName, testCommand.FunctionName,
                         testCommand.Params);
-                //else if (commandJsonListener != null)
-                //{
-                //    commandJsonListener.executeCommand(testCommand.ClassName, testCommand.FunctionName, gson.toJson(testCommand.Params));
-                //}
-                //else if (commandRawJsonListener != null)
-                //{
-                //    commandRawJsonListener.executeCommand(gson.toJson(testCommand));
-                //}
-
+                } else if (CommandJsonListener != null)
+                {
+                    CommandJsonListener.ExecuteCommand(testCommand.ClassName, testCommand.FunctionName, JsonConvert.SerializeObject(testCommand.Params));
+                } else if (CommandRawJsonListener != null)
+                {
+                    CommandRawJsonListener.ExecuteCommand(JsonConvert.SerializeObject(testCommand));
+                }
+                
                 DebugLog("time after {0}.{1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));
                 DebugLog("time elapsed {0}.{1} in milli seconds: {2}", testCommand.ClassName, testCommand.FunctionName,
