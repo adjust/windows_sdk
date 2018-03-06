@@ -37,7 +37,9 @@
     <Compile Include="Constants.cs" />
     <Compile Include="ControlChannel.cs" />
     <Compile Include="CustomExtensionMethods.cs" />
+    <Compile Include="ICommandJsonListener.cs" />
     <Compile Include="ICommandListener.cs" />
+    <Compile Include="ICommandRawJsonListener.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="Networking\HttpResponse.cs" />
     <Compile Include="TestCommand.cs" />
