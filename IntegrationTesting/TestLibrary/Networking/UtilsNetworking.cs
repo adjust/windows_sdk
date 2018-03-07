@@ -70,12 +70,14 @@ namespace TestLibrary.Networking
                 Log.Debug(nameof(UtilsNetworking), "----- POST REQUEST [{0}] RECEIVED", targetUrl);
 
                 if (httpResponse.Headers != null)
+                {
                     using (var headersEnumerator = httpResponse.Headers?.GetEnumerator())
                     {
                         while (headersEnumerator.MoveNext())
                             response.HeaderFields.Add(headersEnumerator.Current.Key,
                                 new List<string>(headersEnumerator.Current.Value));
                     }
+                }
 
                 response.Response = await httpResponse.Content.ReadAsStringAsync();
 

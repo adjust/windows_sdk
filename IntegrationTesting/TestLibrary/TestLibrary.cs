@@ -153,8 +153,6 @@ namespace TestLibrary
             DebugLog("SendTestSessionI");
             var httpResponse = UtilsNetworking
                 .SendPostI("/init_session", clientSdk, LocalIp, TestNames.ToString()).Result;
-
-            if (httpResponse == null) { return; }
             
             ReadResponseI(httpResponse);
         }
@@ -165,8 +163,6 @@ namespace TestLibrary
             var httpResponse = UtilsNetworking
                 .SendPostI(basePath + "/test_info", null, LocalIp, InfoToServer).Result;
             InfoToServer = null;
-            if (httpResponse == null)
-                return;
 
             ReadResponseI(httpResponse);
         }
@@ -178,13 +174,7 @@ namespace TestLibrary
                 DebugLog("Cannot read Response. httpResponse is null");
                 return;
             }
-
-            if(httpResponse.Response == "{}")
-            {
-                DebugLog("ReadResponseI - httpResponse is empty, skipping");
-                return;
-            }
-
+            
             DebugLog("Reading test commands...");
             var testCommandsArray = JsonConvert.DeserializeObject<TestCommand[]>(httpResponse.Response);
             var testCommands = testCommandsArray.ToList();
@@ -196,7 +186,6 @@ namespace TestLibrary
             catch (Exception e)
             {
                 DebugLog("Error while executing test commands: {0}", e.ToString());
-                throw;
             }
         }
 
