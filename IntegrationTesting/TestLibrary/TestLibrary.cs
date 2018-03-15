@@ -169,7 +169,7 @@ namespace TestLibrary
 
         public void ReadResponseI(HttpResponse httpResponse)
         {
-            if(httpResponse == null)
+            if (httpResponse == null)
             {
                 DebugLog("Cannot read Response. httpResponse is null");
                 return;
@@ -224,14 +224,16 @@ namespace TestLibrary
                 {
                     CommandListener.ExecuteCommand(testCommand.ClassName, testCommand.FunctionName,
                         testCommand.Params);
-                } else if (CommandJsonListener != null)
+                }
+                else if (CommandJsonListener != null)
                 {
                     CommandJsonListener.ExecuteCommand(testCommand.ClassName, testCommand.FunctionName, JsonConvert.SerializeObject(testCommand.Params));
-                } else if (CommandRawJsonListener != null)
+                }
+                else if (CommandRawJsonListener != null)
                 {
                     CommandRawJsonListener.ExecuteCommand(JsonConvert.SerializeObject(testCommand));
                 }
-                
+
                 DebugLog("time after {0}.{1}: {2}", testCommand.ClassName, testCommand.FunctionName,
                     DateTime.Now.ToString(DATE_TIME_FORMAT));
                 DebugLog("time elapsed {0}.{1} in milli seconds: {2}", testCommand.ClassName, testCommand.FunctionName,
@@ -253,12 +255,14 @@ namespace TestLibrary
 
         private void ResetTestI(Dictionary<string, List<string>> paramsMap)
         {
-            if (paramsMap.ContainsKey("basePath")) {
+            if (paramsMap.ContainsKey("basePath"))
+            {
                 CurrentBasePath = paramsMap["basePath"][0];
                 DebugLog($"current base path {CurrentBasePath}");
             }
 
-            if (paramsMap.ContainsKey("testName")) {
+            if (paramsMap.ContainsKey("testName"))
+            {
                 CurrentTestName = paramsMap["testName"][0];
                 DebugLog($"current test name {CurrentTestName}");
             }
