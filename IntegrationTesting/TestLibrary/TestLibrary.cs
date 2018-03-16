@@ -174,7 +174,15 @@ namespace TestLibrary
                 DebugLog("Cannot read Response. httpResponse is null");
                 return;
             }
-            
+
+            // test server can return an empty response in a form of open and closed bracket "{}"
+            // and JsonConvert cannot deserialize it (throws an exception), hence this check is needed
+            if (httpResponse.Response == "{}")
+            {
+                DebugLog("ReadResponseI - httpResponse is empty, skipping");
+                return;
+            }
+
             DebugLog("Reading test commands...");
             var testCommandsArray = JsonConvert.DeserializeObject<TestCommand[]>(httpResponse.Response);
             var testCommands = testCommandsArray.ToList();
