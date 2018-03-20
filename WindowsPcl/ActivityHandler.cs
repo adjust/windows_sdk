@@ -686,7 +686,7 @@ namespace AdjustSdk.Pcl
             if (lastInterval > _subsessionInterval)
             {
                 _activityState.SubSessionCount++;
-                _activityState.SessionLenght += lastInterval;
+                _activityState.SessionLength += lastInterval;
                 _activityState.LastActivity = now;
 
                 WriteActivityStateI();
@@ -1356,7 +1356,7 @@ namespace AdjustSdk.Pcl
             }
             else
             {
-                _activityState.SessionLenght += lastInterval;
+                _activityState.SessionLength += lastInterval;
                 _activityState.TimeSpent += lastInterval;
             }
 

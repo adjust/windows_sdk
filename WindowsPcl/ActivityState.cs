@@ -13,7 +13,7 @@ namespace AdjustSdk.Pcl
 
         // session atributes
         internal int SubSessionCount { get; set; }
-        internal TimeSpan? SessionLenght { get; set; } // all duration in seconds
+        internal TimeSpan? SessionLength { get; set; } // all duration in seconds
         internal TimeSpan? TimeSpent { get; set; }
         internal DateTime? LastActivity { get; set; } // all times in seconds sinze 1970
         internal TimeSpan? LastInterval { get; set; }
@@ -33,7 +33,7 @@ namespace AdjustSdk.Pcl
         private static readonly string EVENT_COUNT = "EventCount";
         private static readonly string SESSION_COUNT = "SessionCount";
         private static readonly string SUBSESSION_COUNT = "SubSessionCount";
-        private static readonly string SESSION_LENGTH = "SessionLenght";
+        private static readonly string SESSION_LENGTH = "SessionLength";
         private static readonly string TIME_SPENT = "TimeSpent";
         private static readonly string LAST_ACTIVITY = "LastActivity";
         private static readonly string LAST_INTERVAL = "LastInterval";
@@ -59,7 +59,7 @@ namespace AdjustSdk.Pcl
         internal void ResetSessionAttributes(DateTime now)
         {
             SubSessionCount = 1;
-            SessionLenght = new TimeSpan();
+            SessionLength = new TimeSpan();
             TimeSpent = new TimeSpan();
             LastActivity = now;
             LastInterval = null;
@@ -90,7 +90,7 @@ namespace AdjustSdk.Pcl
                 EventCount,
                 SessionCount,
                 SubSessionCount,
-                SessionLenght.SecondsFormat(),
+                SessionLength.SecondsFormat(),
                 TimeSpent.SecondsFormat(),
                 LastActivity.SecondsFormat(),
                 Adid
@@ -108,7 +108,7 @@ namespace AdjustSdk.Pcl
                 {EVENT_COUNT, activityState.EventCount},
                 {SESSION_COUNT, activityState.SessionCount},
                 {SUBSESSION_COUNT, activityState.SubSessionCount},
-                {SESSION_LENGTH, activityState.SessionLenght},
+                {SESSION_LENGTH, activityState.SessionLength},
                 {TIME_SPENT, activityState.TimeSpent},
                 {LAST_ACTIVITY, activityState.LastActivity?.Ticks ?? DateTime.MinValue.Ticks},
                 {LAST_INTERVAL, activityState.LastInterval},
@@ -129,7 +129,7 @@ namespace AdjustSdk.Pcl
                 EventCount = activityStateObjectMap.ContainsKey(EVENT_COUNT) ? (int) activityStateObjectMap[EVENT_COUNT] : 0,
                 SessionCount = activityStateObjectMap.ContainsKey(SESSION_COUNT) ? (int) activityStateObjectMap[SESSION_COUNT] : 0,
                 SubSessionCount = activityStateObjectMap.ContainsKey(SUBSESSION_COUNT) ? (int) activityStateObjectMap[SUBSESSION_COUNT] : 0,
-                SessionLenght = activityStateObjectMap.ContainsKey(SESSION_LENGTH) ? activityStateObjectMap[SESSION_LENGTH] as TimeSpan? : TimeSpan.Zero,
+                SessionLength = activityStateObjectMap.ContainsKey(SESSION_LENGTH) ? activityStateObjectMap[SESSION_LENGTH] as TimeSpan? : TimeSpan.Zero,
                 TimeSpent = activityStateObjectMap.ContainsKey(TIME_SPENT) ? activityStateObjectMap[TIME_SPENT] as TimeSpan? : TimeSpan.Zero,
                 LastInterval = activityStateObjectMap.ContainsKey(LAST_INTERVAL) ? activityStateObjectMap[LAST_INTERVAL] as TimeSpan? : null,
                 Uuid = activityStateObjectMap.ContainsKey(UUID) ? (Guid) activityStateObjectMap[UUID] : default(Guid),
@@ -164,7 +164,7 @@ namespace AdjustSdk.Pcl
             activity.EventCount = reader.ReadInt32();
             activity.SessionCount = reader.ReadInt32();
             activity.SubSessionCount = reader.ReadInt32();
-            activity.SessionLenght = DeserializeTimeSpanFromLong(reader.ReadInt64());
+            activity.SessionLength = DeserializeTimeSpanFromLong(reader.ReadInt64());
             activity.TimeSpent = DeserializeTimeSpanFromLong(reader.ReadInt64());
             activity.LastActivity = DeserializeDateTimeFromLong(reader.ReadInt64());
             DeserializeDateTimeFromLong(reader.ReadInt64()); // created at
