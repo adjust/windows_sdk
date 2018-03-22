@@ -33,7 +33,7 @@ namespace AdjustSdk.Pcl
         private static readonly string EVENT_COUNT = "EventCount";
         private static readonly string SESSION_COUNT = "SessionCount";
         private static readonly string SUBSESSION_COUNT = "SubSessionCount";
-        private static readonly string SESSION_LENGTH = "SessionLength";
+        private static readonly string SESSION_LENGTH = "SessionLenght";
         private static readonly string TIME_SPENT = "TimeSpent";
         private static readonly string LAST_ACTIVITY = "LastActivity";
         private static readonly string LAST_INTERVAL = "LastInterval";
