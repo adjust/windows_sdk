@@ -47,7 +47,7 @@ namespace AdjustSdk.Pcl
 
         public void GetAttribution()
         {
-            _actionQueue.Enqueue(() => GetAttributionI(TimeSpan.Zero));
+            _actionQueue.Enqueue(() => GetAttributionI(askIn: TimeSpan.Zero, isSdkAskingForIt: true));
         }
 
         public void PauseSending()
@@ -60,10 +60,17 @@ namespace AdjustSdk.Pcl
             _paused = false;
         }
 
-        private void GetAttributionI(TimeSpan askIn)
+        private void GetAttributionI(TimeSpan askIn, bool isSdkAskingForIt)
         {
             // don't reset if new time is shorter than the last one
             if (_timer.FireIn > askIn) { return; }
+
+            // value has to be removed first, otherwise exception is thrown by trying to add existing value
+            _attributionPackage.Parameters.Remove(INITIATED_BY);
+            if (isSdkAskingForIt)
+                _attributionPackage.Parameters.Add(INITIATED_BY, "sdk");
+            else
+                _attributionPackage.Parameters.Add(INITIATED_BY, "backend");
 
             if (askIn.Milliseconds > 0)
             {
@@ -85,7 +92,7 @@ namespace AdjustSdk.Pcl
             {
                 _activityHandler.SetAskingAttribution(true);
 
-                GetAttributionI(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
+                GetAttributionI(askIn: TimeSpan.FromMilliseconds(askInMilliseconds.Value), isSdkAskingForIt: false);
                 return;
             }
 
