@@ -13,7 +13,7 @@ namespace AdjustSdk.Pcl
         private TimerOnce _timer;
         private ActivityPackage _attributionPackage;
         private bool _paused;
-        private readonly string _urlQuery;
+        private string _urlQuery;
         private string _basePath;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
@@ -71,6 +71,9 @@ namespace AdjustSdk.Pcl
                 _attributionPackage.Parameters.Add(INITIATED_BY, "sdk");
             else
                 _attributionPackage.Parameters.Add(INITIATED_BY, "backend");
+
+            // recreate GET paramteres to include "initiated_by" parameter
+            _urlQuery = BuildUrlQuery();
 
             if (askIn.Milliseconds > 0)
             {
@@ -190,9 +193,7 @@ namespace AdjustSdk.Pcl
                 queryList.Add(queryParameter);
             }
 
-            var query = string.Join("&", queryList);
-
-            return query;
+            return string.Join("&", queryList);
         }
 
         public void Teardown()
