@@ -18,6 +18,7 @@
         internal const string CLEAR_SIGNATURE = "clear_signature";
         internal const string FIELDS = "fields";
         internal const string AUTHORIZATION_PARAM = "Authorization";
+        internal const string INITIATED_BY = "initiated_by";
 
         internal const string SESSION = "session";
         internal const string EVENT = "event";

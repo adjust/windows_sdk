@@ -6,14 +6,15 @@ namespace AdjustSdk.Pcl
 {
     public class AttributionHandler : IAttributionHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.AttributionHandler");
 
         private IActivityHandler _activityHandler;
-        private readonly TimerOnce _timer;
+        private TimerOnce _timer;
         private ActivityPackage _attributionPackage;
         private bool _paused;
-        private readonly string _urlQuery;
+        private string _urlQuery;
+        private string _basePath;
 
         public AttributionHandler(IActivityHandler activityHandler, ActivityPackage attributionPackage, bool startPaused)
         {
@@ -31,6 +32,7 @@ namespace AdjustSdk.Pcl
             _activityHandler = activityHandler;
             _attributionPackage = attributionPackage;
             _paused = startPaused;
+            _basePath = activityHandler.BasePath;
         }
 
         public void CheckSessionResponse(SessionResponseData responseData)
@@ -45,7 +47,7 @@ namespace AdjustSdk.Pcl
 
         public void GetAttribution()
         {
-            _actionQueue.Enqueue(() => GetAttributionI(TimeSpan.Zero));
+            _actionQueue.Enqueue(() => GetAttributionI(askIn: TimeSpan.Zero, isInitializedBySdk: true));
         }
 
         public void PauseSending()
@@ -58,10 +60,18 @@ namespace AdjustSdk.Pcl
             _paused = false;
         }
 
-        private void GetAttributionI(TimeSpan askIn)
+        private void GetAttributionI(TimeSpan askIn, bool isInitializedBySdk)
         {
             // don't reset if new time is shorter than the last one
             if (_timer.FireIn > askIn) { return; }
+
+            if (isInitializedBySdk)
+                _attributionPackage.Parameters.AddSafe(INITIATED_BY, "sdk");
+            else
+                _attributionPackage.Parameters.AddSafe(INITIATED_BY, "backend");
+
+            // recreate GET paramteres to include "initiated_by" parameter
+            _urlQuery = BuildUrlQuery();
 
             if (askIn.Milliseconds > 0)
             {
@@ -83,7 +93,7 @@ namespace AdjustSdk.Pcl
             {
                 _activityHandler.SetAskingAttribution(true);
 
-                GetAttributionI(TimeSpan.FromMilliseconds(askInMilliseconds.Value));
+                GetAttributionI(askIn: TimeSpan.FromMilliseconds(askInMilliseconds.Value), isInitializedBySdk: false);
                 return;
             }
 
@@ -147,7 +157,7 @@ namespace AdjustSdk.Pcl
             try
             {
                 ResponseData responseData;
-                using (var httpResponseMessage = Util.SendGetRequest(_attributionPackage, _urlQuery))
+                using (var httpResponseMessage = Util.SendGetRequest(_attributionPackage, _basePath, _urlQuery))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, _attributionPackage);
                 }
@@ -181,9 +191,19 @@ namespace AdjustSdk.Pcl
                 queryList.Add(queryParameter);
             }
 
-            var query = string.Join("&", queryList);
+            return string.Join("&", queryList);
+        }
 
-            return query;
+        public void Teardown()
+        {
+            _timer?.Teardown();
+            _actionQueue?.Teardown();
+
+            _actionQueue = null;
+            _activityHandler = null;
+            _logger = null;
+            _attributionPackage = null;
+            _timer = null;
         }
     }
 }

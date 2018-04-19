@@ -19,10 +19,11 @@ namespace AdjustSdk.Pcl
 
         private TimeSpan _backgroundTimerInterval;
 
-        private readonly ILogger _logger = AdjustFactory.Logger;
-        private readonly ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
-        private readonly InternalState _state = new InternalState();
+        private ILogger _logger = AdjustFactory.Logger;
+        private ActionQueue _actionQueue = new ActionQueue("adjust.ActivityHandler");
+        private InternalState _state = new InternalState();
 
+        private string _basePath;
         private IDeviceUtil _deviceUtil;
         private AdjustConfig _config;
         private DeviceInfo _deviceInfo;
@@ -37,6 +38,16 @@ namespace AdjustSdk.Pcl
         private TimerOnce _delayStartTimer;
         private ISdkClickHandler _sdkClickHandler;
         private SessionParameters _sessionParameters;
+
+        private object lockObject = new object();
+
+        public string BasePath
+        {
+            get
+            {
+                return _basePath;
+            }
+        }
 
         public class InternalState
         {
@@ -415,6 +426,67 @@ namespace AdjustSdk.Pcl
             _actionQueue.Enqueue(SendFirstPackagesI);
         }
 
+        public void Teardown()
+        {
+            _backgroundTimer?.Teardown();
+            _foregroundTimer?.Teardown();
+            _delayStartTimer?.Teardown();
+
+            _actionQueue?.Teardown();
+
+            _packageHandler?.Teardown();
+            _attributionHandler?.Teardown();
+            _sdkClickHandler?.Teardown();
+            _sessionParameters?.CallbackParameters?.Clear();
+            _sessionParameters?.PartnerParameters?.Clear();
+
+            TeardownActivityStateS();
+            TeardownAttributionS();
+            TeardownAllSessionParametersS();
+
+            _packageHandler = null;
+            _logger = null;
+            _backgroundTimer = null;
+            _foregroundTimer = null;
+            _delayStartTimer = null;
+
+            _actionQueue = null;
+            _state = null;
+            _deviceInfo = null;
+            _config = null;
+            _attributionHandler = null;
+            _sdkClickHandler = null;
+
+            Util.Teardown();
+        }
+
+        private void TeardownActivityStateS()
+        {
+            lock(lockObject)
+            {
+                if (_activityState == null) { return; }
+                _activityState = null;
+            }
+        }
+
+        private void TeardownAttributionS()
+        {
+            lock (lockObject)
+            {
+                if (_attribution == null) { return; }
+                _attribution = null;
+            }
+        }
+
+        private void TeardownAllSessionParametersS()
+        {
+            lock (lockObject)
+            {
+                if (_sessionParameters == null) { return; }
+                _sessionParameters = null;
+            }
+        }
+
         #region private
         private void WriteActivityState()
         {
@@ -508,9 +580,11 @@ namespace AdjustSdk.Pcl
                 _delayStartTimer = new TimerOnce(_actionQueue, SendFirstPackagesI);
             }
 
+            _basePath = _config.BasePath;
+
             Util.UserAgent = _config.UserAgent;
 
-            Util.ConfigureHttpClient(_deviceInfo.ClientSdk);
+            Util.RecreateHttpClient(_deviceInfo.ClientSdk);
 
             _packageHandler = AdjustFactory.GetPackageHandler(this, _deviceUtil, IsPausedI(sdkClickHandlerOnly: false));
 
@@ -612,7 +686,7 @@ namespace AdjustSdk.Pcl
             if (lastInterval > _subsessionInterval)
             {
                 _activityState.SubSessionCount++;
-                _activityState.SessionLenght += lastInterval;
+                _activityState.SessionLength += lastInterval;
                 _activityState.LastActivity = now;
 
                 WriteActivityStateI();
@@ -1282,7 +1356,7 @@ namespace AdjustSdk.Pcl
             }
             else
             {
-                _activityState.SessionLenght += lastInterval;
+                _activityState.SessionLength += lastInterval;
                 _activityState.TimeSpent += lastInterval;
             }
 

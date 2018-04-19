@@ -5,6 +5,8 @@ namespace AdjustSdk.Pcl
 {
     public interface IActivityHandler
     {
+        string BasePath { get; }
+
         void Init(AdjustConfig adjustConfig, IDeviceUtil deviceUtil);
 
         void FinishedTrackingActivity(ResponseData responseData);
@@ -55,5 +57,7 @@ namespace AdjustSdk.Pcl
         string GetAdid();
 
         AdjustAttribution GetAttribution();
+
+        void Teardown();
     }
 }

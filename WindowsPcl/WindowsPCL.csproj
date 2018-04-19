@@ -53,6 +53,7 @@
     <Compile Include="BackoffStrategy.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="FileSystem\IFile.cs" />
+    <Compile Include="IntegrationTesting\AdjustTestOptions.cs" />
     <Compile Include="SdkClickResponseData.cs" />
     <Compile Include="DeviceInfo.cs" />
     <Compile Include="EventResponseData.cs" />
