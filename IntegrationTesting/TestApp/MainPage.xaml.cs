@@ -36,7 +36,7 @@ namespace TestApp
         
         private void StartTestSession()
         {
-            _testLibrary.StartTestSession(clientSdk: "wuap4.12.0");
+            _testLibrary.StartTestSession(clientSdk: "wuap4.12.1");
         }
 
         private string GetLocalIp()
