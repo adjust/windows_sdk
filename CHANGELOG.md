@@ -1,3 +1,10 @@
+### Version 4.12.1 (19th April 2018)
+#### Added
+- Added integration tests support to the repository.
+- Added `initiated_by` flag indicating whether SDK or backend initiated attribution request.
+
+---
+
 ### Version 4.12.0 (13th December 2017)
 #### Added
 - Added new `click label` parameter in attribution.
