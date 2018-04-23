@@ -152,6 +152,12 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
+            if(_activityHandler.IsGdprForgotten())
+            {
+                _logger.Debug("Attribution request won't be fired for forgotten user");
+                return;
+            }
+
             _logger.Verbose("{0}", _attributionPackage.GetExtendedString());
 
             try
@@ -161,6 +167,14 @@ namespace AdjustSdk.Pcl
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, _attributionPackage);
                 }
+
+                // check if any package response contains information that user has opted out
+                // if yes, disable SDK and flush any potentially stored packages that happened afterwards
+                if(responseData.TrackingState == TrackingState.OPTED_OUT)
+                {
+                    _activityHandler.SetTrackingStateOptedOut();
+                }
+
                 if (responseData is AttributionResponseData)
                 {
                     CheckAttributionResponseI(responseData as AttributionResponseData);

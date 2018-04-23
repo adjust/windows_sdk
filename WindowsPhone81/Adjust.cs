@@ -277,6 +277,14 @@ namespace AdjustSdk
             return AdjustInstance.GetAttribution();
         }
 
+        /// <summary>
+        /// Give user the right to be forgotten in accordance with GDPR law.
+        /// </summary>
+        public static void GdprForgetMe()
+        {
+            AdjustInstance.GdprForgetMe(DeviceUtil);
+        }
+
 #if DEBUG
         public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
         {

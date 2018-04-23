@@ -97,13 +97,24 @@ namespace AdjustSdk.Pcl
             _actionQueue.Enqueue(() => UpdatePackagesI(sessionParametersCopy));
         }
 
+        public void Flush()
+        {
+            _actionQueue.Enqueue(FlushI);
+        }
+
+        private void FlushI()
+        {
+            _packageQueue.Clear();
+            WritePackageQueueI();
+        }
+
         private void InitI(IActivityHandler activityHandler, IDeviceUtil deviceUtil, bool startPaused)
         {
             ReadPackageQueueI();
 
             _internalWaitHandle = new ManualResetEvent(true); // door starts open (signaled)
 
-            _requestHandler = AdjustFactory.GetRequestHandler(SendNextPackage, CloseFirstPackage);
+            _requestHandler = AdjustFactory.GetRequestHandler(_activityHandler, SendNextPackage, CloseFirstPackage);
         }
 
         private void AddI(ActivityPackage activityPackage)

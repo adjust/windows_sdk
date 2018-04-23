@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Windows.Networking.Connectivity;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -19,14 +19,16 @@ namespace TestApp
 
             //var baseUrl = "http://192.168.8.223:8080";
             var baseUrl = "http://localhost:8080";
-            
+            var gdprUrl = "http://localhost:8080";
+
             var localIp = GetLocalIp();
             var commandListener = new CommandListener();
             AdjustFactory.BaseUrl = baseUrl;
-            _testLibrary = new TestLibrary.TestLibrary(baseUrl, commandListener, localIp);
+            AdjustFactory.GdprUrl = gdprUrl;
+            _testLibrary = new TestLibrary.TestLibrary(baseUrl, gdprUrl, commandListener, localIp);
 
-            //_testLibrary.AddTest("current/event/Test_Event_Params");
-            //_testLibrary.AddTestDirectory("current/sdkInfo");
+            //_testLibrary.AddTest("current/gdpr/Test_GdprForgetMe_after_install");
+            _testLibrary.AddTestDirectory("current/gdpr");
 
             _testLibrary.ExitAppEvent += (sender, args) => { Exit(); };
             commandListener.SetTestLibrary(_testLibrary);

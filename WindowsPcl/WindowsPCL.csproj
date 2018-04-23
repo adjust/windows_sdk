@@ -78,6 +78,7 @@
     <Compile Include="IDeviceUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TimerOnce.cs" />
+    <Compile Include="TrackingState.cs" />
     <Compile Include="UnknowResponseData.cs" />
     <Compile Include="UtilPcl.cs" />
   </ItemGroup>

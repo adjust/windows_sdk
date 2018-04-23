@@ -45,6 +45,24 @@ namespace AdjustSdk.Pcl
             }
         }
 
+        private static string _gdprUrl = null;
+        public static string GdprUrl
+        {
+            get
+            {
+                if (_gdprUrl == null)
+                {
+                    return Constants.GDPR_URL;
+                }
+                return _gdprUrl;
+            }
+
+            set
+            {
+                _gdprUrl = value;
+            }
+        }
+
         public static ILogger Logger
         {
             get
@@ -89,12 +107,12 @@ namespace AdjustSdk.Pcl
             return _iAttributionHandler;
         }
 
-        public static IRequestHandler GetRequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
+        public static IRequestHandler GetRequestHandler(IActivityHandler activityHandler, Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
             if (_iRequestHandler == null)
-                return new RequestHandler(sendNextCallback, retryCallback);
+                return new RequestHandler(activityHandler, sendNextCallback, retryCallback);
 
-            _iRequestHandler.Init(sendNextCallback, retryCallback);
+            _iRequestHandler.Init(activityHandler, sendNextCallback, retryCallback);
             return _iRequestHandler;
         }
 

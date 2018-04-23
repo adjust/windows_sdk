@@ -267,6 +267,19 @@ namespace AdjustSdk.Pcl
             return _activityHandler.GetAdid();
         }
 
+        public void GdprForgetMe(IDeviceUtil deviceUtil)
+        {
+            Util.MarkGdprForgotten(deviceUtil);
+
+            if (CheckActivityHandler("GDPR forget me"))
+            {
+                if (_activityHandler.IsEnabled())
+                {
+                    _activityHandler.SetGdprForgetMe();
+                }
+            }
+        }
+
 #if DEBUG
         public void SetTestOptions(IntegrationTesting.AdjustTestOptions testOptions)
         {

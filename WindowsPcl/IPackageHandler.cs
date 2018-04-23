@@ -18,6 +18,8 @@
 
         void UpdatePackages(SessionParameters sessionParameters);
 
+        void Flush();
+
         void Teardown();
     }
 }

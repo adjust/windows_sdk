@@ -21,6 +21,7 @@ namespace AdjustSdk.Pcl
         // persistent data
         internal Guid Uuid { get; set; }
         internal bool Enabled { get; set; }
+        internal bool IsGdprForgotten { get; set; }
         internal bool AskingAttribution { get; set; }
         internal bool UpdatePackages { get; set; }
         internal string PushToken { get; set; }
@@ -39,6 +40,7 @@ namespace AdjustSdk.Pcl
         private static readonly string LAST_INTERVAL = "LastInterval";
         private static readonly string UUID = "Uuid";
         private static readonly string ENABLED = "Enabled";
+        private static readonly string IS_GDPR_FORGOTTEN = "IsGdprForgotten";
         private static readonly string ASKING_ATTRIBUTION = "AskingAttribution";
         private static readonly string UPDATE_PACKAGES = "UpdatePackages";
         private static readonly string PUSH_TOKEN = "PushToken";
@@ -50,6 +52,7 @@ namespace AdjustSdk.Pcl
             SubSessionCount = -1; // -1 means unknown
             Uuid = Guid.NewGuid();
             Enabled = true;
+            IsGdprForgotten = false;
             AskingAttribution = false;
             UpdatePackages = false;
             Adid = null;
@@ -86,14 +89,15 @@ namespace AdjustSdk.Pcl
 
         public override string ToString()
         {
-            return Util.F("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0} adid:{6}",
+            return Util.F("ec:{0} sc:{1} ssc:{2} sl:{3:.0} ts:{4:.0} la:{5:.0} adid:{6} isGdprForgotten:{7}",
                 EventCount,
                 SessionCount,
                 SubSessionCount,
                 SessionLength.SecondsFormat(),
                 TimeSpent.SecondsFormat(),
                 LastActivity.SecondsFormat(),
-                Adid
+                Adid,
+                IsGdprForgotten
             );
         }
 
@@ -114,6 +118,7 @@ namespace AdjustSdk.Pcl
                 {LAST_INTERVAL, activityState.LastInterval},
                 {UUID, activityState.Uuid},
                 {ENABLED, activityState.Enabled},
+                {IS_GDPR_FORGOTTEN, activityState.IsGdprForgotten},
                 {ASKING_ATTRIBUTION, activityState.AskingAttribution},
                 {UPDATE_PACKAGES, activityState.UpdatePackages},
                 {PUSH_TOKEN, activityState.PushToken},
@@ -134,6 +139,7 @@ namespace AdjustSdk.Pcl
                 LastInterval = activityStateObjectMap.ContainsKey(LAST_INTERVAL) ? activityStateObjectMap[LAST_INTERVAL] as TimeSpan? : null,
                 Uuid = activityStateObjectMap.ContainsKey(UUID) ? (Guid) activityStateObjectMap[UUID] : default(Guid),
                 Enabled = activityStateObjectMap.ContainsKey(ENABLED) ? (bool) activityStateObjectMap[ENABLED] : false,
+                IsGdprForgotten = activityStateObjectMap.ContainsKey(IS_GDPR_FORGOTTEN) ? (bool)activityStateObjectMap[IS_GDPR_FORGOTTEN] : false,
                 AskingAttribution = activityStateObjectMap.ContainsKey(ASKING_ATTRIBUTION) ? (bool) activityStateObjectMap[ASKING_ATTRIBUTION] : false,
                 UpdatePackages = activityStateObjectMap.ContainsKey(UPDATE_PACKAGES) ? (bool) activityStateObjectMap[UPDATE_PACKAGES] : false,
                 PushToken = activityStateObjectMap.ContainsKey(PUSH_TOKEN) ? activityStateObjectMap[PUSH_TOKEN] as string : null,

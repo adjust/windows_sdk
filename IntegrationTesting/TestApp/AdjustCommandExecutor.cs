@@ -16,6 +16,7 @@ namespace TestApp
 
         private TestLibrary.TestLibrary _testLibrary;
         internal string BasePath;
+        internal string GdprPath;
         internal Command Command;
 
         public void SetTestLibrary(TestLibrary.TestLibrary testLibrary)
@@ -25,7 +26,7 @@ namespace TestApp
 
         public void ExecuteCommand(Command command)
         {
-            this.Command = command;
+            Command = command;
             try
             {
                 Log.Debug(" \t>>> EXECUTING METHOD: {0}.{1} <<<", command.ClassName, command.MethodName);
@@ -51,6 +52,7 @@ namespace TestApp
                     case "resetSessionPartnerParameters": ResetSessionPartnerParameters(); break;
                     case "setPushToken": SetPushToken(); break;
                     case "openDeeplink": OpenDeeplink(); break;
+                    case "gdprForgetMe": GdprForgetMe(); break;
                     case "sendReferrer": { Log.Debug("NO REFFERER (sendReferrer) IN WIN SDK!"); /*sendReferrer();*/ break; }
                 }
             }
@@ -64,9 +66,11 @@ namespace TestApp
         {
             AdjustTestOptions testOptions = new AdjustTestOptions();
             testOptions.BaseUrl = AdjustFactory.BaseUrl;
+            testOptions.GdprUrl = AdjustFactory.GdprUrl;
             if (Command.ContainsParameter("basePath"))
             {
                 BasePath = Command.GetFirstParameterValue("basePath");
+                GdprPath = Command.GetFirstParameterValue("basePath");
             }
 
             if (Command.ContainsParameter("timerInterval"))
@@ -102,6 +106,7 @@ namespace TestApp
                     {
                         testOptions.Teardown = true;
                         testOptions.BasePath = BasePath;
+                        testOptions.GdprPath = GdprPath;
                     }
                     if (teardownOption == "deleteState")
                     {
@@ -120,6 +125,7 @@ namespace TestApp
                     {
                         testOptions.Teardown = true;
                         testOptions.BasePath = null;
+                        testOptions.GdprPath = null;
                     }
                     if (teardownOption == "test")
                     {
@@ -483,6 +489,11 @@ namespace TestApp
         private void SendFirstPackages()
         {
             Adjust.SendFirstPackages();
+        }
+
+        private void GdprForgetMe()
+        {
+            Adjust.GdprForgetMe();
         }
 
         private void AddSessionCallbackParameter()

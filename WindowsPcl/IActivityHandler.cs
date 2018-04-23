@@ -21,6 +21,10 @@ namespace AdjustSdk.Pcl
 
         bool IsEnabled();
 
+        bool IsGdprForgotten();
+
+        void SetTrackingStateOptedOut();
+
         void SetOfflineMode(bool offline);
 
         void OpenUrl(Uri uri, DateTime clickTime);
@@ -53,6 +57,8 @@ namespace AdjustSdk.Pcl
         void SendFirstPackages();
 
         void SetPushToken(string pushToken);
+
+        void SetGdprForgetMe();
 
         string GetAdid();
 

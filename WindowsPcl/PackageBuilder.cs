@@ -152,6 +152,13 @@ namespace AdjustSdk.Pcl
             return parameters;
         }
 
+        public ActivityPackage BuildGdprPackage()
+        {
+            var parameters = GetIdsParameters();
+
+            return new ActivityPackage(ActivityKind.GDPR, _deviceInfo.ClientSdk, parameters);
+        }
+
         private Dictionary<string, string> GetAttributableParameters(SessionParameters sessionParameters)
         {
             Dictionary<string, string> parameters = GetDefaultParameters();

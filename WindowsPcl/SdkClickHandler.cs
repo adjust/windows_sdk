@@ -19,6 +19,7 @@ namespace AdjustSdk.Pcl
         {
             Init(activityHandler, startPaused);
             _requestHandler = new RequestHandler(
+                activityHandler: activityHandler,
                 successCallbac: (responseData) => ProcessSdkClickResponseData(responseData),
                 failureCallback: (_, sdkClickPackage) => RetrySendingI(sdkClickPackage));
         }
@@ -65,6 +66,12 @@ namespace AdjustSdk.Pcl
             if (_isPaused) { return; }
             if (_packageQueue.Count == 0) { return; }
 
+            if(IsGdprForgotten())
+            {
+                _logger.Debug("sdk_click request won't be fired for forgotten user");
+                return;
+            }
+
             var sdkClickPackage = _packageQueue.Dequeue();
             int retries = sdkClickPackage.Retries;
 
@@ -94,6 +101,16 @@ namespace AdjustSdk.Pcl
             {
                 activityHandler.FinishedTrackingActivity(responseData);
             }
+        }
+
+        private bool IsGdprForgotten()
+        {
+            IActivityHandler activityHandler;
+            if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
+            {
+                return activityHandler.IsGdprForgotten();
+            }
+            return false;
         }
 
         private void RetrySendingI(ActivityPackage sdkClickPackage)

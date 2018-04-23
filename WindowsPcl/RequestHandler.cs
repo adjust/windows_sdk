@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -10,17 +9,25 @@ namespace AdjustSdk.Pcl
     public class RequestHandler : IRequestHandler
     {
         private ILogger _logger = AdjustFactory.Logger;
+        private WeakReference<IActivityHandler> _activityHandlerWeakReference;
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;
         
-        public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
+        public RequestHandler(
+            IActivityHandler activityHandler, 
+            Action<ResponseData> successCallbac, 
+            Action<ResponseData, ActivityPackage> failureCallback)
         {
-            Init(successCallbac, failureCallback);
+            Init(activityHandler, successCallbac, failureCallback);
         }
 
-        public void Init(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
+        public void Init(
+            IActivityHandler activityHandler,
+            Action<ResponseData> successCallbac, Action<ResponseData,
+            ActivityPackage> failureCallback)
         {
+            _activityHandlerWeakReference = new WeakReference<IActivityHandler>(activityHandler);
             _successCallback = successCallbac;
             _failureCallback = failureCallback;
         }
@@ -52,6 +59,17 @@ namespace AdjustSdk.Pcl
                 using (var httpResponseMessage = Util.SendPostRequest(activityPackage, basePath, queueSize))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
+
+                    if(responseData.TrackingState.HasValue && responseData.TrackingState == TrackingState.OPTED_OUT)
+                    {
+                        IActivityHandler activityHandler;
+                        if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
+                        {
+                            // check if any package response contains information that user has opted out
+                            // if yes, disable SDK and flush any potentially stored packages that happened afterwards
+                            activityHandler.SetTrackingStateOptedOut();
+                        }
+                    }
                 }
             }
             catch (HttpRequestException hre)
@@ -140,6 +158,8 @@ namespace AdjustSdk.Pcl
             _successCallback = null;
             _failureCallback = null;
             _logger = null;
+            _activityHandlerWeakReference.SetTarget(null);
+            _activityHandlerWeakReference = null;
         }
     }
 }

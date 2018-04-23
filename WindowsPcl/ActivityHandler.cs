@@ -24,6 +24,7 @@ namespace AdjustSdk.Pcl
         private InternalState _state = new InternalState();
 
         private string _basePath;
+        private string _gdprPath;
         private IDeviceUtil _deviceUtil;
         private AdjustConfig _config;
         private DeviceInfo _deviceInfo;
@@ -46,6 +47,14 @@ namespace AdjustSdk.Pcl
             get
             {
                 return _basePath;
+            }
+        }
+
+        public string GdprPath
+        {
+            get
+            {
+                return _gdprPath;
             }
         }
 
@@ -198,6 +207,16 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
+            // if user is forgotten, forbid re-enabling
+            if(enabled)
+            {
+                if(IsGdprForgotten())
+                {
+                    _logger.Debug("Re-enabling SDK for forgotten user not allowed!");
+                    return;
+                }
+            }
+
             // save new enabled state in internal state
             _state.IsEnabled = enabled;
 
@@ -210,6 +229,11 @@ namespace AdjustSdk.Pcl
                 return;
             }
 
+            // save new enabled state in activity state
+            _activityState.Enabled = enabled;
+            WriteActivityStateI();
+
+            // check if upon enabling install has been tracked
             if (enabled)
             {
                 if (!_deviceUtil.IsInstallTracked())
@@ -225,10 +249,12 @@ namespace AdjustSdk.Pcl
                 {
                     SetPushToken(pushToken);
                 }
-            }
 
-            _activityState.Enabled = enabled;
-            WriteActivityStateI();
+                if(Util.IsMarkedGdprForgotten(_deviceUtil))
+                {
+                    SetGdprForgetMe();
+                }
+            }
 
             UpdateStatusI(pausingState: !enabled,
                 pausingMessage: "Pausing handlers due to SDK being disabled",
@@ -294,6 +320,12 @@ namespace AdjustSdk.Pcl
         private bool IsEnabledI()
         {
             return _activityState?.Enabled ?? _state.IsEnabled;
+        }
+
+        //TODO: check if needed - private bool IsGdprForgottenI()
+        public bool IsGdprForgotten()
+        {
+            return _activityState?.IsGdprForgotten ?? false;
         }
 
         public void SetOfflineMode(bool offline)
@@ -383,6 +415,16 @@ namespace AdjustSdk.Pcl
                     SetPushTokenI(pushToken);
                 }
             });
+        }
+
+        public void SetGdprForgetMe()
+        {
+            _actionQueue.Enqueue(SetGdprForgetMeI);
+        }
+
+        public void SetTrackingStateOptedOut()
+        {
+            _actionQueue.Enqueue(SetTrackingStateOptedOutI);
         }
 
         public void LaunchEventResponseTasks(EventResponseData eventResponseData)
@@ -560,6 +602,11 @@ namespace AdjustSdk.Pcl
                 _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 SetPushToken(pushToken);
             }
+            
+            if(Util.IsMarkedGdprForgotten(_deviceUtil))
+            {
+                SetGdprForgetMe();
+            }
 
             _foregroundTimer = new TimerCycle(_actionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
 
@@ -581,6 +628,7 @@ namespace AdjustSdk.Pcl
             }
 
             _basePath = _config.BasePath;
+            _gdprPath = _config.GdprPath;
 
             Util.UserAgent = _config.UserAgent;
 
@@ -647,10 +695,15 @@ namespace AdjustSdk.Pcl
                 _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 _activityState.PushToken = pushToken;
 
+                // track the first session package only if it's enabled
                 if (_state.IsEnabled)
                 {
-                    _activityState.SessionCount = 1; // first session
-                    TransferSessionPackageI();
+                    // if user chose to be forgotten before install has ever tracked, don't track it
+                    if (!Util.IsMarkedGdprForgotten(_deviceUtil))
+                    {
+                        _activityState.SessionCount = 1; // first session
+                        TransferSessionPackageI();
+                    }
                 }
 
                 _activityState.ResetSessionAttributes(now);
@@ -1146,6 +1199,48 @@ namespace AdjustSdk.Pcl
             {
                 _packageHandler.SendFirstPackage();
             }
+        }
+
+        private void SetGdprForgetMeI()
+        {
+            if(_activityState.IsGdprForgotten)
+            {
+                Util.ClearGdprForgotten(_deviceUtil);
+                return;
+            }
+
+            _activityState.IsGdprForgotten = true;
+            WriteActivityStateI();
+
+            // Send GDPR package
+            var now = DateTime.Now;
+            var gdprBuilder = new PackageBuilder(_config, _deviceInfo, _activityState, now);
+            var gdprPackage = gdprBuilder.BuildGdprPackage();
+
+            _packageHandler.AddPackage(gdprPackage);
+
+            Util.ClearGdprForgotten(_deviceUtil);
+
+            if (_config.EventBufferingEnabled)
+            {
+                _logger.Info("Buffered gdpr {0}", gdprPackage.Suffix);
+            }
+            else
+            {
+                _packageHandler.SendFirstPackage();
+            }
+        }
+
+        private void SetTrackingStateOptedOutI()
+        {
+            // In case of web opt out, once response from backend arrives isGdprForgotten field in 
+            // this moment defaults to FALSE.
+            // Set it to TRUE regardless of state, since at this moment it should be TRUE.
+            _activityState.IsGdprForgotten = true;
+            WriteActivityStateI();
+
+            SetEnabled(false);
+            _packageHandler.Flush();
         }
 
         private ActivityPackage GetDeeplinkClickPackageI(Dictionary<string, string> extraParameters,

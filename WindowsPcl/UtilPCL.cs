@@ -289,11 +289,35 @@ namespace AdjustSdk.Pcl
             return $"{timeSpan.TotalSeconds:0.0}";
         }
 
+        public static void MarkGdprForgotten(IDeviceUtil deviceUtil)
+        {
+            deviceUtil.PersistSimpleValue(GDPR_USER_FORGOTTEN, "true");
+        }
+
+        public static bool IsMarkedGdprForgotten(IDeviceUtil deviceUtil)
+        {
+            string isGdprForgottenStr;
+            if (deviceUtil.TryTakeSimpleValue(GDPR_USER_FORGOTTEN, out isGdprForgottenStr))
+            {
+                return !string.IsNullOrEmpty(isGdprForgottenStr) && isGdprForgottenStr == "true";
+            }
+            return false;
+        }
+
+        public static void ClearGdprForgotten(IDeviceUtil deviceUtil)
+        {
+            deviceUtil.ClearSimpleValue(GDPR_USER_FORGOTTEN);
+        }
+
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, string basePath, int queueSize)
         {
+            string baseUrl = activityPackage.ActivityKind != ActivityKind.GDPR
+                ? AdjustFactory.BaseUrl
+                : AdjustFactory.GdprUrl;
+
             string url = basePath != null
-                ? AdjustFactory.BaseUrl + basePath + activityPackage.Path
-                : AdjustFactory.BaseUrl + activityPackage.Path;
+                ? baseUrl + basePath + activityPackage.Path
+                : baseUrl + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters[SENT_AT] = sNow;
@@ -491,6 +515,12 @@ namespace AdjustSdk.Pcl
             responseData.Message = GetDictionaryString(jsonResponse, "message");
             responseData.Timestamp = GetDictionaryString(jsonResponse, "timestamp");
             responseData.Adid = GetDictionaryString(jsonResponse, "adid");
+
+            string trackingState = GetDictionaryString(jsonResponse, "tracking_state");
+            if(!string.IsNullOrEmpty(trackingState) && trackingState.ToLower() == "opted_out")
+            {
+                responseData.TrackingState = TrackingState.OPTED_OUT;
+            }
 
             string message = responseData.Message;
             if (message == null)
