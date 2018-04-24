@@ -322,8 +322,12 @@ namespace AdjustSdk.Pcl
             return _activityState?.Enabled ?? _state.IsEnabled;
         }
 
-        //TODO: check if needed - private bool IsGdprForgottenI()
         public bool IsGdprForgotten()
+        {
+            return IsGdprForgottenI();
+        }
+
+        public bool IsGdprForgottenI()
         {
             return _activityState?.IsGdprForgotten ?? false;
         }
@@ -601,11 +605,11 @@ namespace AdjustSdk.Pcl
                 string pushToken;
                 _deviceUtil.TryTakeSimpleValue(ADJUST_PUSH_TOKEN, out pushToken);
                 SetPushToken(pushToken);
-            }
-            
-            if(Util.IsMarkedGdprForgotten(_deviceUtil))
-            {
-                SetGdprForgetMe();
+
+                if (Util.IsMarkedGdprForgotten(_deviceUtil))
+                {
+                    SetGdprForgetMe();
+                }
             }
 
             _foregroundTimer = new TimerCycle(_actionQueue, ForegroundTimerFiredI, timeInterval: foregroundTimerInterval, timeStart: foregroundTimerStart);
@@ -703,6 +707,10 @@ namespace AdjustSdk.Pcl
                     {
                         _activityState.SessionCount = 1; // first session
                         TransferSessionPackageI();
+                    }
+                    else
+                    {
+                        SetGdprForgetMe();
                     }
                 }
 
@@ -1203,7 +1211,10 @@ namespace AdjustSdk.Pcl
 
         private void SetGdprForgetMeI()
         {
-            if(_activityState.IsGdprForgotten)
+            if (!CheckActivityStateI(_activityState)) { return; }
+            if (!IsEnabledI()) { return; }
+
+            if (_activityState.IsGdprForgotten)
             {
                 Util.ClearGdprForgotten(_deviceUtil);
                 return;

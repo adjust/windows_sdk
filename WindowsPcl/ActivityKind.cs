@@ -12,7 +12,7 @@ namespace AdjustSdk
         Click,
         Attribution,
         Info,
-        GDPR
+        Gdpr
     }
 
     public static class ActivityKindUtil
@@ -30,7 +30,7 @@ namespace AdjustSdk
             if (activityKindString == INFO)
                 return ActivityKind.Info;
             if (activityKindString == GDPR)
-                return ActivityKind.GDPR;
+                return ActivityKind.Gdpr;
             return ActivityKind.Unknown;
         }
 
@@ -48,7 +48,7 @@ namespace AdjustSdk
                 case ActivityKind.Click: return SDK_CLICK_PATH;
                 case ActivityKind.Attribution: return ATTRIBUTION_PATH;
                 case ActivityKind.Info: return SDK_INFO_PATH;
-                case ActivityKind.GDPR: return GDPR_PATH;
+                case ActivityKind.Gdpr: return GDPR_PATH;
                 default: return null;
             }
         }

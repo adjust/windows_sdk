@@ -311,7 +311,7 @@ namespace AdjustSdk.Pcl
 
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, string basePath, int queueSize)
         {
-            string baseUrl = activityPackage.ActivityKind != ActivityKind.GDPR
+            string baseUrl = activityPackage.ActivityKind != ActivityKind.Gdpr
                 ? AdjustFactory.BaseUrl
                 : AdjustFactory.GdprUrl;
 
@@ -517,7 +517,7 @@ namespace AdjustSdk.Pcl
             responseData.Adid = GetDictionaryString(jsonResponse, "adid");
 
             string trackingState = GetDictionaryString(jsonResponse, "tracking_state");
-            if(!string.IsNullOrEmpty(trackingState) && trackingState.ToLower() == "opted_out")
+            if(!string.IsNullOrEmpty(trackingState) && trackingState == "opted_out")
             {
                 responseData.TrackingState = TrackingState.OPTED_OUT;
             }
