@@ -506,6 +506,13 @@ namespace AdjustSdk.Pcl
             responseData.StatusCode = statusCode;
             responseData.Success = false; // false by default, set to true later
 
+            // for scenario: too frequent request for GDPR forget user
+            if (statusCode == 429)
+            {
+                responseData.WillRetry = true;
+                return responseData;
+            }
+
             if (jsonResponse == null)
             {
                 responseData.WillRetry = true;
