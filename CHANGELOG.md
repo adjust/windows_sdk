@@ -1,3 +1,9 @@
+### Version 4.13.0 (27th April 2018)
+#### Added
+- Added `Adjust.GdprForgetMe()` method to enable possibility for user to be forgotten in accordance with GDPR law.
+
+---
+
 ### Version 4.12.1 (19th April 2018)
 #### Added
 - Added integration tests support to the repository.
