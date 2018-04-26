@@ -155,9 +155,12 @@ namespace AdjustSdk.Pcl
         {
             try
             {
-                _packageQueue.RemoveAt(0);
-                WritePackageQueueI();
-                _logger.Verbose("Package handler can send");
+                if (_packageQueue.Count > 0)
+                {
+                    _packageQueue.RemoveAt(0);
+                    WritePackageQueueI();
+                    _logger.Verbose("Package handler can send");
+                }
             }
             finally
             // preventing an exception not signaling the WaitHandle
