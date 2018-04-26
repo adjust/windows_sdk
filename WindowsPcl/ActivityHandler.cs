@@ -1555,8 +1555,9 @@ namespace AdjustSdk.Pcl
             if (sdkClickHandlerOnly)
             {
                 // sdk click handler is paused if either:
-                return _state.IsOffline ||  // it's offline
-                        !IsEnabledI();      // is disabled
+                return _state.IsOffline ||       // it's offline
+                        !IsEnabledI() ||         // is disabled
+                        _state.IsInBackground;   // or if app is in background
             }
             // other handlers are paused if either:
             return _state.IsOffline ||  // it's offline
