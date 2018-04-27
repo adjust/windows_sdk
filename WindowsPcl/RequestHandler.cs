@@ -59,17 +59,6 @@ namespace AdjustSdk.Pcl
                 using (var httpResponseMessage = Util.SendPostRequest(activityPackage, basePath, queueSize))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
-
-                    if(responseData.TrackingState.HasValue && responseData.TrackingState == TrackingState.OPTED_OUT)
-                    {
-                        IActivityHandler activityHandler;
-                        if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
-                        {
-                            // check if any package response contains information that user has opted out
-                            // if yes, disable SDK and flush any potentially stored packages that happened afterwards
-                            activityHandler.SetTrackingStateOptedOut();
-                        }
-                    }
                 }
             }
             catch (HttpRequestException hre)
@@ -117,6 +106,18 @@ namespace AdjustSdk.Pcl
             }
 
             var responseData = responseDataTask.Result;
+
+            if (responseData.TrackingState.HasValue && responseData.TrackingState == TrackingState.OPTED_OUT)
+            {
+                IActivityHandler activityHandler;
+                if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
+                {
+                    // check if any package response contains information that user has opted out
+                    // if yes, disable SDK and flush any potentially stored packages that happened afterwards
+                    activityHandler.SetTrackingStateOptedOut();
+                    return;
+                }
+            }
 
             if (!responseData.Success)
             {

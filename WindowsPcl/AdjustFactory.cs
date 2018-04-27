@@ -107,7 +107,8 @@ namespace AdjustSdk.Pcl
             return _iAttributionHandler;
         }
 
-        public static IRequestHandler GetRequestHandler(IActivityHandler activityHandler, Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
+        public static IRequestHandler GetRequestHandler(IActivityHandler activityHandler, 
+            Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
             if (_iRequestHandler == null)
                 return new RequestHandler(activityHandler, sendNextCallback, retryCallback);

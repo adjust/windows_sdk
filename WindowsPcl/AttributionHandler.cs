@@ -170,9 +170,10 @@ namespace AdjustSdk.Pcl
 
                 // check if any package response contains information that user has opted out
                 // if yes, disable SDK and flush any potentially stored packages that happened afterwards
-                if(responseData.TrackingState == TrackingState.OPTED_OUT)
+                if (responseData.TrackingState == TrackingState.OPTED_OUT)
                 {
                     _activityHandler.SetTrackingStateOptedOut();
+                    return;
                 }
 
                 if (responseData is AttributionResponseData)

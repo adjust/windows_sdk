@@ -761,6 +761,11 @@ namespace AdjustSdk.Pcl
 
         private void TrackNewSessionI(DateTime now)
         {
+            if (_activityState.IsGdprForgotten)
+            {
+                return;
+            }
+
             var lastInterval = now - _activityState.LastActivity.Value;
 
             _activityState.SessionCount++;
@@ -820,9 +825,11 @@ namespace AdjustSdk.Pcl
 
         private void TrackEventI(AdjustEvent adjustEvent)
         {
+            if (!CheckActivityStateI(_activityState)) { return; }
             if (!IsEnabledI()) { return; }
             if (!CheckEventI(adjustEvent)) { return; }
             if (!CheckPurchaseIdI(adjustEvent.PurchaseId)) { return; }
+            if (_activityState.IsGdprForgotten) { return; }
 
             var now = DateTime.Now;
 
@@ -1180,6 +1187,7 @@ namespace AdjustSdk.Pcl
         {
             if (!CheckActivityStateI(_activityState)) { return; }
             if (!IsEnabledI()) { return; }
+            if (_activityState.IsGdprForgotten) { return; }
 
             if (pushToken == null) { return; }
             if (pushToken == _activityState.PushToken) { return; }
