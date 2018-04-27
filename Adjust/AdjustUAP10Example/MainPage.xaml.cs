@@ -20,27 +20,27 @@ namespace AdjustUAP10Example
 
         private void btnSimpleEvent_Click(object sender, RoutedEventArgs e)
         {
-            var simpleEvent = new AdjustEvent("{yourSimpleEventToken}");
+            var simpleEvent = new AdjustEvent("g3mfiw");
             Adjust.TrackEvent(simpleEvent);
         }
 
         private void btnRevenueEvent_Click(object sender, RoutedEventArgs e)
         {
-            var revenueEvent = new AdjustEvent("{yourRevenueEventToken}");
+            var revenueEvent = new AdjustEvent("a4fd35");
             revenueEvent.SetRevenue(0.01, "EUR");
             Adjust.TrackEvent(revenueEvent);
         }
 
         private void btnCallbakEvent_Click(object sender, RoutedEventArgs e)
         {
-            var callbackEvent = new AdjustEvent("{yourCallbackEventToken}");
+            var callbackEvent = new AdjustEvent("34vgg9");
             callbackEvent.AddPartnerParameter("key", "value");
             Adjust.TrackEvent(callbackEvent);
         }
 
         private void btnPartnerEvent_Click(object sender, RoutedEventArgs e)
         {
-            var partnerEvent = new AdjustEvent("{yourPartnerEventToken}");
+            var partnerEvent = new AdjustEvent("w788qs");
             partnerEvent.AddPartnerParameter("foo", "bar");
             Adjust.TrackEvent(partnerEvent);
         }
