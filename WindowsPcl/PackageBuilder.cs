@@ -9,7 +9,7 @@ namespace AdjustSdk.Pcl
     {
         private readonly AdjustConfig _config;
         private readonly DeviceInfo _deviceInfo;
-        private readonly ActivityState _activityState;
+        private readonly ActivityStateCopy _activityStateCopy;
         private readonly DateTime _createdAt;
         private readonly SessionParameters _sessionParameters;
 
@@ -17,6 +17,32 @@ namespace AdjustSdk.Pcl
         public string Deeplink { get; set; }
         public AdjustAttribution Attribution { get; set; }
         public DateTime ClickTime { get; set;}
+
+        private class ActivityStateCopy
+        {
+            public TimeSpan? LastInterval { get; set; } = null;
+            public int EventCount { get; set; } = -1;
+            public Guid Uuid { get; set; } = Guid.Empty;
+            public int SessionCount { get; set; } = -1;
+            public int SubsessionCount { get; set; } = -1;
+            public TimeSpan? SessionLength { get; set; } = null;
+            public TimeSpan? TimeSpent { get; set; } = null;
+            public string PushToken { get; set; } = null;
+
+            public ActivityStateCopy(ActivityState activityState)
+            {
+                if (activityState == null) { return; }
+
+                LastInterval = activityState.LastInterval;
+                EventCount = activityState.EventCount;
+                Uuid = activityState.Uuid;
+                SessionCount = activityState.SessionCount;
+                SubsessionCount = activityState.SubSessionCount;
+                SessionLength = activityState.SessionLength;
+                TimeSpent = activityState.TimeSpent;
+                PushToken = activityState.PushToken;
+            }
+        }
 
         internal PackageBuilder(AdjustConfig adjustConfig, 
             DeviceInfo deviceInfo,
@@ -38,7 +64,7 @@ namespace AdjustSdk.Pcl
         {
             _config = adjustConfig;
             _deviceInfo = deviceInfo;
-            _activityState = activityState;
+            _activityStateCopy = new ActivityStateCopy(activityState);
             _createdAt = createdAt;
         }
 
@@ -53,7 +79,7 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetDefaultParameters();
 
-            AddInt(parameters, EVENT_COUNT, _activityState.EventCount);
+            AddInt(parameters, EVENT_COUNT, _activityStateCopy.EventCount);
             AddString(parameters, EVENT_TOKEN, adjustEvent.EventToken);
             AddDouble(parameters, REVENUE, adjustEvent.Revenue);
             AddString(parameters, CURRENCY, adjustEvent.Currency);
@@ -126,11 +152,18 @@ namespace AdjustSdk.Pcl
             return parameters;
         }
 
+        public ActivityPackage BuildGdprPackage()
+        {
+            var parameters = GetIdsParameters();
+
+            return new ActivityPackage(ActivityKind.Gdpr, _deviceInfo.ClientSdk, parameters);
+        }
+
         private Dictionary<string, string> GetAttributableParameters(SessionParameters sessionParameters)
         {
             Dictionary<string, string> parameters = GetDefaultParameters();
 
-            AddTimeSpan(parameters, "last_interval", _activityState.LastInterval);
+            AddTimeSpan(parameters, "last_interval", _activityStateCopy.LastInterval);
             AddString(parameters, "default_tracker", _config.DefaultTracker);
 
             if (sessionParameters != null)
@@ -219,16 +252,16 @@ namespace AdjustSdk.Pcl
         {
             InjectPushToken(parameters);
 
-            AddString(parameters, WIN_UUID, _activityState?.Uuid.ToString());
-            AddInt(parameters, "session_count", _activityState?.SessionCount);
-            AddInt(parameters, "subsession_count", _activityState?.SubSessionCount);
-            AddTimeSpan(parameters, "session_length", _activityState?.SessionLenght);
-            AddTimeSpan(parameters, "time_spent", _activityState?.TimeSpent);
+            AddString(parameters, WIN_UUID, _activityStateCopy.Uuid.ToString());
+            AddInt(parameters, "session_count", _activityStateCopy.SessionCount);
+            AddInt(parameters, "subsession_count", _activityStateCopy.SubsessionCount);
+            AddTimeSpan(parameters, "session_length", _activityStateCopy.SessionLength);
+            AddTimeSpan(parameters, "time_spent", _activityStateCopy.TimeSpent);
         }
         
         private void InjectPushToken(Dictionary<string, string> parameters)
         {
-            AddString(parameters, PUSH_TOKEN, _activityState?.PushToken);
+            AddString(parameters, PUSH_TOKEN, _activityStateCopy.PushToken);
         }
 
         #region AddParameter

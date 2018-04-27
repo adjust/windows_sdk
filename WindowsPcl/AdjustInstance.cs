@@ -11,6 +11,7 @@ namespace AdjustSdk.Pcl
         private List<Action<ActivityHandler>> _preLaunchActions;
         private bool? _startEnabled = null;
         private bool _startOffline = false;
+        private string _basePath;
 
         public bool ApplicationLaunched => _activityHandler != null;
 
@@ -23,6 +24,7 @@ namespace AdjustSdk.Pcl
             adjustConfig.PreLaunchActions = _preLaunchActions;
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
+            adjustConfig.BasePath = _basePath;
 
             AdjustConfig.String2Sha256Func = deviceUtil.HashStringUsingSha256;
             AdjustConfig.String2Sha512Func = deviceUtil.HashStringUsingSha512;
@@ -263,6 +265,78 @@ namespace AdjustSdk.Pcl
         {
             if (!CheckActivityHandler()) { return null; }
             return _activityHandler.GetAdid();
+        }
+
+        public void GdprForgetMe(IDeviceUtil deviceUtil)
+        {
+            Util.MarkGdprForgotten(deviceUtil);
+
+            if (CheckActivityHandler("GDPR forget me"))
+            {
+                if (_activityHandler.IsEnabled())
+                {
+                    _activityHandler.SetGdprForgetMe();
+                }
+            }
+        }
+
+#if DEBUG
+        public void SetTestOptions(IntegrationTesting.AdjustTestOptions testOptions)
+        {
+            if (testOptions.BasePath != null)
+            {
+                _basePath = testOptions.BasePath;
+            }
+
+            if (testOptions.BaseUrl != null)
+            {
+                AdjustFactory.BaseUrl = testOptions.BaseUrl;
+            }
+            
+            if (testOptions.TimerIntervalInMilliseconds.HasValue)
+            {
+                var intervalMillis = testOptions.TimerIntervalInMilliseconds.Value;
+                if (intervalMillis == -1)
+                    AdjustFactory.SetTimerInterval(TimeSpan.FromMinutes(1));
+                else
+                    AdjustFactory.SetTimerInterval(TimeSpan.FromMilliseconds(intervalMillis));
+            }
+
+            if (testOptions.TimerStartInMilliseconds.HasValue)
+            {
+                var timerStartMillis = testOptions.TimerStartInMilliseconds.Value;
+                if (timerStartMillis == -1)
+                    AdjustFactory.SetTimerStart(TimeSpan.FromMinutes(1));
+                else
+                    AdjustFactory.SetTimerStart(TimeSpan.FromMilliseconds(timerStartMillis));
+            }
+
+            if (testOptions.SessionIntervalInMilliseconds.HasValue)
+            {
+                var sessionIntervalMillis = testOptions.SessionIntervalInMilliseconds.Value;
+                if (sessionIntervalMillis == -1)
+                    AdjustFactory.SetSessionInterval(TimeSpan.FromMinutes(30));
+                else
+                    AdjustFactory.SetSessionInterval(TimeSpan.FromMilliseconds(sessionIntervalMillis));
+            }
+
+            if (testOptions.SubsessionIntervalInMilliseconds.HasValue)
+            {
+                var subSessionIntervalMillis = testOptions.SubsessionIntervalInMilliseconds.Value;
+                if (subSessionIntervalMillis == -1)
+                    AdjustFactory.SetSubsessionInterval(TimeSpan.FromSeconds(1));
+                else
+                    AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
+            }
+        }
+#endif
+
+        public void Teardown()
+        {
+            if (!CheckActivityHandler()) { return; }
+
+            _activityHandler.Teardown();
+            _activityHandler = null;
         }
     }
 }

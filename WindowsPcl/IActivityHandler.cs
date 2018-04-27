@@ -5,6 +5,8 @@ namespace AdjustSdk.Pcl
 {
     public interface IActivityHandler
     {
+        string BasePath { get; }
+
         void Init(AdjustConfig adjustConfig, IDeviceUtil deviceUtil);
 
         void FinishedTrackingActivity(ResponseData responseData);
@@ -18,6 +20,10 @@ namespace AdjustSdk.Pcl
         void SetEnabled(bool enabled);
 
         bool IsEnabled();
+
+        bool IsGdprForgotten();
+
+        void SetTrackingStateOptedOut();
 
         void SetOfflineMode(bool offline);
 
@@ -52,8 +58,12 @@ namespace AdjustSdk.Pcl
 
         void SetPushToken(string pushToken);
 
+        void SetGdprForgetMe();
+
         string GetAdid();
 
         AdjustAttribution GetAttribution();
+
+        void Teardown();
     }
 }

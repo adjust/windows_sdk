@@ -46,7 +46,7 @@ namespace AdjustWP81Example
             //var config = new AdjustConfig("{yourAppToken}", AdjustConfig.EnvironmentSandbox);
 
             // configure Adjust - with logging (Sandox env & Verbose log level)
-            string appToken = "{yourAppToken}";
+            string appToken = "2fm9gkqubvpc";
             string environment = AdjustConfig.EnvironmentSandbox;
             var config = new AdjustConfig(appToken, environment,
                 msg => Debug.WriteLine(msg), LogLevel.Verbose);

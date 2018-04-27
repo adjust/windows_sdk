@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -9,33 +8,41 @@ namespace AdjustSdk.Pcl
 {
     public class RequestHandler : IRequestHandler
     {
-        private readonly ILogger _logger = AdjustFactory.Logger;
+        private ILogger _logger = AdjustFactory.Logger;
+        private WeakReference<IActivityHandler> _activityHandlerWeakReference;
 
         private Action<ResponseData> _successCallback;
         private Action<ResponseData, ActivityPackage> _failureCallback;
         
-        public RequestHandler(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
+        public RequestHandler(
+            IActivityHandler activityHandler, 
+            Action<ResponseData> successCallbac, 
+            Action<ResponseData, ActivityPackage> failureCallback)
         {
-            Init(successCallbac, failureCallback);
+            Init(activityHandler, successCallbac, failureCallback);
         }
 
-        public void Init(Action<ResponseData> successCallbac, Action<ResponseData, ActivityPackage> failureCallback)
+        public void Init(
+            IActivityHandler activityHandler,
+            Action<ResponseData> successCallbac, Action<ResponseData,
+            ActivityPackage> failureCallback)
         {
+            _activityHandlerWeakReference = new WeakReference<IActivityHandler>(activityHandler);
             _successCallback = successCallbac;
             _failureCallback = failureCallback;
         }
 
-        public void SendPackage(ActivityPackage activityPackage, int queueSize)
+        public void SendPackage(ActivityPackage activityPackage, string basePath, int queueSize)
         {
-            Task.Run(() => SendI(activityPackage, queueSize))
+            Task.Run(() => SendI(activityPackage, basePath, queueSize))
                 // continuation used to prevent unhandled exceptions in SendI
                 .ContinueWith((responseData) => PackageSent(responseData, activityPackage),
                     TaskContinuationOptions.ExecuteSynchronously); // execute on the same thread of SendI
         }
 
-        public void SendPackageSync(ActivityPackage activityPackage, int queueSize)
+        public void SendPackageSync(ActivityPackage activityPackage, string basePath, int queueSize)
         {
-            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, queueSize));
+            var sendTask = new Task<ResponseData>(() => SendI(activityPackage, basePath, queueSize));
             // continuation used to prevent unhandled exceptions in SendI
             sendTask.ContinueWith((responseData) => {
                 PackageSent(responseData, activityPackage);
@@ -44,12 +51,12 @@ namespace AdjustSdk.Pcl
             sendTask.RunSynchronously();
         }
 
-        private ResponseData SendI(ActivityPackage activityPackage, int queueSize)
+        private ResponseData SendI(ActivityPackage activityPackage, string basePath, int queueSize)
         {
             ResponseData responseData;
             try
             {
-                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, queueSize))
+                using (var httpResponseMessage = Util.SendPostRequest(activityPackage, basePath, queueSize))
                 {
                     responseData = Util.ProcessResponse(httpResponseMessage, activityPackage);
                 }
@@ -100,6 +107,18 @@ namespace AdjustSdk.Pcl
 
             var responseData = responseDataTask.Result;
 
+            if (responseData.TrackingState.HasValue && responseData.TrackingState == TrackingState.OPTED_OUT)
+            {
+                IActivityHandler activityHandler;
+                if (_activityHandlerWeakReference.TryGetTarget(out activityHandler))
+                {
+                    // check if any package response contains information that user has opted out
+                    // if yes, disable SDK and flush any potentially stored packages that happened afterwards
+                    activityHandler.SetTrackingStateOptedOut();
+                    return;
+                }
+            }
+
             if (!responseData.Success)
             {
                 LogSendErrorI(responseData, activityPackage);
@@ -133,6 +152,15 @@ namespace AdjustSdk.Pcl
             }
 
             _logger.Error("{0}", errorMessagBuilder.ToString());
+        }
+
+        public void Teardown()
+        {
+            _successCallback = null;
+            _failureCallback = null;
+            _logger = null;
+            _activityHandlerWeakReference.SetTarget(null);
+            _activityHandlerWeakReference = null;
         }
     }
 }

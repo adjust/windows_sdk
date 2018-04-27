@@ -15,6 +15,8 @@ namespace AdjustSdk
         internal string AppSecret { get; private set; }
         internal string AppToken { get; }
         internal string Environment { get; }
+        internal string BasePath { get; set; }
+        internal string GdprPath { get; set; }
 
         public string SdkPrefix { get; set; }
         public bool EventBufferingEnabled { get; set; }

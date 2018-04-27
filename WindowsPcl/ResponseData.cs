@@ -6,6 +6,7 @@ namespace AdjustSdk.Pcl
     public abstract class ResponseData
     {
         internal ActivityKind ActivityKind { get; set; }
+        internal TrackingState? TrackingState { get; set; } = null;
         internal bool WillRetry { get; set; }
         internal Dictionary<string, string> JsonResponse { get; set; }
         internal string Message { get; set; }
@@ -46,7 +47,8 @@ namespace AdjustSdk.Pcl
 
         public override string ToString()
         {
-            return Util.F("message:{0} timestamp:{1} json:{2}", Message, Timestamp, JsonResponse);
+            return Util.F("message:{0} timestamp:{1} adid:{2} success:{3} willRetry:{4} attribution:{5} trackingState:{6} json:{7}",
+                Message, Timestamp, Adid, Success, WillRetry, Attribution, TrackingState, JsonResponse);
         }
     }
 }

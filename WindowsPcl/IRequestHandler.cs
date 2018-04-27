@@ -4,10 +4,15 @@ namespace AdjustSdk.Pcl
 {
     public interface IRequestHandler
     {
-        void Init(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback);
+        void Init(
+            IActivityHandler activityHandler, 
+            Action<ResponseData> successCallbac, Action<ResponseData,
+            ActivityPackage> failureCallback);
 
-        void SendPackage(ActivityPackage package, int queueSize);
+        void SendPackage(ActivityPackage package, string basePath, int queueSize);
 
-        void SendPackageSync(ActivityPackage activityPackage, int queueSize);
+        void SendPackageSync(ActivityPackage activityPackage, string basePath, int queueSize);
+
+        void Teardown();
     }
 }

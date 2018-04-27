@@ -12,6 +12,8 @@ using System.Xml.Linq;
 using Windows.ApplicationModel;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
+using Windows.Storage;
+using Windows.Storage.Search;
 using Windows.Storage.Streams;
 using Windows.System;
 using Windows.System.Profile;
@@ -27,9 +29,38 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly IDeviceUtil DeviceUtil = new UtilWS();
-        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
-        private static bool IsApplicationActive = false;
+        private static bool _isApplicationActive = false;
+
+        private static AdjustInstance _adjustInstance;
+        private static AdjustInstance AdjustInstance
+        {
+            get
+            {
+                if (_adjustInstance == null)
+                    _adjustInstance = new AdjustInstance();
+                return _adjustInstance;
+            }
+            set
+            {
+                _adjustInstance = value;
+            }
+        }
+
+
+        private static IDeviceUtil _deviceUtil;
+        private static IDeviceUtil DeviceUtil
+        {
+            get
+            {
+                if (_deviceUtil == null)
+                    _deviceUtil = new UtilWS();
+                return _deviceUtil;
+            }
+            set
+            {
+                _deviceUtil = value;
+            }
+        }
 
         [Obsolete("Static setup of logging is deprecated! Use AdjustConfig constructor instead.")]
         public static void SetupLogging(Action<String> logDelegate, LogLevel? logLevel = null)
@@ -125,9 +156,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationActivated()
         {
-            if (IsApplicationActive) { return; }
+            if (_isApplicationActive) { return; }
 
-            IsApplicationActive = true;
+            _isApplicationActive = true;
             AdjustInstance.ApplicationActivated();
         }
 
@@ -139,9 +170,9 @@ namespace AdjustSdk
         /// </summary>
         public static void ApplicationDeactivated()
         {
-            if (!IsApplicationActive) { return; }
+            if (!_isApplicationActive) { return; }
 
-            IsApplicationActive = false;
+            _isApplicationActive = false;
             AdjustInstance.ApplicationDeactivated();
         }
 
@@ -250,5 +281,72 @@ namespace AdjustSdk
         {
             return AdjustInstance.GetAttribution();
         }
+
+        /// <summary>
+        /// Give user the right to be forgotten in accordance with GDPR law.
+        /// </summary>
+        public static void GdprForgetMe()
+        {
+            AdjustInstance.GdprForgetMe(DeviceUtil);
+        }
+
+#if DEBUG
+        public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
+        {
+            if (testOptions.Teardown.HasValue && testOptions.Teardown.Value)
+            {
+                if (AdjustInstance != null)
+                {
+                    AdjustInstance.Teardown();
+                }
+
+                _isApplicationActive = false;
+                DeviceUtil = null;
+                AdjustInstance = null;
+                AdjustFactory.Teardown();
+
+                // check whether to delete state 
+                if (testOptions.DeleteState.HasValue && testOptions.DeleteState.Value)
+                {
+                    ClearAllPersistedObjects();
+                    ClearAllPeristedValues();
+                }
+            }
+
+            if (AdjustInstance == null)
+                AdjustInstance = new AdjustInstance();
+
+            AdjustInstance.SetTestOptions(testOptions);
+        }
+
+        private static void ClearAllPersistedObjects()
+        {
+            var localSettings = ApplicationData.Current.LocalSettings;
+            Task.Run(() =>
+            {
+                Debug.WriteLine("About to delete local settings. Count: {0}", localSettings.Values.Count);
+                localSettings.Values.Clear();
+            });
+        }
+
+        private static void ClearAllPeristedValues()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+
+            if (localFolder == null)
+                return;
+
+            Task.Run(async () =>
+            {
+                int filesDeletedCount = 0;
+                foreach (var file in await localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    filesDeletedCount++;
+                }
+                Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
+            });
+        }
+#endif
     }
 }

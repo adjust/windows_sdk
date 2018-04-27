@@ -6,6 +6,12 @@ namespace AdjustSdk.Pcl
 {
     public static class AdjustFactory
     {
+        private static readonly TimeSpan DefaultSessionInterval = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan DefaultSubsessionInterval = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan DefaultTimerInterval = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan DefaultTimerStart = TimeSpan.FromSeconds(0);
+        private static readonly TimeSpan DefaultMaxDelayStart = TimeSpan.FromSeconds(10);
+
         private static ILogger _logger;
         private static IActivityHandler _iActivityHandler;
         private static IPackageHandler _iPackageHandler;
@@ -21,6 +27,42 @@ namespace AdjustSdk.Pcl
         private static BackoffStrategy _sdkClickHandlerBackoffStrategy;
         private static TimeSpan? _maxDelayStart;
 
+        private static string _baseUrl = null;
+        public static string BaseUrl
+        {
+            get
+            {
+                if (_baseUrl == null)
+                {
+                    return Constants.BASE_URL;
+                }
+                return _baseUrl;
+            }
+
+            set
+            {
+                _baseUrl = value;
+            }
+        }
+
+        private static string _gdprUrl = null;
+        public static string GdprUrl
+        {
+            get
+            {
+                if (_gdprUrl == null)
+                {
+                    return Constants.GDPR_URL;
+                }
+                return _gdprUrl;
+            }
+
+            set
+            {
+                _gdprUrl = value;
+            }
+        }
+
         public static ILogger Logger
         {
             get
@@ -33,7 +75,7 @@ namespace AdjustSdk.Pcl
 
             set { _logger = value; }
         }
-
+        
         public static IActivityHandler GetActivityHandler(AdjustConfig adjustConfig, IDeviceUtil deviceUtil)
         {
             if (_iActivityHandler == null)
@@ -65,12 +107,13 @@ namespace AdjustSdk.Pcl
             return _iAttributionHandler;
         }
 
-        public static IRequestHandler GetRequestHandler(Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
+        public static IRequestHandler GetRequestHandler(IActivityHandler activityHandler, 
+            Action<ResponseData> sendNextCallback, Action<ResponseData, ActivityPackage> retryCallback)
         {
             if (_iRequestHandler == null)
-                return new RequestHandler(sendNextCallback, retryCallback);
+                return new RequestHandler(activityHandler, sendNextCallback, retryCallback);
 
-            _iRequestHandler.Init(sendNextCallback, retryCallback);
+            _iRequestHandler.Init(activityHandler, sendNextCallback, retryCallback);
             return _iRequestHandler;
         }
 
@@ -84,18 +127,10 @@ namespace AdjustSdk.Pcl
             return _iSdkClickHandler;
         }
 
-        public static HttpMessageHandler GetHttpMessageHandler()
-        {
-            if (_httpMessageHandler == null)
-                return new HttpClientHandler();
-            else
-                return _httpMessageHandler;
-        }
-
         public static TimeSpan GetSessionInterval()
         {
             if (!_sessionInterval.HasValue)
-                return new TimeSpan(0, 30, 0); // 30 minutes
+                return DefaultSessionInterval; // 30 minutes
             else
                 return _sessionInterval.Value;
         }
@@ -103,7 +138,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetSubsessionInterval()
         {
             if (!_subsessionInterval.HasValue)
-                return new TimeSpan(0, 0, 1); // 1 second
+                return DefaultSubsessionInterval; // 1 second
             else
                 return _subsessionInterval.Value;
         }
@@ -111,7 +146,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetTimerInterval()
         {
             if (!_timerInterval.HasValue)
-                return new TimeSpan(0, 1, 0); // 1 minute
+                return DefaultTimerInterval; // 1 minute
             else
                 return _timerInterval.Value;
         }
@@ -119,7 +154,7 @@ namespace AdjustSdk.Pcl
         public static TimeSpan GetTimerStart()
         {
             if (!_timerStart.HasValue)
-                return new TimeSpan(0, 0, 0); // 0 seconds
+                return DefaultTimerStart; // 0 seconds
             else
                 return _timerStart.Value;
         }
@@ -141,12 +176,12 @@ namespace AdjustSdk.Pcl
             }
             return _sdkClickHandlerBackoffStrategy;
         }
-
+        
         public static TimeSpan GetMaxDelayStart()
         {
             if (_maxDelayStart == null)
             {
-                return TimeSpan.FromSeconds(10);
+                return DefaultMaxDelayStart;
             }
             return _maxDelayStart.Value;
         }
@@ -214,6 +249,25 @@ namespace AdjustSdk.Pcl
         public static void SetMaxDelayStart(TimeSpan maxDelayStart)
         {
             _maxDelayStart = maxDelayStart;
+        }
+
+        public static void Teardown()
+        {
+            _iPackageHandler = null;
+            _iRequestHandler = null;
+            _iAttributionHandler = null;
+            _logger = null;
+            _httpMessageHandler?.Dispose();
+            _httpMessageHandler = null;
+            _packageHandlerBackoffStrategy = null;
+            _sdkClickHandlerBackoffStrategy = null;
+
+            _timerInterval = DefaultTimerInterval;
+            _timerStart = DefaultTimerStart;
+            _sessionInterval = DefaultSessionInterval;
+            _subsessionInterval = DefaultSubsessionInterval;
+            _maxDelayStart = DefaultMaxDelayStart;
+            _baseUrl = Constants.BASE_URL;
         }
     }
 }

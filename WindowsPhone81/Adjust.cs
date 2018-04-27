@@ -1,5 +1,9 @@
 ﻿using AdjustSdk.Pcl;
 using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.Storage.Search;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 
@@ -12,9 +16,38 @@ namespace AdjustSdk
     /// </summary>
     public class Adjust
     {
-        private static readonly IDeviceUtil DeviceUtil = new UtilWP81();
-        private static readonly AdjustInstance AdjustInstance = new AdjustInstance();
         private static bool _isApplicationActive = false;
+
+        private static AdjustInstance _adjustInstance;
+        private static AdjustInstance AdjustInstance
+        {
+            get
+            {
+                if (_adjustInstance == null)
+                    _adjustInstance = new AdjustInstance();
+                return _adjustInstance;
+            }
+            set
+            {
+                _adjustInstance = value;
+            }
+        }
+
+
+        private static IDeviceUtil _deviceUtil;
+        private static IDeviceUtil DeviceUtil
+        {
+            get
+            {
+                if (_deviceUtil == null)
+                    _deviceUtil = new UtilWP81();
+                return _deviceUtil;
+            }
+            set
+            {
+                _deviceUtil = value;
+            }
+        }
 
         private Adjust() { }
 
@@ -243,5 +276,72 @@ namespace AdjustSdk
         {
             return AdjustInstance.GetAttribution();
         }
+
+        /// <summary>
+        /// Give user the right to be forgotten in accordance with GDPR law.
+        /// </summary>
+        public static void GdprForgetMe()
+        {
+            AdjustInstance.GdprForgetMe(DeviceUtil);
+        }
+
+#if DEBUG
+        public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
+        {
+            if (testOptions.Teardown.HasValue && testOptions.Teardown.Value)
+            {
+                if (AdjustInstance != null)
+                {
+                    AdjustInstance.Teardown();
+                }
+
+                _isApplicationActive = false;
+                DeviceUtil = null;
+                AdjustInstance = null;
+                AdjustFactory.Teardown();
+
+                // check whether to delete state 
+                if (testOptions.DeleteState.HasValue && testOptions.DeleteState.Value)
+                {
+                    ClearAllPersistedObjects();
+                    ClearAllPeristedValues();
+                }
+            }
+
+            if (AdjustInstance == null)
+                AdjustInstance = new AdjustInstance();
+
+            AdjustInstance.SetTestOptions(testOptions);
+        }
+
+        private static void ClearAllPersistedObjects()
+        {
+            var localSettings = ApplicationData.Current.LocalSettings;
+            Task.Run(() =>
+            {
+                Debug.WriteLine("About to delete local settings. Count: {0}", localSettings.Values.Count);
+                localSettings.Values.Clear();
+            });
+        }
+
+        private static void ClearAllPeristedValues()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+
+            if (localFolder == null)
+                return;
+
+            Task.Run(async () =>
+            {
+                int filesDeletedCount = 0;
+                foreach (var file in await localFolder.GetFilesAsync(CommonFileQuery.OrderByName))
+                {
+                    await file.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    filesDeletedCount++;
+                }
+                Debug.WriteLine("{0} files deleted from local folder.", filesDeletedCount);
+            });
+        }
+#endif
     }
 }

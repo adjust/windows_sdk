@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,8 +16,9 @@ namespace AdjustSdk.Pcl
     {
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
-        private static readonly HttpClient HttpClient = new HttpClient(AdjustFactory.GetHttpMessageHandler());
         internal static string UserAgent { get; set; }
+
+        private static HttpClient _httpClient;
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
         {
@@ -241,12 +241,6 @@ namespace AdjustSdk.Pcl
             return jsonDic;
         }
 
-        internal static void ConfigureHttpClient(string clientSdk)
-        {
-            HttpClient.Timeout = new TimeSpan(0, 1, 0);
-            HttpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
-        }
-
         internal static string ExtractExceptionMessage(Exception e)
         {
             if (e == null)
@@ -295,9 +289,35 @@ namespace AdjustSdk.Pcl
             return $"{timeSpan.TotalSeconds:0.0}";
         }
 
-        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, int queueSize)
+        public static void MarkGdprForgotten(IDeviceUtil deviceUtil)
         {
-            var url = BASE_URL + activityPackage.Path;
+            deviceUtil.PersistSimpleValue(GDPR_USER_FORGOTTEN, "true");
+        }
+
+        public static bool IsMarkedGdprForgotten(IDeviceUtil deviceUtil)
+        {
+            string isGdprForgottenStr;
+            if (deviceUtil.TryTakeSimpleValue(GDPR_USER_FORGOTTEN, out isGdprForgottenStr))
+            {
+                return !string.IsNullOrEmpty(isGdprForgottenStr) && isGdprForgottenStr == "true";
+            }
+            return false;
+        }
+
+        public static void ClearGdprForgotten(IDeviceUtil deviceUtil)
+        {
+            deviceUtil.ClearSimpleValue(GDPR_USER_FORGOTTEN);
+        }
+
+        public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, string basePath, int queueSize)
+        {
+            string baseUrl = activityPackage.ActivityKind != ActivityKind.Gdpr
+                ? AdjustFactory.BaseUrl
+                : AdjustFactory.GdprUrl;
+
+            string url = basePath != null
+                ? baseUrl + basePath + activityPackage.Path
+                : baseUrl + activityPackage.Path;
 
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters[SENT_AT] = sNow;
@@ -319,11 +339,11 @@ namespace AdjustSdk.Pcl
 
             using (var postParams = new FormUrlEncodedContent(postParamsMap))
             {
-                return HttpClient.PostAsync(url, postParams).Result;
+                return _httpClient.PostAsync(url, postParams).Result;
             }
         }
 
-        public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string queryParameters)
+        public static HttpResponseMessage SendGetRequest(ActivityPackage activityPackage, string basePath, string queryParameters)
         {
             var finalQuery = F("{0}&{1}={2}", queryParameters, SENT_AT, DateFormat(DateTime.Now));
 
@@ -334,14 +354,18 @@ namespace AdjustSdk.Pcl
             string authorizationHeader =
                 BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
 
-            var uriBuilder = new UriBuilder(BASE_URL);
-            uriBuilder.Path = activityPackage.Path;
+            string path = basePath != null
+                ? basePath + activityPackage.Path
+                : activityPackage.Path;
+
+            var uriBuilder = new UriBuilder(AdjustFactory.BaseUrl);
+            uriBuilder.Path = path;
             uriBuilder.Query = finalQuery;
 
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            return HttpClient.GetAsync(uriBuilder.Uri).Result;
+            return _httpClient.GetAsync(uriBuilder.Uri).Result;
         }
 
         private static string ExtractAppSecret(Dictionary<string, string> parameters)
@@ -450,15 +474,15 @@ namespace AdjustSdk.Pcl
         
         private static void SetUserAgent()
         {
-            HttpClient.DefaultRequestHeaders.Remove(USER_AGENT);
-            HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
+            _httpClient.DefaultRequestHeaders.Remove(USER_AGENT);
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(USER_AGENT, UserAgent);
         }
 
         private static void SetAuthorizationParameter(string authHeader)
         {
-            HttpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
+            _httpClient.DefaultRequestHeaders.Remove(AUTHORIZATION_PARAM);
             if(!string.IsNullOrEmpty(authHeader))
-                HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
+                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(AUTHORIZATION_PARAM, authHeader);
         }
 
         public static ResponseData ProcessResponse(HttpWebResponse httpWebResponse, ActivityPackage activityPackage)
@@ -482,6 +506,13 @@ namespace AdjustSdk.Pcl
             responseData.StatusCode = statusCode;
             responseData.Success = false; // false by default, set to true later
 
+            // for scenario: too frequent request for GDPR forget user
+            if (statusCode == 429)
+            {
+                responseData.WillRetry = true;
+                return responseData;
+            }
+
             if (jsonResponse == null)
             {
                 responseData.WillRetry = true;
@@ -491,6 +522,12 @@ namespace AdjustSdk.Pcl
             responseData.Message = GetDictionaryString(jsonResponse, "message");
             responseData.Timestamp = GetDictionaryString(jsonResponse, "timestamp");
             responseData.Adid = GetDictionaryString(jsonResponse, "adid");
+
+            string trackingState = GetDictionaryString(jsonResponse, "tracking_state");
+            if(!string.IsNullOrEmpty(trackingState) && trackingState == "opted_out")
+            {
+                responseData.TrackingState = TrackingState.OPTED_OUT;
+            }
 
             string message = responseData.Message;
             if (message == null)
@@ -572,6 +609,22 @@ namespace AdjustSdk.Pcl
             if (key == null || value == null) { return; }
             dict.Remove(key);
             dict.Add(key, value);
+        }
+
+        public static void Teardown()
+        {
+            _httpClient?.Dispose();
+            _httpClient = null;
+        }
+
+        public static void RecreateHttpClient(string clientSdk)
+        {
+            if (_httpClient != null)
+                return;
+
+            _httpClient = new HttpClient { Timeout = new TimeSpan(0, 1, 0) };
+            if (clientSdk != null)
+                _httpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
     }
 
