@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using AdjustSdk;
-using AdjustSdk.Pcl;
 using TestLibrary;
 using static TestApp.MainPage;
 using AdjustSdk.Pcl.IntegrationTesting;
@@ -65,8 +64,8 @@ namespace TestApp
         private void TestOptions()
         {
             AdjustTestOptions testOptions = new AdjustTestOptions();
-            testOptions.BaseUrl = AdjustFactory.BaseUrl;
-            testOptions.GdprUrl = AdjustFactory.GdprUrl;
+            testOptions.BaseUrl = MainPage.BaseUrl;
+            testOptions.GdprUrl = MainPage.GdprUrl;
             if (Command.ContainsParameter("basePath"))
             {
                 BasePath = Command.GetFirstParameterValue("basePath");

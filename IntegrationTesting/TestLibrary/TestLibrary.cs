@@ -14,7 +14,6 @@ namespace TestLibrary
     {
         private const string DATE_TIME_FORMAT = @"MM\/dd\/yyyy HH:mm";
         internal static string BaseUrl;
-        internal static string GdprUrl;
 
         public string LocalIp { get; set; }
         internal ICommandListener CommandListener;
@@ -31,29 +30,28 @@ namespace TestLibrary
         //https://docs.microsoft.com/en-us/dotnet/standard/collections/thread-safe/blockingcollection-overview
         internal BlockingCollection<string> WaitControlQueue;
 
-        public TestLibrary(string baseUrl, string gdprUrl, ICommandListener commandListener, string localIp, Action<string> logDelegate = null)
-            : this(baseUrl, gdprUrl, localIp, logDelegate)
+        public TestLibrary(string baseUrl, ICommandListener commandListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
         {
             CommandListener = commandListener;
         }
 
-        public TestLibrary(string baseUrl, string gdprUrl, ICommandJsonListener commandJsonListener, string localIp, Action<string> logDelegate = null)
-            : this(baseUrl, gdprUrl, localIp, logDelegate)
+        public TestLibrary(string baseUrl, ICommandJsonListener commandJsonListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
         {
             CommandJsonListener = commandJsonListener;
         }
 
-        public TestLibrary(string baseUrl, string gdprUrl, ICommandRawJsonListener commandRawJsonListener, string localIp, Action<string> logDelegate = null)
-            : this(baseUrl, gdprUrl, localIp, logDelegate)
+        public TestLibrary(string baseUrl, ICommandRawJsonListener commandRawJsonListener, string localIp, Action<string> logDelegate = null)
+            : this(baseUrl, localIp, logDelegate)
         {
             CommandRawJsonListener = commandRawJsonListener;
         }
 
-        private TestLibrary(string baseUrl, string gdprUrl, string localIp, Action<string> logDelegate = null)
+        private TestLibrary(string baseUrl, string localIp, Action<string> logDelegate = null)
         {
             Log.InjectLogDelegate(logDelegate);
             BaseUrl = baseUrl;
-            GdprUrl = gdprUrl;
             LocalIp = localIp;
             TestNames = new StringBuilder();
         }

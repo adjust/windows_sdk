@@ -12,6 +12,7 @@ namespace AdjustSdk.Pcl
         private bool? _startEnabled = null;
         private bool _startOffline = false;
         private string _basePath;
+        private string _gdprPath;
 
         public bool ApplicationLaunched => _activityHandler != null;
 
@@ -25,6 +26,7 @@ namespace AdjustSdk.Pcl
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
             adjustConfig.BasePath = _basePath;
+            adjustConfig.GdprPath = _gdprPath;
 
             AdjustConfig.String2Sha256Func = deviceUtil.HashStringUsingSha256;
             AdjustConfig.String2Sha512Func = deviceUtil.HashStringUsingSha512;
@@ -288,11 +290,21 @@ namespace AdjustSdk.Pcl
                 _basePath = testOptions.BasePath;
             }
 
+            if (testOptions.GdprPath != null)
+            {
+                _gdprPath = testOptions.GdprPath;
+            }
+
             if (testOptions.BaseUrl != null)
             {
                 AdjustFactory.BaseUrl = testOptions.BaseUrl;
             }
-            
+
+            if (testOptions.GdprUrl != null)
+            {
+                AdjustFactory.GdprUrl = testOptions.GdprUrl;
+            }
+
             if (testOptions.TimerIntervalInMilliseconds.HasValue)
             {
                 var intervalMillis = testOptions.TimerIntervalInMilliseconds.Value;
