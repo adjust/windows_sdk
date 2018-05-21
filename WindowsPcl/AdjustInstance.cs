@@ -340,6 +340,12 @@ namespace AdjustSdk.Pcl
                 else
                     AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
             }
+
+            if (testOptions.NoBackoffWait.HasValue && testOptions.NoBackoffWait.Value)
+            {
+                AdjustFactory.SetPackageHandlerBackoffStrategy(BackoffStrategy.NoWait);
+                AdjustFactory.SetSdkClickHandlerBackoffStrategy(BackoffStrategy.NoWait);
+            }
         }
 #endif
 

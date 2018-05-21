@@ -96,6 +96,14 @@ namespace TestApp
                 testOptions.SubsessionIntervalInMilliseconds = subsessionInterval;
             }
 
+            if (Command.ContainsParameter("noBackoffWait"))
+            {
+                if (Command.GetFirstParameterValue("noBackoffWait") == "true")
+                {
+                    testOptions.NoBackoffWait = true;
+                }
+            }
+
             if (Command.ContainsParameter("teardown"))
             {
                 List<string> teardownOptions = Command.Parameters["teardown"];
