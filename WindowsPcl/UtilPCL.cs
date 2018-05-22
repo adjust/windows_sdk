@@ -554,10 +554,6 @@ namespace AdjustSdk.Pcl
             {
                 responseData.WillRetry = false;
             }
-            else if (statusCode != 200)
-            {
-                responseData.WillRetry = true;
-            }
 
             return responseData;
         }
