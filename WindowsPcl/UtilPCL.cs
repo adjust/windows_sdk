@@ -550,10 +550,6 @@ namespace AdjustSdk.Pcl
             {
                 responseData.WillRetry = true;
             }
-            else if (statusCode == 500 || statusCode == 501)
-            {
-                responseData.WillRetry = false;
-            }
 
             return responseData;
         }
