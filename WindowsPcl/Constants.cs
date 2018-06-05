@@ -47,6 +47,8 @@
         internal const string CREATIVE = "creative";
         internal const string DEEPLINK = "deeplink";
         internal const string SOURCE = "source";
+        internal const string DEEPLINK_URL = "deeplink_url";
+        internal const string DEEPLINK_CLICK_TIME = "deeplink_click_time";
         internal const string ADJUST_PUSH_TOKEN = "adj_push_token";
         internal const string GDPR_USER_FORGOTTEN = "adj_gdpr_user_forgotten";
         internal const string PUSH_TOKEN = "push_token";

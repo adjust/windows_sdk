@@ -80,11 +80,18 @@ namespace AdjustSdk.Pcl
                 _activityHandler.SetOfflineMode(offlineMode);
             }
         }
-
-        public void AppWillOpenUrl(Uri uri)
+        
+        public void AppWillOpenUrl(Uri uri, IDeviceUtil deviceUtil)
         {
-            if (!CheckActivityHandler()) { return; }
             var clickTime = DateTime.Now;
+
+            if (!CheckActivityHandler())
+            {
+                deviceUtil.PersistSimpleValue(DEEPLINK_URL, uri.AbsoluteUri);
+                deviceUtil.PersistSimpleValue(DEEPLINK_CLICK_TIME, clickTime.Ticks.ToString());
+                return;
+            }
+            
             _activityHandler.OpenUrl(uri, clickTime);
         }
 

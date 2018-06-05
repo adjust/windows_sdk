@@ -682,6 +682,8 @@ namespace AdjustSdk.Pcl
             ProcessSessionI();
 
             CheckAttributionStateI();
+
+            ProcessCachedDeeplinkI();
         }
 
         private void ProcessSessionI()
@@ -722,6 +724,9 @@ namespace AdjustSdk.Pcl
 
                 // remove old push token from device
                 _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
+
+                // check for cached deep links
+                ProcessCachedDeeplinkI();
 
                 return;
             }
@@ -1248,6 +1253,22 @@ namespace AdjustSdk.Pcl
             {
                 _packageHandler.SendFirstPackage();
             }
+        }
+
+        private void ProcessCachedDeeplinkI()
+        {
+            if (!CheckActivityStateI(_activityState)) { return; }
+
+            Uri deeplink;
+            DateTime deeplinkClicktime;
+            if(!Util.GetDeeplinkCacheValues(_deviceUtil, out deeplink, out deeplinkClicktime))
+            {
+                return;
+            }
+
+            OpenUrl(deeplink, deeplinkClicktime);
+
+            Util.ClearDeplinkCache(_deviceUtil);
         }
 
         private void SetTrackingStateOptedOutI()

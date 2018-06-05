@@ -309,6 +309,39 @@ namespace AdjustSdk.Pcl
             deviceUtil.ClearSimpleValue(GDPR_USER_FORGOTTEN);
         }
 
+        public static void ClearDeplinkCache(IDeviceUtil deviceUtil)
+        {
+            deviceUtil.ClearSimpleValue(DEEPLINK_URL);
+            deviceUtil.ClearSimpleValue(DEEPLINK_CLICK_TIME);
+        }
+
+        public static bool GetDeeplinkCacheValues(IDeviceUtil deviceUtil, out Uri deeplinkUri, out DateTime clickTime)
+        {
+            deeplinkUri = null;
+            clickTime = new DateTime();
+
+            string deeplinkUriStr;
+            deviceUtil.TryTakeSimpleValue(DEEPLINK_URL, out deeplinkUriStr);
+            string deeplinkUrlClickTimeStr;
+            deviceUtil.TryTakeSimpleValue(DEEPLINK_CLICK_TIME, out deeplinkUrlClickTimeStr);
+
+            if (deeplinkUriStr == null || deeplinkUrlClickTimeStr == null)
+            {
+                return false;
+            }
+
+            long deeplinkUrlClickTimeTicks;
+            if (!long.TryParse(deeplinkUrlClickTimeStr, out deeplinkUrlClickTimeTicks))
+            {
+                return false;
+            }
+
+            deeplinkUri = new Uri(deeplinkUriStr);
+            clickTime = new DateTime(deeplinkUrlClickTimeTicks);
+
+            return true;
+        }
+
         public static HttpResponseMessage SendPostRequest(ActivityPackage activityPackage, string basePath, int queueSize)
         {
             string baseUrl = activityPackage.ActivityKind != ActivityKind.Gdpr
