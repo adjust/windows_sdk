@@ -682,6 +682,8 @@ namespace AdjustSdk.Pcl
             ProcessSessionI();
 
             CheckAttributionStateI();
+
+            ProcessCachedDeeplinkI();
         }
 
         private void ProcessSessionI()
@@ -1248,6 +1250,22 @@ namespace AdjustSdk.Pcl
             {
                 _packageHandler.SendFirstPackage();
             }
+        }
+
+        private void ProcessCachedDeeplinkI()
+        {
+            if (!CheckActivityStateI(_activityState)) { return; }
+
+            Uri deeplink;
+            DateTime deeplinkClicktime;
+            if(!Util.GetDeeplinkCacheValues(_deviceUtil, out deeplink, out deeplinkClicktime))
+            {
+                return;
+            }
+
+            OpenUrl(deeplink, deeplinkClicktime);
+
+            Util.ClearDeeplinkCache(_deviceUtil);
         }
 
         private void SetTrackingStateOptedOutI()

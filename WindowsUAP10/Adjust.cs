@@ -240,7 +240,7 @@ namespace AdjustSdk
         /// <param name="url">The url that open the application</param>
         public static void AppWillOpenUrl(Uri url)
         {
-            AdjustInstance.AppWillOpenUrl(url);
+            AdjustInstance.AppWillOpenUrl(url, DeviceUtil);
         }
 
         /// <summary>

@@ -12,6 +12,7 @@ namespace AdjustSdk.Pcl
         private bool? _startEnabled = null;
         private bool _startOffline = false;
         private string _basePath;
+        private string _gdprPath;
 
         public bool ApplicationLaunched => _activityHandler != null;
 
@@ -25,6 +26,7 @@ namespace AdjustSdk.Pcl
             adjustConfig.StartEnabled = _startEnabled;
             adjustConfig.StartOffline = _startOffline;
             adjustConfig.BasePath = _basePath;
+            adjustConfig.GdprPath = _gdprPath;
 
             AdjustConfig.String2Sha256Func = deviceUtil.HashStringUsingSha256;
             AdjustConfig.String2Sha512Func = deviceUtil.HashStringUsingSha512;
@@ -78,11 +80,18 @@ namespace AdjustSdk.Pcl
                 _activityHandler.SetOfflineMode(offlineMode);
             }
         }
-
-        public void AppWillOpenUrl(Uri uri)
+        
+        public void AppWillOpenUrl(Uri uri, IDeviceUtil deviceUtil)
         {
-            if (!CheckActivityHandler()) { return; }
             var clickTime = DateTime.Now;
+
+            if (!CheckActivityHandler())
+            {
+                deviceUtil.PersistSimpleValue(DEEPLINK_URL, uri.AbsoluteUri);
+                deviceUtil.PersistSimpleValue(DEEPLINK_CLICK_TIME, clickTime.Ticks.ToString());
+                return;
+            }
+            
             _activityHandler.OpenUrl(uri, clickTime);
         }
 
@@ -288,11 +297,21 @@ namespace AdjustSdk.Pcl
                 _basePath = testOptions.BasePath;
             }
 
+            if (testOptions.GdprPath != null)
+            {
+                _gdprPath = testOptions.GdprPath;
+            }
+
             if (testOptions.BaseUrl != null)
             {
                 AdjustFactory.BaseUrl = testOptions.BaseUrl;
             }
-            
+
+            if (testOptions.GdprUrl != null)
+            {
+                AdjustFactory.GdprUrl = testOptions.GdprUrl;
+            }
+
             if (testOptions.TimerIntervalInMilliseconds.HasValue)
             {
                 var intervalMillis = testOptions.TimerIntervalInMilliseconds.Value;
@@ -327,6 +346,12 @@ namespace AdjustSdk.Pcl
                     AdjustFactory.SetSubsessionInterval(TimeSpan.FromSeconds(1));
                 else
                     AdjustFactory.SetSubsessionInterval(TimeSpan.FromMilliseconds(subSessionIntervalMillis));
+            }
+
+            if (testOptions.NoBackoffWait.HasValue && testOptions.NoBackoffWait.Value)
+            {
+                AdjustFactory.SetPackageHandlerBackoffStrategy(BackoffStrategy.NoWait);
+                AdjustFactory.SetSdkClickHandlerBackoffStrategy(BackoffStrategy.NoWait);
             }
         }
 #endif

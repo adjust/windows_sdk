@@ -8,6 +8,7 @@
         public string GdprPath { get; set; }
         public bool? Teardown { get; set; }
         public bool? DeleteState { get; set; }
+        public bool? NoBackoffWait { get; set; }
 
         // default value => Constants.ONE_MINUTE;
         public long? TimerIntervalInMilliseconds { get; set; }

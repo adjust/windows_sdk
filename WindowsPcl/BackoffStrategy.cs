@@ -18,6 +18,7 @@ namespace AdjustSdk.Pcl
             MinRange = 0.5,
             MaxRange = 1.0
         };
+        
         public static readonly BackoffStrategy ShortWait = new BackoffStrategy
         {
             MinRetries = 1,
@@ -26,8 +27,23 @@ namespace AdjustSdk.Pcl
             MinRange = 0.5,
             MaxRange = 1.0
         };
-        //TestWait,
-        //NoWait,
-        //NoRetry
+
+        public static readonly BackoffStrategy TestWait = new BackoffStrategy
+        {
+            MinRetries = 1,
+            TicksMultiplier = TimeSpan.TicksPerMillisecond * 200,
+            MaxWaitTicks = TimeSpan.TicksPerMillisecond * 1000,
+            MinRange = 0.5,
+            MaxRange = 1.0
+        };
+
+        public static readonly BackoffStrategy NoWait = new BackoffStrategy
+        {
+            MinRetries = 100,
+            TicksMultiplier = TimeSpan.TicksPerMillisecond * 1,
+            MaxWaitTicks = TimeSpan.TicksPerMillisecond * 1000,
+            MinRange = 1.0,
+            MaxRange = 1.0
+        };
     }
 }

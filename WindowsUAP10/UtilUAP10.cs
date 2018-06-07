@@ -290,7 +290,7 @@ namespace AdjustSdk
 
         private string GetClientSdk()
         {
-            return "wuap4.13.0";
+            return "wuap4.14.0";
         }
 
         private static string GetOsName()
