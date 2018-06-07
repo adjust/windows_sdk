@@ -1,3 +1,9 @@
+### Version 4.14.0 (7th June 2018)
+#### Changed
+- `Adjust.AppWillOpenUrl(Uri url)` method changed to be able to be called before the SDK is initialized.
+
+---
+
 ### Version 4.13.0 (27th April 2018)
 #### Added
 - Added `Adjust.GdprForgetMe()` method to enable possibility for user to be forgotten in accordance with GDPR law.
