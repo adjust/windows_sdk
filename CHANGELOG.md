@@ -1,19 +1,12 @@
 ### Version 4.14.0 (7th June 2018)
-#### Changed
-- `Adjust.AppWillOpenUrl(Uri url)` method changed to be able to be called before the SDK is initialized.
+#### Added
+- Added deep link caching in case `AppWillOpenUrl` method is called before SDK is initialised.
 
 ---
 
 ### Version 4.13.0 (27th April 2018)
 #### Added
 - Added `Adjust.GdprForgetMe()` method to enable possibility for user to be forgotten in accordance with GDPR law.
-
----
-
-### Version 4.12.1 (19th April 2018)
-#### Added
-- Added integration tests support to the repository.
-- Added `initiated_by` flag indicating whether SDK or backend initiated attribution request.
 
 ---
 
