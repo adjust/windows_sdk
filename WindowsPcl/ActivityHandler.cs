@@ -725,9 +725,6 @@ namespace AdjustSdk.Pcl
                 // remove old push token from device
                 _deviceUtil.ClearSimpleValue(ADJUST_PUSH_TOKEN);
 
-                // check for cached deep links
-                ProcessCachedDeeplinkI();
-
                 return;
             }
 
