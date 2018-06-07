@@ -309,7 +309,7 @@ namespace AdjustSdk.Pcl
             deviceUtil.ClearSimpleValue(GDPR_USER_FORGOTTEN);
         }
 
-        public static void ClearDeplinkCache(IDeviceUtil deviceUtil)
+        public static void ClearDeeplinkCache(IDeviceUtil deviceUtil)
         {
             deviceUtil.ClearSimpleValue(DEEPLINK_URL);
             deviceUtil.ClearSimpleValue(DEEPLINK_CLICK_TIME);

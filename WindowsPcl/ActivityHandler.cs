@@ -1268,7 +1268,7 @@ namespace AdjustSdk.Pcl
 
             OpenUrl(deeplink, deeplinkClicktime);
 
-            Util.ClearDeplinkCache(_deviceUtil);
+            Util.ClearDeeplinkCache(_deviceUtil);
         }
 
         private void SetTrackingStateOptedOutI()
