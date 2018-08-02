@@ -376,6 +376,20 @@ namespace TestApp
                     _testLibrary.SendInfoToServer(localBasePath);
                 };
             }
+
+            if (Command.ContainsParameter("deferredDeeplinkCallback"))
+            {
+                string launchDeferredDeeplinkS = Command.GetFirstParameterValue("deferredDeeplinkCallback");
+                bool launchDeferredDeeplink = launchDeferredDeeplinkS == "true";
+                string localBasePath = BasePath;
+                adjustConfig.DeeplinkResponse = deeplink =>
+                {
+                    Log.Debug(TAG, "deferred_deep_link = " + deeplink.ToString());
+                    _testLibrary.AddInfoToSend("deeplink", deeplink.ToString());
+                    _testLibrary.SendInfoToServer(localBasePath);
+                    return launchDeferredDeeplink;
+                };
+            }
         }
 
         private void Start()
