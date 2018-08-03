@@ -269,26 +269,7 @@ namespace TestApp
                 var userAgent = Command.GetFirstParameterValue("userAgent");
                 adjustConfig.SetUserAgent(userAgent);
             }
-
-            if (Command.ContainsParameter("deferredDeeplinkCallback"))
-            {
-                adjustConfig.DeeplinkResponse = uri =>
-                {
-                    if (uri == null)
-                    {
-                        Log.Debug(TAG, "DeeplinkResponse, uri = null");
-                        return false;
-                    }
-
-                    Log.Debug(TAG, "DeeplinkResponse, uri = " + uri.ToString());
-
-                    if (!uri.AbsoluteUri.StartsWith("adjusttest"))
-                        return false;
-
-                    return true;
-                };
-            }
-
+            
             if (Command.ContainsParameter("attributionCallbackSendAll"))
             {
                 string localBasePath = BasePath;
