@@ -895,6 +895,13 @@ namespace AdjustSdk.Pcl
                 task = LaunchAttributionActionI();
             }
 
+            // if attribution didn't update and it's still null
+            // ask for attribution
+            if (_attribution == null && _activityState.AskingAttribution == false)
+            {
+                _attributionHandler.GetAttribution();
+            }
+
             if (sessionResponseData.Success)
             {
                 _deviceUtil.SetInstallTracked();
