@@ -334,6 +334,7 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", eventSuccessResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", eventSuccessResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventSuccessResponseData.EventToken);
+                    _testLibrary.AddInfoToSend("callbackId", eventSuccessResponseData.CallbackId);
                     if (eventSuccessResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventSuccessResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer(localBasePath);
@@ -351,6 +352,7 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", eventFailureResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", eventFailureResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventFailureResponseData.EventToken);
+                    _testLibrary.AddInfoToSend("callbackId", eventFailureResponseData.CallbackId);
                     _testLibrary.AddInfoToSend("willRetry", eventFailureResponseData.WillRetry.ToString().ToLower());
                     if (eventFailureResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventFailureResponseData.JsonResponse.ToJson());
@@ -446,6 +448,12 @@ namespace TestApp
             {
                 var purchaseId = Command.GetFirstParameterValue("orderId");
                 adjustEvent.PurchaseId = purchaseId;
+            }
+
+            if (Command.ContainsParameter("callbackId"))
+            {
+                var callbackId = Command.GetFirstParameterValue("callbackId");
+                adjustEvent.CallbackId = callbackId;
             }
         }
 

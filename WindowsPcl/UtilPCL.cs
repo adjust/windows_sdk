@@ -355,22 +355,23 @@ namespace AdjustSdk.Pcl
             var sNow = DateFormat(DateTime.Now);
             activityPackage.Parameters[SENT_AT] = sNow;
 
-            string secretId = ExtractSecretId(activityPackage.Parameters);
-            string appSecret = ExtractAppSecret(activityPackage.Parameters);
+            Dictionary<string, string> parameters = new Dictionary<string, string>(activityPackage.Parameters);
+
+            ExtractEventCallbackId(parameters);
+            string secretId = ExtractSecretId(parameters);
+            string appSecret = ExtractAppSecret(parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
-                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
+                BuildAuthorizationHeader(parameters, appSecret, secretId, activityKind);
 
             SetUserAgent();
             SetAuthorizationParameter(authorizationHeader);
 
-            Dictionary<string, string> postParamsMap = 
-                new Dictionary<string, string>(activityPackage.Parameters);
             if(queueSize > 0)
-                postParamsMap.Add(QUEUE_SIZE, queueSize.ToString());
+                parameters.Add(QUEUE_SIZE, queueSize.ToString());
 
-            using (var postParams = new FormUrlEncodedContent(postParamsMap))
+            using (var postParams = new FormUrlEncodedContent(parameters))
             {
                 return _httpClient.PostAsync(url, postParams).Result;
             }
@@ -380,12 +381,15 @@ namespace AdjustSdk.Pcl
         {
             var finalQuery = F("{0}&{1}={2}", queryParameters, SENT_AT, DateFormat(DateTime.Now));
 
-            string secretId = ExtractSecretId(activityPackage.Parameters);
-            string appSecret = ExtractAppSecret(activityPackage.Parameters);
+            Dictionary<string, string> parameters = new Dictionary<string, string>(activityPackage.Parameters);
+
+            ExtractEventCallbackId(parameters);
+            string secretId = ExtractSecretId(parameters);
+            string appSecret = ExtractAppSecret(parameters);
 
             string activityKind = Enum.GetName(typeof(ActivityKind), activityPackage.ActivityKind);
             string authorizationHeader =
-                BuildAuthorizationHeader(activityPackage.Parameters, appSecret, secretId, activityKind);
+                BuildAuthorizationHeader(parameters, appSecret, secretId, activityKind);
 
             string path = basePath != null
                 ? basePath + activityPackage.Path
@@ -419,6 +423,11 @@ namespace AdjustSdk.Pcl
                 parameters.Remove(SECRET_ID);
             }
             return secretId;
+        }
+
+        private static void ExtractEventCallbackId(Dictionary<string, string> parameters)
+        {
+            parameters.Remove(EVENT_CALLBACK_ID);
         }
 
         private static string BuildAuthorizationHeader(IReadOnlyDictionary<string, string> parameters,
