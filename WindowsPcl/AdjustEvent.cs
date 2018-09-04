@@ -13,6 +13,7 @@ namespace AdjustSdk
         internal Dictionary<string, string> CallbackParameters { get; private set; }
         internal Dictionary<string, string> PartnerParameters { get; private set; }
         public string PurchaseId { get; set; }
+        public string CallbackId { get; set; }
 
         public AdjustEvent(string eventToken)
         {

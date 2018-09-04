@@ -269,26 +269,7 @@ namespace TestApp
                 var userAgent = Command.GetFirstParameterValue("userAgent");
                 adjustConfig.SetUserAgent(userAgent);
             }
-
-            if (Command.ContainsParameter("deferredDeeplinkCallback"))
-            {
-                adjustConfig.DeeplinkResponse = uri =>
-                {
-                    if (uri == null)
-                    {
-                        Log.Debug(TAG, "DeeplinkResponse, uri = null");
-                        return false;
-                    }
-
-                    Log.Debug(TAG, "DeeplinkResponse, uri = " + uri.ToString());
-
-                    if (!uri.AbsoluteUri.StartsWith("adjusttest"))
-                        return false;
-
-                    return true;
-                };
-            }
-
+            
             if (Command.ContainsParameter("attributionCallbackSendAll"))
             {
                 string localBasePath = BasePath;
@@ -353,6 +334,7 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", eventSuccessResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", eventSuccessResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventSuccessResponseData.EventToken);
+                    _testLibrary.AddInfoToSend("callbackId", eventSuccessResponseData.CallbackId);
                     if (eventSuccessResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventSuccessResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer(localBasePath);
@@ -370,10 +352,25 @@ namespace TestApp
                     _testLibrary.AddInfoToSend("timestamp", eventFailureResponseData.Timestamp);
                     _testLibrary.AddInfoToSend("adid", eventFailureResponseData.Adid);
                     _testLibrary.AddInfoToSend("eventToken", eventFailureResponseData.EventToken);
+                    _testLibrary.AddInfoToSend("callbackId", eventFailureResponseData.CallbackId);
                     _testLibrary.AddInfoToSend("willRetry", eventFailureResponseData.WillRetry.ToString().ToLower());
                     if (eventFailureResponseData.JsonResponse != null)
                         _testLibrary.AddInfoToSend("jsonResponse", eventFailureResponseData.JsonResponse.ToJson());
                     _testLibrary.SendInfoToServer(localBasePath);
+                };
+            }
+
+            if (Command.ContainsParameter("deferredDeeplinkCallback"))
+            {
+                string launchDeferredDeeplinkS = Command.GetFirstParameterValue("deferredDeeplinkCallback");
+                bool launchDeferredDeeplink = launchDeferredDeeplinkS == "true";
+                string localBasePath = BasePath;
+                adjustConfig.DeeplinkResponse = deeplink =>
+                {
+                    Log.Debug(TAG, "deferred_deep_link = " + deeplink.ToString());
+                    _testLibrary.AddInfoToSend("deeplink", deeplink.ToString());
+                    _testLibrary.SendInfoToServer(localBasePath);
+                    return launchDeferredDeeplink;
                 };
             }
         }
@@ -451,6 +448,12 @@ namespace TestApp
             {
                 var purchaseId = Command.GetFirstParameterValue("orderId");
                 adjustEvent.PurchaseId = purchaseId;
+            }
+
+            if (Command.ContainsParameter("callbackId"))
+            {
+                var callbackId = Command.GetFirstParameterValue("callbackId");
+                adjustEvent.CallbackId = callbackId;
             }
         }
 

@@ -129,9 +129,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\WindowsPCL\WindowsPcl.csproj">
+    <ProjectReference Include="..\..\WindowsPcl\WindowsPCL.csproj">
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
-      <Name>WindowsPcl</Name>
+      <Name>WindowsPCL</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\WindowsUAP10\AdjustUAP10.csproj">
       <Project>{0013b5dc-2c9f-4cde-8fb2-56cdac76028e}</Project>

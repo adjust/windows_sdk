@@ -22,7 +22,7 @@
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.protocol">
-          <uap:Protocol Name="adjusttest" />
+          <uap:Protocol Name="adjust-test" />
         </uap:Extension>
       </Extensions>
     </Application>

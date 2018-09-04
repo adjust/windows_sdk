@@ -38,6 +38,8 @@ namespace AdjustWP81Example
         private void btnSimpleEvent_Click(object sender, RoutedEventArgs e)
         {
             var simpleEvent = new AdjustEvent("g3mfiw");
+            // Assign custom identifier to event which will be reported in success/failure callbacks.
+            simpleEvent.CallbackId = "PrettyRandomIdentifier";
             Adjust.TrackEvent(simpleEvent);
         }
 

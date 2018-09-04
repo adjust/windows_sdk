@@ -83,6 +83,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, EVENT_TOKEN, adjustEvent.EventToken);
             AddDouble(parameters, REVENUE, adjustEvent.Revenue);
             AddString(parameters, CURRENCY, adjustEvent.Currency);
+            AddString(parameters, EVENT_CALLBACK_ID, adjustEvent.CallbackId);
             if (!isInDelay)
             {
                 AddDictionaryJson(parameters, "callback_params",

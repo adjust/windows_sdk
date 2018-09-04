@@ -3,6 +3,7 @@
     public class EventResponseData : ResponseData
     {
         internal string EventToken { get; set; }
+        internal string CallbackId { get; set; }
 
         public EventResponseData(ActivityPackage activityPackage)
         {
@@ -10,6 +11,12 @@
             if (activityPackage.Parameters.TryGetValue(Constants.EVENT_TOKEN, out eventToken))
             {
                 EventToken = eventToken;
+            }
+
+            string eventCallbackId;
+            if (activityPackage.Parameters.TryGetValue(Constants.EVENT_CALLBACK_ID, out eventCallbackId))
+            {
+                CallbackId = eventCallbackId;
             }
         }
 
@@ -24,8 +31,9 @@
             successResponseData.Message = Message;
             successResponseData.Timestamp = Timestamp;
             successResponseData.Adid = Adid;
-            successResponseData.JsonResponse = JsonResponse;
             successResponseData.EventToken = EventToken;
+            successResponseData.CallbackId = CallbackId;
+            successResponseData.JsonResponse = JsonResponse;
 
             return successResponseData;
         }
@@ -42,8 +50,9 @@
             failureResponseData.Timestamp = Timestamp;
             failureResponseData.Adid = Adid;
             failureResponseData.WillRetry = WillRetry;
-            failureResponseData.JsonResponse = JsonResponse;
             failureResponseData.EventToken = EventToken;
+            failureResponseData.CallbackId = CallbackId;
+            failureResponseData.JsonResponse = JsonResponse;
 
             return failureResponseData;
         }

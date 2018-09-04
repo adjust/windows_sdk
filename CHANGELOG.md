@@ -1,3 +1,14 @@
+### Version 4.15.0 (4th September 2018)
+#### Added
+- Added `CallbackId` property on `AdjustEvent` object for users to set custom ID on event object which will later be reported in event success/failure callbacks.
+- Added `CallbackId` property to `AdjustEventSuccess` class.
+- Added `CallbackId` property to `AdjustEventFailure` class.
+
+#### Changed
+- SDK will now fire attribution request each time upon session tracking finished in case it lacks attribution info.
+
+---
+
 ### Version 4.14.0 (7th June 2018)
 #### Added
 - Added deep link caching in case `AppWillOpenUrl` method is called before SDK is initialised.

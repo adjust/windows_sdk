@@ -56,10 +56,13 @@ namespace AdjustSdk.Pcl
 
             if (Parameters != null)
             {
+                List<string> stringsToExclude = new List<string> { "app_secret", "secret_id", "event_callback_id" };
+
                 stringBuilder.AppendFormat("Parameters:");
                 var sortedParameters = new SortedDictionary<string,string>(Parameters);
                 foreach (var keyValuePair in sortedParameters)
                 {
+                    if(stringsToExclude.Contains(keyValuePair.Key)) { continue; }
                     stringBuilder.AppendFormat("\n\t\t{0} {1}", keyValuePair.Key.PadRight(16, ' '), keyValuePair.Value);
                 }
             }

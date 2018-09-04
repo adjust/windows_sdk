@@ -64,5 +64,6 @@
         internal const string USER_AGENT = "user-agent";
         internal const string QUEUE_SIZE = "queue_size";
         internal const string SENT_AT = "sent_at";
+        internal const string EVENT_CALLBACK_ID = "event_callback_id";
     }
 }
