@@ -105,9 +105,9 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-    <ProjectReference Include="..\..\WindowsPCL\WindowsPcl.csproj">
+    <ProjectReference Include="..\..\WindowsPcl\WindowsPCL.csproj">
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
-      <Name>WindowsPcl</Name>
+      <Name>WindowsPCL</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\WindowsStore\AdjustWS.csproj">
       <Project>{882c2a80-b6a5-42a2-8e28-0749b2090d04}</Project>

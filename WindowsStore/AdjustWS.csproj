@@ -104,9 +104,9 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
-    <ProjectReference Include="..\WindowsPCL\WindowsPcl.csproj">
+    <ProjectReference Include="..\WindowsPcl\WindowsPCL.csproj">
       <Project>{1037b76a-1170-414d-afae-4c4621e78007}</Project>
-      <Name>WindowsPcl</Name>
+      <Name>WindowsPCL</Name>
     </ProjectReference>
     <ProjectReference Include="..\WindowsUap\WindowsUap.csproj">
       <Project>{4aa3181e-fbd4-4d11-ac6c-abcd52c6516a}</Project>
