@@ -18,6 +18,7 @@ This is the Windows SDK of adjust™. You can read more about adjust™ at [adju
         * [Revenue deduplication](#revenue-deduplication)
         * [Callback parameters](#callback-parameters)
         * [Partner parameters](#partner-params)
+        * [Callback identifier](#callback-id)
     * [Session parameters](#session-params)
         * [Session callback parameters](#session-callback-parameters)
         * [Session partner parameters](#session-partner-parameters)
@@ -235,6 +236,19 @@ Adjust.TrackEvent(adjustEvent);
 
 You can read more about special partners and these integrations in our [guide to special partners][special-partners].
 
+### <a id="callback-id"></a>Callback identifier
+
+You can also add custom string identifier to each event you want to track. This identifier will later be reported in event success and/or event failure callbacks to enable you to keep track on which event was successfully tracked or not. You can set this identifier using the `CallbackId` property on your `AdjustEvent` instance:
+
+
+```cs
+var adjustEvent = new AdjustEvent("abc123");
+
+adjustEvent.CallbackId = "Your-Custom-Id";
+
+Adjust.TrackEvent(adjustEvent);
+```
+
 ### <a id="session-params"></a>Set up session parameters
 
 Some parameters are saved to be sent in every event and session of the Adjust SDK. Once you have added any of these parameters, you don't need to add them every time, since they will be saved locally. If you add the same parameter twice, there will be no effect.
@@ -393,6 +407,7 @@ The delegate function will be called after the SDK tries to send a package to th
 Both event response data objects contain:
 
 - `string EventToken` the event token, if the package tracked was an event.
+- `string CallbackId` the custom defined callback ID set on event object.
 
 If any value is unavailable, it will default to `null`.
 
