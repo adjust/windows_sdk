@@ -50,7 +50,7 @@ namespace AdjustSdk.Pcl
         public ActivityState()
         {
             SubSessionCount = -1; // -1 means unknown
-            Uuid = Guid.NewGuid();
+            Uuid = Util.Uuid;
             Enabled = true;
             IsGdprForgotten = false;
             AskingAttribution = false;

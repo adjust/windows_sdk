@@ -19,6 +19,9 @@ namespace AdjustSdk.Pcl
         private static readonly NullFormat NullFormat = new NullFormat();
         internal static string UserAgent { get; set; }
 
+        // used for win_uuid in ActivityState and PackageBuilder
+        internal static Guid Uuid = Guid.NewGuid();
+
         private static HttpClient _httpClient;
 
         internal static string GetStringEncodedParameters(Dictionary<string, string> parameters)
