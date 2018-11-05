@@ -660,6 +660,16 @@ namespace AdjustSdk.Pcl
             if (clientSdk != null)
                 _httpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
         }
+
+        public static bool IsUrlFacebookAuthUrl(string deeplink)
+        {
+            // Url with FB credentials to be filtered out
+            if (Regex.Match(deeplink, FB_AUTH_REGEX).Success)
+            {
+                return true;
+            }
+            return false;
+        }
     }
 
     // http://stackoverflow.com/a/7689257
