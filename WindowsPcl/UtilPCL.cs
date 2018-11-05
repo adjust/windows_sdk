@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AdjustSdk.Pcl.FileSystem;
 using static AdjustSdk.Pcl.Constants;
