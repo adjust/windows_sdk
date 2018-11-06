@@ -218,6 +218,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, WIN_HWID, _deviceInfo.HardwareId);
             AddString(parameters, WIN_NAID, _deviceInfo.NetworkAdapterId);
             AddString(parameters, WIN_UDID, _deviceInfo.DeviceUniqueId);
+            AddString(parameters, WIN_UUID, _activityStateCopy.Uuid.ToString());
 
             AddString(parameters, EAS_ID, _deviceInfo.EasId);
         }
