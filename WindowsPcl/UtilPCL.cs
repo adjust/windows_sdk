@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using AdjustSdk.Pcl.FileSystem;
 using static AdjustSdk.Pcl.Constants;
@@ -17,6 +18,9 @@ namespace AdjustSdk.Pcl
         private static ILogger Logger => AdjustFactory.Logger;
         private static readonly NullFormat NullFormat = new NullFormat();
         internal static string UserAgent { get; set; }
+
+        // used for win_uuid in ActivityState and PackageBuilder
+        internal static Guid Uuid = Guid.NewGuid();
 
         private static HttpClient _httpClient;
 
@@ -659,6 +663,16 @@ namespace AdjustSdk.Pcl
             _httpClient = new HttpClient { Timeout = new TimeSpan(0, 1, 0) };
             if (clientSdk != null)
                 _httpClient.DefaultRequestHeaders.Add(CLIENT_SDK, clientSdk);
+        }
+
+        public static bool IsUrlFacebookAuthUrl(string deeplink)
+        {
+            // Url with FB credentials to be filtered out
+            if (Regex.Match(deeplink, FB_AUTH_REGEX).Success)
+            {
+                return true;
+            }
+            return false;
         }
     }
 

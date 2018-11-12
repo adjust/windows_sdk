@@ -31,7 +31,11 @@ namespace AdjustSdk.Pcl
 
             public ActivityStateCopy(ActivityState activityState)
             {
-                if (activityState == null) { return; }
+                if (activityState == null)
+                {
+                    Uuid = Util.Uuid;
+                    return;
+                }
 
                 LastInterval = activityState.LastInterval;
                 EventCount = activityState.EventCount;
@@ -139,6 +143,13 @@ namespace AdjustSdk.Pcl
         {
             var parameters = GetIdsParameters();
 
+            AddString(parameters, WIN_UUID, _activityStateCopy.Uuid.ToString());
+            AddString(parameters, "os_name", _deviceInfo.OsName);
+            AddString(parameters, "os_version", _deviceInfo.OsVersion);
+            AddString(parameters, "app_version", _deviceInfo.AppVersion);
+            AddString(parameters, "device_type", _deviceInfo.DeviceType);
+            AddString(parameters, "device_name", _deviceInfo.DeviceName);
+
             return new ActivityPackage(ActivityKind.Attribution, _deviceInfo.ClientSdk, parameters);
         }
 
@@ -156,6 +167,13 @@ namespace AdjustSdk.Pcl
         public ActivityPackage BuildGdprPackage()
         {
             var parameters = GetIdsParameters();
+
+            AddString(parameters, WIN_UUID, _activityStateCopy.Uuid.ToString());
+            AddString(parameters, "os_name", _deviceInfo.OsName);
+            AddString(parameters, "os_version", _deviceInfo.OsVersion);
+            AddString(parameters, "app_version", _deviceInfo.AppVersion);
+            AddString(parameters, "device_type", _deviceInfo.DeviceType);
+            AddString(parameters, "device_name", _deviceInfo.DeviceName);
 
             return new ActivityPackage(ActivityKind.Gdpr, _deviceInfo.ClientSdk, parameters);
         }
@@ -200,6 +218,7 @@ namespace AdjustSdk.Pcl
             AddString(parameters, WIN_HWID, _deviceInfo.HardwareId);
             AddString(parameters, WIN_NAID, _deviceInfo.NetworkAdapterId);
             AddString(parameters, WIN_UDID, _deviceInfo.DeviceUniqueId);
+            AddString(parameters, WIN_UUID, _activityStateCopy.Uuid.ToString());
 
             AddString(parameters, EAS_ID, _deviceInfo.EasId);
         }

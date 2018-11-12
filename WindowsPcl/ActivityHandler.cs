@@ -1035,6 +1035,12 @@ namespace AdjustSdk.Pcl
 
             if (deeplink?.Length == 0) { return; }
 
+            if (Util.IsUrlFacebookAuthUrl(deeplink))
+            {
+                _logger.Debug("Deep link (" + deeplink + ") processing skipped!");
+                return;
+            }
+
             var windowsPhone80Protocol = "/Protocol?";
             if (deeplink?.StartsWith(windowsPhone80Protocol) == true)
             {

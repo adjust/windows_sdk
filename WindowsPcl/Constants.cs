@@ -65,5 +65,7 @@
         internal const string QUEUE_SIZE = "queue_size";
         internal const string SENT_AT = "sent_at";
         internal const string EVENT_CALLBACK_ID = "event_callback_id";
+
+        internal const string FB_AUTH_REGEX = "^(fb|vk)[0-9]{5,}[^:]*://authorize.*access_token=.*";
     }
 }
