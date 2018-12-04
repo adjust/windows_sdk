@@ -286,9 +286,9 @@ namespace AdjustSdk
             return string.Equals(isInstallTracked, bool.TrueString, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        private string GetClientSdk()
+        internal static string GetClientSdk()
         {
-            return "wstore4.16.0";
+            return "wstore4.17.0";
         }
 
         private string GetOsName()

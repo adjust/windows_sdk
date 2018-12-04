@@ -290,6 +290,10 @@ namespace AdjustSdk
             AdjustInstance.GdprForgetMe(DeviceUtil);
         }
 
+        public static string GetSdkVersion()
+        {
+            return UtilWS.GetClientSdk();
+        }
 #if DEBUG
         public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
         {

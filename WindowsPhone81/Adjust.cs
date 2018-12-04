@@ -285,6 +285,10 @@ namespace AdjustSdk
             AdjustInstance.GdprForgetMe(DeviceUtil);
         }
 
+        public static string GetSdkVersion()
+        {
+            return UtilWP81.GetClientSdk();
+        }
 #if DEBUG
         public static void SetTestOptions(Pcl.IntegrationTesting.AdjustTestOptions testOptions)
         {
