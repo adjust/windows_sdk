@@ -1,3 +1,9 @@
+### Version 4.17.0 (4th December 2018)
+#### Added
+- Added `GetSdkVersion()` method to `Adjust` interface to obtain current SDK version string.
+
+---
+
 ### Version 4.16.0 (12th November 2018)
 #### Added
 - Added sending of UUID string with each attribution request.
