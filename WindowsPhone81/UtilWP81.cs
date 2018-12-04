@@ -290,7 +290,7 @@ namespace AdjustSdk
 
         internal static string GetClientSdk()
         {
-            return "wphone81-4.16.0";
+            return "wphone81-4.17.0";
         }
 
         private static string GetOsName()
